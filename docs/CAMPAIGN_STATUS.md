@@ -31,6 +31,18 @@ segment. This is a verified intermediate save, not a completed window or a
 terminal gameplay/sustainability audit. See the
 [midpoint observation](../experiments/evidence/keyboard_binding_astra_r1_midpoint_288_20260911.json).
 
+The separate read-only [saved-supply review](../experiments/evidence/keyboard_binding_astra_r1_supply_256_288_20260911.json)
+verified all 32 native boundaries at that save. Population grew from 10 to 12,
+with zero recorded citizen deaths. Raw-edible inventory changed from 447 to 50,
+but trader-flagged inventory changed from 395 to zero; non-trader-flagged units
+changed only from 52 to 50. This is not an ownership/accessibility guarantee.
+Drink inventory changed from 413 to 238, without a trader breakdown, so that
+delta is not measured consumption. Fishing appeared at 23 boundaries, raw-fish
+preparation at 17 and planting at eight; these are current-job samples, not
+completed jobs or production rates. Seven beds, three workshops and one farm
+remain unchanged. No additional construction or sustainable replenishment is
+established by this saved segment. The audit made no game or model calls.
+
 The active run now broadcasts captured screens and chosen actions through the
 [homepage player](https://fortgym.live/#watch-root). Public frames 289 and 290
 were independently matched to original hash-bound receipts. The one-way relay
@@ -48,6 +60,26 @@ The declaration was pushed before launch at
 `bb8516aa6a27d6ba92bee39f9769adcfb7095d6c` passed remote CI with 4,921 tests and
 154 skipped before launch. It is pinned separately from native revision
 `d22f28d99f4fd103188979e964e148139d3f3efd`; no native implementation changed.
+
+## Remote integration: two reviewed recovery changes landed in main
+
+[PR132](https://github.com/lemoz/fort-gym/pull/132) and
+[PR134](https://github.com/lemoz/fort-gym/pull/134) are now merged. Remote main is
+`58a0ae6570f8f0e1673f0152728851f04de132ca`. Both merge trees equal their exact
+reviewed heads. Fresh local suites passed 1,918 and 1,971 tests respectively,
+with ten skips each. Their post-merge main CI runs passed 1,868 and 1,921 tests,
+with 60 skips each; local and CI coverage totals are deliberately separate.
+Changed-file Ruff and diff checks passed. Review was implementer review, not
+independent approval. Original tick-acceptance artifacts were rehashed, and the
+dialog fixture's historical failed assertion remains a failure in its evidence.
+
+These merges add the previously tested saved-runtime recovery/tick-limit work
+and let models respond to known blocking dialogs without automatic dismissal.
+They do not deploy the website, start a game/model, change the active condition,
+or update frozen source checkouts. Source branches remain retained. The next
+unmerged dependency is PR135; its production diff was inspected, but full review
+and fresh tests remain. This does not claim the entire release stack is merged.
+See the [integration receipt](../experiments/evidence/remote_campaign_integration_20260911.json).
 
 ## Latest completed result: recovery saved decision 256 and 28,345 new ticks
 

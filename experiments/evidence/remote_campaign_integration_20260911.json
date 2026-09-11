@@ -1,0 +1,71 @@
+{
+  "schema_version": "fortgym.remote-campaign-integration/v1",
+  "observed_date": "2026-09-11",
+  "review_kind": "implementer_review_not_independent_approval",
+  "main_before": "5c1de785bd6abdbe1bc9520529c6157e44793c0d",
+  "main_after": "58a0ae6570f8f0e1673f0152728851f04de132ca",
+  "changes": [
+    {
+      "pull_request": 132,
+      "url": "https://github.com/lemoz/fort-gym/pull/132",
+      "review": "https://github.com/lemoz/fort-gym/pull/132#issuecomment-5638702639",
+      "head": "de69c7a467eb0b00becfef03329bac9f58690e35",
+      "merge_commit": "0250c85852b59991002a895a68e817c7671b43e9",
+      "merged_at": "2026-09-11T18:05:21Z",
+      "local_tests": {
+        "passed": 1918,
+        "skipped": 10
+      },
+      "changed_file_ruff": "passed",
+      "original_native_tick_artifacts_rehashed": 4,
+      "merge_tree_equals_reviewed_head": true,
+      "post_merge_ci": {
+        "run_id": 34631325348,
+        "conclusion": "success",
+        "passed": 1868,
+        "skipped": 60
+      }
+    },
+    {
+      "pull_request": 134,
+      "url": "https://github.com/lemoz/fort-gym/pull/134",
+      "review": "https://github.com/lemoz/fort-gym/pull/134#issuecomment-5638782946",
+      "head": "5f5700a704ed8402bb6e1a4a9a9609e3f8750e72",
+      "merge_commit": "58a0ae6570f8f0e1673f0152728851f04de132ca",
+      "merged_at": "2026-09-11T18:12:25Z",
+      "retargeted_from": "codex/native-output-pause-acceptance",
+      "retargeted_to": "main",
+      "retarget_base_trees_identical": true,
+      "local_tests": {
+        "passed": 1971,
+        "skipped": 10
+      },
+      "changed_file_ruff": "passed",
+      "historical_failed_native_fixture_preserved": true,
+      "merge_tree_equals_reviewed_head": true,
+      "post_merge_ci": {
+        "run_id": 34631976589,
+        "conclusion": "success",
+        "passed": 1921,
+        "skipped": 60
+      }
+    }
+  ],
+  "source_branches_deleted": false,
+  "active_native_revision": "d22f28d99f4fd103188979e964e148139d3f3efd",
+  "native_owner_sha256": "6a7f543e31f5df04baedc5606d7d9313179dee3d80adb92440cd5be80a7c112d",
+  "native_terminal_reviewer_sha256": "25d70c20c9742eced4c6e2cdf7263344f3ee4373470b6e1e2d7c2c6bef0b5cdd",
+  "frozen_sources_changed": false,
+  "active_run_changed": false,
+  "model_calls_by_integration": 0,
+  "game_launches_by_integration": 0,
+  "website_deployments": 0,
+  "service_restarts": 0,
+  "remaining_integration": {
+    "next_pull_request": 135,
+    "head": "47fc2b9a924cc402453581b3aa707d838d4a3604",
+    "state": "production_diff_inspected_full_review_and_fresh_tests_pending",
+    "entire_stack_merged": false
+  },
+  "year_two_goal_completed": false
+}

@@ -1,0 +1,718 @@
+{
+  "schema_version": "fortgym.saved-segment-supply-review/v1",
+  "campaign_id": "bindings-20260911-astra-r1",
+  "source_revision": "d22f28d99f4fd103188979e964e148139d3f3efd",
+  "checkpoint_sha256": "9d7caa8e0c733d99ea635f77a11e10be238e6bc585561203817ae3c6479438e0",
+  "source_sha256": {
+    "native-before.json": "a5906f264274cfc072d873661aaa326c56c1577275a90cd011ce0cd0ed4296ac",
+    "native-after.json": "540ccb68c7802ae3e82bd17dfd69f481d4d94efec3102dc091c5c51344103199",
+    "result.json": "354ef1c7e7e72801ec051806a1d14e3f85d51ce459ac3fba3dc321b494f93c8b",
+    "checkpoint/checkpoint.json": "eb3138f32dca34b40dfca196b604f20539ca03c8a66467f7f656e6b4ac36ad7d",
+    "checkpoint/trace.jsonl": "2d7c750fac8cad2c9d77d863d6abf3d4bc0e43c182792bc9af6b35a3fae7765d"
+  },
+  "first_step": 256,
+  "next_step": 288,
+  "new_saved_ticks": 50000,
+  "initial": {
+    "cursor": 256,
+    "year": 30,
+    "year_tick": 246646,
+    "metrics": {
+      "population": 10,
+      "food_stock": 447,
+      "drink_stock": 413,
+      "wood_stock": null,
+      "stone_stock": null,
+      "functional_rooms": null,
+      "completed_workshops": 3,
+      "completed_beds": 7,
+      "completed_farms": 1,
+      "recorded_dead_citizens": 0
+    },
+    "raw_edible_units": 447,
+    "trader_flagged_units": 395,
+    "non_trader_flagged_units": 52
+  },
+  "final": {
+    "cursor": 288,
+    "year": 30,
+    "year_tick": 296646,
+    "metrics": {
+      "population": 12,
+      "food_stock": 50,
+      "drink_stock": 238,
+      "wood_stock": null,
+      "stone_stock": null,
+      "functional_rooms": null,
+      "completed_workshops": 3,
+      "completed_beds": 7,
+      "completed_farms": 1,
+      "recorded_dead_citizens": 0
+    },
+    "raw_edible_units": 50,
+    "trader_flagged_units": 0,
+    "non_trader_flagged_units": 50
+  },
+  "timeline": [
+    {
+      "cursor": 257,
+      "year": 30,
+      "year_tick": 248646,
+      "metrics": {
+        "population": 10,
+        "food_stock": 444,
+        "drink_stock": 412,
+        "wood_stock": null,
+        "stone_stock": null,
+        "functional_rooms": null,
+        "completed_workshops": 3,
+        "completed_beds": 7,
+        "completed_farms": 1,
+        "recorded_dead_citizens": 0
+      },
+      "raw_edible_units": 444,
+      "trader_flagged_units": 395,
+      "non_trader_flagged_units": 49
+    },
+    {
+      "cursor": 258,
+      "year": 30,
+      "year_tick": 250646,
+      "metrics": {
+        "population": 10,
+        "food_stock": 444,
+        "drink_stock": 411,
+        "wood_stock": null,
+        "stone_stock": null,
+        "functional_rooms": null,
+        "completed_workshops": 3,
+        "completed_beds": 7,
+        "completed_farms": 1,
+        "recorded_dead_citizens": 0
+      },
+      "raw_edible_units": 444,
+      "trader_flagged_units": 395,
+      "non_trader_flagged_units": 49
+    },
+    {
+      "cursor": 259,
+      "year": 30,
+      "year_tick": 252646,
+      "metrics": {
+        "population": 10,
+        "food_stock": 443,
+        "drink_stock": 411,
+        "wood_stock": null,
+        "stone_stock": null,
+        "functional_rooms": null,
+        "completed_workshops": 3,
+        "completed_beds": 7,
+        "completed_farms": 1,
+        "recorded_dead_citizens": 0
+      },
+      "raw_edible_units": 443,
+      "trader_flagged_units": 395,
+      "non_trader_flagged_units": 48
+    },
+    {
+      "cursor": 260,
+      "year": 30,
+      "year_tick": 254646,
+      "metrics": {
+        "population": 10,
+        "food_stock": 444,
+        "drink_stock": 411,
+        "wood_stock": null,
+        "stone_stock": null,
+        "functional_rooms": null,
+        "completed_workshops": 3,
+        "completed_beds": 7,
+        "completed_farms": 1,
+        "recorded_dead_citizens": 0
+      },
+      "raw_edible_units": 444,
+      "trader_flagged_units": 395,
+      "non_trader_flagged_units": 49
+    },
+    {
+      "cursor": 261,
+      "year": 30,
+      "year_tick": 256646,
+      "metrics": {
+        "population": 12,
+        "food_stock": 441,
+        "drink_stock": 411,
+        "wood_stock": null,
+        "stone_stock": null,
+        "functional_rooms": null,
+        "completed_workshops": 3,
+        "completed_beds": 7,
+        "completed_farms": 1,
+        "recorded_dead_citizens": 0
+      },
+      "raw_edible_units": 441,
+      "trader_flagged_units": 395,
+      "non_trader_flagged_units": 46
+    },
+    {
+      "cursor": 262,
+      "year": 30,
+      "year_tick": 256646,
+      "metrics": {
+        "population": 12,
+        "food_stock": 441,
+        "drink_stock": 411,
+        "wood_stock": null,
+        "stone_stock": null,
+        "functional_rooms": null,
+        "completed_workshops": 3,
+        "completed_beds": 7,
+        "completed_farms": 1,
+        "recorded_dead_citizens": 0
+      },
+      "raw_edible_units": 441,
+      "trader_flagged_units": 395,
+      "non_trader_flagged_units": 46
+    },
+    {
+      "cursor": 263,
+      "year": 30,
+      "year_tick": 256646,
+      "metrics": {
+        "population": 12,
+        "food_stock": 441,
+        "drink_stock": 411,
+        "wood_stock": null,
+        "stone_stock": null,
+        "functional_rooms": null,
+        "completed_workshops": 3,
+        "completed_beds": 7,
+        "completed_farms": 1,
+        "recorded_dead_citizens": 0
+      },
+      "raw_edible_units": 441,
+      "trader_flagged_units": 395,
+      "non_trader_flagged_units": 46
+    },
+    {
+      "cursor": 264,
+      "year": 30,
+      "year_tick": 256646,
+      "metrics": {
+        "population": 12,
+        "food_stock": 441,
+        "drink_stock": 411,
+        "wood_stock": null,
+        "stone_stock": null,
+        "functional_rooms": null,
+        "completed_workshops": 3,
+        "completed_beds": 7,
+        "completed_farms": 1,
+        "recorded_dead_citizens": 0
+      },
+      "raw_edible_units": 441,
+      "trader_flagged_units": 395,
+      "non_trader_flagged_units": 46
+    },
+    {
+      "cursor": 265,
+      "year": 30,
+      "year_tick": 256646,
+      "metrics": {
+        "population": 12,
+        "food_stock": 441,
+        "drink_stock": 411,
+        "wood_stock": null,
+        "stone_stock": null,
+        "functional_rooms": null,
+        "completed_workshops": 3,
+        "completed_beds": 7,
+        "completed_farms": 1,
+        "recorded_dead_citizens": 0
+      },
+      "raw_edible_units": 441,
+      "trader_flagged_units": 395,
+      "non_trader_flagged_units": 46
+    },
+    {
+      "cursor": 266,
+      "year": 30,
+      "year_tick": 256646,
+      "metrics": {
+        "population": 12,
+        "food_stock": 441,
+        "drink_stock": 411,
+        "wood_stock": null,
+        "stone_stock": null,
+        "functional_rooms": null,
+        "completed_workshops": 3,
+        "completed_beds": 7,
+        "completed_farms": 1,
+        "recorded_dead_citizens": 0
+      },
+      "raw_edible_units": 441,
+      "trader_flagged_units": 395,
+      "non_trader_flagged_units": 46
+    },
+    {
+      "cursor": 267,
+      "year": 30,
+      "year_tick": 258646,
+      "metrics": {
+        "population": 12,
+        "food_stock": 445,
+        "drink_stock": 410,
+        "wood_stock": null,
+        "stone_stock": null,
+        "functional_rooms": null,
+        "completed_workshops": 3,
+        "completed_beds": 7,
+        "completed_farms": 1,
+        "recorded_dead_citizens": 0
+      },
+      "raw_edible_units": 445,
+      "trader_flagged_units": 395,
+      "non_trader_flagged_units": 50
+    },
+    {
+      "cursor": 268,
+      "year": 30,
+      "year_tick": 258646,
+      "metrics": {
+        "population": 12,
+        "food_stock": 445,
+        "drink_stock": 410,
+        "wood_stock": null,
+        "stone_stock": null,
+        "functional_rooms": null,
+        "completed_workshops": 3,
+        "completed_beds": 7,
+        "completed_farms": 1,
+        "recorded_dead_citizens": 0
+      },
+      "raw_edible_units": 445,
+      "trader_flagged_units": 395,
+      "non_trader_flagged_units": 50
+    },
+    {
+      "cursor": 269,
+      "year": 30,
+      "year_tick": 260646,
+      "metrics": {
+        "population": 12,
+        "food_stock": 55,
+        "drink_stock": 260,
+        "wood_stock": null,
+        "stone_stock": null,
+        "functional_rooms": null,
+        "completed_workshops": 3,
+        "completed_beds": 7,
+        "completed_farms": 1,
+        "recorded_dead_citizens": 0
+      },
+      "raw_edible_units": 55,
+      "trader_flagged_units": 5,
+      "non_trader_flagged_units": 50
+    },
+    {
+      "cursor": 270,
+      "year": 30,
+      "year_tick": 262646,
+      "metrics": {
+        "population": 12,
+        "food_stock": 50,
+        "drink_stock": 260,
+        "wood_stock": null,
+        "stone_stock": null,
+        "functional_rooms": null,
+        "completed_workshops": 3,
+        "completed_beds": 7,
+        "completed_farms": 1,
+        "recorded_dead_citizens": 0
+      },
+      "raw_edible_units": 50,
+      "trader_flagged_units": 0,
+      "non_trader_flagged_units": 50
+    },
+    {
+      "cursor": 271,
+      "year": 30,
+      "year_tick": 264646,
+      "metrics": {
+        "population": 12,
+        "food_stock": 50,
+        "drink_stock": 259,
+        "wood_stock": null,
+        "stone_stock": null,
+        "functional_rooms": null,
+        "completed_workshops": 3,
+        "completed_beds": 7,
+        "completed_farms": 1,
+        "recorded_dead_citizens": 0
+      },
+      "raw_edible_units": 50,
+      "trader_flagged_units": 0,
+      "non_trader_flagged_units": 50
+    },
+    {
+      "cursor": 272,
+      "year": 30,
+      "year_tick": 266646,
+      "metrics": {
+        "population": 12,
+        "food_stock": 52,
+        "drink_stock": 255,
+        "wood_stock": null,
+        "stone_stock": null,
+        "functional_rooms": null,
+        "completed_workshops": 3,
+        "completed_beds": 7,
+        "completed_farms": 1,
+        "recorded_dead_citizens": 0
+      },
+      "raw_edible_units": 52,
+      "trader_flagged_units": 0,
+      "non_trader_flagged_units": 52
+    },
+    {
+      "cursor": 273,
+      "year": 30,
+      "year_tick": 268646,
+      "metrics": {
+        "population": 12,
+        "food_stock": 56,
+        "drink_stock": 252,
+        "wood_stock": null,
+        "stone_stock": null,
+        "functional_rooms": null,
+        "completed_workshops": 3,
+        "completed_beds": 7,
+        "completed_farms": 1,
+        "recorded_dead_citizens": 0
+      },
+      "raw_edible_units": 56,
+      "trader_flagged_units": 0,
+      "non_trader_flagged_units": 56
+    },
+    {
+      "cursor": 274,
+      "year": 30,
+      "year_tick": 270646,
+      "metrics": {
+        "population": 12,
+        "food_stock": 55,
+        "drink_stock": 252,
+        "wood_stock": null,
+        "stone_stock": null,
+        "functional_rooms": null,
+        "completed_workshops": 3,
+        "completed_beds": 7,
+        "completed_farms": 1,
+        "recorded_dead_citizens": 0
+      },
+      "raw_edible_units": 55,
+      "trader_flagged_units": 0,
+      "non_trader_flagged_units": 55
+    },
+    {
+      "cursor": 275,
+      "year": 30,
+      "year_tick": 270646,
+      "metrics": {
+        "population": 12,
+        "food_stock": 55,
+        "drink_stock": 252,
+        "wood_stock": null,
+        "stone_stock": null,
+        "functional_rooms": null,
+        "completed_workshops": 3,
+        "completed_beds": 7,
+        "completed_farms": 1,
+        "recorded_dead_citizens": 0
+      },
+      "raw_edible_units": 55,
+      "trader_flagged_units": 0,
+      "non_trader_flagged_units": 55
+    },
+    {
+      "cursor": 276,
+      "year": 30,
+      "year_tick": 272646,
+      "metrics": {
+        "population": 12,
+        "food_stock": 57,
+        "drink_stock": 252,
+        "wood_stock": null,
+        "stone_stock": null,
+        "functional_rooms": null,
+        "completed_workshops": 3,
+        "completed_beds": 7,
+        "completed_farms": 1,
+        "recorded_dead_citizens": 0
+      },
+      "raw_edible_units": 57,
+      "trader_flagged_units": 0,
+      "non_trader_flagged_units": 57
+    },
+    {
+      "cursor": 277,
+      "year": 30,
+      "year_tick": 274646,
+      "metrics": {
+        "population": 12,
+        "food_stock": 54,
+        "drink_stock": 251,
+        "wood_stock": null,
+        "stone_stock": null,
+        "functional_rooms": null,
+        "completed_workshops": 3,
+        "completed_beds": 7,
+        "completed_farms": 1,
+        "recorded_dead_citizens": 0
+      },
+      "raw_edible_units": 54,
+      "trader_flagged_units": 0,
+      "non_trader_flagged_units": 54
+    },
+    {
+      "cursor": 278,
+      "year": 30,
+      "year_tick": 276646,
+      "metrics": {
+        "population": 12,
+        "food_stock": 53,
+        "drink_stock": 250,
+        "wood_stock": null,
+        "stone_stock": null,
+        "functional_rooms": null,
+        "completed_workshops": 3,
+        "completed_beds": 7,
+        "completed_farms": 1,
+        "recorded_dead_citizens": 0
+      },
+      "raw_edible_units": 53,
+      "trader_flagged_units": 0,
+      "non_trader_flagged_units": 53
+    },
+    {
+      "cursor": 279,
+      "year": 30,
+      "year_tick": 278646,
+      "metrics": {
+        "population": 12,
+        "food_stock": 50,
+        "drink_stock": 250,
+        "wood_stock": null,
+        "stone_stock": null,
+        "functional_rooms": null,
+        "completed_workshops": 3,
+        "completed_beds": 7,
+        "completed_farms": 1,
+        "recorded_dead_citizens": 0
+      },
+      "raw_edible_units": 50,
+      "trader_flagged_units": 0,
+      "non_trader_flagged_units": 50
+    },
+    {
+      "cursor": 280,
+      "year": 30,
+      "year_tick": 280646,
+      "metrics": {
+        "population": 12,
+        "food_stock": 50,
+        "drink_stock": 249,
+        "wood_stock": null,
+        "stone_stock": null,
+        "functional_rooms": null,
+        "completed_workshops": 3,
+        "completed_beds": 7,
+        "completed_farms": 1,
+        "recorded_dead_citizens": 0
+      },
+      "raw_edible_units": 50,
+      "trader_flagged_units": 0,
+      "non_trader_flagged_units": 50
+    },
+    {
+      "cursor": 281,
+      "year": 30,
+      "year_tick": 282646,
+      "metrics": {
+        "population": 12,
+        "food_stock": 49,
+        "drink_stock": 248,
+        "wood_stock": null,
+        "stone_stock": null,
+        "functional_rooms": null,
+        "completed_workshops": 3,
+        "completed_beds": 7,
+        "completed_farms": 1,
+        "recorded_dead_citizens": 0
+      },
+      "raw_edible_units": 49,
+      "trader_flagged_units": 0,
+      "non_trader_flagged_units": 49
+    },
+    {
+      "cursor": 282,
+      "year": 30,
+      "year_tick": 284646,
+      "metrics": {
+        "population": 12,
+        "food_stock": 47,
+        "drink_stock": 248,
+        "wood_stock": null,
+        "stone_stock": null,
+        "functional_rooms": null,
+        "completed_workshops": 3,
+        "completed_beds": 7,
+        "completed_farms": 1,
+        "recorded_dead_citizens": 0
+      },
+      "raw_edible_units": 47,
+      "trader_flagged_units": 0,
+      "non_trader_flagged_units": 47
+    },
+    {
+      "cursor": 283,
+      "year": 30,
+      "year_tick": 286646,
+      "metrics": {
+        "population": 12,
+        "food_stock": 49,
+        "drink_stock": 243,
+        "wood_stock": null,
+        "stone_stock": null,
+        "functional_rooms": null,
+        "completed_workshops": 3,
+        "completed_beds": 7,
+        "completed_farms": 1,
+        "recorded_dead_citizens": 0
+      },
+      "raw_edible_units": 49,
+      "trader_flagged_units": 0,
+      "non_trader_flagged_units": 49
+    },
+    {
+      "cursor": 284,
+      "year": 30,
+      "year_tick": 288646,
+      "metrics": {
+        "population": 12,
+        "food_stock": 45,
+        "drink_stock": 240,
+        "wood_stock": null,
+        "stone_stock": null,
+        "functional_rooms": null,
+        "completed_workshops": 3,
+        "completed_beds": 7,
+        "completed_farms": 1,
+        "recorded_dead_citizens": 0
+      },
+      "raw_edible_units": 45,
+      "trader_flagged_units": 0,
+      "non_trader_flagged_units": 45
+    },
+    {
+      "cursor": 285,
+      "year": 30,
+      "year_tick": 290646,
+      "metrics": {
+        "population": 12,
+        "food_stock": 48,
+        "drink_stock": 240,
+        "wood_stock": null,
+        "stone_stock": null,
+        "functional_rooms": null,
+        "completed_workshops": 3,
+        "completed_beds": 7,
+        "completed_farms": 1,
+        "recorded_dead_citizens": 0
+      },
+      "raw_edible_units": 48,
+      "trader_flagged_units": 0,
+      "non_trader_flagged_units": 48
+    },
+    {
+      "cursor": 286,
+      "year": 30,
+      "year_tick": 292646,
+      "metrics": {
+        "population": 12,
+        "food_stock": 45,
+        "drink_stock": 240,
+        "wood_stock": null,
+        "stone_stock": null,
+        "functional_rooms": null,
+        "completed_workshops": 3,
+        "completed_beds": 7,
+        "completed_farms": 1,
+        "recorded_dead_citizens": 0
+      },
+      "raw_edible_units": 45,
+      "trader_flagged_units": 0,
+      "non_trader_flagged_units": 45
+    },
+    {
+      "cursor": 287,
+      "year": 30,
+      "year_tick": 294646,
+      "metrics": {
+        "population": 12,
+        "food_stock": 51,
+        "drink_stock": 239,
+        "wood_stock": null,
+        "stone_stock": null,
+        "functional_rooms": null,
+        "completed_workshops": 3,
+        "completed_beds": 7,
+        "completed_farms": 1,
+        "recorded_dead_citizens": 0
+      },
+      "raw_edible_units": 51,
+      "trader_flagged_units": 0,
+      "non_trader_flagged_units": 51
+    },
+    {
+      "cursor": 288,
+      "year": 30,
+      "year_tick": 296646,
+      "metrics": {
+        "population": 12,
+        "food_stock": 50,
+        "drink_stock": 238,
+        "wood_stock": null,
+        "stone_stock": null,
+        "functional_rooms": null,
+        "completed_workshops": 3,
+        "completed_beds": 7,
+        "completed_farms": 1,
+        "recorded_dead_citizens": 0
+      },
+      "raw_edible_units": 50,
+      "trader_flagged_units": 0,
+      "non_trader_flagged_units": 50
+    }
+  ],
+  "boundaries_with_job_type": {
+    "Drink2": 4,
+    "Eat": 1,
+    "Fish": 23,
+    "PlantSeeds": 8,
+    "PrepareRawFish": 17,
+    "Sleep": 7
+  },
+  "unavailable_activity_boundaries": 0,
+  "unknown_citizen_job_samples": 0,
+  "stock_change_is_not_production_or_consumption": true,
+  "non_trader_flag_is_not_ownership_or_accessibility": true,
+  "drink_trader_breakdown": "not_measured",
+  "sustainability": "not_established",
+  "completed_production": null,
+  "job_samples_are_not_distinct_completed_jobs": true,
+  "full_window_terminal_audit": "pending",
+  "native_calls": 0,
+  "model_calls": 0,
+  "review_script_sha256": "6daffccf6fde8823ef0b2bc8390f01c8217b4613e2008dafefa4e44e90090c6d"
+}
