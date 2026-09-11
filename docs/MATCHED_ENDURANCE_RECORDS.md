@@ -24,19 +24,26 @@ do not immediately create thousands of hidden table rows. Exact metrics,
 per-decision observations, source-load/final-reload proofs, clock outcomes,
 teardown and immutable evidence links remain inspectable.
 
-The current implementation preserves the existing website, prior APIs, model
-prompts, native source, running owner and observer. An isolated worktree named
-`campaign-matched-endurance-cohort` holds the next publication for separate preview
-verification. Astra attempt 1's audited decision-128 result is registered by
-its immutable result commit and original declared window. Its 51,400 saved
-ticks, seven living dwarves, five beds, two farms, three workshops, 29 food and
-121 drinks are recorded outcomes, not proof of sustainability or year two.
-Sol attempt 1's audited decision-128 result is also registered: 20,000 saved
-ticks, seven living dwarves, no completed beds/farms/workshops, food50 and
-drinks60. Digging jobs observed at 56 boundaries do not establish completed
-job counts or excavated tiles. Both attempts retain independent saves and
-their original conditions; equal responses do not mean equal elapsed game
-time or token use. The other four attempts retain their decision-64 baselines.
-Different saved response counts are not equal-budget comparisons. Test-generated future
+The September 11 registry includes all six audited decision-128 results and
+Astra attempt 1's later decision-256 result. The earlier windows remain unchanged
+and inspectable. The latest-save table is now unequal: Astra attempt 1 has 256
+responses and the other five attempts have 128. Across the six latest saves,
+there are 896 responses and 28,581,994 returned tokens; seven endurance windows
+contain 512 new decision boundaries. These totals do not double-count earlier
+cumulative usage.
+
+Astra's decision-256 record is published at immutable result commit
+`4bb97d6c4fe3b5a1f8acc7d416c46817bcff5100`, retaining the declaration at
+`4590fc1828365c44c9a4d3be728b4168ded5c514`. It has 135,400 saved elapsed ticks,
+seven living dwarves, zero recorded deaths, eight beds, two farms, three
+workshops, 34 food and 199 drinks. This matched attempt has not reached a full
+elapsed year. Stocks do not prove self-sufficiency. The separate older exploratory
+Astra campaign's year-two milestone is unchanged by this comparison update.
+
+The starting save was freshly loaded, and the final checkpoint and VM teardown
+were audited. A separate fresh reload of the final decision-256 save is not yet
+verified. No prompt change, budget extension or human gameplay rescue is recorded.
+Dollar charges remain unreported, not zero. The page, historical APIs, prompts,
+native source and private observer files remain unchanged. Test-generated future
 windows are synthetic fixtures and are never added to the public registry.
 No browser visual QA, public deployment or main merge is claimed by these changes.

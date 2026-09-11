@@ -39,6 +39,14 @@ RESULTS: dict[str, tuple[Publication, ...]] = {
             "37d2ed8db264f5941b8879543376110330294403274c2815922b6c3a057bc19f",
             "45bb05c903181b6b2e4f61df3a4c0a8eca05b818",
         ),
+        Publication(
+            "experiments/evidence/keyboard_matched_astra_r1_continuation_128_256_20260911.json",
+            "a61dd8db4bb61b4bf5639e94ec58647423a27e1a73f9e08397af157db51e685e",
+            "4bb97d6c4fe3b5a1f8acc7d416c46817bcff5100",
+            "experiments/keyboard_matched_endurance_20260911/astra_r1-128-256.json",
+            "9fa3b4160f5df536a9f65cb33b00d9dcb4e28660acab8b789729434a6621a61a",
+            "4590fc1828365c44c9a4d3be728b4168ded5c514",
+        ),
     ),
     "matched-20260910-sol-r1": (
         Publication(
