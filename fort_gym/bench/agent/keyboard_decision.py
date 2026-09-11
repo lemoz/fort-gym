@@ -14,9 +14,10 @@ from pathlib import Path
 
 from ..env.screen_observation import TEXT_PROFILE, encode_screen
 from ..env.native_key_catalog import NATIVE_PROFILE, catalog_instructions
+from ..env.display_key_catalog import BINDING_PROFILE
 from .codex_transport import CodexTransportError, request_decision
 from .codex_selection import MODEL, REASONING_EFFORT
-from .keyboard_prompt import BASE_PROMPT, MEMORY_PROMPT, MEMORY_CONTRACT, validate_prompt_profile
+from .keyboard_prompt import BASE_PROMPT, BINDING_PROMPT, MEMORY_PROMPT, MEMORY_CONTRACT, validate_prompt_profile
 from .standard_input import (
     CONTROL_PROFILE,
     OBSERVATION_PROFILE,
@@ -77,6 +78,8 @@ def request_keyboard_decision(
     prompt_profile: str = BASE_PROMPT,
 ) -> dict:
     validate_prompt_profile(prompt_profile)
+    if (control_profile == BINDING_PROFILE) != (prompt_profile == BINDING_PROMPT):
+        raise ValueError("Displayed-key controls require their declared binding instructions")
     if not isinstance(memory, str):
         raise ValueError("Agent memory must be text")
     observation = encode_screen(screen, observation_profile)
@@ -94,7 +97,13 @@ def request_keyboard_decision(
     )
     if control_profile == NATIVE_PROFILE:
         instructions += "\n" + catalog_instructions() + "\n"
-    if prompt_profile == MEMORY_PROMPT:
+    if control_profile == BINDING_PROFILE:
+        instructions = instructions.replace(
+            "Your controls are native game-interface key events.",
+            "Your controls are displayed keyboard keys through the pinned game bindings.",
+        )
+        instructions += "\n" + BINDING_INSTRUCTIONS + "\n"
+    if prompt_profile in (MEMORY_PROMPT, BINDING_PROMPT):
         instructions += "\n" + MEMORY_CONTRACT + "\n"
     prompt = (
         instructions
@@ -150,3 +159,20 @@ def request_keyboard_decision(
     if error is not None:
         raise CodexTransportError("Model response failed the keyboard contract", result)
     return result
+
+
+BINDING_INSTRUCTIONS = """For printable keys, put each displayed character in keys as its own
+string, preserving case: [\"q\"], [\"a\"], [\"b\"], or [\"H\"]. Text entry is a
+sequence of character keys, not one multi-character string. Space is \" \".
+Special keys use SYM:modifier_mask:name. Examples: \"SYM:0:Enter\", \"SYM:0:ESC\",
+\"SYM:0:Up\", \"SYM:0:Down\", \"SYM:0:Left\", \"SYM:0:Right\",
+\"SYM:0:Backspace\", \"SYM:0:Tab\", and \"SYM:2:n\" for Ctrl+n.
+The modifier mask combines Shift=1, Ctrl=2, Alt=4; letter characters already
+carry their case. Use native symbol spelling, not action names such as SELECT
+or HOTKEY_CARPENTER_BED. The executor resolves each key to its complete binding
+set and delivers that set once. Success depends on the current menu; no job or
+strategy is chosen for you. Keys within the list are sequential presses with
+UI time between them, not a held chord. Mouse and held-key repeat are not part
+of this profile. The binding file is pinned; changing in-game key bindings is
+outside this condition. Input acknowledgement is not proof of a game effect:
+inspect the following screen to see what happened."""

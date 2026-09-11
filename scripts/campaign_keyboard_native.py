@@ -127,13 +127,16 @@ def worker(args) -> dict:
                     else {}
                 ),
                 **({"prompt_profile": condition["prompt_profile"]}
-                   if condition["schema_version"] == "fortgym.codex-keyboard-condition/v3" else {}),
+                   if condition["schema_version"] in ("fortgym.codex-keyboard-condition/v3",
+                                                      "fortgym.codex-keyboard-condition/v4") else {}),
+                control_profile=condition["control_profile"],
             ),
             max_dispatches=condition["max_dispatches"],
             max_total_tokens=condition["max_total_tokens"],
             max_advance_ticks=condition["max_advance_ticks"],
             model=condition["model"],
             reasoning_effort=condition["reasoning_effort"],
+            control_profile=condition["control_profile"],
         )
         if fresh:
             from fort_gym.bench.run.keyboard_trial import run_keyboard_trial

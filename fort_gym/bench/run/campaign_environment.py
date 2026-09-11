@@ -19,7 +19,9 @@ from ..env.campaign_keyboard import (
     HELPER_CONTROL_PROFILE,
     execute_campaign_keys,
 )
-from ..env.native_key_catalog import KEYBOARD_PROFILES, NATIVE_PROFILE
+from ..env.native_key_catalog import CAMPAIGN_KEYBOARD_PROFILES, KEYBOARD_PROFILES, NATIVE_PROFILE
+from ..env.display_key_catalog import BINDING_PROFILE
+from ..env.campaign_binding_keys import read_binding_index
 from ..env.dfhack_client import DFHackClient
 from ..env.executor import Executor
 from ..env.screen_observation import raw_screen
@@ -78,6 +80,8 @@ class NativeCampaignEnvironment:
         self.max_advance_ticks = max_advance_ticks
         self.workshop_placement_policy = validate_policy(workshop_placement_policy)
         self.expected_dfroot = expected_dfroot.resolve()
+        if control_profile == BINDING_PROFILE:
+            read_binding_index(self.expected_dfroot)
         self._verify_runtime()
         settings = get_settings()
         self.client = DFHackClient(host=settings.DFHACK_HOST, port=settings.DFHACK_PORT)
@@ -191,6 +195,8 @@ class NativeCampaignEnvironment:
 
     def apply(self, action: dict[str, Any], state: dict[str, Any]) -> dict[str, Any]:
         self._verify_runtime()
+        if getattr(self, "control_profile", None) == BINDING_PROFILE:
+            read_binding_index(self.expected_dfroot)
         if getattr(self, "control_profile", HELPER_CONTROL_PROFILE) in KEYBOARD_PROFILES:
             if action.get("type") != "KEYSTROKE":
                 return {
@@ -238,7 +244,7 @@ class NativeCampaignEnvironment:
         before = self.observe()
         if ticks == 0:
             return before, {"ok": True, "ticks_advanced": 0, "skipped": True}
-        if getattr(self, "control_profile", HELPER_CONTROL_PROFILE) == NATIVE_PROFILE:
+        if getattr(self, "control_profile", HELPER_CONTROL_PROFILE) in CAMPAIGN_KEYBOARD_PROFILES:
             # This v2 clock fix does not change the historical v1 condition.
             # An empty keyboard batch is a read-only, runtime/calendar-bound
             # probe. Never press Escape or alter a model-selected menu here.
@@ -246,7 +252,7 @@ class NativeCampaignEnvironment:
                 execution = execute_campaign_keys(
                     [], expected_dfroot=self.expected_dfroot,
                     year=before.get("year"), year_tick=before.get("year_tick"),
-                    control_profile=self.control_profile,
+                    control_profile=NATIVE_PROFILE,
                 )
                 if execution.get("accepted") is not True:
                     raise RuntimeError("Keyboard clock preflight could not attest native UI")
@@ -277,7 +283,7 @@ class NativeCampaignEnvironment:
         )
         after, receipt = self.observe(), dict(self.client.last_tick_info)
         if (
-            getattr(self, "control_profile", HELPER_CONTROL_PROFILE) == NATIVE_PROFILE
+            getattr(self, "control_profile", HELPER_CONTROL_PROFILE) in CAMPAIGN_KEYBOARD_PROFILES
             and validate_zero_tick_timeout(receipt, requested_ticks=ticks, state=after) is None
         ):
             # Retain the failed operation verbatim and attest its settled native

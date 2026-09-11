@@ -15,11 +15,12 @@ from .standard_input import parse_envelope
 class KeyboardInputRejected(ValueError):
     """A shape-valid response has unsupported keys and must not reach the game."""
 
-    def __init__(self, payload: object, *, max_advance_ticks: int) -> None:
+    def __init__(self, payload: object, *, max_advance_ticks: int,
+                 control_profile: str = NATIVE_PROFILE) -> None:
         self.action = parse_envelope(
-            payload, max_advance_ticks=max_advance_ticks, control_profile=NATIVE_PROFILE
+            payload, max_advance_ticks=max_advance_ticks, control_profile=control_profile
         )
-        allowed = keys_for_profile(NATIVE_PROFILE)
+        allowed = keys_for_profile(control_profile)
         self.invalid_keys = sorted({key for key in self.action["params"]["keys"] if key not in allowed})
         if not self.invalid_keys:
             raise ValueError("A keyboard rejection requires unsupported native key names")
@@ -32,12 +33,13 @@ class KeyboardInputRejected(ValueError):
 def rejected_receipt(
     result: dict, *, screen_sha256: str, max_advance_ticks: int,
     model: str = MODEL, reasoning_effort: str = REASONING_EFFORT,
+    control_profile: str = NATIVE_PROFILE,
 ) -> KeyboardInputRejected:
     """Validate a complete rejection receipt, without invoking any transport."""
     validate_selection(model, reasoning_effort)
     receipt = result.get("transport_receipt")
     if not isinstance(receipt, dict) or (
-        result.get("control_profile") != NATIVE_PROFILE
+        result.get("control_profile") != control_profile
         or result.get("observation_profile") != TEXT_PROFILE
         or result.get("screen_sha256") != screen_sha256
         or result.get("action_grammar_valid") is not False
@@ -61,7 +63,8 @@ def rejected_receipt(
         or receipt.get("interrupted") is not False
     ):
         raise ValueError("Keyboard rejection lacks complete identity and non-execution proof")
-    return KeyboardInputRejected(receipt.get("response"), max_advance_ticks=max_advance_ticks)
+    return KeyboardInputRejected(receipt.get("response"), max_advance_ticks=max_advance_ticks,
+                                 control_profile=control_profile)
 
 
 def validate_rejection_state(previous: dict, current: dict) -> None:

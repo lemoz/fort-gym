@@ -24,7 +24,7 @@ from ..agent.campaign_keyboard import (
 )
 from ..agent.standard_input import parse_response as parse_keyboard_response
 from ..agent.keyboard_rejection import KeyboardInputRejected, validate_rejection_state
-from ..env.native_key_catalog import NATIVE_PROFILE
+from ..env.native_key_catalog import CAMPAIGN_KEYBOARD_PROFILES
 from ..env.screen_observation import TEXT_PROFILE, encode_screen
 from ..agent.campaign_local import LocalOutputLimitPause
 from ..agent.governed_llm import GovernedBudgetCapError
@@ -268,8 +268,8 @@ class CampaignLoop:
         initial = agent.export_campaign_state()
         if keyboard and (
             not callable(getattr(environment, "screen_capture", None))
-            or getattr(environment, "control_profile", None) != NATIVE_PROFILE
-            or initial["configuration"].get("control_profile") != NATIVE_PROFILE
+            or getattr(environment, "control_profile", None) not in CAMPAIGN_KEYBOARD_PROFILES
+            or initial["configuration"].get("control_profile") != getattr(environment, "control_profile", None)
             or initial["configuration"].get("observation_profile") != TEXT_PROFILE
             or initial["configuration"].get("max_advance_ticks") != max_advance_ticks
         ):
@@ -549,7 +549,8 @@ class CampaignLoop:
         allow_view = self.observation_profile == INSPECTION_PROFILE
         action = (
             parse_keyboard_response(
-                raw_action, max_advance_ticks=self.max_advance_ticks, control_profile=NATIVE_PROFILE
+                raw_action, max_advance_ticks=self.max_advance_ticks,
+                control_profile=self.agent.export_campaign_state()["configuration"]["control_profile"]
             )
             if keyboard
             else parse_campaign_action(

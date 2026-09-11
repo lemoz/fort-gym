@@ -16,9 +16,10 @@ import uuid
 from pathlib import Path
 
 from ..env.native_key_catalog import NATIVE_PROFILE
+from ..env.display_key_catalog import BINDING_PROFILE, BINDINGS_SHA256
 from ..env.screen_observation import TEXT_PROFILE, raw_screen
 from .codex_selection import MODEL, REASONING_EFFORT, validate_selection
-from .keyboard_prompt import validate_prompt_profile
+from .keyboard_prompt import BINDING_PROMPT, validate_prompt_profile
 
 MAX_BYTES = 2 * 1024 * 1024
 
@@ -64,18 +65,26 @@ def validate_request(request: dict) -> None:
         "observation_profile",
         "max_advance_ticks",
     }
-    if version in ("fortgym.keyboard-exchange-request/v2", "fortgym.keyboard-exchange-request/v3"):
+    binding = version == "fortgym.keyboard-exchange-request/v4"
+    if version in ("fortgym.keyboard-exchange-request/v2", "fortgym.keyboard-exchange-request/v3",
+                   "fortgym.keyboard-exchange-request/v4"):
         fields |= {"model", "reasoning_effort"}
         validate_selection(request.get("model"), request.get("reasoning_effort"))
-        if version == "fortgym.keyboard-exchange-request/v3":
+        if version in ("fortgym.keyboard-exchange-request/v3", "fortgym.keyboard-exchange-request/v4"):
             fields.add("prompt_profile")
             validate_prompt_profile(request.get("prompt_profile"))
+        if binding:
+            fields.add("bindings_sha256")
+            if request.get("bindings_sha256") != BINDINGS_SHA256 or request.get("prompt_profile") != BINDING_PROMPT:
+                raise ValueError("Displayed-key exchange bindings or prompt differ")
     elif version != "fortgym.keyboard-exchange-request/v1":
         raise ValueError("Keyboard exchange condition is invalid")
+    if not binding and request.get("prompt_profile") == BINDING_PROMPT:
+        raise ValueError("Historical keyboard requests cannot change input semantics")
     if set(request) != fields:
         raise ValueError("Keyboard exchange request fields differ")
     if (
-        request["control_profile"] != NATIVE_PROFILE
+        request["control_profile"] != (BINDING_PROFILE if binding else NATIVE_PROFILE)
         or request["observation_profile"] != TEXT_PROFILE
         or not isinstance(request["memory"], str)
         or (request["feedback"] is not None and not isinstance(request["feedback"], dict))
@@ -105,6 +114,7 @@ def exchange_decision(
     model: str | None = None,
     reasoning_effort: str | None = None,
     prompt_profile: str | None = None,
+    control_profile: str = NATIVE_PROFILE,
 ) -> dict:
     if type(timeout_seconds) not in (int, float) or not 1 <= timeout_seconds <= 600:
         raise ValueError("Invalid exchange deadline")
@@ -115,7 +125,7 @@ def exchange_decision(
         "screen": raw_screen(screen),
         "memory": memory,
         "feedback": feedback,
-        "control_profile": NATIVE_PROFILE,
+        "control_profile": control_profile,
         "observation_profile": TEXT_PROFILE,
         "max_advance_ticks": max_advance_ticks,
     }
@@ -131,6 +141,11 @@ def exchange_decision(
             raise ValueError("A prompt profile requires explicit model selection")
         request.update(schema_version="fortgym.keyboard-exchange-request/v3",
                        prompt_profile=prompt_profile)
+    if control_profile == BINDING_PROFILE:
+        if model is None or reasoning_effort is None or prompt_profile != BINDING_PROMPT:
+            raise ValueError("Displayed-key exchange requires explicit model and binding prompt")
+        request.update(schema_version="fortgym.keyboard-exchange-request/v4",
+                       bindings_sha256=BINDINGS_SHA256)
     validate_request(request)
     directory = root / identifier
     directory.mkdir(mode=0o700, parents=False, exist_ok=False)
