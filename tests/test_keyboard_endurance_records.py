@@ -17,10 +17,21 @@ def test_actual_six_saved_baselines_do_not_invent_endurance_results(monkeypatch)
     monkeypatch.setattr(records, "RESULTS", {})
     baseline = keyboard_continuations()
     result = records.keyboard_endurance_records()
-    assert result["recorded_endurance_windows"] == result["recorded_endurance_boundaries"] == 0
-    assert result["latest_saved_responses"] == 384 and result["latest_saved_tokens"] == 11403734
+    assert (
+        result["recorded_endurance_windows"]
+        == result["recorded_endurance_boundaries"]
+        == 0
+    )
+    assert (
+        result["latest_saved_responses"] == 384
+        and result["latest_saved_tokens"] == 11403734
+    )
     assert result["declared_trials"] == 6
-    assert result["strong_ranking_supported"] is result["live_owner_status_included"] is False
+    assert (
+        result["strong_ranking_supported"]
+        is result["live_owner_status_included"]
+        is False
+    )
     for row, before in zip(result["trials"], baseline["trials"], strict=True):
         assert row["publication_state"] == "decision_64_baseline_only"
         assert row["latest_result"] == before["result"] and row["windows"] == []
@@ -28,7 +39,9 @@ def test_actual_six_saved_baselines_do_not_invent_endurance_results(monkeypatch)
     assert keyboard_continuations() == baseline
 
 
-def test_actual_astra_endurance_result_preserves_audited_outcome_and_unequal_budgets(monkeypatch):
+def test_actual_astra_endurance_result_preserves_audited_outcome_and_unequal_budgets(
+    monkeypatch,
+):
     identity = "matched-20260910-astra-r1"
     monkeypatch.setattr(records, "RESULTS", {identity: records.RESULTS[identity]})
     result = records.keyboard_endurance_records()
@@ -40,13 +53,15 @@ def test_actual_astra_endurance_result_preserves_audited_outcome_and_unequal_bud
     assert astra["campaign_id"] == "matched-20260910-astra-r1"
     assert astra["publication_state"] == "recorded_endurance"
     assert all(
-        row["latest_result"]["next_decision"] == 64 and row["windows"] == [] for row in others
+        row["latest_result"]["next_decision"] == 64 and row["windows"] == []
+        for row in others
     )
     saved = astra["latest_result"]
     assert saved["next_decision"] == 128 and saved["new_responses"] == 64
     assert saved["saved_elapsed_ticks"] == 51400
     assert (
-        saved["audit_sha256"] == "68afc4f0729cc37b28c41d6d7399239bace42aff5a59d9270e4c74c08c169f86"
+        saved["audit_sha256"]
+        == "68afc4f0729cc37b28c41d6d7399239bace42aff5a59d9270e4c74c08c169f86"
     )
     assert (
         saved["checkpoint_sha256"]
@@ -70,10 +85,24 @@ def test_actual_astra_endurance_result_preserves_audited_outcome_and_unequal_bud
         == "cb9cc0c5af8f158848493b1e7b3bb79f4f4736f185fbf7ce96fb157095e1d145"
     )
     assert "/0c2aaeb63f1a209cf7ec299a473a77911ddd10ed/" in astra["latest_result_url"]
-    assert result["strong_ranking_supported"] is result["live_owner_status_included"] is False
+    assert (
+        result["strong_ranking_supported"]
+        is result["live_owner_status_included"]
+        is False
+    )
 
 
-def test_astra_and_sol_128_records_remain_independent_before_cohort_complete():
+def test_astra_and_sol_128_records_remain_independent_before_cohort_complete(
+    monkeypatch,
+):
+    monkeypatch.setattr(
+        records,
+        "RESULTS",
+        {
+            identity: records.RESULTS[identity]
+            for identity in ("matched-20260910-astra-r1", "matched-20260910-sol-r1")
+        },
+    )
     result = records.keyboard_endurance_records()
     assert result["recorded_endurance_windows"] == 2
     assert result["recorded_endurance_boundaries"] == 128
@@ -82,7 +111,8 @@ def test_astra_and_sol_128_records_remain_independent_before_cohort_complete():
     astra, sol, *others = result["trials"]
     assert all(row["latest_result"]["next_decision"] == 128 for row in (astra, sol))
     assert all(
-        row["latest_result"]["next_decision"] == 64 and row["windows"] == [] for row in others
+        row["latest_result"]["next_decision"] == 64 and row["windows"] == []
+        for row in others
     )
     assert (
         astra["windows"][0]["evidence_sha256"]
@@ -96,13 +126,17 @@ def test_astra_and_sol_128_records_remain_independent_before_cohort_complete():
     saved = sol["latest_result"]
     assert saved["saved_elapsed_ticks"] == 20000 and saved["new_saved_ticks"] == 14500
     assert (
-        saved["audit_sha256"] == "60134d9949f6815af0728bb9aee775f98661149295293f20993e5acd3c6cf0d9"
+        saved["audit_sha256"]
+        == "60134d9949f6815af0728bb9aee775f98661149295293f20993e5acd3c6cf0d9"
     )
     assert (
         saved["checkpoint_sha256"]
         == "5c8e263dcdbf12908eb33d7317eaa1f88545d3a6d0c4fbd151fe69224e391b3f"
     )
-    assert saved["prior_checkpoint_sha256"] != astra["latest_result"]["prior_checkpoint_sha256"]
+    assert (
+        saved["prior_checkpoint_sha256"]
+        != astra["latest_result"]["prior_checkpoint_sha256"]
+    )
     metrics = saved["saved_metrics"]
     assert (metrics["population"], metrics["recorded_dead_citizens"]) == (7, 0)
     assert (
@@ -118,7 +152,101 @@ def test_astra_and_sol_128_records_remain_independent_before_cohort_complete():
     assert saved["native_cleanup_verified"] is saved["vm_teardown_verified"] is True
     assert saved["usage"]["reported_charge_usd"] is None
     assert "/91cab28293ed75f968fca12b4f1acbc5908da68e/" in sol["latest_result_url"]
-    assert result["strong_ranking_supported"] is result["live_owner_status_included"] is False
+    assert (
+        result["strong_ranking_supported"]
+        is result["live_owner_status_included"]
+        is False
+    )
+
+
+def test_five_audited_128_records_keep_astra_two_at_its_actual_baseline(monkeypatch):
+    monkeypatch.setattr(
+        records,
+        "RESULTS",
+        {
+            identity: publications
+            for identity, publications in records.RESULTS.items()
+            if identity != "matched-20260910-astra-r2"
+        },
+    )
+    result = records.keyboard_endurance_records()
+    assert result["recorded_endurance_windows"] == 5
+    assert result["recorded_endurance_boundaries"] == 320
+    assert result["latest_saved_responses"] == 704
+    assert result["latest_saved_tokens"] == 20294864
+    trials = {row["campaign_id"]: row for row in result["trials"]}
+    assert trials["matched-20260910-astra-r2"]["latest_result"]["next_decision"] == 64
+    assert trials["matched-20260910-astra-r2"]["windows"] == []
+    expected = {
+        "matched-20260910-terra-r1": (
+            13000,
+            2871632,
+            "b17449c294ab154126192ab926603dfd59589114",
+        ),
+        "matched-20260910-terra-r2": (
+            32500,
+            4109237,
+            "1f3b10db4e35fb9560254cb1bd789838dedd3264",
+        ),
+        "matched-20260910-sol-r2": (
+            13800,
+            3270294,
+            "840402a411d69e868a6b93429d35a8f6502ca52f",
+        ),
+    }
+    for identity, (ticks, tokens, revision) in expected.items():
+        row = trials[identity]
+        saved = row["latest_result"]
+        assert saved["next_decision"] == 128 and saved["saved_elapsed_ticks"] == ticks
+        assert saved["usage"]["campaign_returned_tokens"] == tokens
+        assert saved["usage"]["reported_charge_usd"] is None
+        assert saved["human_gameplay_rescue"] is saved["year_two_reached"] is False
+        assert saved["sustainability_established"] is False
+        assert saved["saved_metrics"]["population"] == 7
+        assert all(
+            saved["saved_metrics"][key] == 0
+            for key in ("completed_beds", "completed_farms", "completed_workshops")
+        )
+        assert "/" + revision + "/" in row["latest_result_url"]
+    assert result["strong_ranking_supported"] is False
+
+
+def test_all_six_audited_results_share_128_decisions_without_inventing_success():
+    result = records.keyboard_endurance_records()
+    assert result["recorded_endurance_windows"] == 6
+    assert result["recorded_endurance_boundaries"] == 384
+    assert result["latest_saved_responses"] == 768
+    assert result["latest_saved_tokens"] == 22707069
+    for row in result["trials"]:
+        saved = row["latest_result"]
+        assert saved["next_decision"] == 128 and len(row["windows"]) == 1
+        assert saved["saved_metrics"]["population"] == 7
+        assert saved["saved_metrics"]["recorded_dead_citizens"] == 0
+        assert saved["source_checkpoint_fresh_load_verified"] is True
+        assert saved["native_cleanup_verified"] is saved["vm_teardown_verified"] is True
+        assert saved["human_gameplay_rescue"] is saved["year_two_reached"] is False
+        assert saved["sustainability_established"] is False
+        assert saved["final_fresh_reload_verified"] is False
+        assert saved["usage"]["reported_charge_usd"] is None
+    astra = result["trials"][-1]
+    assert astra["campaign_id"] == "matched-20260910-astra-r2"
+    saved = astra["latest_result"]
+    assert saved["saved_elapsed_ticks"] == 39900
+    assert saved["usage"]["campaign_returned_tokens"] == 4389202
+    metrics = saved["saved_metrics"]
+    assert tuple(
+        metrics[key]
+        for key in (
+            "completed_beds",
+            "completed_farms",
+            "completed_workshops",
+            "food_stock",
+            "drink_stock",
+        )
+    ) == (6, 2, 3, 40, 128)
+    assert metrics["functional_rooms"] is None
+    assert "/b40b7417b7def266eb9e8c8e4a56c5c631b78490/" in astra["latest_result_url"]
+    assert result["strong_ranking_supported"] is False
 
 
 @pytest.fixture
@@ -141,7 +269,9 @@ def published(tmp_path, monkeypatch):
     parent_sha = source["public_result_sha256"]
     chain = template["source_result_chain_sha256"].copy()
     plan = original(records.PLAN_PATH, records.PLAN_SHA256)
-    declared = next(row for row in plan["execution_order"] if row["campaign_id"] == identity)
+    declared = next(
+        row for row in plan["execution_order"] if row["campaign_id"] == identity
+    )
     condition = original(
         "experiments/keyboard_matched_pilot_20260910/astra-condition.json",
         parent["execution"]["condition_file_sha256"],
@@ -150,14 +280,23 @@ def published(tmp_path, monkeypatch):
     def append(responses=None, change=None):
         nonlocal parent, parent_sha, template, chain
         window = records.next_window(
-            parent, parent_sha, chain, template, plan=plan, row=declared, condition=condition
+            parent,
+            parent_sha,
+            chain,
+            template,
+            plan=plan,
+            row=declared,
+            condition=condition,
         )
         child = synthetic_child(parent, window, responses)
         child["execution"]["declaration_revision"] = "b" * 40
         if change:
             change(child)
         index = len(records.RESULTS.get(identity, ()))
-        result_path, window_path = f"fixture-result-{index}.json", f"fixture-window-{index}.json"
+        result_path, window_path = (
+            f"fixture-result-{index}.json",
+            f"fixture-window-{index}.json",
+        )
         (tmp_path / result_path).write_bytes(encoded(child))
         (tmp_path / window_path).write_bytes(encoded(window))
         publication = records.Publication(
@@ -172,7 +311,9 @@ def published(tmp_path, monkeypatch):
 
 
 @pytest.mark.parametrize("target", [128, 256, 512, 1024, 1280])
-def test_longer_chains_keep_latest_totals_without_counting_parents_twice(published, target):
+def test_longer_chains_keep_latest_totals_without_counting_parents_twice(
+    published, target
+):
     cursor = 64
     while cursor < target:
         child, _ = published()
@@ -220,7 +361,9 @@ def test_invalid_own_save_lineage_never_becomes_a_result(published, field, value
         records.keyboard_endurance_records()
 
 
-def test_reordered_or_repeated_windows_and_wrong_source_revision_are_rejected(published):
+def test_reordered_or_repeated_windows_and_wrong_source_revision_are_rejected(
+    published,
+):
     published()
     published()
     identity = "matched-20260910-astra-r1"
@@ -244,18 +387,23 @@ def test_reordered_or_repeated_windows_and_wrong_source_revision_are_rejected(pu
         records.keyboard_endurance_records()
 
 
-def test_route_matches_records_and_does_not_change_the_live_or_historical_routes(published):
+def test_route_matches_records_and_does_not_change_the_live_or_historical_routes(
+    published,
+):
     from fort_gym.bench.api import server
 
     client = TestClient(server.app)
     before = client.get("/public/keyboard-cohort-continuations").json()
     published()
     response = client.get("/public/keyboard-cohort-endurance-records")
-    assert response.status_code == 200 and "no-store" in response.headers["cache-control"]
+    assert (
+        response.status_code == 200 and "no-store" in response.headers["cache-control"]
+    )
     assert response.json() == records.keyboard_endurance_records()
     assert client.get("/public/keyboard-cohort-continuations").json() == before
     assert (
-        client.get("/public/keyboard-cohort-endurance-active").json()["status"] == "not_connected"
+        client.get("/public/keyboard-cohort-endurance-active").json()["status"]
+        == "not_connected"
     )
     assert client.get("/protocols/unknown").status_code == 404
     identity = "matched-20260910-astra-r1"
@@ -294,7 +442,9 @@ def test_record_reader_rejects_escape_symlink_and_oversize(tmp_path, monkeypatch
 
 
 @pytest.mark.parametrize("target", [128, 1280])
-def test_website_renders_latest_saves_and_loads_window_details_only_when_opened(published, target):
+def test_website_renders_latest_saves_and_loads_window_details_only_when_opened(
+    published, target
+):
     from fort_gym.bench.api.keyboard_cohort import PROJECT_ROOT
 
     node = shutil.which("node")

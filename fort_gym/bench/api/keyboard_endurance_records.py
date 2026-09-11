@@ -50,6 +50,46 @@ RESULTS: dict[str, tuple[Publication, ...]] = {
             "45bb05c903181b6b2e4f61df3a4c0a8eca05b818",
         ),
     ),
+    "matched-20260910-terra-r1": (
+        Publication(
+            "experiments/evidence/keyboard_matched_terra_r1_continuation_64_128_20260911.json",
+            "3e833f88a813192f3c3190847e551439c34c7741d5bb87443d156cd244fc0b4f",
+            "b17449c294ab154126192ab926603dfd59589114",
+            "experiments/keyboard_matched_endurance_20260910/terra_r1-64-128.json",
+            "a35611af7ade99d0880d403c4e3ed1fbe648f5a349c86ed19754ca7d85f7badb",
+            "45bb05c903181b6b2e4f61df3a4c0a8eca05b818",
+        ),
+    ),
+    "matched-20260910-terra-r2": (
+        Publication(
+            "experiments/evidence/keyboard_matched_terra_r2_continuation_64_128_20260911.json",
+            "858276b6da253f86d08f6ee8fba4ce6cd7eb28cce2005f3c6fbb67aa7b2bf3a6",
+            "1f3b10db4e35fb9560254cb1bd789838dedd3264",
+            "experiments/keyboard_matched_endurance_20260910/terra_r2-64-128.json",
+            "785939093d94880f3c142f05c0aff4b35df291ae412f53b2f6a9e4920641310e",
+            "45bb05c903181b6b2e4f61df3a4c0a8eca05b818",
+        ),
+    ),
+    "matched-20260910-sol-r2": (
+        Publication(
+            "experiments/evidence/keyboard_matched_sol_r2_continuation_64_128_20260911.json",
+            "0bff8ed59f1fd011db53ffca63c8e39f323f747cb512231b4560f8f176cbd3a8",
+            "840402a411d69e868a6b93429d35a8f6502ca52f",
+            "experiments/keyboard_matched_endurance_20260910/sol_r2-64-128.json",
+            "38a5b248bf68a2a12130edda7d280b46ba6b998fd1f61c49285ce51e4587f151",
+            "45bb05c903181b6b2e4f61df3a4c0a8eca05b818",
+        ),
+    ),
+    "matched-20260910-astra-r2": (
+        Publication(
+            "experiments/evidence/keyboard_matched_astra_r2_continuation_64_128_20260911.json",
+            "f0b40ab005e0dfdd38a4285fd14c4e098cd5da8ea92e507943ab99c3aea2ad1d",
+            "b40b7417b7def266eb9e8c8e4a56c5c631b78490",
+            "experiments/keyboard_matched_endurance_20260910/astra_r2-64-128.json",
+            "6eb671d1b58bd9f7d3e473020baea37164add301a11311bee3bfb737aa0cb729",
+            "45bb05c903181b6b2e4f61df3a4c0a8eca05b818",
+        ),
+    ),
 }
 
 
@@ -58,7 +98,11 @@ def read_result(path: str, expected: str) -> dict:
     if relative.is_absolute() or ".." in relative.parts:
         raise ValueError("A public record must remain inside the project")
     target = PROJECT_ROOT / relative
-    if target.is_symlink() or not target.is_file() or target.stat().st_size > MAX_RECORD_BYTES:
+    if (
+        target.is_symlink()
+        or not target.is_file()
+        or target.stat().st_size > MAX_RECORD_BYTES
+    ):
         raise ValueError("Invalid public endurance record")
     data = target.read_bytes()
     if len(data) > MAX_RECORD_BYTES or hashlib.sha256(data).hexdigest() != expected:
@@ -83,13 +127,17 @@ def keyboard_endurance_records() -> dict:
         chain = template["source_result_chain_sha256"].copy()
         condition = validate_condition(
             _read(
-                "experiments/keyboard_matched_pilot_20260910/" + declared[identity]["condition"],
+                "experiments/keyboard_matched_pilot_20260910/"
+                + declared[identity]["condition"],
                 parent["execution"]["condition_file_sha256"],
             )
         )
         windows = []
         for publication in RESULTS.get(identity, ()):
-            for revision in (publication.result_revision, publication.declaration_revision):
+            for revision in (
+                publication.result_revision,
+                publication.declaration_revision,
+            ):
                 if re.fullmatch(r"[a-f0-9]{40}", revision) is None:
                     raise ValueError("Publication requires immutable source revisions")
             if publication.result_sha256 in chain:
@@ -105,16 +153,23 @@ def keyboard_endurance_records() -> dict:
                 condition=condition,
             )
             if publication.window_sha256 != digest(expected) or window != expected:
-                raise ValueError("Registered window differs from the original declared conditions")
+                raise ValueError(
+                    "Registered window differs from the original declared conditions"
+                )
             result = read_result(publication.result_path, publication.result_sha256)
             validate_continuation(result, parent, window, condition)
-            if result["execution"]["declaration_revision"] != publication.declaration_revision:
+            if (
+                result["execution"]["declaration_revision"]
+                != publication.declaration_revision
+            ):
                 raise ValueError("Result does not bind its declared source revision")
             windows.append(
                 {
                     "result": result,
                     "evidence_sha256": publication.result_sha256,
-                    "evidence_url": _link(publication.result_path, publication.result_revision),
+                    "evidence_url": _link(
+                        publication.result_path, publication.result_revision
+                    ),
                     "declaration_url": _link(
                         publication.window_path, publication.declaration_revision
                     ),
@@ -148,13 +203,19 @@ def keyboard_endurance_records() -> dict:
         "declared_trials": len(trials),
         "recorded_endurance_windows": sum(len(row["windows"]) for row in trials),
         "recorded_endurance_boundaries": sum(
-            entry["result"]["new_responses"] for row in trials for entry in row["windows"]
+            entry["result"]["new_responses"]
+            for row in trials
+            for entry in row["windows"]
         ),
-        "latest_saved_responses": sum(row["latest_result"]["next_decision"] for row in trials),
+        "latest_saved_responses": sum(
+            row["latest_result"]["next_decision"] for row in trials
+        ),
         "latest_saved_tokens": sum(
             row["latest_result"]["usage"]["campaign_returned_tokens"] for row in trials
         ),
-        "comparison_decision_boundaries": plan["stages"]["comparison_decision_boundaries"],
+        "comparison_decision_boundaries": plan["stages"][
+            "comparison_decision_boundaries"
+        ],
         "year_two_elapsed_ticks": 403200,
         "strong_ranking_supported": False,
         "live_owner_status_included": False,
