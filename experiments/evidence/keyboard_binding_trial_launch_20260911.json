@@ -1,0 +1,91 @@
+{
+  "schema_version": "fortgym.public-keyboard-binding-trial-launch/v1",
+  "recorded_at_utc": "2026-09-11 08:04:55 UTC",
+  "campaign_id": "bindings-20260911-astra-r1",
+  "status": "running_startup_verified",
+  "source_revision": "8b9fffa1de4f93506cbcbdf82fd154aeb17b5697",
+  "image_id": "sha256:a33c46c55f8b389251acf49bd127e18b8a6713a13bd25619b84b49ec6e493374",
+  "implementation_pull_request": "https://github.com/lemoz/fort-gym/pull/159",
+  "condition_path": "experiments/keyboard_bindings_20260911/astra-condition.json",
+  "trial_path": "experiments/keyboard_bindings_20260911/astra-trial.json",
+  "config_sha256": {
+    "astra-condition.json": "4b331696dbae5b43c44cadead3dcba425565429c3fb98e9fc23950320d288abf",
+    "astra-trial.json": "3b1f2fe31e23c0d0be5f501ae6ea8d83bb809a7cb8c749f7a607636843ca3a92"
+  },
+  "model": "gpt-6-astra",
+  "reasoning_effort": "medium",
+  "transport": "codex-exec-chatgpt/v1",
+  "auth_mode": "chatgpt",
+  "control_profile": "native_keyboard_bindings/v1",
+  "prompt_profile": "native_keyboard_binding_instructions/v1",
+  "source_snapshot_receipt_sha256": "eaf5fa5a40014719e6c313f33497740e536a8faa1c90a84c4e09dcc380ac0595",
+  "starting_boundary": {
+    "year": 30,
+    "year_tick": 16801,
+    "paused": true,
+    "screen_size": [
+      120,
+      40
+    ]
+  },
+  "fresh_empty_memory_usage_history": true,
+  "independent_campaign": true,
+  "shares_original_matched_pilot_snapshot": true,
+  "borrowed_old_campaign_memory": false,
+  "operator_edited_diagnostic_copy_used": false,
+  "same_condition_as_historical_matched_cohort": false,
+  "maximum_responses": 32,
+  "startup_review": {
+    "passed": true,
+    "receipt_sha256": "4cebb1d915455eccb1c088351e5d14f26721e4e4a26a7a7c5718a9ea8f46a430",
+    "admission_captured_at_unix": 1789113647.6940029,
+    "decision_index": 0,
+    "events_sha256": "23e09791eb1f08d4dafbaf6c1c1260b01437cde646cc1bde44c0916a84a69537",
+    "request_sha256": "e5f0a5197414caa879efea9ef3a5fe5b4d6b463e613a21d38639e2a2553f536f",
+    "total_tokens": 26434,
+    "first_response_tokens": 26434,
+    "first_request_sha256": "d13a0f1d499d46045f303de529325a016164eeb659e9fd29f82f8feb5cacdd5f",
+    "first_response_sha256": "1d6fd39b89bf3364dd834c7e88d04e76c57fda6458afd59208d26f008d65ba23",
+    "first_action_keys": [
+      "z"
+    ],
+    "next_request_confirmed_keys": 1,
+    "first_action_ticks_advanced": 0
+  },
+  "focused_tests": {
+    "passed": 149
+  },
+  "owner_sha256": "99c8a5b3677e89ab65612c84bcb17bd79c6f7c545b35a0b64d2364c06aebcaf6",
+  "usage_and_cost": {
+    "fresh_account_admission_before_each_call": true,
+    "initial_observed_used_percent": 70,
+    "maximum_included_usage_percent": 98,
+    "atomic_account_reservation": false,
+    "actual_model_charge_usd": null,
+    "hardware_energy_and_app_cost_usd": null,
+    "api_fallback": false,
+    "local_model_fallback": false,
+    "automatic_credit_purchase": false,
+    "automatic_reset_consumption": false
+  },
+  "lifecycle": {
+    "existing_local_vm_profiles": 1,
+    "max_simultaneous_vms": 1,
+    "cpus": 2,
+    "memory_gib": 3,
+    "disk_gib": 32,
+    "game_network": "none",
+    "cloud_vms_created": 0,
+    "mandatory_teardown_in_owner": true,
+    "teardown_not_yet_due_running_trial": true
+  },
+  "proof_limits": {
+    "terminal_result": false,
+    "new_checkpoint_verified": false,
+    "year_two_reached": false,
+    "model_comparison_claim": false,
+    "public_website_deployed": false,
+    "main_merged": false
+  },
+  "next": "Finish the bounded trial, independently audit saved gameplay and all provider receipts, verify native/VM teardown, and publish the distinct condition on the campaign website."
+}

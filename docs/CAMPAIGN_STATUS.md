@@ -115,6 +115,20 @@ its corrected version changed no harness code or game acceptance criteria.
 No model calls or scored checkpoints occurred. The independent Astra Medium
 32-response trial is now the next gameplay step, not yet a completed result.
 
+That independent trial has now [launched with verified startup](../experiments/evidence/keyboard_binding_trial_launch_20260911.json)
+as `bindings-20260911-astra-r1`, using the same `8b9fffa1d` implementation and
+verified native image. The original matched-pilot snapshot loaded at year 30,
+tick 16801 with a 120x40 screen, empty model memory and zero inherited usage.
+The first actual Astra Medium subscription response used `z`; its next request
+acknowledged one completed key press and zero elapsed ticks. Independent review
+decoded the actual provider events and verified 26,434 returned tokens. The
+account admitted the run at 70% included usage, with fresh checks before each call.
+Dollar charges remain unreported, not zero. No API/local-model fallback or reset
+purchase/redemption is enabled. This is a separate 32-response condition, not
+an addition to the historical matched-cohort totals. The bounded local owner is
+running with mandatory teardown; no terminal result or new saved outcome is
+claimed by this startup snapshot.
+
 ### Preserved decision-128 comparison and earlier launch observations
 
 The decision-128 round is complete: two attempts each for Astra, Sol and Terra,
