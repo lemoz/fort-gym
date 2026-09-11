@@ -461,6 +461,17 @@ async def public_keyboard_binding_results() -> JSONResponse:
     return JSONResponse(data, headers=HTML_CACHE_HEADERS)
 
 
+@app.get("/public/keyboard-binding-campaign")
+async def public_keyboard_binding_campaign() -> JSONResponse:
+    from .keyboard_binding_campaign import keyboard_binding_campaign
+
+    try:
+        data = keyboard_binding_campaign()
+    except (OSError, ValueError, KeyError, TypeError):
+        raise HTTPException(status_code=503, detail="Displayed-key campaign evidence is unavailable") from None
+    return JSONResponse(data, headers=HTML_CACHE_HEADERS)
+
+
 @app.get("/protocols/{slug}", response_class=HTMLResponse)
 async def serve_protocol_detail(slug: str):
     """Serve protocol-specific metadata while the client resolves the detail body."""

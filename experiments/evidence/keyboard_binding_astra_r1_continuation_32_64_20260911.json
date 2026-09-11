@@ -1,0 +1,1420 @@
+{
+  "schema_version": "fortgym.public-keyboard-binding-continuation-result/v1",
+  "campaign_id": "bindings-20260911-astra-r1",
+  "status": "completed",
+  "stop_reason": "segment_limit",
+  "source_revision": "8b9fffa1de4f93506cbcbdf82fd154aeb17b5697",
+  "image_id": "sha256:a33c46c55f8b389251acf49bd127e18b8a6713a13bd25619b84b49ec6e493374",
+  "implementation_pull_request": "https://github.com/lemoz/fort-gym/pull/159",
+  "declaration_revision": "8a92cbeb5b19cf0f479f2494d95356c50faa40ee",
+  "condition": {
+    "account_admission": "fresh_read_before_each_model_invocation",
+    "actual_charge_usd": null,
+    "advance_policy": "model_requested/v1",
+    "api_fallback": false,
+    "automatic_credit_purchase": false,
+    "automatic_reset_consumption": false,
+    "bindings_sha256": "8176d2bd7a8d96f6bb12feb654519a8361a6f262363b84ec48963be832cb7efd",
+    "condition_id": "binding-pilot-astra-medium-native-keyboard-120x40",
+    "control_profile": "native_keyboard_bindings/v1",
+    "exchange_timeout_seconds": 240,
+    "max_advance_ticks": 2000,
+    "max_dispatches": 1280,
+    "max_segments": 1,
+    "max_total_tokens": 40000000,
+    "maximum_included_usage_percent": 98,
+    "model": "gpt-6-astra",
+    "model_timeout_seconds": 180,
+    "observation_profile": "native_screen_text/v1",
+    "prompt_profile": "native_keyboard_binding_instructions/v1",
+    "reasoning_effort": "medium",
+    "schema_version": "fortgym.codex-keyboard-condition/v4",
+    "screen_size": [
+      120,
+      40
+    ],
+    "steps_per_segment": 32,
+    "transport": "codex-exec-chatgpt/v1"
+  },
+  "window": {
+    "condition_id": "binding-pilot-astra-medium-native-keyboard-120x40",
+    "continuation_checkpoint_sha256": "ce25bca850526f6863c2c6fb3d4ac3a048b3791898df764021d815d273db3541",
+    "continuation_from_next_step": 32,
+    "hypothesis": "Under unchanged displayed-key controls, Astra can resume its own saved plans and continue fortress development without manual gameplay intervention. Record construction, stock changes, population, accepted inputs, clock outcomes and model receipts without inferring sustainability from intent or stock changes.",
+    "max_segments": 1,
+    "original_condition": "astra-condition.json",
+    "private_measurement_profile": "fortgym.campaign-food-measurement/v1",
+    "private_measurement_timeout_seconds": 15,
+    "reset_memory": false,
+    "reset_usage": false,
+    "resource_observation_profile": "fortgym.native-resource-observations/v1",
+    "runtime_rpc_transport": "native-rpc",
+    "schema_version": "fortgym.codex-keyboard-window/v1",
+    "snapshot_profile": "native_menu_preserving_save/v4",
+    "steps_per_segment": 32,
+    "strategy_intervention": false
+  },
+  "source_result_path": "experiments/evidence/keyboard_binding_astra_r1_20260911.json",
+  "source_result_sha256": "b016efeb037b321455cec9c0df6ea5e9e21553ca1e561730ed1bc3ed03b975ae",
+  "source_checkpoint_sha256": "ce25bca850526f6863c2c6fb3d4ac3a048b3791898df764021d815d273db3541",
+  "checkpoint_sha256": "53c0cf824da7db2bcf07b9fc4ea7859e050124af6ce1399abf0821882f9d66c9",
+  "first_step": 32,
+  "responses": 64,
+  "new_responses": 32,
+  "new_confirmed_key_presses": 182,
+  "saved_elapsed_ticks": 29500,
+  "new_saved_elapsed_ticks": 14000,
+  "ticks_per_year": 403200,
+  "final_boundary": {
+    "year": 30,
+    "year_tick": 46301,
+    "paused": true
+  },
+  "initial_metrics": {
+    "completed_beds": 0,
+    "completed_farms": 1,
+    "completed_workshops": 2,
+    "drink_stock": 60,
+    "food_stock": 50,
+    "functional_rooms": 0,
+    "population": 7,
+    "recorded_dead_citizens": 0,
+    "stone_stock": null,
+    "wood_stock": null
+  },
+  "saved_metrics": {
+    "completed_beds": 4,
+    "completed_farms": 1,
+    "completed_workshops": 2,
+    "drink_stock": 103,
+    "food_stock": 40,
+    "functional_rooms": 0,
+    "population": 7,
+    "recorded_dead_citizens": 0,
+    "stone_stock": null,
+    "wood_stock": null
+  },
+  "new_tokens": 797336,
+  "usage": {
+    "accounted_responses": 64,
+    "cost_basis": "codex_subscription_charge_unreported/v1",
+    "dispatched_requests": 64,
+    "returned_responses": 64,
+    "total_cost_usd": null,
+    "total_tokens": 1583026
+  },
+  "new_clock_outcomes": {
+    "no_error": 32
+  },
+  "activity": {
+    "available_boundaries": 32,
+    "boundaries_with_job_type": {
+      "ConstructTable": 8,
+      "ConstructThrone": 5,
+      "CustomReaction": 6,
+      "Drink2": 8,
+      "Fish": 29,
+      "MakeBarrel": 19,
+      "PlantSeeds": 12,
+      "StoreItemInBag": 8,
+      "StoreItemInStockpile": 8,
+      "no_current_job": 32
+    },
+    "completed_consumption": null,
+    "completed_production": null,
+    "first_step": 32,
+    "limits": [
+      "A current job can be traveling, waiting, interrupted or cancelled; it is not completion evidence.",
+      "Unknown citizen observations remain unknown, not zero activity.",
+      "Unseen activity between recorded boundaries is not measured."
+    ],
+    "observed_boundaries": 32,
+    "schema_version": "fortgym.private-citizen-activity-review/v1",
+    "scope": "Native citizen current-job samples; repeated samples are not distinct jobs or durations.",
+    "stop_step_exclusive": 64
+  },
+  "food_measurement": {
+    "complete_samples": 32,
+    "samples": 32,
+    "final_inventory": {
+      "complete": true,
+      "drink_records": 14,
+      "duplicate_records": 0,
+      "excluded_records": 0,
+      "food_records": 12,
+      "forbidden_units": 0,
+      "hidden_units": 0,
+      "in_job_units": 5,
+      "item_read_failures": 0,
+      "list_read_failures": 0,
+      "nonfood_records": 938,
+      "predicate_argument": 0,
+      "rotten_units": 0,
+      "scanned_records": 964,
+      "scanned_units": 40,
+      "schema_version": "fortgym.native-food-inventory/v1",
+      "scope": "native predicate at argument 0, not accessibility, ownership or production/consumption",
+      "source": "world.items.other.IN_PLAY isEdibleRaw(0) getStackSize excluding DRINK",
+      "trader_units": 0,
+      "units": 40
+    },
+    "model_observation": "native_screen_text/v1; private evaluator inventory is not supplied to the model"
+  },
+  "audit": {
+    "passed": true,
+    "sha256": "31e8f2524ad304402b72eade1e213d872485c6d4f9695319ac59cec692294c09",
+    "source_sha256": "15f0394e816974862a2c928cf23a8dd624e1b3638ba979b7b3ea0a77ea6089c6",
+    "provider_receipts_verified": 32,
+    "provider_receipts": [
+      {
+        "admission_captured_at_unix": 1789118382.3853,
+        "decision_index": 0,
+        "events_sha256": "79239f4a485a61440f0e23769a39e623162cdb186d5b618eae64e0ba500e6fc4",
+        "request_sha256": "57d8c6de5c9062f4491a638007a0cebdfb7b842cc9361c6435c3b0642c939cd0",
+        "total_tokens": 25764
+      },
+      {
+        "admission_captured_at_unix": 1789118410.802915,
+        "decision_index": 1,
+        "events_sha256": "d2ed152d59a68349b0fc7c2672a421071b8f5525999faedbc0f2c13261272a7b",
+        "request_sha256": "2c0367c92dc566cb2dbd2e217630455632ab3b1165743504af8d6cde80160428",
+        "total_tokens": 25156
+      },
+      {
+        "admission_captured_at_unix": 1789118443.923124,
+        "decision_index": 2,
+        "events_sha256": "f0d5562ada082fbf852858f59ec8359509e2b2fd1bc6c374b4a1c5dce77f5ec2",
+        "request_sha256": "985ac260b6f5b32d0d4fd4547d5061de516eb2cd663d51a0d8ad0298f9b46792",
+        "total_tokens": 25417
+      },
+      {
+        "admission_captured_at_unix": 1789118470.944869,
+        "decision_index": 3,
+        "events_sha256": "783fd57009924bb55b89faf75855c8f71c60f617dd49d7d72a32b34fa559ae8d",
+        "request_sha256": "db392893458910bebfd9ede890497652ff34efaa795b0251c3936cdee94e1b83",
+        "total_tokens": 25845
+      },
+      {
+        "admission_captured_at_unix": 1789118495.844109,
+        "decision_index": 4,
+        "events_sha256": "dee862d446a62d9b517ae0533139a7c613740fdba3a6335d511705244133c62c",
+        "request_sha256": "2a0eed194127f1fe570dd1bce8f1eed66ba01c5e8684ef2b9066e98bd9e26179",
+        "total_tokens": 25004
+      },
+      {
+        "admission_captured_at_unix": 1789118520.626818,
+        "decision_index": 5,
+        "events_sha256": "64f0e7b18b635e6dfb7357c9209856c4e909c19a0aedcadb6056d5c716e9788b",
+        "request_sha256": "2e5bbdb1145d0a928ede8c2431fe2262b55bbb7311ff6bcb14ac9a9e659e2141",
+        "total_tokens": 25523
+      },
+      {
+        "admission_captured_at_unix": 1789118572.021375,
+        "decision_index": 6,
+        "events_sha256": "8792103fe96594284bb23fa7a20d701078751bbed0ea36e44d14001f077ff0c3",
+        "request_sha256": "912a969513d8b53ef5162fffc464b950b6fa7208e0ac091683dcdbff950fa15d",
+        "total_tokens": 25121
+      },
+      {
+        "admission_captured_at_unix": 1789118600.448064,
+        "decision_index": 7,
+        "events_sha256": "7645fb46ced208e7f6c289f2d888cea4600713b65df3a04e2eb71a7e37e31839",
+        "request_sha256": "dedc5bdaffe1ef57d78ff12d58378a038b75f4a2fe06a123276e8fce6e708634",
+        "total_tokens": 25340
+      },
+      {
+        "admission_captured_at_unix": 1789118629.505955,
+        "decision_index": 8,
+        "events_sha256": "a387b673522904e1dc243954cf187139ce1a2a94ae40d8215600800768807fc4",
+        "request_sha256": "edda21059707f030bac44f93af966899a266a6ce6c3785674795ce9673da481c",
+        "total_tokens": 24989
+      },
+      {
+        "admission_captured_at_unix": 1789118676.552044,
+        "decision_index": 9,
+        "events_sha256": "cde2d064e22dc8fcc6bc19d9864c96eca526ea9b7f48c5c98b69e7c92f207afd",
+        "request_sha256": "bdb7998ea466dfd0070913ba8a7ba891a4b793964d6b523c3ad14a061fb752a7",
+        "total_tokens": 25511
+      },
+      {
+        "admission_captured_at_unix": 1789118701.827793,
+        "decision_index": 10,
+        "events_sha256": "48eefdb6ef83cf0440001571ce5cef56c1d403f5ffc857a75423b2b5453a6bca",
+        "request_sha256": "f7474fcbe7a48fab7e693439a9427116effd368080ae99feaf6bd52583233279",
+        "total_tokens": 24874
+      },
+      {
+        "admission_captured_at_unix": 1789118724.7457228,
+        "decision_index": 11,
+        "events_sha256": "1e6be880ccf9e2b0e6472fd8c8443c5da5903ecb57414156e36b770fd00d97b6",
+        "request_sha256": "a2b048417e5e50f3b10f893698426a33361d05c6d21713551634f1bfd5322b6d",
+        "total_tokens": 24849
+      },
+      {
+        "admission_captured_at_unix": 1789118771.814443,
+        "decision_index": 12,
+        "events_sha256": "fbaf81de93cabe28707523ea57e3064ea4393cfc5979a94be5cbb58631152a87",
+        "request_sha256": "02b79d30c3754503ee855cd291d698d92f7110da7006ec450f818c0bb07fb405",
+        "total_tokens": 25455
+      },
+      {
+        "admission_captured_at_unix": 1789118795.480202,
+        "decision_index": 13,
+        "events_sha256": "b7f2f24449be3ee7662051311b3bc69ed400fac8837f6d0597ee9a1e69aead62",
+        "request_sha256": "a6be1c5fad2e741e3a8b35d41278394924aa6fe3f833eaba32842eb05ecd6afd",
+        "total_tokens": 15932
+      },
+      {
+        "admission_captured_at_unix": 1789118818.155377,
+        "decision_index": 14,
+        "events_sha256": "01530e2a55138f959371d75ac1b35fb3090622a70be505332ae67acd9b2341b2",
+        "request_sha256": "df94a7a737e939334105429e2ad4c9e9be8c0acd871718622c24d289145f1e89",
+        "total_tokens": 25029
+      },
+      {
+        "admission_captured_at_unix": 1789118844.8360362,
+        "decision_index": 15,
+        "events_sha256": "0c4b05a6c0caa4c7f4c6d89865de3d0ba994b27fbb3be72d5c9a6450dadd072f",
+        "request_sha256": "d4fc5803a8bcda960c5673a9aeb16b536362e7428804e8c706fcd7a4bbfacf08",
+        "total_tokens": 24616
+      },
+      {
+        "admission_captured_at_unix": 1789118873.311706,
+        "decision_index": 16,
+        "events_sha256": "52cd7da3fefbd34721b95d85843973670abc2ecb4f188e678112c3a6f39b62b4",
+        "request_sha256": "8dca09fbd573b08fb130f9a279084e487882f726aa09e33e2317415011274f47",
+        "total_tokens": 24877
+      },
+      {
+        "admission_captured_at_unix": 1789118896.476306,
+        "decision_index": 17,
+        "events_sha256": "959e8b3db00908899b65b47c65d41e4184a5ef5e4226d7ba4576d516b892d833",
+        "request_sha256": "45958e9f5e58e3549509c9440253ac09af85401d8bf8cb4c65e5bafae97e21e6",
+        "total_tokens": 24853
+      },
+      {
+        "admission_captured_at_unix": 1789118924.194417,
+        "decision_index": 18,
+        "events_sha256": "bb8f64526043fda0d7b9e9ed57cd342cd16cb72fe6f543fc031a2746b0028b2e",
+        "request_sha256": "f6c0f7065a2ed1115d7ce47c615b70e45d36f2e5edb4d25bb85aabe6886aea1e",
+        "total_tokens": 25027
+      },
+      {
+        "admission_captured_at_unix": 1789118949.9333482,
+        "decision_index": 19,
+        "events_sha256": "9c5535235072079a71f8ddbbdbbc0cd60c59c9d7636f9826cee3b1d7f61e292c",
+        "request_sha256": "f59d974ede0f13327308a57bed93380f2878ce0519cb75abf2bdea52903da4f6",
+        "total_tokens": 25380
+      },
+      {
+        "admission_captured_at_unix": 1789118999.606625,
+        "decision_index": 20,
+        "events_sha256": "b3950d1c38e09fd15f2c63e915a8f0bf0813746a86ed9ace765a5f63d99e7de8",
+        "request_sha256": "ea970cb9ec6d06b144a1831fe730d0494b57e8ee6a9716b88343c80067059c01",
+        "total_tokens": 25449
+      },
+      {
+        "admission_captured_at_unix": 1789119023.2372842,
+        "decision_index": 21,
+        "events_sha256": "30dd737ec92b5c70d3764da078907ad3d4bf18cbb82acc51ff92ec98b1f96c39",
+        "request_sha256": "8eb7e7497b761bf50196445c0a4cd3239c7259dc48244aef7c388502f7ee6563",
+        "total_tokens": 24742
+      },
+      {
+        "admission_captured_at_unix": 1789119049.045838,
+        "decision_index": 22,
+        "events_sha256": "495a9bb21ee33f299b791b3d5c281ca413a6db83585c4610984be3866b172db1",
+        "request_sha256": "32e4f531b1205cff694b40f4f3c21645e77d4f7ee41a6c7f88eee35d51436e62",
+        "total_tokens": 25065
+      },
+      {
+        "admission_captured_at_unix": 1789119072.883899,
+        "decision_index": 23,
+        "events_sha256": "d600a6aa9aa7aa6b5bf1cd919d63fa068b35d688c967c08ba34d8cdbdb2008f6",
+        "request_sha256": "d0922641a13c274c921b2919402a059600e34a03e7caaf3b075601dc6929da08",
+        "total_tokens": 24692
+      },
+      {
+        "admission_captured_at_unix": 1789119119.938588,
+        "decision_index": 24,
+        "events_sha256": "d99f38e8a5b19a10f87d707bd75795925abee39cdb878e413c4e55bf1f62b51a",
+        "request_sha256": "f1b575930c01de9d20d80c17ac10af2abbe3aa328bcda1c2106405025ea42e04",
+        "total_tokens": 25694
+      },
+      {
+        "admission_captured_at_unix": 1789119145.37265,
+        "decision_index": 25,
+        "events_sha256": "9e49fcedacd75f3ac1353d57a1c7f18e38b3af733dd2642922f2dec6a809b216",
+        "request_sha256": "58e70754948b606e645a7c56ba48cb4a492f9d58a0815c6226bae17223251e6a",
+        "total_tokens": 24910
+      },
+      {
+        "admission_captured_at_unix": 1789119171.5503721,
+        "decision_index": 26,
+        "events_sha256": "f122c8b2e42ddfd8ecae333a07d7bb33e5d9b23938f9a10081e139b44810a7da",
+        "request_sha256": "c6f8695d281f6fd3f2ffeabbbb03142cc329f48f68de0c63c288242f0697ad4c",
+        "total_tokens": 25255
+      },
+      {
+        "admission_captured_at_unix": 1789119227.3144782,
+        "decision_index": 27,
+        "events_sha256": "2489b8d2fc3568550257a70eac3c6aef0dc163dcd9c348857c496b4d97805eeb",
+        "request_sha256": "86c14a49bcc7bb00f7fc83f703fcde13d59ec1d432a491b3abb75d2fa72f918d",
+        "total_tokens": 25952
+      },
+      {
+        "admission_captured_at_unix": 1789119251.910487,
+        "decision_index": 28,
+        "events_sha256": "14df74ef9551af630dd04cb63221cbbe5bb72d09699bab6af0f0558b6cf6c05b",
+        "request_sha256": "6fbca995c2fb5349f3554d18505f0e6d0ccc51e279eab28523928d220c75ac4b",
+        "total_tokens": 25043
+      },
+      {
+        "admission_captured_at_unix": 1789119275.5582669,
+        "decision_index": 29,
+        "events_sha256": "f5e5959029913e5749661cf481b1910ec814e56fb3b0bc1931f7d5fafe1dd33d",
+        "request_sha256": "a159c9a9c39dff7432731805099221670cf8cf6fa10e0f6035a437c644898f92",
+        "total_tokens": 24917
+      },
+      {
+        "admission_captured_at_unix": 1789119298.317149,
+        "decision_index": 30,
+        "events_sha256": "5b2bd859f2ba3a450acfcfb4c5c369764c683bfccdc5c422ef2908a558006f18",
+        "request_sha256": "e5911c9006366f7dee39e7a9386e785defa96cb99733b259d5f2a314ebc22e7c",
+        "total_tokens": 25405
+      },
+      {
+        "admission_captured_at_unix": 1789119326.413111,
+        "decision_index": 31,
+        "events_sha256": "672121d34cc82d40c5db2c99258e4ccdaa5cc96adfcaf33e541bfedc950e6438",
+        "request_sha256": "06e209c52a5f39d4917f05798e128a0cf936e0618162d6365cd2fc3abcdd9766",
+        "total_tokens": 25650
+      }
+    ],
+    "native_cleanup_verified": true,
+    "vm_teardown_verified": true,
+    "shutdown": {
+      "guest_command_warning": true,
+      "guest_poweroff_returncode": 1,
+      "vm_observed_stopped": true,
+      "vm_stop_returncode": 0
+    },
+    "trace_sha256": "b3c995fc32f3fb0311a16877a2e419f76e88d18cde0e450357ca4720c72abcbd",
+    "usage_sha256": "8fd9d532a34a3c4c2369d594ed3a1957efdfb6399e0e9f6597975bb0ca6bc0c3"
+  },
+  "proof_limits": {
+    "same_campaign_own_save_continuation": true,
+    "memory_or_usage_reset": false,
+    "prompt_or_budget_changed": false,
+    "fresh_final_checkpoint_reload_verified": false,
+    "same_condition_as_historical_matched_cohort": false,
+    "human_gameplay_rescue": false,
+    "sustainability_proven": false,
+    "year_two_reached": false,
+    "strong_model_ranking_supported": false,
+    "completed_production_measured": false,
+    "completed_consumption_measured": false,
+    "public_website_deployed": false,
+    "main_merged": false
+  },
+  "cost_limits": {
+    "actual_model_charge_usd": null,
+    "hardware_energy_and_app_cost_usd": null,
+    "api_fallback": false,
+    "local_model_fallback": false,
+    "automatic_credit_purchase": false,
+    "automatic_reset_consumption": false,
+    "cloud_vms_created": 0
+  },
+  "timeline": [
+    {
+      "decision": 33,
+      "keys": [
+        "b",
+        "b",
+        "SYM:0:Right",
+        "SYM:0:Enter"
+      ],
+      "model_intent": "Place a second bed beside the first.",
+      "input_accepted": true,
+      "confirmed_key_presses": 4,
+      "requested_ticks": 0,
+      "ticks_advanced": 0,
+      "saved_elapsed_ticks": 15500,
+      "clock_error": null,
+      "metrics": {
+        "population": 7,
+        "food_stock": 50,
+        "drink_stock": 60,
+        "wood_stock": null,
+        "stone_stock": null,
+        "functional_rooms": 0,
+        "completed_workshops": 2,
+        "completed_beds": 0,
+        "completed_farms": 1,
+        "recorded_dead_citizens": 0
+      },
+      "returned_tokens": 25764
+    },
+    {
+      "decision": 34,
+      "keys": [
+        "SYM:0:Left",
+        "SYM:0:Left",
+        "SYM:0:Left",
+        "SYM:0:Left",
+        "SYM:0:Left",
+        "SYM:0:Left",
+        "SYM:0:Left",
+        "SYM:0:Left",
+        "SYM:0:Left",
+        "SYM:0:Left",
+        "SYM:0:Left",
+        "SYM:0:Left",
+        "SYM:0:Left",
+        "SYM:0:Left",
+        "SYM:0:Left",
+        "SYM:0:Left",
+        "SYM:0:Left",
+        "SYM:0:Left",
+        "SYM:0:Left",
+        "SYM:0:Left",
+        "SYM:0:Left",
+        "SYM:0:Up",
+        "SYM:0:Enter"
+      ],
+      "model_intent": "Move bed placement onto the excavated sleeping area and inspect material selection.",
+      "input_accepted": true,
+      "confirmed_key_presses": 23,
+      "requested_ticks": 0,
+      "ticks_advanced": 0,
+      "saved_elapsed_ticks": 15500,
+      "clock_error": null,
+      "metrics": {
+        "population": 7,
+        "food_stock": 50,
+        "drink_stock": 60,
+        "wood_stock": null,
+        "stone_stock": null,
+        "functional_rooms": 0,
+        "completed_workshops": 2,
+        "completed_beds": 0,
+        "completed_farms": 1,
+        "recorded_dead_citizens": 0
+      },
+      "returned_tokens": 25156
+    },
+    {
+      "decision": 35,
+      "keys": [
+        "SYM:0:Enter"
+      ],
+      "model_intent": "Select an almond wood bed for the second sleeping place and inspect the build menu.",
+      "input_accepted": true,
+      "confirmed_key_presses": 1,
+      "requested_ticks": 0,
+      "ticks_advanced": 0,
+      "saved_elapsed_ticks": 15500,
+      "clock_error": null,
+      "metrics": {
+        "population": 7,
+        "food_stock": 50,
+        "drink_stock": 60,
+        "wood_stock": null,
+        "stone_stock": null,
+        "functional_rooms": 0,
+        "completed_workshops": 2,
+        "completed_beds": 0,
+        "completed_farms": 1,
+        "recorded_dead_citizens": 0
+      },
+      "returned_tokens": 25417
+    },
+    {
+      "decision": 36,
+      "keys": [
+        "b"
+      ],
+      "model_intent": "Select another bed for placement.",
+      "input_accepted": true,
+      "confirmed_key_presses": 1,
+      "requested_ticks": 0,
+      "ticks_advanced": 0,
+      "saved_elapsed_ticks": 15500,
+      "clock_error": null,
+      "metrics": {
+        "population": 7,
+        "food_stock": 50,
+        "drink_stock": 60,
+        "wood_stock": null,
+        "stone_stock": null,
+        "functional_rooms": 0,
+        "completed_workshops": 2,
+        "completed_beds": 0,
+        "completed_farms": 1,
+        "recorded_dead_citizens": 0
+      },
+      "returned_tokens": 25845
+    },
+    {
+      "decision": 37,
+      "keys": [
+        "SYM:0:Right",
+        "SYM:0:Enter"
+      ],
+      "model_intent": "Place the third bed beside the first two.",
+      "input_accepted": true,
+      "confirmed_key_presses": 2,
+      "requested_ticks": 0,
+      "ticks_advanced": 0,
+      "saved_elapsed_ticks": 15500,
+      "clock_error": null,
+      "metrics": {
+        "population": 7,
+        "food_stock": 50,
+        "drink_stock": 60,
+        "wood_stock": null,
+        "stone_stock": null,
+        "functional_rooms": 0,
+        "completed_workshops": 2,
+        "completed_beds": 0,
+        "completed_farms": 1,
+        "recorded_dead_citizens": 0
+      },
+      "returned_tokens": 25004
+    },
+    {
+      "decision": 38,
+      "keys": [
+        "SYM:0:Enter",
+        "SYM:0:Right",
+        "SYM:0:Enter",
+        "SYM:0:Enter",
+        "SYM:0:Right",
+        "SYM:0:Enter",
+        "SYM:0:Enter",
+        "SYM:0:Right",
+        "SYM:0:Enter",
+        "SYM:0:Enter",
+        "SYM:0:Right",
+        "SYM:0:Enter",
+        "SYM:0:Enter",
+        "SYM:0:ESC",
+        "SYM:0:ESC",
+        " "
+      ],
+      "model_intent": "Place the five remaining beds along the south wall and let dwarves install them.",
+      "input_accepted": true,
+      "confirmed_key_presses": 16,
+      "requested_ticks": 2000,
+      "ticks_advanced": 2000,
+      "saved_elapsed_ticks": 17500,
+      "clock_error": null,
+      "metrics": {
+        "population": 7,
+        "food_stock": 50,
+        "drink_stock": 60,
+        "wood_stock": null,
+        "stone_stock": null,
+        "functional_rooms": 0,
+        "completed_workshops": 2,
+        "completed_beds": 3,
+        "completed_farms": 1,
+        "recorded_dead_citizens": 0
+      },
+      "returned_tokens": 25523
+    },
+    {
+      "decision": 39,
+      "keys": [
+        "q",
+        "SYM:0:Up",
+        "SYM:0:Up",
+        "SYM:0:Up",
+        "SYM:0:Up",
+        "SYM:0:Up",
+        "SYM:0:Up",
+        "SYM:0:Up"
+      ],
+      "model_intent": "Inspect the carpenter’s queue to resolve the brewing shortage of empty barrels.",
+      "input_accepted": true,
+      "confirmed_key_presses": 8,
+      "requested_ticks": 0,
+      "ticks_advanced": 0,
+      "saved_elapsed_ticks": 17500,
+      "clock_error": null,
+      "metrics": {
+        "population": 7,
+        "food_stock": 50,
+        "drink_stock": 60,
+        "wood_stock": null,
+        "stone_stock": null,
+        "functional_rooms": 0,
+        "completed_workshops": 2,
+        "completed_beds": 3,
+        "completed_farms": 1,
+        "recorded_dead_citizens": 0
+      },
+      "returned_tokens": 25121
+    },
+    {
+      "decision": 40,
+      "keys": [
+        "e",
+        "e",
+        "e",
+        "e",
+        "e",
+        "e",
+        "e",
+        "e",
+        "e",
+        "e",
+        "e",
+        "e",
+        "e",
+        "e",
+        "e",
+        "e",
+        "e",
+        "e",
+        "e",
+        "e",
+        "e",
+        "e",
+        "e",
+        "e",
+        "e",
+        "SYM:0:Right",
+        "SYM:0:Right",
+        "SYM:0:Right",
+        "SYM:0:Right"
+      ],
+      "model_intent": "Free barrels from food stockpile allocation and inspect the carpenter workshop.",
+      "input_accepted": true,
+      "confirmed_key_presses": 29,
+      "requested_ticks": 0,
+      "ticks_advanced": 0,
+      "saved_elapsed_ticks": 17500,
+      "clock_error": null,
+      "metrics": {
+        "population": 7,
+        "food_stock": 50,
+        "drink_stock": 60,
+        "wood_stock": null,
+        "stone_stock": null,
+        "functional_rooms": 0,
+        "completed_workshops": 2,
+        "completed_beds": 3,
+        "completed_farms": 1,
+        "recorded_dead_citizens": 0
+      },
+      "returned_tokens": 25340
+    },
+    {
+      "decision": 41,
+      "keys": [
+        "r",
+        "SYM:0:ESC",
+        " "
+      ],
+      "model_intent": "Repeat barrel production to provide brewing containers and let dwarves complete work.",
+      "input_accepted": true,
+      "confirmed_key_presses": 3,
+      "requested_ticks": 2000,
+      "ticks_advanced": 2000,
+      "saved_elapsed_ticks": 19500,
+      "clock_error": null,
+      "metrics": {
+        "population": 7,
+        "food_stock": 50,
+        "drink_stock": 60,
+        "wood_stock": null,
+        "stone_stock": null,
+        "functional_rooms": 0,
+        "completed_workshops": 2,
+        "completed_beds": 3,
+        "completed_farms": 1,
+        "recorded_dead_citizens": 0
+      },
+      "returned_tokens": 24989
+    },
+    {
+      "decision": 42,
+      "keys": [
+        "q",
+        "SYM:0:Down",
+        "SYM:0:Down",
+        "SYM:0:Down",
+        "SYM:0:Down",
+        "SYM:0:Down"
+      ],
+      "model_intent": "Inspect the still and restore brewing now that barrel production has had time to run.",
+      "input_accepted": true,
+      "confirmed_key_presses": 6,
+      "requested_ticks": 0,
+      "ticks_advanced": 0,
+      "saved_elapsed_ticks": 19500,
+      "clock_error": null,
+      "metrics": {
+        "population": 7,
+        "food_stock": 50,
+        "drink_stock": 60,
+        "wood_stock": null,
+        "stone_stock": null,
+        "functional_rooms": 0,
+        "completed_workshops": 2,
+        "completed_beds": 3,
+        "completed_farms": 1,
+        "recorded_dead_citizens": 0
+      },
+      "returned_tokens": 25511
+    },
+    {
+      "decision": 43,
+      "keys": [
+        "a"
+      ],
+      "model_intent": "Open the still's task menu to restart brewing.",
+      "input_accepted": true,
+      "confirmed_key_presses": 1,
+      "requested_ticks": 0,
+      "ticks_advanced": 0,
+      "saved_elapsed_ticks": 19500,
+      "clock_error": null,
+      "metrics": {
+        "population": 7,
+        "food_stock": 50,
+        "drink_stock": 60,
+        "wood_stock": null,
+        "stone_stock": null,
+        "functional_rooms": 0,
+        "completed_workshops": 2,
+        "completed_beds": 3,
+        "completed_farms": 1,
+        "recorded_dead_citizens": 0
+      },
+      "returned_tokens": 24874
+    },
+    {
+      "decision": 44,
+      "keys": [
+        "b",
+        "r",
+        "SYM:0:ESC",
+        " "
+      ],
+      "model_intent": "Resume repeat brewing with newly made barrels and allow production.",
+      "input_accepted": true,
+      "confirmed_key_presses": 4,
+      "requested_ticks": 2000,
+      "ticks_advanced": 2000,
+      "saved_elapsed_ticks": 21500,
+      "clock_error": null,
+      "metrics": {
+        "population": 7,
+        "food_stock": 45,
+        "drink_stock": 80,
+        "wood_stock": null,
+        "stone_stock": null,
+        "functional_rooms": 0,
+        "completed_workshops": 2,
+        "completed_beds": 3,
+        "completed_farms": 1,
+        "recorded_dead_citizens": 0
+      },
+      "returned_tokens": 24849
+    },
+    {
+      "decision": 45,
+      "keys": [
+        "z"
+      ],
+      "model_intent": "Inspect fortress supplies and population after brewing resumed.",
+      "input_accepted": true,
+      "confirmed_key_presses": 1,
+      "requested_ticks": 0,
+      "ticks_advanced": 0,
+      "saved_elapsed_ticks": 21500,
+      "clock_error": null,
+      "metrics": {
+        "population": 7,
+        "food_stock": 45,
+        "drink_stock": 80,
+        "wood_stock": null,
+        "stone_stock": null,
+        "functional_rooms": 0,
+        "completed_workshops": 2,
+        "completed_beds": 3,
+        "completed_farms": 1,
+        "recorded_dead_citizens": 0
+      },
+      "returned_tokens": 25455
+    },
+    {
+      "decision": 46,
+      "keys": [
+        "SYM:0:ESC",
+        "q"
+      ],
+      "model_intent": "Return to the fortress and inspect a bed to establish a shared dormitory.",
+      "input_accepted": true,
+      "confirmed_key_presses": 2,
+      "requested_ticks": 0,
+      "ticks_advanced": 0,
+      "saved_elapsed_ticks": 21500,
+      "clock_error": null,
+      "metrics": {
+        "population": 7,
+        "food_stock": 45,
+        "drink_stock": 80,
+        "wood_stock": null,
+        "stone_stock": null,
+        "functional_rooms": 0,
+        "completed_workshops": 2,
+        "completed_beds": 3,
+        "completed_farms": 1,
+        "recorded_dead_citizens": 0
+      },
+      "returned_tokens": 15932
+    },
+    {
+      "decision": 47,
+      "keys": [
+        "SYM:0:Left",
+        "SYM:0:Left",
+        "SYM:0:Left",
+        "SYM:0:Left",
+        "SYM:0:Left",
+        "SYM:0:Down",
+        "SYM:0:Down",
+        "r"
+      ],
+      "model_intent": "Select a bed and define a shared sleeping room.",
+      "input_accepted": true,
+      "confirmed_key_presses": 8,
+      "requested_ticks": 0,
+      "ticks_advanced": 0,
+      "saved_elapsed_ticks": 21500,
+      "clock_error": null,
+      "metrics": {
+        "population": 7,
+        "food_stock": 45,
+        "drink_stock": 80,
+        "wood_stock": null,
+        "stone_stock": null,
+        "functional_rooms": 0,
+        "completed_workshops": 2,
+        "completed_beds": 3,
+        "completed_farms": 1,
+        "recorded_dead_citizens": 0
+      },
+      "returned_tokens": 25029
+    },
+    {
+      "decision": 48,
+      "keys": [
+        "SYM:0:Enter"
+      ],
+      "model_intent": "Confirm the bed's room boundary and inspect dormitory settings.",
+      "input_accepted": true,
+      "confirmed_key_presses": 1,
+      "requested_ticks": 0,
+      "ticks_advanced": 0,
+      "saved_elapsed_ticks": 21500,
+      "clock_error": null,
+      "metrics": {
+        "population": 7,
+        "food_stock": 45,
+        "drink_stock": 80,
+        "wood_stock": null,
+        "stone_stock": null,
+        "functional_rooms": 0,
+        "completed_workshops": 2,
+        "completed_beds": 3,
+        "completed_farms": 1,
+        "recorded_dead_citizens": 0
+      },
+      "returned_tokens": 24616
+    },
+    {
+      "decision": 49,
+      "keys": [
+        "d"
+      ],
+      "model_intent": "Enable the shared dormitory.",
+      "input_accepted": true,
+      "confirmed_key_presses": 1,
+      "requested_ticks": 0,
+      "ticks_advanced": 0,
+      "saved_elapsed_ticks": 21500,
+      "clock_error": null,
+      "metrics": {
+        "population": 7,
+        "food_stock": 45,
+        "drink_stock": 80,
+        "wood_stock": null,
+        "stone_stock": null,
+        "functional_rooms": 0,
+        "completed_workshops": 2,
+        "completed_beds": 3,
+        "completed_farms": 1,
+        "recorded_dead_citizens": 0
+      },
+      "returned_tokens": 24877
+    },
+    {
+      "decision": 50,
+      "keys": [
+        "SYM:0:ESC",
+        "q",
+        "SYM:0:Right",
+        "SYM:0:Right",
+        "SYM:0:Right",
+        "SYM:0:Right",
+        "SYM:0:Right",
+        "SYM:0:Up",
+        "SYM:0:Up",
+        "SYM:0:Up",
+        "SYM:0:Up",
+        "SYM:0:Up",
+        "SYM:0:Up",
+        "SYM:0:Up"
+      ],
+      "model_intent": "Inspect the carpenter to add dining furniture; dormitory is confirmed enabled.",
+      "input_accepted": true,
+      "confirmed_key_presses": 14,
+      "requested_ticks": 0,
+      "ticks_advanced": 0,
+      "saved_elapsed_ticks": 21500,
+      "clock_error": null,
+      "metrics": {
+        "population": 7,
+        "food_stock": 45,
+        "drink_stock": 80,
+        "wood_stock": null,
+        "stone_stock": null,
+        "functional_rooms": 0,
+        "completed_workshops": 2,
+        "completed_beds": 3,
+        "completed_farms": 1,
+        "recorded_dead_citizens": 0
+      },
+      "returned_tokens": 24853
+    },
+    {
+      "decision": 51,
+      "keys": [
+        "r",
+        "a"
+      ],
+      "model_intent": "Stop indefinite barrel production and inspect carpenter tasks for dining furniture.",
+      "input_accepted": true,
+      "confirmed_key_presses": 2,
+      "requested_ticks": 0,
+      "ticks_advanced": 0,
+      "saved_elapsed_ticks": 21500,
+      "clock_error": null,
+      "metrics": {
+        "population": 7,
+        "food_stock": 45,
+        "drink_stock": 80,
+        "wood_stock": null,
+        "stone_stock": null,
+        "functional_rooms": 0,
+        "completed_workshops": 2,
+        "completed_beds": 3,
+        "completed_farms": 1,
+        "recorded_dead_citizens": 0
+      },
+      "returned_tokens": 25027
+    },
+    {
+      "decision": 52,
+      "keys": [
+        "t",
+        "a",
+        "c",
+        "a",
+        "t",
+        "a",
+        "c",
+        "a",
+        "t",
+        "a",
+        "c",
+        "SYM:0:ESC",
+        " "
+      ],
+      "model_intent": "Queue three wooden tables and three chairs, then allow production and farming to proceed.",
+      "input_accepted": true,
+      "confirmed_key_presses": 13,
+      "requested_ticks": 2000,
+      "ticks_advanced": 2000,
+      "saved_elapsed_ticks": 23500,
+      "clock_error": null,
+      "metrics": {
+        "population": 7,
+        "food_stock": 45,
+        "drink_stock": 79,
+        "wood_stock": null,
+        "stone_stock": null,
+        "functional_rooms": 0,
+        "completed_workshops": 2,
+        "completed_beds": 3,
+        "completed_farms": 1,
+        "recorded_dead_citizens": 0
+      },
+      "returned_tokens": 25380
+    },
+    {
+      "decision": 53,
+      "keys": [
+        "b",
+        "t"
+      ],
+      "model_intent": "Open table placement to furnish a dining area.",
+      "input_accepted": true,
+      "confirmed_key_presses": 2,
+      "requested_ticks": 0,
+      "ticks_advanced": 0,
+      "saved_elapsed_ticks": 23500,
+      "clock_error": null,
+      "metrics": {
+        "population": 7,
+        "food_stock": 45,
+        "drink_stock": 79,
+        "wood_stock": null,
+        "stone_stock": null,
+        "functional_rooms": 0,
+        "completed_workshops": 2,
+        "completed_beds": 3,
+        "completed_farms": 1,
+        "recorded_dead_citizens": 0
+      },
+      "returned_tokens": 25449
+    },
+    {
+      "decision": 54,
+      "keys": [
+        "SYM:0:Left",
+        "SYM:0:Left",
+        "SYM:0:Down",
+        "SYM:0:Down",
+        "SYM:0:Down",
+        "SYM:0:Enter"
+      ],
+      "model_intent": "Place a dining table on open floor beside the food stockpile.",
+      "input_accepted": true,
+      "confirmed_key_presses": 6,
+      "requested_ticks": 0,
+      "ticks_advanced": 0,
+      "saved_elapsed_ticks": 23500,
+      "clock_error": null,
+      "metrics": {
+        "population": 7,
+        "food_stock": 45,
+        "drink_stock": 79,
+        "wood_stock": null,
+        "stone_stock": null,
+        "functional_rooms": 0,
+        "completed_workshops": 2,
+        "completed_beds": 3,
+        "completed_farms": 1,
+        "recorded_dead_citizens": 0
+      },
+      "returned_tokens": 24742
+    },
+    {
+      "decision": 55,
+      "keys": [
+        "SYM:0:Enter",
+        "SYM:0:ESC",
+        "b",
+        "c",
+        "SYM:0:Up"
+      ],
+      "model_intent": "Confirm the table material and begin placing an adjacent dining chair.",
+      "input_accepted": true,
+      "confirmed_key_presses": 5,
+      "requested_ticks": 0,
+      "ticks_advanced": 0,
+      "saved_elapsed_ticks": 23500,
+      "clock_error": null,
+      "metrics": {
+        "population": 7,
+        "food_stock": 45,
+        "drink_stock": 79,
+        "wood_stock": null,
+        "stone_stock": null,
+        "functional_rooms": 0,
+        "completed_workshops": 2,
+        "completed_beds": 3,
+        "completed_farms": 1,
+        "recorded_dead_citizens": 0
+      },
+      "returned_tokens": 25065
+    },
+    {
+      "decision": 56,
+      "keys": [
+        "SYM:0:ESC",
+        "SYM:0:ESC",
+        " "
+      ],
+      "model_intent": "Allow carpentry and table installation to finish before placing dining chairs.",
+      "input_accepted": true,
+      "confirmed_key_presses": 3,
+      "requested_ticks": 2000,
+      "ticks_advanced": 2000,
+      "saved_elapsed_ticks": 25500,
+      "clock_error": null,
+      "metrics": {
+        "population": 7,
+        "food_stock": 45,
+        "drink_stock": 79,
+        "wood_stock": null,
+        "stone_stock": null,
+        "functional_rooms": 0,
+        "completed_workshops": 2,
+        "completed_beds": 3,
+        "completed_farms": 1,
+        "recorded_dead_citizens": 0
+      },
+      "returned_tokens": 24692
+    },
+    {
+      "decision": 57,
+      "keys": [
+        "b",
+        "c"
+      ],
+      "model_intent": "Check whether a wooden chair is now available for the dining area.",
+      "input_accepted": true,
+      "confirmed_key_presses": 2,
+      "requested_ticks": 0,
+      "ticks_advanced": 0,
+      "saved_elapsed_ticks": 25500,
+      "clock_error": null,
+      "metrics": {
+        "population": 7,
+        "food_stock": 45,
+        "drink_stock": 79,
+        "wood_stock": null,
+        "stone_stock": null,
+        "functional_rooms": 0,
+        "completed_workshops": 2,
+        "completed_beds": 3,
+        "completed_farms": 1,
+        "recorded_dead_citizens": 0
+      },
+      "returned_tokens": 25694
+    },
+    {
+      "decision": 58,
+      "keys": [
+        "SYM:0:Up",
+        "SYM:0:Enter"
+      ],
+      "model_intent": "Place a dining chair beside the installed table.",
+      "input_accepted": true,
+      "confirmed_key_presses": 2,
+      "requested_ticks": 0,
+      "ticks_advanced": 0,
+      "saved_elapsed_ticks": 25500,
+      "clock_error": null,
+      "metrics": {
+        "population": 7,
+        "food_stock": 45,
+        "drink_stock": 79,
+        "wood_stock": null,
+        "stone_stock": null,
+        "functional_rooms": 0,
+        "completed_workshops": 2,
+        "completed_beds": 3,
+        "completed_farms": 1,
+        "recorded_dead_citizens": 0
+      },
+      "returned_tokens": 24910
+    },
+    {
+      "decision": 59,
+      "keys": [
+        "SYM:0:Enter",
+        "SYM:0:ESC",
+        "SYM:0:ESC",
+        " "
+      ],
+      "model_intent": "Select the available chair and allow its construction beside the dining table.",
+      "input_accepted": true,
+      "confirmed_key_presses": 4,
+      "requested_ticks": 2000,
+      "ticks_advanced": 2000,
+      "saved_elapsed_ticks": 27500,
+      "clock_error": null,
+      "metrics": {
+        "population": 7,
+        "food_stock": 45,
+        "drink_stock": 78,
+        "wood_stock": null,
+        "stone_stock": null,
+        "functional_rooms": 0,
+        "completed_workshops": 2,
+        "completed_beds": 3,
+        "completed_farms": 1,
+        "recorded_dead_citizens": 0
+      },
+      "returned_tokens": 25255
+    },
+    {
+      "decision": 60,
+      "keys": [
+        "q",
+        "SYM:0:Down"
+      ],
+      "model_intent": "Inspect the installed table to establish a dining room.",
+      "input_accepted": true,
+      "confirmed_key_presses": 2,
+      "requested_ticks": 0,
+      "ticks_advanced": 0,
+      "saved_elapsed_ticks": 27500,
+      "clock_error": null,
+      "metrics": {
+        "population": 7,
+        "food_stock": 45,
+        "drink_stock": 78,
+        "wood_stock": null,
+        "stone_stock": null,
+        "functional_rooms": 0,
+        "completed_workshops": 2,
+        "completed_beds": 3,
+        "completed_farms": 1,
+        "recorded_dead_citizens": 0
+      },
+      "returned_tokens": 25952
+    },
+    {
+      "decision": 61,
+      "keys": [
+        "r"
+      ],
+      "model_intent": "Define a communal dining room from the installed table.",
+      "input_accepted": true,
+      "confirmed_key_presses": 1,
+      "requested_ticks": 0,
+      "ticks_advanced": 0,
+      "saved_elapsed_ticks": 27500,
+      "clock_error": null,
+      "metrics": {
+        "population": 7,
+        "food_stock": 45,
+        "drink_stock": 78,
+        "wood_stock": null,
+        "stone_stock": null,
+        "functional_rooms": 0,
+        "completed_workshops": 2,
+        "completed_beds": 3,
+        "completed_farms": 1,
+        "recorded_dead_citizens": 0
+      },
+      "returned_tokens": 25043
+    },
+    {
+      "decision": 62,
+      "keys": [
+        "SYM:0:Enter"
+      ],
+      "model_intent": "Confirm communal dining room at its current size.",
+      "input_accepted": true,
+      "confirmed_key_presses": 1,
+      "requested_ticks": 0,
+      "ticks_advanced": 0,
+      "saved_elapsed_ticks": 27500,
+      "clock_error": null,
+      "metrics": {
+        "population": 7,
+        "food_stock": 45,
+        "drink_stock": 78,
+        "wood_stock": null,
+        "stone_stock": null,
+        "functional_rooms": 0,
+        "completed_workshops": 2,
+        "completed_beds": 3,
+        "completed_farms": 1,
+        "recorded_dead_citizens": 0
+      },
+      "returned_tokens": 24917
+    },
+    {
+      "decision": 63,
+      "keys": [
+        "h",
+        "SYM:0:ESC",
+        "b",
+        "b",
+        "SYM:0:Left",
+        "SYM:0:Down",
+        "SYM:0:Down",
+        "SYM:0:Down",
+        "SYM:0:Down",
+        "SYM:0:Enter"
+      ],
+      "model_intent": "Make the communal dining room a meeting hall and begin placing another dormitory bed.",
+      "input_accepted": true,
+      "confirmed_key_presses": 10,
+      "requested_ticks": 0,
+      "ticks_advanced": 0,
+      "saved_elapsed_ticks": 27500,
+      "clock_error": null,
+      "metrics": {
+        "population": 7,
+        "food_stock": 45,
+        "drink_stock": 78,
+        "wood_stock": null,
+        "stone_stock": null,
+        "functional_rooms": 0,
+        "completed_workshops": 2,
+        "completed_beds": 3,
+        "completed_farms": 1,
+        "recorded_dead_citizens": 0
+      },
+      "returned_tokens": 25405
+    },
+    {
+      "decision": 64,
+      "keys": [
+        "SYM:0:Enter",
+        "SYM:0:ESC",
+        "SYM:0:ESC",
+        " "
+      ],
+      "model_intent": "Confirm the fourth bed and let dwarves install furniture and tend crops.",
+      "input_accepted": true,
+      "confirmed_key_presses": 4,
+      "requested_ticks": 2000,
+      "ticks_advanced": 2000,
+      "saved_elapsed_ticks": 29500,
+      "clock_error": null,
+      "metrics": {
+        "population": 7,
+        "food_stock": 40,
+        "drink_stock": 103,
+        "wood_stock": null,
+        "stone_stock": null,
+        "functional_rooms": 0,
+        "completed_workshops": 2,
+        "completed_beds": 4,
+        "completed_farms": 1,
+        "recorded_dead_citizens": 0
+      },
+      "returned_tokens": 25650
+    }
+  ],
+  "interpretation": [
+    "This is one continuation of the displayed-key pilot, not another independent replicate.",
+    "Completed beds count placed and completed bed buildings, not carried items or queued jobs.",
+    "Stock changes, intentions and sampled active jobs are not measured completed production or sustainability.",
+    "Keep this control condition separate from historical native-event-name model comparisons."
+  ]
+}
+
