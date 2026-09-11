@@ -24,6 +24,21 @@ RESULTS = {
         "e81a20836eb6959a529b657a72339bca2e299203c73188006fb32d682c734e11",
         "a46836aabe58491f924f2e82ebddcbc09cf554a3",
     ),
+    "matched-20260910-terra-r2": (
+        "experiments/evidence/keyboard_matched_terra_r2_continuation_32_64_20260910.json",
+        "1966bf1e8229e8fbfd7a161d84c78da272dd3f5c9aa86040f59a8baa415ef1b8",
+        "79524f12c806a6b574af2f402353506415e7180e",
+    ),
+    "matched-20260910-sol-r2": (
+        "experiments/evidence/keyboard_matched_sol_r2_continuation_32_64_20260910.json",
+        "2f261d841808126b4f26cb55dcd47faae36ed37a7310c71648fae0fc531f26da",
+        "03a58baeb4ffa70a8a1cc5f0bde5adceeab4a433",
+    ),
+    "matched-20260910-astra-r2": (
+        "experiments/evidence/keyboard_matched_astra_r2_continuation_32_64_20260910.json",
+        "b5b195022876f8342c26e97634a8645cfb8beb885475a493187dc5fff7d90f1e",
+        "627448ec979f4f4b6501a97e2b62fffcf60e5386",
+    ),
 }
 
 
