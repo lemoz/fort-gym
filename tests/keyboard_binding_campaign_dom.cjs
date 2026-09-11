@@ -29,15 +29,15 @@ function all(node, tag) { return (node.tag === tag ? [node] : []).concat(node.ch
   fail = false;
   await refresh.events.click();
   assert.equal(content.hidden, false);
-  assert.match(status.textContent, /Recorded campaign: 64 decisions saved and audited/);
-  for (const text of ['1,583,026', '29,500', '2 / 4 / 1', '40 / 103', 'Unreported, not $0', 'blocking_native_menu', 'not proof that it succeeded', 'Decision 32: save verified; separate fresh reload verified', 'Decision 64: save verified; separate fresh reload not yet tested', 'SSH warning']) {
+  assert.match(status.textContent, /Recorded campaign: 96 decisions saved and audited/);
+  for (const text of ['2,567,162', '59,500', '3 / 5 / 1', '58 / 121', 'Unreported, not $0', 'blocking_native_menu', 'not proof that it succeeded', 'Decision 32: save verified; separate fresh reload verified', 'Decision 64: save verified; separate fresh reload not yet tested', 'SSH warning', 'Decision 96: save verified; separate fresh reload not yet tested', '3 time-advance attempts were blocked by menus', 'Functional rooms Unknown']) {
     assert.ok(content.textContent.includes(text), text);
   }
-  assert.equal(all(content, 'tbody')[0].children.length, 64);
-  assert.equal(all(content, 'a').length, 6);
+  assert.equal(all(content, 'tbody')[0].children.length, 96);
+  assert.equal(all(content, 'a').length, 7);
   assert.ok(all(content, 'a').every(link => link.href.startsWith('https://github.com/lemoz/fort-gym/blob/')));
   const last = all(content, 'tbody')[0].children.at(-1).textContent;
-  assert.match(last, /64\./); assert.match(last, /29,500/); assert.match(last, /2 \/ 4 \/ 1/);
+  assert.match(last, /96\./); assert.match(last, /59,500/); assert.match(last, /3 \/ 5 \/ 1/);
   const loadedText = content.textContent;
   fail = true;
   await refresh.events.click();
@@ -49,7 +49,7 @@ function all(node, tag) { return (node.tag === tag ? [node] : []).concat(node.ch
   data.result_url = 'javascript:alert(1)';
   data.checkpoints[0].result_url = 'javascript:alert(1)';
   await refresh.events.click();
-  assert.match(content.textContent, /Unknown \/ 103/);
+  assert.match(content.textContent, /Unknown \/ 121/);
   assert.match(content.textContent, /<script>not executable<\/script>/);
   assert.equal(all(content, 'script').length, 0);
   assert.equal(all(content, 'a')[0].href, undefined);

@@ -69,6 +69,7 @@
       ['Dwarves / recorded dead', `${number(m.population)} / ${number(m.recorded_dead_citizens)}`],
       ['Completed workshops / beds / farms', `${number(m.completed_workshops)} / ${number(m.completed_beds)} / ${number(m.completed_farms)}`],
       ['Raw food / drinks', `${number(m.food_stock)} / ${number(m.drink_stock)}`],
+      ['Functional rooms', number(m.functional_rooms)],
       ['Returned tokens', number(result.usage.total_tokens)], ['Reported model charge', 'Unreported, not $0'],
     ];
     values.forEach(([label, value]) => { const item = el('div'); item.appendChild(el('dt', label)); item.appendChild(el('dd', value)); facts.appendChild(item); });
@@ -79,7 +80,9 @@
       result.stop_reason === 'budget_limited_pause' ? 'Paused at a usage or budget boundary.' : 'Recorded window ended.';
     output.appendChild(el('p', `${stop} ${duration} elapsed years. ${years < 1 ? 'This campaign has not reached year two.' : 'Reaching year two does not prove long-term self-sufficiency.'} All ${number(result.confirmed_key_presses)} displayed key presses were confirmed.`, 'campaign-note'));
     const window = result.latest_window, before = window.initial_metrics;
-    output.appendChild(el('p', `Since the previous save: ${number(window.responses)} decisions, ${number(window.elapsed_ticks)} elapsed ticks and ${number(window.returned_tokens)} returned tokens. Completed beds ${number(before.completed_beds)} → ${number(m.completed_beds)}; food ${number(before.food_stock)} → ${number(m.food_stock)}; drinks ${number(before.drink_stock)} → ${number(m.drink_stock)}.`, 'campaign-note'));
+    output.appendChild(el('p', `Since the previous save: ${number(window.responses)} decisions, ${number(window.elapsed_ticks)} elapsed ticks and ${number(window.returned_tokens)} returned tokens. Completed beds ${number(before.completed_beds)} → ${number(m.completed_beds)}; workshops ${number(before.completed_workshops)} → ${number(m.completed_workshops)}; food ${number(before.food_stock)} → ${number(m.food_stock)}; drinks ${number(before.drink_stock)} → ${number(m.drink_stock)}.`, 'campaign-note'));
+    const blocked = window.clock_outcomes.blocking_native_menu || 0;
+    if (blocked) output.appendChild(el('p', `${number(blocked)} time-advance attempts were blocked by menus in this window. Inspect the decision history for each failure and the following action.`, 'campaign-note'));
     output.appendChild(el('p', 'Latest save, native game cleanup and VM shutdown verified. No human gameplay rescue. Sustainable production, consumption and a model ranking are not established.', 'campaign-note'));
     output.appendChild(el('p', 'Food is the measured edible inventory, not the on-screen estimate or a production rate. Completed beds counts placed bed buildings, not bed items or queued jobs.', 'campaign-note'));
     const history = el('details', undefined, 'campaign-details');
@@ -87,15 +90,15 @@
     result.checkpoints.forEach(checkpoint => {
       history.appendChild(el('p', `Decision ${number(checkpoint.responses)}: save verified; separate fresh reload ${checkpoint.separate_fresh_reload_verified ? 'verified' : 'not yet tested'}.`));
       history.appendChild(el('p', checkpoint.reload_note, 'campaign-note'));
+      if (checkpoint.shutdown && checkpoint.shutdown.guest_command_warning) {
+        history.appendChild(el('p', `Decision ${number(checkpoint.responses)}: the guest poweroff command returned an SSH warning. The separate VM stop succeeded, and an independent check confirmed it stopped.`, 'campaign-note'));
+      }
       history.appendChild(link('Saved checkpoint evidence', checkpoint.result_url));
       if (checkpoint.reload_url) {
         history.appendChild(el('span', ' · '));
         history.appendChild(link('Reload verification', checkpoint.reload_url));
       }
     });
-    if (result.shutdown.guest_command_warning) {
-      history.appendChild(el('p', 'The guest poweroff command returned an SSH warning. The separate VM stop succeeded, and an independent check confirmed it stopped.', 'campaign-note'));
-    }
     output.appendChild(history);
     const sources = el('p', undefined, 'campaign-note');
     sources.appendChild(link('Audited result', data.result_url)); sources.appendChild(el('span', ' · '));

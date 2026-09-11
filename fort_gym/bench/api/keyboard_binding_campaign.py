@@ -1,6 +1,7 @@
 """A registered displayed-key campaign chain, separate from historical cohorts."""
 
 from .keyboard_binding_results import REPOSITORY, SOURCE_REVISION, keyboard_binding_result
+from .keyboard_binding_results import RESULT_PATH as INITIAL_RESULT_PATH
 from .keyboard_endurance_records import read_result
 
 RESULT_PATH = "experiments/evidence/keyboard_binding_astra_r1_continuation_32_64_20260911.json"
@@ -11,7 +12,14 @@ RELOAD_SHA256 = "291bee15debe7c47d606221b61e99ce8eef0415233480042a4fa0720c5d3945
 RELOAD_REVISION = "242fa861227fd725a839909f04e7a6203cd0f20a"
 
 
-def validate_chain(prior: dict, result: dict, reload: dict) -> None:
+LATEST_RESULT_PATH = (
+    "experiments/evidence/keyboard_binding_astra_r1_continuation_64_96_20260911.json"
+)
+LATEST_RESULT_SHA256 = "2b49a0e15e8d9dc80dfd4af3b020a83b58bc94eb29e50ed4fcba1f96f043986e"
+LATEST_RESULT_REVISION = "45e162e371250b382a2a840b7afac75b58bedc91"
+
+
+def validate_continuation(prior: dict, result: dict) -> None:
     """Reject changed identities or inconsistent cumulative accounting."""
     if (
         result["schema_version"] != "fortgym.public-keyboard-binding-continuation-result/v1"
@@ -36,6 +44,11 @@ def validate_chain(prior: dict, result: dict, reload: dict) -> None:
     for key in ("model", "reasoning_effort", "control_profile", "prompt_profile", "transport"):
         if result["condition"][key] != prior["condition"][key]:
             raise ValueError("Displayed-key continuation changed its condition")
+    if (
+        prior["schema_version"] == result["schema_version"]
+        and prior["condition"] != result["condition"]
+    ):
+        raise ValueError("Displayed-key continuation changed its full condition")
     rows = result["timeline"]
     expected = list(range(prior["responses"] + 1, result["responses"] + 1))
     if (
@@ -51,6 +64,9 @@ def validate_chain(prior: dict, result: dict, reload: dict) -> None:
         or (rows and rows[-1]["metrics"] != result["saved_metrics"])
     ):
         raise ValueError("Displayed-key continuation accounting differs")
+
+
+def validate_reload(prior: dict, reload: dict) -> None:
     if (
         reload["schema_version"] != "fortgym.public-binding-checkpoint-reload/v1"
         or reload["campaign_id"] != prior["campaign_id"]
@@ -67,15 +83,65 @@ def validate_chain(prior: dict, result: dict, reload: dict) -> None:
         raise ValueError("Reload evidence does not identify the earlier checkpoint")
 
 
+def validate_chain(prior: dict, result: dict, reload: dict) -> None:
+    """Keep validation of the original trial-to-continuation boundary available."""
+    validate_continuation(prior, result)
+    validate_reload(prior, reload)
+
+
 def keyboard_binding_campaign() -> dict:
-    """Return the exact recorded chain; never scan private or active artifacts."""
+    """Fold registered continuation windows without scanning private artifacts."""
     initial = keyboard_binding_result()
     prior = initial["result"]
-    result = read_result(RESULT_PATH, RESULT_SHA256)
     reload = read_result(RELOAD_PATH, RELOAD_SHA256)
-    validate_chain(prior, result, reload)
-    result_url = REPOSITORY + RESULT_REVISION + "/" + RESULT_PATH
+    validate_reload(prior, reload)
     reload_url = REPOSITORY + RELOAD_REVISION + "/" + RELOAD_PATH
+    timeline = list(prior["timeline"])
+    confirmed_keys = prior["confirmed_key_presses"]
+    prior_path, prior_sha = INITIAL_RESULT_PATH, initial["result_sha256"]
+    checkpoints = [
+        {
+            "responses": prior["responses"],
+            "saved_elapsed_ticks": prior["saved_elapsed_ticks"],
+            "checkpoint_sha256": prior["checkpoint_sha256"],
+            "save_verified": True,
+            "separate_fresh_reload_verified": True,
+            "result_url": initial["result_url"],
+            "reload_url": reload_url,
+            "reload_note": "Default menu after reload; no manual menu restoration. Original save and agent state unchanged. The copied save only appended two DFHack load-event log lines; the initial strict equality failure and later scoped audit remain recorded.",
+            "shutdown": None,
+        }
+    ]
+    for path, record_sha, revision in (
+        (RESULT_PATH, RESULT_SHA256, RESULT_REVISION),
+        (LATEST_RESULT_PATH, LATEST_RESULT_SHA256, LATEST_RESULT_REVISION),
+    ):
+        result = read_result(path, record_sha)
+        validate_continuation(prior, result)
+        if (
+            result["source_result_path"] != prior_path
+            or result["source_result_sha256"] != prior_sha
+        ):
+            raise ValueError("Displayed-key continuation source result differs")
+        result_url = REPOSITORY + revision + "/" + path
+        timeline.extend(result["timeline"])
+        confirmed_keys += result["new_confirmed_key_presses"]
+        checkpoints.append(
+            {
+                "responses": result["responses"],
+                "saved_elapsed_ticks": result["saved_elapsed_ticks"],
+                "checkpoint_sha256": result["checkpoint_sha256"],
+                "save_verified": True,
+                "separate_fresh_reload_verified": result["proof_limits"][
+                    "fresh_final_checkpoint_reload_verified"
+                ],
+                "result_url": result_url,
+                "reload_url": None,
+                "reload_note": "No separate post-run fresh reload of this checkpoint has been performed.",
+                "shutdown": result["audit"]["shutdown"],
+            }
+        )
+        prior, prior_path, prior_sha = result, path, record_sha
     return {
         "schema_version": "fortgym.public-keyboard-binding-campaign/v1",
         "recorded_only": True,
@@ -90,9 +156,8 @@ def keyboard_binding_campaign() -> dict:
         "ticks_per_year": result["ticks_per_year"],
         "saved_metrics": result["saved_metrics"],
         "usage": result["usage"],
-        "confirmed_key_presses": prior["confirmed_key_presses"]
-        + result["new_confirmed_key_presses"],
-        "timeline": [*prior["timeline"], *result["timeline"]],
+        "confirmed_key_presses": confirmed_keys,
+        "timeline": timeline,
         "latest_window": {
             "first_step": result["first_step"],
             "responses": result["new_responses"],
@@ -101,32 +166,9 @@ def keyboard_binding_campaign() -> dict:
             "initial_metrics": result["initial_metrics"],
             "clock_outcomes": result["new_clock_outcomes"],
         },
-        "checkpoints": [
-            {
-                "responses": prior["responses"],
-                "saved_elapsed_ticks": prior["saved_elapsed_ticks"],
-                "checkpoint_sha256": prior["checkpoint_sha256"],
-                "save_verified": True,
-                "separate_fresh_reload_verified": True,
-                "result_url": initial["result_url"],
-                "reload_url": reload_url,
-                "reload_note": "Default menu after reload; no manual menu restoration. Original save and agent state unchanged. The copied save only appended two DFHack load-event log lines; the initial strict equality failure and later scoped audit remain recorded.",
-            },
-            {
-                "responses": result["responses"],
-                "saved_elapsed_ticks": result["saved_elapsed_ticks"],
-                "checkpoint_sha256": result["checkpoint_sha256"],
-                "save_verified": True,
-                "separate_fresh_reload_verified": result["proof_limits"][
-                    "fresh_final_checkpoint_reload_verified"
-                ],
-                "result_url": result_url,
-                "reload_url": None,
-                "reload_note": "No separate post-run fresh reload of this latest checkpoint has been performed.",
-            },
-        ],
+        "checkpoints": checkpoints,
         "result_url": result_url,
-        "result_sha256": RESULT_SHA256,
+        "result_sha256": record_sha,
         "condition_url": initial["condition_url"],
         "trial_url": initial["trial_url"],
         "initial_result_url": initial["result_url"],
