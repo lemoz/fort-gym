@@ -57,14 +57,18 @@ def prepare(failed):
     return prepare_restart(checkpoint, source, declaration, latest)
 
 
-@pytest.mark.parametrize("failure_kind", ["timeout", "presave"])
+@pytest.mark.parametrize("failure_kind", ["timeout", "presave", "dismissed"])
 def test_restart_retains_all_usage_memory_and_discontinuity_after_continuation(
     tmp_path, failed, failure_kind
 ):
-    if failure_kind == "presave":
+    if failure_kind in {"presave", "dismissed"}:
         from tests.test_keyboard_presave_restart import retain_presave_evidence
 
-        retain_presave_evidence(failed)
+        retain_presave_evidence(
+            failed,
+            "Snapshot cannot hide a dismissed screen" if failure_kind == "dismissed"
+            else "Identity probe requires a native screen",
+        )
     checkpoint, source, declaration = failed
     record = prepare(failed)
     assert record["retained_usage"]["total_tokens"] == 300

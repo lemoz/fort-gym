@@ -11,7 +11,7 @@ from tests.test_keyboard_restart import failed as failed, prepare
 from tests.test_keyboard_runtime import saved as saved
 
 
-def retain_presave_evidence(failed):
+def retain_presave_evidence(failed, assertion="Identity probe requires a native screen"):
     _, source, _ = failed
     segment = source / "segment-0"
     result_path = segment / "result.json"
@@ -22,7 +22,7 @@ def retain_presave_evidence(failed):
     world, screen = read(segment / "native-after.json"), read(segment / "final-screen.json")
     attempt = {
         "schema_version": "fortgym.native-menu-save-attempt/v1",
-        "identity_before_raw": "(lua command):22: Identity probe requires a native screen\n"
+        "identity_before_raw": f"(lua command):22: {assertion}\n"
         "stack traceback:\n\t[C]: in function 'assert'",
         "screen_before": screen,
         "screen_after": screen,
@@ -34,8 +34,11 @@ def retain_presave_evidence(failed):
     return path
 
 
-def test_presave_restart_binds_original_attempt_and_preserves_usage(failed):
-    path = retain_presave_evidence(failed)
+@pytest.mark.parametrize("assertion", [
+    "Identity probe requires a native screen", "Snapshot cannot hide a dismissed screen",
+])
+def test_presave_restart_binds_original_attempt_and_preserves_usage(failed, assertion):
+    path = retain_presave_evidence(failed, assertion)
     record = prepare(failed)
     assert record["save_failure_stage"] == "identity_before_save"
     assert record["source_save_attempt_sha256"] == hashlib.sha256(path.read_bytes()).hexdigest()
@@ -43,6 +46,9 @@ def test_presave_restart_binds_original_attempt_and_preserves_usage(failed):
     assert record["retained_usage"]["returned_responses"] == 3
 
 
+@pytest.mark.parametrize("assertion", [
+    "Identity probe requires a native screen", "Snapshot cannot hide a dismissed screen",
+])
 @pytest.mark.parametrize("mutation", [
     "missing", "symlink", "schema", "raw_json", "wrong_assertion", "postsave_assertion",
     "save_operation_raw", "save_operation", "identity_before", "identity_after_raw",
@@ -50,8 +56,8 @@ def test_presave_restart_binds_original_attempt_and_preserves_usage(failed):
     "world_changed", "empty_world", "empty_screen", "wrong_final_world",
     "wrong_final_screen", "not_retained", "unknown_error", "new_native_save",
 ])
-def test_presave_restart_refuses_incomplete_or_postsave_evidence(failed, mutation):
-    path = retain_presave_evidence(failed)
+def test_presave_restart_refuses_incomplete_or_postsave_evidence(failed, mutation, assertion):
+    path = retain_presave_evidence(failed, assertion)
     attempt = read(path)
     if mutation == "missing":
         path.unlink()
