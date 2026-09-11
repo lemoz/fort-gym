@@ -15,6 +15,7 @@ from ..eval.campaign import TICKS_PER_YEAR, read_campaign_progress
 from ..eval.campaign_profile import metrics_from_state
 from .campaign_checkpoint import verify_checkpoint
 from .campaign_loop import reconciled_usage
+from .keyboard_restart import validate_discontinuities
 from .keyboard_window_audit import SegmentSpan
 
 
@@ -91,6 +92,12 @@ def verify_saved_segment(
     parent_manifest = verify_checkpoint(parent)
     manifest = verify_checkpoint(checkpoint)
     source, payload = parent_manifest["payload"], manifest["payload"]
+    history = validate_discontinuities(read(parent / "runner.json").get("discontinuities", []))
+    _require(
+        read(segment_path / "history-before.json") == {"discontinuities": history}
+        and read(checkpoint / "runner.json").get("discontinuities", []) == history,
+        "Native segment changed its inherited loss history",
+    )
     _require(
         source["campaign_id"] == payload["campaign_id"] == campaign_id
         and source["next_step"] == span.first_step
@@ -109,7 +116,7 @@ def verify_saved_segment(
         and segment.get("status") == "bounded_segment_complete"
         and segment.get("checkpoint_verified") is True
         and segment.get("recovery_requires_reconciliation") is False
-        and segment.get("discontinuities", []) == []
+        and segment.get("discontinuities", []) == history
         and not any(k.endswith("error") or k.endswith("error_type") for k in segment)
         and segment["campaign_id"] == campaign_id
         and type(segment["first_step"]) is int
@@ -151,6 +158,16 @@ def verify_saved_segment(
             "Campaign conditions changed inside segment",
         )
     _require(initial["campaign_id"] == campaign_id, "Agent belongs to another campaign")
+    lost_responses = sum(row["lost_trace_next_step"] - row["restored_next_step"] for row in history)
+    _require(
+        initial["usage"]["accounted_responses"] == span.first_step + lost_responses
+        and all(
+            row["restored_next_step"] <= span.first_step
+            and row["retained_usage"]["accounted_responses"] <= initial["usage"]["accounted_responses"]
+            for row in history
+        ),
+        "Source usage does not reconcile with saved decisions and inherited loss",
+    )
     _require(
         reconciled_usage(initial, (parent / "usage.jsonl").read_bytes())
         == initial["usage"],
@@ -203,6 +220,10 @@ def verify_saved_segment(
                 "Segment trace has missing, repeated or borrowed decisions",
             )
             if seen >= span.first_step:
+                _require(
+                    row.get("discontinuities", []) == history,
+                    "New trace changed its inherited loss history",
+                )
                 ticks = row["tick_advance"]["ticks_advanced"]
                 _require(type(ticks) is int and ticks >= 0, "Invalid action tick count")
                 advanced += ticks
@@ -212,9 +233,18 @@ def verify_saved_segment(
         "Native calendar and per-action tick receipts disagree",
     )
     progress = read_campaign_progress(checkpoint / "trace.jsonl")
+    prior_progress = read_campaign_progress(parent / "trace.jsonl")
     _require(
         progress["elapsed_ticks"] == segment["committed_elapsed_ticks"]
-        and progress.get("native_save_loss_restarts", 0) == 0
+        and progress.get("native_save_loss_restarts", 0)
+        == prior_progress.get("native_save_loss_restarts", 0) == len(history)
+        and all(
+            progress.get(key) == prior_progress.get(key)
+            for key in (
+                "uninterrupted_campaign", "discarded_native_ticks",
+                "confirmed_discarded_native_ticks", "discarded_native_ticks_complete",
+            )
+        )
         and not (segment_path / "loop/failures.jsonl").exists(),
         "Native segment has unreconciled history or save loss",
     )
@@ -232,6 +262,8 @@ def verify_saved_segment(
         "new_saved_ticks": new_ticks,
         "saved_elapsed_ticks": progress["elapsed_ticks"],
         "usage": agent["usage"],
+        "inherited_discontinuities": history,
+        "uninterrupted_campaign": not history,
         "prior_checkpoint_sha256": parent_manifest["sha256"],
         "checkpoint_sha256": manifest["sha256"],
         "initial_metrics": expected_initial_metrics,

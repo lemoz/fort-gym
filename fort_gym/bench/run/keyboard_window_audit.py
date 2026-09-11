@@ -8,6 +8,7 @@ from dataclasses import dataclass
 import re
 
 from .keyboard_config import positive
+from .keyboard_restart import validate_discontinuities
 
 
 @dataclass(frozen=True)
@@ -21,8 +22,13 @@ class SegmentSpan:
         return self.next_step - self.first_step
 
 
-def settled_segment_spans(result: dict, window: dict) -> tuple[SegmentSpan, ...]:
-    """Reject gaps, extra segments and unsettled terminal shapes without I/O."""
+def settled_segment_spans(
+    result: dict, window: dict, *, inherited_discontinuities: list[dict] | None = None,
+) -> tuple[SegmentSpan, ...]:
+    """Reject gaps or new loss; the caller must bind history to a verified parent."""
+    history = validate_discontinuities(
+        [] if inherited_discontinuities is None else inherited_discontinuities
+    )
     start = positive(window.get("continuation_from_next_step"), "continuation cursor")
     steps = positive(window.get("steps_per_segment"), "segment size", maximum=64)
     maximum = positive(window.get("max_segments"), "segment count", maximum=16)
@@ -76,7 +82,7 @@ def settled_segment_spans(result: dict, window: dict) -> tuple[SegmentSpan, ...]
             or not first <= end <= first + steps
             or segment.get("checkpoint_verified") is not True
             or segment.get("recovery_requires_reconciliation") is not False
-            or segment.get("discontinuities", []) != []
+            or segment.get("discontinuities", []) != history
             or any(k.endswith("error") or k.endswith("error_type") for k in segment)
         ):
             raise ValueError(

@@ -66,6 +66,11 @@ def trial(tmp_path):
     loop.step()
     initial = tmp_path / "checkpoint"
     loop.checkpoint(initial, snapshotter=env, code_revision=REVISION)
+    return continuation_trial(tmp_path, initial)
+
+
+def continuation_trial(tmp_path, initial):
+    """Run ordinary segments from either an original or recovered native save."""
     native = tmp_path / "native"
     native.mkdir()
 
