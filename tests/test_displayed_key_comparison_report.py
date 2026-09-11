@@ -27,12 +27,8 @@ def write(path, value):
 def fixture(tmp_path):
     plan = json.loads((ROOT / PLAN / "cohort.json").read_text())
     hashes = {}
-    for name in {
-        row[key] for row in plan["sequence"] for key in ("condition", "trial")
-    }:
-        hashes[name] = write(
-            tmp_path / PLAN / name, json.loads((ROOT / PLAN / name).read_text())
-        )
+    for name in {row[key] for row in plan["sequence"] for key in ("condition", "trial")}:
+        hashes[name] = write(tmp_path / PLAN / name, json.loads((ROOT / PLAN / name).read_text()))
     digest = write(tmp_path / PLAN / "cohort.json", plan)
     index = {
         "schema_version": "fortgym.public-displayed-key-index/v1",
@@ -102,12 +98,8 @@ def test_all_declared_slots_remain_without_published_results(fixture):
         row["id"] for row in fixture[1]["sequence"]
     ]
     assert all(row["result"] is None for row in data["trials"])
-    assert all(
-        row["publication_state"] == "no_published_result" for row in data["trials"]
-    )
-    assert (
-        data["all_attempts_reported"] is data["all_saved_boundaries_reached"] is False
-    )
+    assert all(row["publication_state"] == "no_published_result" for row in data["trials"])
+    assert data["all_attempts_reported"] is data["all_saved_boundaries_reached"] is False
     assert data["strong_ranking_supported"] is data["live_status_included"] is False
 
 
@@ -164,11 +156,7 @@ def test_reporting_all_outcomes_is_not_the_same_as_every_model_reaching_the_boun
         )
     data = report(fixture)
     assert data["all_attempts_reported"] is True
-    assert (
-        data["all_saved_boundaries_reached"]
-        is data["strong_ranking_supported"]
-        is False
-    )
+    assert data["all_saved_boundaries_reached"] is data["strong_ranking_supported"] is False
 
 
 def test_all_six_equal_boundaries_still_do_not_create_a_strong_ranking(fixture):
@@ -265,9 +253,7 @@ def test_all_other_controls_must_match_even_when_each_config_hash_is_valid(fixtu
         report(fixture)
 
 
-@pytest.mark.parametrize(
-    "mutation", ["duplicate", "bool_replicate", "missing_replicate"]
-)
+@pytest.mark.parametrize("mutation", ["duplicate", "bool_replicate", "missing_replicate"])
 def test_cohort_denominator_cannot_shrink_or_duplicate(fixture, mutation):
     root, plan, index = fixture
     if mutation == "duplicate":
@@ -347,13 +333,9 @@ def test_actual_declared_cohort_index_has_no_fabricated_results():
         boundary=64,
     )
     assert data["declared_attempts"] == 6
-    assert (
-        data["plan_sha256"]
-        == "da38987cb71b1bafde853d10e476e0c9539a950c9d90580ff1c2b1ba7cb839b0"
-    )
+    assert data["plan_sha256"] == "da38987cb71b1bafde853d10e476e0c9539a950c9d90580ff1c2b1ba7cb839b0"
     assert all(
-        row["model"] in {"gpt-6-astra", "gpt-5.6-sol", "gpt-5.6-terra"}
-        for row in data["trials"]
+        row["model"] in {"gpt-6-astra", "gpt-5.6-sol", "gpt-5.6-terra"} for row in data["trials"]
     )
     assert data["strong_ranking_supported"] is False
 
@@ -367,8 +349,7 @@ def test_actual_saved_sol_outcome_is_preserved_without_a_success_claim():
     row = data["trials"][0]
     assert row["campaign_id"] == "bindings-comparison-20260911-sol-r1"
     assert (
-        row["evidence_sha256"]
-        == "5d0cb5ea363ef5ac4bf24d8336ea1479bbd84a1966a90f68a646d0635923af66"
+        row["evidence_sha256"] == "5d0cb5ea363ef5ac4bf24d8336ea1479bbd84a1966a90f68a646d0635923af66"
     )
     assert row["result"]["status"] == "saved" and row["result"]["responses"] == 64
     assert row["result"]["checkpoint"]["saved_elapsed_ticks"] == 2900
