@@ -27,7 +27,7 @@
 <link rel="icon" type="image/svg+xml" href="/static/brand/favicon.svg">
 <link rel="icon" type="image/png" sizes="32x32" href="/static/brand/favicon-32.png">
 <link rel="apple-touch-icon" sizes="180x180" href="/static/brand/apple-touch-icon.png">
-<link rel="stylesheet" href="/static/fort-labs.css?v=20260711-2">
+<link rel="stylesheet" href="/static/fort-labs.css?v=20260911-3">
 <link rel="stylesheet" href="/static/home-watch.css?v=1">
 <script type="module" src="/static/home-watch.mjs?v=20260911-2"></script>
 <style>
@@ -161,7 +161,7 @@
       <a href="/worlds">Runs</a>
       <a href="/findings">Findings</a>
       <a href="#about">About</a>
-      <a class="fl-live-link" href="/live"><span class="fl-status-dot" id="nav-live-dot"></span><span id="nav-live-label">No live run</span></a>
+      <a class="fl-live-link" href="/#watch-root"><span class="fl-status-dot" id="nav-live-dot"></span><span id="nav-live-label">Watch</span></a>
     </nav>
     <button class="fl-menu-button" type="button" aria-label="Open navigation" aria-expanded="false" aria-controls="fl-mobile-menu" data-fl-menu-button>☰</button>
   </div>
@@ -173,7 +173,7 @@
   <a href="/worlds">Runs <span>04</span></a>
   <a href="/findings">Findings <span>05</span></a>
   <a href="#about">About <span>06</span></a>
-  <a href="/live">Live viewer <span>07</span></a>
+  <a href="/#watch-root">Spectator <span>07</span></a>
   <a href="/campaigns">Campaigns <span>08</span></a>
 </nav>
 
@@ -231,8 +231,8 @@
         <div class="fl-kicker" id="worlds-title">Worlds on record</div>
         <a class="fl-link" href="/worlds">Explore all recorded worlds →</a>
       </div>
-      <div class="worlds-track" id="worlds-track" aria-live="polite">
-        <div class="fl-empty">Loading recorded gameplay…</div>
+      <div class="published-recording-list" id="worlds-track" data-published-recordings aria-live="polite">
+        <p class="fl-empty">Astra, Sol and Terra recordings. <a href="/worlds">Browse all replays →</a></p>
       </div>
     </div>
   </section>
@@ -255,13 +255,13 @@
     </div>
   </section>
 
-  <section class="latest-band" aria-label="Latest run summary">
+  <section class="latest-band" aria-label="Latest published recording">
     <div class="fl-wrap fl-data-band latest-grid">
-      <div class="fl-data-cell"><div class="fl-data-label">Latest run</div><div class="fl-data-value" id="latest-model">Loading…</div></div>
+      <div class="fl-data-cell"><div class="fl-data-label">Latest recording</div><div class="fl-data-value" id="latest-model">See Runs</div></div>
       <div class="fl-data-cell"><div class="fl-data-label">Status</div><div class="fl-data-value" id="latest-status">--</div></div>
-      <div class="fl-data-cell"><div class="fl-data-label">Step</div><div class="fl-data-value" id="latest-step">--</div></div>
-      <div class="fl-data-cell"><div class="fl-data-label">Seed</div><div class="fl-data-value" id="latest-seed">--</div></div>
-      <div class="fl-data-cell"><div class="fl-data-label">Score</div><div class="fl-data-value fl-data-value-acid" id="latest-score">--</div></div>
+      <div class="fl-data-cell"><div class="fl-data-label">Decisions</div><div class="fl-data-value" id="latest-step">--</div></div>
+      <div class="fl-data-cell"><div class="fl-data-label">Saved through</div><div class="fl-data-value" id="latest-save">--</div></div>
+      <div class="fl-data-cell"><div class="fl-data-label">Ranking</div><div class="fl-data-value" id="latest-ranking">Not compared</div></div>
       <div class="fl-data-cell latest-action"><a class="fl-btn" id="latest-link" href="/worlds">Open run →</a></div>
     </div>
   </section>
@@ -282,7 +282,7 @@
       <div class="fl-table-shell" style="margin-top:36px">
         <table class="fl-table" aria-label="Comparable Fort-Eval results">
           <thead><tr><th>Model</th><th>Protocol</th><th>Worlds</th><th>Mean score</th><th>Best score</th><th>Watch</th></tr></thead>
-          <tbody id="results-body"><tr><td colspan="6"><div class="fl-empty results-empty">The first experimental cohort is being assembled.</div></td></tr></tbody>
+          <tbody id="results-body"><tr><td colspan="6"><div class="fl-empty results-empty">No comparable benchmark results are published here. The recordings above are exploratory runs, not a ranking.</div></td></tr></tbody>
         </table>
       </div>
     </div>
@@ -316,14 +316,14 @@
     <div class="fl-wrap story-layout">
       <div>
         <div class="fl-eyebrow">The full story</div>
-        <h2 class="fl-section-title">Watch a fortress unfold across space, time, and z-levels.</h2>
+        <h2 class="fl-section-title">Follow the fortress one decision at a time.</h2>
         <p class="fl-copy">Follow where the agent looked, what it tried, and how the world responded.</p>
         <p class="fl-muted fl-mono" style="font-size:12px">Spectator view · the agent plays from its declared interface.</p>
         <a class="fl-link" id="story-link" href="/worlds">Explore a run →</a>
       </div>
       <div>
         <div class="fl-media story-media"><canvas id="story-canvas" aria-label="Recorded Dwarf Fortress world"></canvas><div class="fl-media-source" id="story-source">Loading recorded world…</div></div>
-        <div class="story-legend"><span>Recorded world</span><span>Decision history in replay</span><span>Full World view in replay</span></div>
+        <div class="story-legend"><span>Captured game screen</span><span>Decision history</span><span>Chosen keys and stated intent</span></div>
       </div>
     </div>
   </section>
@@ -377,8 +377,8 @@
   <div class="fl-wrap fl-footer-grid">
     <div><div class="fl-footer-mark"><span>FORT</span> LABS</div><p class="fl-footer-copy">Worlds for long-horizon intelligence. Fort-Eval is the first environment; Fort-Gym is the open-source harness.</p></div>
     <div><div class="fl-footer-title">Explore</div><div class="fl-footer-links"><a href="/results">Results</a><a href="/protocols">Protocols</a><a href="/worlds">Runs</a><a href="/findings">Findings</a></div></div>
-    <div><div class="fl-footer-title">Research</div><div class="fl-footer-links"><a href="https://github.com/lemoz/fort-gym/blob/main/docs/FORT_EVAL_SPEC.md">Methodology</a><a href="https://github.com/lemoz/fort-gym">GitHub</a><a href="/live">Live viewer</a></div></div>
-    <div><div class="fl-footer-title">Experiment status</div><div class="fl-footer-links"><a id="footer-status-link" href="/live">No live run</a><a href="/worlds">Recorded worlds</a></div></div>
+    <div><div class="fl-footer-title">Research</div><div class="fl-footer-links"><a href="https://github.com/lemoz/fort-gym/blob/main/docs/FORT_EVAL_SPEC.md">Methodology</a><a href="https://github.com/lemoz/fort-gym">GitHub</a><a href="/#watch-root">Spectator</a></div></div>
+    <div><div class="fl-footer-title">Experiment status</div><div class="fl-footer-links"><a id="footer-status-link" href="/#watch-root">Watch</a><a href="/worlds">Recorded worlds</a></div></div>
   </div>
 </footer>
 
@@ -389,41 +389,6 @@
   const FL = window.FortLabs;
   FL.initShell();
   const $ = id => document.getElementById(id);
-
-  function uniqueRuns(runs) {
-    const seen = new Set();
-    return runs.filter(run => run?.token && !seen.has(run.token) && seen.add(run.token));
-  }
-
-  function renderWorldRail(runs) {
-    const track = $('worlds-track');
-    if (!runs.length) {
-      track.innerHTML = '<div class="fl-empty">The next world begins soon. Explore the methodology while the experiment is prepared.</div>';
-      return;
-    }
-    track.innerHTML = runs.slice(0, 6).map((run, index) => `
-      <a class="world-tile" href="${FL.runUrl(run)}" aria-label="Open ${FL.escapeHtml(run.model || 'recorded run')}">
-        <div class="world-tile-media"><canvas id="rail-canvas-${index}"></canvas><div class="world-tile-state"><span class="fl-status-dot ${FL.escapeHtml(run.status)}"></span>${FL.escapeHtml(FL.statusLabel(run.status))}</div></div>
-        <div class="world-tile-meta">
-          <div><div class="world-tile-model">${FL.escapeHtml(run.model || 'Unknown model')}</div><div class="world-tile-step">Step ${FL.escapeHtml(run.step ?? 0)} / ${FL.escapeHtml(run.max_steps ?? '--')}</div></div>
-          <div class="world-tile-score">${FL.escapeHtml(FL.formatNumber(run.score))}</div>
-        </div>
-      </a>`).join('');
-    runs.slice(0, 6).forEach((run, index) => FL.loadRunFrame(run, $(`rail-canvas-${index}`)));
-  }
-
-  function applyFeatured(run) {
-    if (!run) return;
-    const url = FL.runUrl(run);
-    $('latest-model').textContent = run.model || 'Unknown model';
-    $('latest-status').innerHTML = `<span class="fl-status-dot ${FL.escapeHtml(run.status)}"></span>${FL.escapeHtml(FL.statusLabel(run.status))}`;
-    $('latest-step').textContent = `${run.step ?? 0} / ${run.max_steps ?? '--'}`;
-    $('latest-seed').textContent = run.seed_save || 'Not reported';
-    $('latest-score').textContent = FL.formatNumber(run.score);
-    $('latest-link').href = url;
-    $('hero-run-link').href = url;
-    $('hero-run-link').textContent = FL.canWatchLive(run) ? 'Watch live run →' : 'Open latest run →';
-  }
 
   function renderResults(groups) {
     const body = $('results-body');
@@ -448,47 +413,14 @@
 
   async function loadHome() {
     try {
-      const page = await FL.fetchJson('/public/worlds?limit=24');
-      const runs = uniqueRuns(Array.isArray(page.items) ? page.items : []);
-      renderWorldRail(runs);
-      applyFeatured(runs[0]);
-      const live = runs.find(run => FL.canWatchLive(run));
-      if (live) {
-        $('nav-live-dot').className = 'fl-status-dot running';
-        $('nav-live-label').textContent = 'Live now';
-        $('footer-status-link').textContent = 'Live now';
-        $('footer-status-link').href = FL.runUrl(live);
-      }
-      const storyRun = runs[1] || runs[0];
-      const reasonRun = runs[2] || runs[0];
-      if (storyRun) {
-        $('story-link').href = FL.runUrl(storyRun);
-        FL.loadRunFrame(storyRun, $('story-canvas'), $('story-source'));
-      } else {
-        FL.renderUnavailable($('story-canvas'));
-        $('story-source').textContent = 'No recorded world available';
-      }
-      if (reasonRun) FL.loadRunFrame(reasonRun, $('reason-canvas'), $('reason-source'));
-      else {
-        FL.renderUnavailable($('reason-canvas'));
-        $('reason-source').textContent = 'No recorded world available';
-      }
-    } catch (_) {
-      $('worlds-track').innerHTML = '<div class="fl-empty">Recorded worlds are temporarily unavailable.</div>';
-      $('latest-model').textContent = 'Run data unavailable';
-      FL.renderUnavailable($('story-canvas'), 'Recorded worlds temporarily unavailable');
-      FL.renderUnavailable($('reason-canvas'), 'Recorded worlds temporarily unavailable');
-      $('story-source').textContent = 'Recorded worlds temporarily unavailable';
-      $('reason-source').textContent = 'Recorded worlds temporarily unavailable';
-    }
-    try {
       const overview = await FL.fetchJson('/public/overview?recent_limit=24');
       renderResults(overview.comparison_groups);
-    } catch (_) {}
+    } catch (_) { $('results-body').innerHTML = '<tr><td colspan="6">Historical benchmark results unavailable. Recordings above remain accessible.</td></tr>'; }
   }
 
   loadHome();
 })();
 </script>
+<script type="module" src="/static/published-recordings.mjs?v=20260911-1"></script>
 </body>
 </html>
