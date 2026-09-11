@@ -125,6 +125,27 @@ native-menu outcomes are retained. Its v1 observer is terminal and no VM from
 that completed window remains running. The final save's separate fresh reload
 remains unverified; the distinct Astra attempt-1 continuation above is active.
 
+## Prepared experiment: native character-input reference
+
+A separate opt-in prompt profile is pushed at
+`e8997480e660ccaeb36d3081f7e1cf5adc5fa54b` in
+[draft PR #157](https://github.com/lemoz/fort-gym/pull/157). It explains native
+command events versus literal character events while retaining the existing
+memory-replacement instructions. Both earlier prompt profiles remain byte-for-byte
+unchanged. All original cohort conditions, the active Astra owner, native image,
+host courier and currently serving website remain unchanged.
+
+The [experiment note](https://github.com/lemoz/fort-gym/blob/e8997480e660ccaeb36d3081f7e1cf5adc5fa54b/docs/KEYBOARD_CHARACTER_REFERENCE.md)
+binds the distinction to version-matched DFHack source and sets out a controlled
+native diagnostic followed by separate paired model trials. Neither has launched.
+This is a hypothesis prompted by ineffective workshop-menu inputs, not a proven
+menu fix, gameplay improvement, or addition to the unchanged matched results.
+Focused tests: 100 passed. Full offline suite: 4,967 passed, 10 skipped.
+Changed-file lint and source-module type checks passed; broader checks retain
+existing unrelated failures. Exact-head GitHub CI `34566980293` is running.
+No paid model call, new VM, main merge or public deployment was performed for
+this change.
+
 ## Current delivery: recorded endurance and live continuation
 
 The next-stage host and all six exact own-save configurations are pushed at
