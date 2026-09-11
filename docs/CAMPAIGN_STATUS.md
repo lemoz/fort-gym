@@ -4,7 +4,7 @@ Verified September 11, 2026 UTC. The Year-Two Autonomous Play objective remains
 unfinished; work continues toward the same objective. The owner has approved starting the project
 work for [Astra standard-input experiments](ASTRA_STANDARD_INPUT_EXPERIMENTS.md).
 
-## Current run: Terra attempt 2 resumed; three decision-128 saves audited
+## Current run: Sol attempt 2 resumed; four decision-128 saves audited
 
 Astra attempt 1 completed its declared 64-to-128 window from its own save and
 memory. Its [audited result](../experiments/evidence/keyboard_matched_astra_r1_continuation_64_128_20260911.json)
@@ -52,7 +52,18 @@ window. No human gameplay rescue or prompt change was introduced.
 Its complete model receipts, own memory/usage, initial native reload, final
 save and VM teardown passed independent audit. Both shutdown commands returned
 zero; a separate fresh reload of the new final checkpoint remains unverified.
-After that audited teardown, Terra attempt 2 started its own declared 64-to-128
+Terra attempt 2 also completed its own declared 64-to-128 continuation. Its
+[audited result](../experiments/evidence/keyboard_matched_terra_r2_continuation_64_128_20260911.json)
+retains 13,500 new ticks and 64 new responses: 32,500 ticks, 128 responses and
+4,109,237 returned tokens cumulatively. Seven dwarves remain alive with no
+recorded deaths, no completed bed, farm or workshop, food50 and drinks53.
+Drinks fell from 60; sustainable production remains unproven. One unsupported
+native-key action and all 63 no-error clock outcomes remain in the record.
+Own-save memory/usage, all 64 model receipts, the initial native reload, final
+save and teardown passed audit; both shutdown commands returned zero. The new
+final checkpoint's separate fresh reload has not yet been verified.
+
+After that audited teardown, Sol attempt 2 started its own declared 64-to-128
 continuation. VM/container start and read-only configuration checks passed.
 Its live activity remains provisional until independent terminal audit.
 
@@ -134,8 +145,8 @@ in [draft PR #154](https://github.com/lemoz/fort-gym/pull/154). It reproduces
 the three available own-save 128-to-256 configurations and adds a pure
 multi-segment structural checker for the forthcoming full auditor. All
 151 focused checks and the full local suite (4,851 passed, 10 skipped) passed.
-Exact-head GitHub CI run `34555496095` was still running at this update; no CI
-success is inferred. The current website and native owner remain unchanged.
+Exact-head GitHub CI run `34555496095` subsequently passed. The current website
+and native owner remain unchanged by this preparation.
 The remaining decision-128 attempts must complete and be audited in order;
 full multi-segment owner/auditor integration is still required. No next-stage
 gameplay or Year-Two success is claimed by this preparation.
