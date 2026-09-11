@@ -117,3 +117,32 @@ Tests cover recovery metadata rejection, live/replay transitions, the retained
 unsaved-tail warning, exact historical hashes and the new saved tick total.
 Deploy as a pinned static-only fast-forward. Preserve the API and game process
 identities, database and untracked files; no service restart or gameplay launch.
+
+## Live relay without service changes
+
+The next release starts at `41b10423178c69eb02e91f842a842e0c98209aa4`.
+The existing public API has no campaign directory configured. When it reports
+`not_connected`, the homepage now checks one sanitized static live derivative.
+A connected API remains authoritative; an absent, malformed or expired relay
+leaves the recorded viewer available. Explicit recording links never auto-switch.
+
+The bounded observer attaches to one already-running owner, pinned by process
+start time, command and directory. It reads completed, hash-bound provider
+receipts through the frozen observer at `2778519991899ee3360db1caf6daec29721bbc4a`.
+It exports only captured screen tiles, chosen keys and explicit action intent.
+An action is labeled chosen, not execution-verified. Provider payloads, private
+memory, account details and internal reasoning are not exported.
+
+Authenticated SSH replaces only `web/static/live/watch-active.json`, with a
+bounded allowlisted payload, atomic write, freshness check and owner-conflict
+guard. Observation errors do not imply the game stopped. A confirmed owner exit
+ends the relay; a lost observer expires after 30 seconds. Viewers have no input
+path to the game. The live file is an ignored, disposable derivative, not a save
+or a replacement for immutable native evidence and audited recordings.
+
+Deploy as a pinned fast-forward, preserving all recordings, API/game process
+identities, database and unrelated files. No environment change, service restart,
+game launch or infrastructure change is involved. Tests cover fallback selection,
+privacy filtering, invalid clocks, stale feeds, owner conflicts, PID reuse,
+observation failures and bounded terminal delivery failure. Runtime receipts
+must distinguish public HTTP/data verification from browser visual QA.

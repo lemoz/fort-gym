@@ -51,6 +51,19 @@ export function liveState(value, now = Date.now() / 1000) {
       value.observed_at_unix > now + 5 || value.fresh_for_seconds !== 30) throw Error('Invalid live clock');
   return now - value.observed_at_unix > 30 ? 'stale' : value.status;
 }
+
+export async function readLiveStatus(request) {
+  const primary = await request('/public/watch-active');
+  liveState(primary);
+  if (primary.status !== 'not_connected') return primary;
+  try {
+    const relay = await request('/static/live/watch-active.json?t=' + Math.floor(Date.now() / 10000));
+    liveState(relay);
+    return relay;
+  } catch (_) {
+    return primary; // An absent or invalid relay must not break recorded viewing.
+  }
+}
 export function validateRecording(data) {
   const count = value => Number.isSafeInteger(value) && value >= 0;
   if (data?.schema_version !== 'fortgym.watch-recording/v1' || !Array.isArray(data.frames) ||
