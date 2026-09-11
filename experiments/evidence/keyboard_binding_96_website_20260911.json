@@ -1,0 +1,98 @@
+{
+  "schema_version": "fortgym.public-binding-campaign-website-publication/v1",
+  "status": "local_http_accepted_remote_draft_pushed",
+  "website_revision": "f9f6fdc1819a7b50c42ebf598e3b96279ee4c980",
+  "website_branch": "codex/campaign-binding-window-site",
+  "base_revision": "132daed6ba2e43c620fa499524705183c6ced03f",
+  "pull_request": "https://github.com/lemoz/fort-gym/pull/162",
+  "local_preview_url": "http://127.0.0.1:8857/campaigns",
+  "campaign_endpoint": "/public/keyboard-binding-campaign",
+  "campaign_response_sha256": "5e84cd6bcd61ca377bb324b11c8e487446efaf251180ec67f3d2ac8fa6f53fc4",
+  "native_result_path": "experiments/evidence/keyboard_binding_astra_r1_continuation_64_96_20260911.json",
+  "native_result_sha256": "2b49a0e15e8d9dc80dfd4af3b020a83b58bc94eb29e50ed4fcba1f96f043986e",
+  "reload_result_path": "experiments/evidence/keyboard_binding_astra_r1_reload_20260911.json",
+  "reload_result_sha256": "291bee15debe7c47d606221b61e99ce8eef0415233480042a4fa0720c5d39458",
+  "independent_campaigns": 1,
+  "displayed_decisions": 96,
+  "displayed_saved_elapsed_ticks": 59500,
+  "displayed_total_tokens": 2567162,
+  "checkpoint_reload_display": [
+    {
+      "decisions": 32,
+      "save_verified": true,
+      "separate_fresh_reload_verified": true
+    },
+    {
+      "decisions": 64,
+      "save_verified": true,
+      "separate_fresh_reload_verified": false
+    },
+    {
+      "decisions": 96,
+      "save_verified": true,
+      "separate_fresh_reload_verified": false
+    }
+  ],
+  "original_and_historical_routes_unchanged": true,
+  "stable_route_sha256": {
+    "/public/keyboard-cohort": "86e12b6574540c72f2a01c767cffc88ab7c8af29b32d335c7a57ae58f39532ba",
+    "/public/keyboard-cohort-continuations": "d3fb3c1b5ac432772cb0e7926c9dc75402781e61ee81c5d37b33a713a8e16101",
+    "/public/keyboard-cohort-endurance-records": "d535f85746dd487f6026ab3f840c3ccd360c58ee52485ba48522e40c1795619d",
+    "/public/keyboard-campaigns": "e3f1665398788b219c15d2365445e58b449c36a7430f9c153ac815202016cfcf",
+    "/public/keyboard-binding-results": "5b1b61a30aa994925617d4d1c9f4f1fbb35e8bffefc16d3b1078789cbaed9ece"
+  },
+  "generic_feed_http_status": 200,
+  "published_snapshots": 11,
+  "full_tests": {
+    "passed": 5001,
+    "skipped": 10,
+    "failed": 0
+  },
+  "static_checks": {
+    "changed_file_ruff_passed": true,
+    "javascript_syntax_passed": true,
+    "ruff_findings_base_and_current": 10,
+    "mypy_errors_base_and_current": 465,
+    "mypy_files_base_and_current": 27,
+    "same_diagnostics_ignoring_shifted_line_numbers": true,
+    "globally_clean": false,
+    "python_formatter": "ruff at line length 100; Black unavailable in selected environment and offline cache"
+  },
+  "private_receipt_sha256": {
+    "full_tests_xml": "17836de15db8b9ca945fc3f7c8e94c315491863d47e7c89947b4f8d94e2e2669",
+    "before_http": "1c3fa7db0dfd3059d8cd1bce575bfc58d38d39e3bfd24ca16fd468a434ea211d",
+    "after_http": "1d10ee548eb87f95e0428e8ff9001e65a58ea2c53d5949d7ebb8232f0caeeb9d",
+    "http_acceptance_source": "0602dbe22fb84bd48ad37cc4e0608c5ff7d269040419a344e0d47de4cfc4d4f7",
+    "preview_source": "206764799c10af83b1bee39a1e50a07b4d161d43725ceac702bb62f30d61be2b"
+  },
+  "github_ci_at_publication": {
+    "run_id": 34591095349,
+    "conclusion": "success",
+    "headSha": "f9f6fdc1819a7b50c42ebf598e3b96279ee4c980",
+    "status": "completed",
+    "url": "https://github.com/lemoz/fort-gym/actions/runs/34591095349"
+  },
+  "proof_limits": {
+    "browser_visual_qa_performed": false,
+    "dom_test_double_is_browser_acceptance": false,
+    "additional_native_gameplay": false,
+    "model_calls": 0,
+    "game_vm_starts": 0,
+    "main_merged": false,
+    "public_website_deployed": false,
+    "full_year_two_goal_complete": false
+  },
+  "checkpoint_shutdown_warning_display": [
+    {
+      "decisions": 64,
+      "guest_command_warning": true
+    },
+    {
+      "decisions": 96,
+      "guest_command_warning": false
+    }
+  ],
+  "previous_64_decision_timeline_unchanged": true,
+  "previous_timeline_sha256": "570df872299baa60e6349806a0f9d30edcdea672c9843d41278bbb131d1d3b98",
+  "focused_campaign_chain_tests_passed": 27
+}

@@ -46,9 +46,24 @@ No separate post-run fresh reload has been performed on this decision-96 save.
 This displayed-key campaign has elapsed about 0.148 years, not its first
 anniversary. Actual dollar charges are unreported, not zero. No GCE, model
 fallback, reset redemption, disk growth or evidence pruning occurred.
-The local website still displays the audited decision-64 record in draft PR161;
-publishing the decision-96 website view is next, followed by longer actual play
-and repeated comparable three-model evaluation. Main merge and public deployment
+The [decision-96 website update](../experiments/evidence/keyboard_binding_96_website_20260911.json)
+is now locally HTTP-accepted and pushed in [draft PR162](https://github.com/lemoz/fort-gym/pull/162),
+stacked on PR161. Clean source `f9f6fdc1819a7b50c42ebf598e3b96279ee4c980`
+serves all 96 decision rows and the 32/64/96 checkpoints. The decision-64 shutdown
+warning remains attached to that earlier save; decision 96 shows clean shutdown.
+The page shows the latest three menu-blocked attempts and unavailable room count.
+
+All five older public endpoints remain byte-identical, the first 64 timeline
+rows are unchanged, and the generic feed still serves all 11 published snapshots.
+The full offline suite passed 5,001 tests with 10 skipped; 27 focused API/chain/
+DOM-test-double checks passed. Exact-head GitHub CI run 34591095349 passed.
+The same 10 repository-wide Ruff findings and 465 mypy errors remain, with no new
+diagnostics. No browser visual/layout acceptance is claimed; the app preview
+handoff returned queued. Website work added no native gameplay or model calls.
+
+Next: longer actual play from the verified decision-96 own-save checkpoint,
+followed by repeated comparable three-model evaluation. No reload-only detour is
+required before the ordinary continuation. Main merge and public deployment
 remain open. The full Year-Two/Cross-Model goal remains active.
 
 ## Earlier decision-64 result and verified website delivery
