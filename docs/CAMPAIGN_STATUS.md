@@ -12,14 +12,46 @@ and [reload verification](#later-checkpoint-1057-verification-and-website-delive
 Do not confuse that achieved duration with the younger, independent matched
 cohort below. Long-term self-sufficiency and the full delivery goal remain open.
 
-## Current state: displayed-key Astra continuation reached decision 64
+## Current state: displayed-key Astra continuation reached decision 96
 
-The next unchanged [decision-64-to-96 window](../experiments/keyboard_binding_continuation_20260911/window-64-96.json)
-is predeclared: one 32-response segment from the original decision-64 save.
-It preserves model, prompt, memory, usage and controls, and uses the existing
-dedicated local runtime with mandatory shutdown. Preparation passed 22 checks;
-that is not additional gameplay evidence. The verified totals below remain
-authoritative until the new window is executed and audited.
+The [audited decision-64-to-96 continuation](../experiments/evidence/keyboard_binding_astra_r1_continuation_64_96_20260911.json)
+completed with **32 new responses, 161 confirmed key presses, 30,000 new saved
+ticks and 984,136 new returned tokens**. Cumulative totals are **96 responses,
+59,500 saved ticks and 2,567,162 tokens**. This is the same own-save campaign;
+model, Medium reasoning, controls, prompt, memory and usage limits were unchanged.
+No human gameplay rescue or budget extension occurred. The declaration was
+pushed before launch at `9012a07dfb3dfac3ca2c2945fa82b2515f87f6ae`.
+
+All seven dwarves remain alive with zero recorded deaths. Completed placed beds
+increased from four to five and workshops from two to three; one farm remains.
+Food increased from 40 to 58 and drinks from 103 to 121. These are observed stocks
+and completed structures, not measured production rates or sustainability.
+Functional-room measurement is unavailable at the final boundary, not zero.
+Wood and stone also remain unknown in the recognized metrics.
+
+All 32 new input batches were accepted. Decisions 74, 78 and 91 requested time
+while a blocking native menu was open and advanced zero ticks. Their following
+decisions advanced time; these navigation failures and recoveries remain in the
+timeline. The other 29 clock outcomes report no error. The result does not turn
+intentions into successful construction or hide zero-tick failures.
+
+Independent review passed exact agent restoration, preserved history and usage,
+all 32 actual provider receipts, native keys and clock deltas, the settled save,
+and teardown. The owner and audit both exited zero. Container cleanup, guest
+poweroff and VM stop each returned zero, and the VM was independently observed
+stopped. The original checkpoint remains unchanged. New native save: year30,
+tick76,301, manifest `9576d897a176f6f50face655a11ae25cdd9a320a37eec30566c4cdbce4f6d77d`.
+No separate post-run fresh reload has been performed on this decision-96 save.
+
+This displayed-key campaign has elapsed about 0.148 years, not its first
+anniversary. Actual dollar charges are unreported, not zero. No GCE, model
+fallback, reset redemption, disk growth or evidence pruning occurred.
+The local website still displays the audited decision-64 record in draft PR161;
+publishing the decision-96 website view is next, followed by longer actual play
+and repeated comparable three-model evaluation. Main merge and public deployment
+remain open. The full Year-Two/Cross-Model goal remains active.
+
+## Earlier decision-64 result and verified website delivery
 
 The [own-save continuation from 32 to 64](../experiments/evidence/keyboard_binding_astra_r1_continuation_32_64_20260911.json)
 completed with **32 new responses, 182 confirmed key presses and 14,000 new

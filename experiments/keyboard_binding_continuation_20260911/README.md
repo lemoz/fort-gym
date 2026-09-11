@@ -1,4 +1,46 @@
-# Displayed-key Astra continuation: decisions 32 to 64
+# Displayed-key Astra own-save continuations
+
+## Latest: decisions 64 to 96 completed
+
+The unchanged [window-64-96.json](window-64-96.json) was pushed before launch
+at `9012a07dfb3dfac3ca2c2945fa82b2515f87f6ae`. It completed and independently
+passed terminal review: 32 new responses, 161 confirmed key presses, 30,000
+new saved ticks and 984,136 new tokens. Totals:96 responses,59,500 ticks,
+2,567,162 returned tokens. Seven living, zero recorded dead; five completed
+placed beds, three workshops, one farm, food58 and drinks121. Functional-room,
+wood and stone metrics are unknown at the final boundary. No sustainability
+or completed-production-rate claim is supported.
+
+The [new versioned result](../evidence/keyboard_binding_astra_r1_continuation_64_96_20260911.json)
+has SHA `2b49a0e15e8d9dc80dfd4af3b020a83b58bc94eb29e50ed4fcba1f96f043986e`.
+Audit SHA `9cd726c200a1730ae8db401afc0ee0ff041fd73ee72e87a1729754c26503f03b`;
+checkpoint manifest `9576d897a176f6f50face655a11ae25cdd9a320a37eec30566c4cdbce4f6d77d`.
+Original checkpoint/memory/history/configuration and cumulative limits were
+preserved. All inputs were accepted; three blocking-menu zero-tick outcomes
+and their subsequent time advances remain inspectable. Both guest poweroff and
+VM stop returned zero, with independent stopped proof. No GCE, paid fallback,
+local model, reset redemption, disk growth or pruning; actual dollars null.
+
+The parameterized `export_window.py` binds the explicit source-result and audit
+hashes and rechecks preserved configuration, accounting and checkpoint lineage.
+Unlike the initial trial's condition summary, continuation records carry the
+full native condition. The exporter resolves the first trial's hash-pinned
+configuration rather than treating those different JSON shapes as equivalent.
+An initial equality check caught that shape mismatch; after the explicit schema
+handling and boundary tests, it reproduced the previous published decision-64
+result exactly, including its32 provider receipts. Original records and executed
+export.py remain unchanged. It also exported this audited96 result successfully.
+All114 displayed-key declaration/result/export regressions passed, along with
+changed-file Ruff and whitespace checks. These checks supplement the native
+audit; they are not additional gameplay or website acceptance.
+
+Private retained owner/evidence: `keyboard-bindings-astra-r1-64-96-v1` under the
+existing keyboard-matched-pilot-v1 artifact folder. No fresh post-run reload of
+checkpoint96 is claimed. The website remains at64 pending its next reviewed
+update. This is one campaign at about0.148 elapsed years, not another replicate,
+a historical-cohort member, or completion of the full project goal.
+
+## Earlier declaration and result: decisions 32 to 64
 
 Predeclared continuation of campaign `bindings-20260911-astra-r1`, not a new
 attempt, an old native-event-name cohort member, or a replay of the diagnostic
