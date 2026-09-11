@@ -1,0 +1,18 @@
+{
+  "schema_version": "fortgym.codex-keyboard-window/v1",
+  "condition_id": "binding-pilot-astra-medium-native-keyboard-120x40",
+  "original_condition": "astra-condition.json",
+  "continuation_from_next_step": 32,
+  "continuation_checkpoint_sha256": "ce25bca850526f6863c2c6fb3d4ac3a048b3791898df764021d815d273db3541",
+  "steps_per_segment": 32,
+  "max_segments": 1,
+  "reset_memory": false,
+  "reset_usage": false,
+  "strategy_intervention": false,
+  "snapshot_profile": "native_menu_preserving_save/v4",
+  "runtime_rpc_transport": "native-rpc",
+  "private_measurement_profile": "fortgym.campaign-food-measurement/v1",
+  "private_measurement_timeout_seconds": 15,
+  "resource_observation_profile": "fortgym.native-resource-observations/v1",
+  "hypothesis": "Under unchanged displayed-key controls, Astra can resume its own saved plans and continue fortress development without manual gameplay intervention. Record construction, stock changes, population, accepted inputs, clock outcomes and model receipts without inferring sustainability from intent or stock changes."
+}
