@@ -12,7 +12,7 @@ and [reload verification](#later-checkpoint-1057-verification-and-website-delive
 Do not confuse that achieved duration with the younger, independent matched
 cohort below. Long-term self-sufficiency and the full delivery goal remain open.
 
-## Current state: first matched displayed-key outcome saved
+## Current state: Sol's first matched outcome saved, Terra running
 
 The [new declaration](../experiments/keyboard_binding_comparison_20260911/README.md)
 sets six fresh attempts, two each for Sol, Terra and Astra at Medium, with the
@@ -30,7 +30,8 @@ This is weak measured gameplay progress, not a successful fortress or a model
 ranking. The saved checkpoint hash is
 `985f00da901dfd8edd684e4bb242cec022a9f8937d3f5f733ff7567684ebdb0e`.
 No new cloud VM, disk growth, evidence deletion, credit purchase, paid API
-fallback or human gameplay rescue occurred. The local VM is verified stopped.
+fallback or human gameplay rescue occurred. Sol's VM teardown was verified
+before the next attempt started.
 
 The existing [public viewer](https://fortgym.live/#watch-root) broadcast this
 attempt through decision 64 and then received its stopped status. Public
@@ -45,10 +46,14 @@ The declaration and reusable owner/audits are pushed at
 Ruff checks pass; all three configurations load through the actual frozen
 native parser. The [shared comparison reader](DISPLAYED_KEY_COMPARISON.md)
 now loads this exact saved result and keeps the five missing outcomes visible
-at the same decision boundary. Its immutable result index does not invent live
+at the same decision boundary. Its source-pinned result index does not invent live
 status or silently mix in longer continuations. Do not relaunch the completed
-Sol owner. Terra r1 is next under the same declared conditions; Sol's later
-64-to-128 continuation and fresh reload remain pending. The full goal is active.
+Sol owner. [Terra r1 is now running](../experiments/evidence/keyboard_binding_comparison_terra_r1_startup_20260911.json)
+under the same declared conditions. Its first native seed load and subscription
+receipt passed verification, and the homepage switched correctly to Terra's
+live screen and moves. The same local VM had 2,803,612 KiB free before this
+game container was created; no disk grew. Sol's later 64-to-128 continuation
+and fresh reload remain pending. The full goal is active.
 
 ## Latest completed milestone: displayed-key Astra saved into Year Two
 
