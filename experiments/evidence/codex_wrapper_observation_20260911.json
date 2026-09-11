@@ -1,0 +1,20 @@
+{
+  "schema_version": "fortgym.installed-codex-wrapper-observation/v1",
+  "observed_at": "2026-09-11T18:50:32Z",
+  "scope": "installed_host_cli_not_per_dispatch_attestation",
+  "cli_version_reported": "codex-cli 0.154.0",
+  "launcher_sha256": "61b0194f3bb6534439c8d26a3ed57d0805f84b884588b761795323eeb92fcf70",
+  "installed_darwin_arm64_binary_sha256": "4f85982624b3898c8991cb80c0981b2aa71070e3537046c9a95950318a95afcc",
+  "associated_active_window": "keyboard-bindings-astra-r1-256-416-v1",
+  "latest_verified_save": 352,
+  "historical_per_dispatch_wrapper_identity": false,
+  "mid_run_upgrade_established": false,
+  "source_or_configuration_changed": false,
+  "model_calls": 0,
+  "global_config_changes": 0,
+  "limitations": [
+    "An installation snapshot cannot attest the wrapper used by earlier calls or every running process.",
+    "Requested model and reasoning effort remain distinct from provider-attested resolved model identity.",
+    "No historical protocol, receipt, declaration or comparison result is rewritten."
+  ]
+}

@@ -121,11 +121,19 @@
   "remaining_integration": {
     "next_pull_request": 137,
     "head": "3ab9fc4c9f553171206d3d7122402ec4493ef2e6",
-    "state": "scope_inspected_full_review_and_fresh_tests_pending",
+    "state": "partial_source_review_complete_full_local_tests_passed_remaining_review_pending",
     "changed_files": 271,
     "insertions": 31717,
     "deletions": 61,
-    "entire_stack_merged": false
+    "entire_stack_merged": false,
+    "review_index": "experiments/evidence/keyboard_harness_review_137_20260911.json",
+    "review": "https://github.com/lemoz/fort-gym/pull/137#issuecomment-5639229687",
+    "base": "main",
+    "draft": true,
+    "local_tests": {
+      "passed": 4327,
+      "skipped": 10
+    }
   },
   "year_two_goal_completed": false
 }

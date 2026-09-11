@@ -21,16 +21,20 @@ save/load boundary every 32 decisions, and mandatory local VM teardown. No new
 GCE resource, paid fallback, local model, automatic reset or human gameplay
 intervention was introduced.
 
-The second segment has now saved cursor 320, retaining 321,845 elapsed ticks
-(79.8 percent of its first year), with 12 living citizens and zero recorded
-deaths. The saved window contains 64 new responses and 92,000 new ticks.
-Cumulative usage is 352 actual responses and 9,327,557 returned tokens, including
-the earlier loss. Save-file hashes independently verify at
-`dd81b0ac66fb7c47e9e1a8e6bd56dd2dfa8f1b463feb125efa9e70847cd3229a`.
-Food is 47 raw-edible units and drink stock is 259, up from 238 at cursor 288.
-That increase is not a measured production rate. Seven beds, three workshops
-and one farm remain. The same owner entered its third segment. Full terminal
-audit and teardown remain pending. See the [latest midpoint](../experiments/evidence/keyboard_binding_astra_r1_midpoint_320_20260911.json).
+The third segment has now saved cursor 352, retaining 361,845 elapsed ticks
+(89.7 percent of its first year), with 12 living citizens and zero recorded
+deaths. The saved window contains 96 new responses and 132,000 new ticks.
+Cumulative usage is 384 actual responses and 10,151,112 returned tokens, including
+the earlier loss. Save-file hashes and the parent checkpoint independently verify
+at `b5955efbdd6bd56e3a82e0d3abb912bfd23e0d5a110068a6c02b653e0e0be466`.
+Food is 39 raw-edible units and drink stock is 316. Seven beds, three workshops
+and one farm remain. The same owner entered its fourth segment and returned at
+least 113 new responses in this window. Full terminal audit and teardown remain
+pending. See the [latest midpoint](../experiments/evidence/keyboard_binding_astra_r1_midpoint_352_20260911.json).
+
+The previous segment saved cursor 320 with 321,845 elapsed ticks, 47 raw-edible
+food units and 259 drink units. Its independently verified save and cumulative
+usage remain in the [earlier midpoint](../experiments/evidence/keyboard_binding_astra_r1_midpoint_320_20260911.json).
 
 The first 32-response segment saved cursor 288 and another 50,000 native ticks,
 bringing this matched campaign to 279,845 elapsed ticks (about 69 percent of its
@@ -62,6 +66,15 @@ zero at both endpoints. Six boundaries included planting, five included a
 generic `CustomReaction` job, and two included bag storage. These samples do
 not identify a completed brewing job or establish sustainable production.
 This read-only review sent no game commands or model requests.
+
+The [cursor 320-to-352 supply review](../experiments/evidence/keyboard_binding_astra_r1_supply_320_352_20260911.json)
+verified another 32 saved boundaries. Population remained 12 with zero recorded
+deaths. Raw-edible food changed from 47 to 39, with zero trader-flagged food at
+both endpoints; drink stock changed from 259 to 316. Planting appeared at six
+boundaries, harvesting at one and generic `CustomReaction` at seven. These are
+job samples, not completed production. Stock deltas do not measure production
+or consumption, and non-trader inventory does not establish ownership or
+accessibility. This review made no game or model calls.
 
 The active run now broadcasts captured screens and chosen actions through the
 [homepage player](https://fortgym.live/#watch-root). Public frames 289 and 290
@@ -107,8 +120,21 @@ not a new model selection or launch.
 
 These merges do not deploy the website, start a game/model, change the active
 condition, or update frozen source checkouts. Source branches remain retained.
-The next unmerged dependency is PR137. Its 271-file, 31,717-line addition has only
-been scoped for this integration; full review and fresh validation remain.
+The next unmerged dependency is PR137, now retargeted to main and still draft.
+Its fresh full local suite passed 4,327 tests with ten skipped. The
+[partial review](https://github.com/lemoz/fort-gym/pull/137#issuecomment-5639229687)
+and [hash-bound review index](../experiments/evidence/keyboard_harness_review_137_20260911.json)
+cover fourteen core source files and eleven test files. Campaign-loop, save/restart,
+outcome and website review remains; passing tests alone do not establish merge
+readiness for this 271-file, 31,717-line addition.
+
+The transport review identified a comparison-provenance gap: decision receipts
+record model and settings but not the Codex wrapper version or executable
+identity. The [installed-wrapper observation](../experiments/evidence/codex_wrapper_observation_20260911.json)
+records version 0.154.0 now, not the version used by every historical call. The
+initial implementation document's 0.153.4 check does not prove an upgrade during
+this run. Future receipts should include wrapper identity; frozen sources and
+historical receipts remain unchanged.
 This does not claim the entire release stack is merged. See the
 [integration receipt](../experiments/evidence/remote_campaign_integration_20260911.json).
 

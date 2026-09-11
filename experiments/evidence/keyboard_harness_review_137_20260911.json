@@ -1,0 +1,116 @@
+{
+  "schema_version": "fortgym.keyboard-integration-review-progress/v1",
+  "observed_at": "2026-09-11T18:50:32Z",
+  "pull_request": 137,
+  "url": "https://github.com/lemoz/fort-gym/pull/137",
+  "head": "3ab9fc4c9f553171206d3d7122402ec4493ef2e6",
+  "review_kind": "partial_implementer_review_not_independent_approval",
+  "source_files_reviewed": [
+    "fort_gym/bench/agent/codex_selection.py",
+    "fort_gym/bench/agent/codex_allowance.py",
+    "fort_gym/bench/agent/codex_transport.py",
+    "fort_gym/bench/agent/codex_protocol.py",
+    "fort_gym/bench/agent/keyboard_decision.py",
+    "fort_gym/bench/agent/keyboard_courier.py",
+    "fort_gym/bench/agent/keyboard_exchange.py",
+    "fort_gym/bench/agent/keyboard_observation.py",
+    "fort_gym/bench/agent/campaign_keyboard.py",
+    "fort_gym/bench/agent/standard_input.py",
+    "fort_gym/bench/env/screen_observation.py",
+    "fort_gym/bench/env/campaign_keyboard.py",
+    "fort_gym/bench/run/keyboard_config.py",
+    "hook/campaign_keyboard_v1.lua"
+  ],
+  "test_files_reviewed": [
+    "tests/test_codex_allowance.py",
+    "tests/test_codex_transport.py",
+    "tests/test_keyboard_decision.py",
+    "tests/test_keyboard_exchange.py",
+    "tests/test_keyboard_model_selection.py",
+    "tests/test_campaign_codex_keyboard.py",
+    "tests/test_campaign_keyboard.py",
+    "tests/test_campaign_keyboard_lua.py",
+    "tests/test_standard_input.py",
+    "tests/test_screen_observation.py",
+    "tests/test_native_key_catalog.py"
+  ],
+  "reviewed_file_sha256": {
+    "fort_gym/bench/agent/codex_selection.py": "04c7d19319939e13ac8fbc0f291a4450f175053a111b5ed4e1a09dc99a334bab",
+    "fort_gym/bench/agent/codex_allowance.py": "571b398e0d755166a78403f5245c30ea6588519a7ccca7a53a35e2c5cc8aa7ab",
+    "fort_gym/bench/agent/codex_transport.py": "c023aa5723cc1f1f46ca04f36711fa0e57fd394dc6487555a8fb842d5b7ab4d5",
+    "fort_gym/bench/agent/codex_protocol.py": "8687fdd235f3c624e3dff201bc874f68fd0c553303d52e797521300c6b759d87",
+    "fort_gym/bench/agent/keyboard_decision.py": "7ffd2719a76731d849db8f474ffebbdf503988fbe11db3e515d7161ad2e41f93",
+    "fort_gym/bench/agent/keyboard_courier.py": "06fd41a3998325cdc976edb71db2cc4922ecd0a23937fb7e7d358b3f5e02ce63",
+    "fort_gym/bench/agent/keyboard_exchange.py": "54bb210242a36dc63125e4c3b66e9bb311f630a18f7e435fbc2fa0a425ac0d32",
+    "fort_gym/bench/agent/keyboard_observation.py": "390a915f397ff2f74aa6055b6ab995fa119ba5650927d95f096937cd24a1034a",
+    "fort_gym/bench/agent/campaign_keyboard.py": "19644649c5a1281b99d77cd5920deb7313d8e18b9358d7d15139793777fb20cf",
+    "fort_gym/bench/agent/standard_input.py": "b115bf278e1b066a00ced9e7fe6d9d38be526df3e03308a1fbfb375f9e534281",
+    "fort_gym/bench/env/screen_observation.py": "9fcb8c0969e087e49e465690a456df99fa41f904f4cdf5f0e581c442eae0388d",
+    "fort_gym/bench/env/campaign_keyboard.py": "7b207d40acdeaeea502cef672c3474932ac4c8a6964cba0cd7c3ee23ebb4d97f",
+    "fort_gym/bench/run/keyboard_config.py": "cd5a92c40100805e02c631475fa976b0d601a35e04207d431072ce152b5680e2",
+    "hook/campaign_keyboard_v1.lua": "d0018d1c482050aee3ca27c08965ffe29b91363d2727e40a99cca3df15cbef32",
+    "tests/test_codex_allowance.py": "6b57bfdd111c9a0c113ec76103fea78fe1edce808a376fa572d3e329d4629e4a",
+    "tests/test_codex_transport.py": "bee905742d9caa2759818f9f0ba06943c6289c4800aeccb84cf3f085c9ae0bb6",
+    "tests/test_keyboard_decision.py": "89f8a18b029a9a76abac2bf982f5d661f6542dc6aa2b43a248f5450c03940ccd",
+    "tests/test_keyboard_exchange.py": "ab2036693fd0190bd66eca77a04450c17a02f59f60fc8d6b9d158b02598494e2",
+    "tests/test_keyboard_model_selection.py": "b9d3ba2d2954e5446e5751023b9ea47669f7e181e46ba903fdcb6dfa0c0762bf",
+    "tests/test_campaign_codex_keyboard.py": "61a2ff3048bf4dd2653c7a84bc2236c86d29cfa6e43fd606a2b5326c0a063347",
+    "tests/test_campaign_keyboard.py": "34334c7c26ec2ab31ad6bf3104e1aa23cfc074672ab0c535b21d2e41dc8be7e0",
+    "tests/test_campaign_keyboard_lua.py": "9e034a782d618da54845168414c2612458d7eaac142f746cab069dfda221b9e5",
+    "tests/test_standard_input.py": "a9f8c3e187e55de7660eccb473325aad35f0bbef0c681fb9f726367cedfc07a9",
+    "tests/test_screen_observation.py": "e5869cf82a4c53cd7845c134457affeccbcc15e898e1b76036f19bbe7de660f3",
+    "tests/test_native_key_catalog.py": "478df6553d4485dd6d3302443b10cdfeee45ba2eec780325e8ac09ad76ac68e1"
+  },
+  "partially_inspected": [
+    "fort_gym/bench/env/native_key_catalog.py"
+  ],
+  "verified_contracts": [
+    "Literal model and effort selection propagate through condition, request digest, courier and response checks; no replacement model or API fallback.",
+    "Single-use courier claim precedes inference; returned usage remains distinct from native key execution and unreported subscription charges.",
+    "Account probe performs initialization and account/rate-limit reads without creating a model turn; its result is not an atomic quota reservation.",
+    "Captured screen encoding preserves glyphs, geometry and color information without adding hidden native state.",
+    "Chosen native keys are prevalidated and sent once; confirmed prefixes, partial writes and uncertain writes are distinct, with no automatic key replay.",
+    "Only literal read-only exchange probes may retry after freshly confirmed live container state; failed observation is not treated as owner death."
+  ],
+  "local_full_suite": {
+    "passed": 4327,
+    "skipped": 10,
+    "report": "pr137-local-pytest.xml"
+  },
+  "selected_file_ruff": "passed",
+  "existing_exact_head_ci": {
+    "run_id": 34436394718,
+    "conclusion": "success",
+    "fresh_post_merge_ci": false
+  },
+  "findings": [
+    {
+      "id": "wrapper-identity",
+      "priority": 2,
+      "summary": "Decision receipts do not bind the Codex wrapper version or executable identity.",
+      "evidence": "The request metadata records requested model/effort and prompt/schema hashes, but no wrapper identity. Installed CLI reports 0.154.0 now; the initial implementation document describes a 0.153.4 compatibility check, not a per-call record.",
+      "impact": "This observation cannot establish whether all historical model trials used the same wrapper. It is not evidence of a mid-run upgrade. Keep that comparison limitation explicit.",
+      "next_action": "Add versioned wrapper identity to future model decision provenance without changing frozen current-run sources or relabeling old receipts."
+    }
+  ],
+  "official_references": [
+    "https://learn.chatgpt.com/docs/non-interactive-mode",
+    "https://learn.chatgpt.com/docs/app-server#lifecycle-overview",
+    "https://learn.chatgpt.com/docs/app-server#api-overview-1"
+  ],
+  "remaining_review": [
+    "Campaign-loop integration and cumulative usage/trace reconciliation.",
+    "Clock, save identity, checkpoint/restart paths and original native evidence.",
+    "Outcome metrics, public/API records, website changes and historical publication manifests.",
+    "All files not explicitly listed as reviewed; full merge readiness remains unproven."
+  ],
+  "ready_to_merge": false,
+  "merged": false,
+  "active_source_changed": false,
+  "new_model_calls": 0,
+  "new_game_launches": 0,
+  "website_deployed": false,
+  "review_url": "https://github.com/lemoz/fort-gym/pull/137#issuecomment-5639229687",
+  "base": "main",
+  "draft": true
+}
