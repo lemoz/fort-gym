@@ -26,7 +26,14 @@
     "fort_gym/bench/run/keyboard_rejection_journal.py",
     "fort_gym/bench/run/keyboard_checkpoint_recovery.py",
     "fort_gym/bench/run/keyboard_rejection.py",
-    "fort_gym/bench/run/keyboard_rejection_recovery.py"
+    "fort_gym/bench/run/keyboard_rejection_recovery.py",
+    "fort_gym/bench/run/keyboard_clock.py",
+    "fort_gym/bench/run/keyboard_clock_timeout.py",
+    "fort_gym/bench/run/keyboard_save.py",
+    "fort_gym/bench/run/keyboard_save_probe.py",
+    "fort_gym/bench/run/keyboard_save_screens.py",
+    "fort_gym/bench/run/keyboard_save_lua.py",
+    "fort_gym/bench/run/campaign_environment.py"
   ],
   "test_files_reviewed": [
     "tests/test_codex_allowance.py",
@@ -45,7 +52,16 @@
     "tests/test_campaign_save.py",
     "tests/test_keyboard_checkpoint_recovery.py",
     "tests/test_keyboard_rejection.py",
-    "tests/test_keyboard_rejection_recovery.py"
+    "tests/test_keyboard_rejection_recovery.py",
+    "tests/test_keyboard_clock.py",
+    "tests/test_keyboard_clock_boundary.py",
+    "tests/test_keyboard_clock_timeout.py",
+    "tests/test_keyboard_modal_clock.py",
+    "tests/test_keyboard_save.py",
+    "tests/test_keyboard_save_identity.py",
+    "tests/test_keyboard_save_settled_identity.py",
+    "tests/test_keyboard_save_dfhack.py",
+    "tests/test_campaign_environment.py"
   ],
   "reviewed_file_sha256": {
     "fort_gym/bench/agent/codex_selection.py": "04c7d19319939e13ac8fbc0f291a4450f175053a111b5ed4e1a09dc99a334bab",
@@ -85,7 +101,23 @@
     "tests/test_campaign_save.py": "c1883333f70a9032c1cc51102c8d2cb4ce066e59408db9af6b15037550046017",
     "tests/test_keyboard_checkpoint_recovery.py": "e3e7819c7cd4ea5e08e17c71640fa5dc2d077635955aca99fef4319f461a7227",
     "tests/test_keyboard_rejection.py": "649acc7c8a00424eb599fd67b5ce9e0d670df983ff52f59c504f94e0ce0f56cb",
-    "tests/test_keyboard_rejection_recovery.py": "6c51e2cf8f29170904cb581d0f89475c98bccb50c13a0e8695a4ba96704baadf"
+    "tests/test_keyboard_rejection_recovery.py": "6c51e2cf8f29170904cb581d0f89475c98bccb50c13a0e8695a4ba96704baadf",
+    "fort_gym/bench/run/keyboard_clock.py": "d190cef63c982d41327bb40678561f82a6f1ab4abb81292a1afc110e71aa5db9",
+    "fort_gym/bench/run/keyboard_clock_timeout.py": "2c1697be56c84af517216ce72709943433804f756eb30f4859904a557c3d0c49",
+    "fort_gym/bench/run/keyboard_save.py": "ad4f5d80c858072ef9f2f04673d9147af7c908ea567185635600e8b9b9832363",
+    "fort_gym/bench/run/keyboard_save_probe.py": "b354293cfb018fb65a99805f838c87605bd032dfeeb5cd37623e9705a6ec63f0",
+    "fort_gym/bench/run/keyboard_save_screens.py": "a8837b5bb7b7afdc9a632cd7f6a4e6dd30984a05b7a06bfb58b0b878e2372f01",
+    "fort_gym/bench/run/keyboard_save_lua.py": "724e1b3f2bb076226e884c0fcc2aebd88f23497fb9bb451e176f49085c64eb1f",
+    "fort_gym/bench/run/campaign_environment.py": "a4f1de2076beac60adb40b84a5623dc392d0dca154088942092491923b7fdb52",
+    "tests/test_keyboard_clock.py": "7caf7b9ef696340db52953f877833668dafa891c7d57bcc65b0da7ebc0a22163",
+    "tests/test_keyboard_clock_boundary.py": "77c0f755edbb7bf9b5cb2d7adca44c3695f0c6a8d088b00419e5bc9baf7306be",
+    "tests/test_keyboard_clock_timeout.py": "e484fab832a6bd65c6e0f91a51a3b617b781bf703dd74a8b2eed70d8fca0d578",
+    "tests/test_keyboard_modal_clock.py": "651a1815e9f5952a2bb324ff4ddd522d7c7b0b3fb41a9369dbf5d2b6b3f11a15",
+    "tests/test_keyboard_save.py": "236c167f7aac539a359faeeab6fbd3636a9b0ff938ef134bf005bbbad7f80702",
+    "tests/test_keyboard_save_identity.py": "1b4377e9c99e8ee78d4742921f2b6037ac6695ac1bc2e3f4853cbbcc38c78d58",
+    "tests/test_keyboard_save_settled_identity.py": "963ba88ec6bbe4db30380731be94ca9fd2e61f3e675e5d2505a20f193e150ac0",
+    "tests/test_keyboard_save_dfhack.py": "386e792fd794404df8fa46804a6f2817acee5fe1c924315073169ee03c77508d",
+    "tests/test_campaign_environment.py": "d42a24779f701a8d04ccb05e3dd54dcc4a5d5d475a7d56cb337cedd0aee21b7b"
   },
   "partially_inspected": [
     "fort_gym/bench/env/native_key_catalog.py"
@@ -125,9 +157,10 @@
     "https://learn.chatgpt.com/docs/app-server#api-overview-1"
   ],
   "remaining_review": [
-    "Remaining clock, menu-preserving save, launcher identity, runtime and other restart/recovery paths, including their dependencies and retained native evidence.",
+    "Remaining launcher/runtime identity and other restart/recovery paths and their dependencies.",
+    "Other retained native acceptance evidence beyond the explicitly rechecked status-stack fixture.",
     "Outcome metrics, public/API records, website changes and historical publication manifests.",
-    "All files not explicitly listed as reviewed; passing local tests and reviewed component contracts do not establish full merge readiness."
+    "All files not explicitly listed as reviewed; passing tests and component review do not establish full merge readiness."
   ],
   "ready_to_merge": false,
   "merged": false,
@@ -138,7 +171,7 @@
   "review_url": "https://github.com/lemoz/fort-gym/pull/137#issuecomment-5639229687",
   "base": "main",
   "draft": true,
-  "updated_at": "2026-09-11T19:03:38Z",
+  "updated_at": "2026-09-11T19:12:18Z",
   "continuation_review": {
     "source_files_added": 7,
     "test_files_added": 6,
@@ -165,5 +198,47 @@
       "Settled-save recovery checks retained files, source prefix, memory, usage and observations; documented pending pathfinding-cache differences are distinguished from persistent state changes."
     ],
     "new_native_acceptance_claim": false
+  },
+  "documentation_files_reviewed": [
+    "docs/native-menu-save.md",
+    "docs/semantic-native-checkpoints.md",
+    "docs/DFHACK_SCREEN_CHECKPOINTS.md"
+  ],
+  "documentation_file_sha256": {
+    "docs/native-menu-save.md": "798ca89b33d9ed2308c7779582b7e55d9b08e20cfccd6c056a3ea72b85f9fc23",
+    "docs/semantic-native-checkpoints.md": "c4867d841bbccb832d9fbd68c562c7efdddc4c6cc2e794ba6e9a14aa2c3f9ab3",
+    "docs/DFHACK_SCREEN_CHECKPOINTS.md": "56e95a66ebbe616b2b61e76fa711dd525eae58cb52a33054435e834117744bad"
+  },
+  "clock_menu_save_review": {
+    "source_files_added": 7,
+    "test_files_added": 9,
+    "local_tests": {
+      "passed": 281,
+      "skipped": 0,
+      "report": "pr137-clock-menu-save-pytest.xml"
+    },
+    "selected_file_ruff": "passed",
+    "contracts_reviewed": [
+      "Known blocking native menus defer time with two matching read-only UI probes; unknown focus tries the clock and only a fully attested zero-tick timeout becomes factual feedback.",
+      "Post-keyboard calendar and UI boundaries, actual partial ticks and pause restoration are verified; the model chooses menu navigation and no automatic gameplay key or clock replay is added.",
+      "Explicit save profiles preserve historical conditions. V1 pixel equality, V2 semantic UI equality, V3 settled separate-RPC identity and V4 identified DFHack stack checks remain distinct.",
+      "Menu-preserving maintenance requests one paused native save, retains the same screen stack and backup preference, and validates stable copied files plus calendar/world/UI identity. It is not a model-accessible gameplay shortcut.",
+      "The native adapter verifies its expected runtime and exposes raw captured screen content separately from private measurements; production and consumption rates remain unavailable."
+    ],
+    "native_evidence_recheck": {
+      "record": "experiments/evidence/native_status_stack_acceptance_20260908.json",
+      "source_revision": "d795ed6e2889fc9cc61bb38b6d23b7a0feed27ff",
+      "audit_sha256": "a3cc767d13edc26a3a4b80b04d6f854e849c4dbcde469e879ac37accb7054af7",
+      "original_audit_assertions_reexecuted_read_only": true,
+      "publication_replaced_by_original_summary_equality_assertion": true,
+      "operator_context_seed_save_and_reload_receipts_verified": true,
+      "historical_cleanup_receipts_verified": true,
+      "original_summary_unchanged": true,
+      "four_production_menu_save_modules_unchanged_since_accepted_revision": true,
+      "current_vm_status_checked": false,
+      "new_native_acceptance_claim": false,
+      "new_model_calls": 0
+    },
+    "primary_reference": "https://docs.dfhack.org/en/0.47.05-r8/docs/dev/Lua%20API.html#screen-module"
   }
 }

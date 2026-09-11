@@ -21,16 +21,21 @@ save/load boundary every 32 decisions, and mandatory local VM teardown. No new
 GCE resource, paid fallback, local model, automatic reset or human gameplay
 intervention was introduced.
 
-The third segment has now saved cursor 352, retaining 361,845 elapsed ticks
-(89.7 percent of its first year), with 12 living citizens and zero recorded
-deaths. The saved window contains 96 new responses and 132,000 new ticks.
-Cumulative usage is 384 actual responses and 10,151,112 returned tokens, including
+The fourth segment has now saved cursor 384, retaining 397,845 elapsed ticks
+(98.7 percent of its first year), with 12 living citizens and zero recorded
+deaths. The saved window contains 128 new responses and 168,000 new ticks.
+Cumulative usage is 416 actual responses and 11,023,820 returned tokens, including
 the earlier loss. Save-file hashes and the parent checkpoint independently verify
-at `b5955efbdd6bd56e3a82e0d3abb912bfd23e0d5a110068a6c02b653e0e0be466`.
-Food is 39 raw-edible units and drink stock is 316. Seven beds, three workshops
-and one farm remain. The same owner entered its fourth segment and returned at
-least 113 new responses in this window. Full terminal audit and teardown remain
-pending. See the [latest midpoint](../experiments/evidence/keyboard_binding_astra_r1_midpoint_352_20260911.json).
+at `c0ce89647d3d777370820d0a74cf5ff37db833bfe2e365ca6180683401cbb922`.
+Food is 50 raw-edible units and drink stock is 293. Eight beds, three workshops
+and one farm are recorded, one more bed than the preceding save. The same owner
+entered its fifth segment. Full terminal audit and teardown remain pending.
+This elapsed clock is still short of the first anniversary despite the native
+calendar entering year 31. See the [latest midpoint](../experiments/evidence/keyboard_binding_astra_r1_midpoint_384_20260911.json).
+
+The preceding [cursor 352 save](../experiments/evidence/keyboard_binding_astra_r1_midpoint_352_20260911.json)
+retains 361,845 elapsed ticks, 39 food units and 316 drink units, with the same
+12 living citizens and zero recorded deaths.
 
 The previous segment saved cursor 320 with 321,845 elapsed ticks, 47 raw-edible
 food units and 259 drink units. Its independently verified save and cumulative
@@ -76,6 +81,14 @@ job samples, not completed production. Stock deltas do not measure production
 or consumption, and non-trader inventory does not establish ownership or
 accessibility. This review made no game or model calls.
 
+The [cursor 352-to-384 supply review](../experiments/evidence/keyboard_binding_astra_r1_supply_352_384_20260911.json)
+verified all 32 saved boundaries. Food changed from 39 to 50 and drinks from 316
+to 293, with zero trader-flagged food at both endpoints. Completed beds increased
+from seven to eight. Planting appeared at four boundaries, harvesting at two and
+bed construction at seven. Inventory and current-job samples are not completed
+production rates or proof of long-term self-sufficiency. No gameplay input or
+model calls were made by this read-only review.
+
 The active run now broadcasts captured screens and chosen actions through the
 [homepage player](https://fortgym.live/#watch-root). Public frames 289 and 290
 were independently matched to original hash-bound receipts. The one-way relay
@@ -87,6 +100,12 @@ Website release `f90af451d540be64bc233e06b72bafff7f19603d` is pushed in
 byte-identical. Public API/game identities, database and unrelated files were
 preserved, without service restart. HTTP/data contracts passed; no browser
 visual QA is claimed. See the [release receipt](../experiments/evidence/website_live_relay_20260911.json).
+
+A fresh public HTTPS recheck matched live frame 388 to its original request and
+response. The landing, worlds and results pages, viewer modules, catalogs, four
+recordings and historical findings still matched the released bytes. The relay
+remains running; this was data/HTTP verification, not new browser visual QA or
+a deployment. Chosen actions remain labeled as not execution-verified.
 
 The declaration was pushed before launch at
 `d9463200785c67d9fe701f4f583d1539e5db2e96`. Read-only auditor revision
@@ -124,11 +143,15 @@ The next unmerged dependency is PR137, now retargeted to main and still draft.
 Its fresh full local suite passed 4,327 tests with ten skipped. The
 [partial review](https://github.com/lemoz/fort-gym/pull/137#issuecomment-5639229687)
 and [hash-bound review index](../experiments/evidence/keyboard_harness_review_137_20260911.json)
-now cover twenty-one source files and seventeen test files. The added loop,
+now cover twenty-eight source files and twenty-six test files. The added loop,
 checkpoint, save and rejected-input review passed 81 continuation tests and 47
-rejection/recovery tests, with selected-file Ruff passing. Remaining clock,
-menu-save, launcher and restart paths, native evidence, outcomes and website
-review remain; passing tests alone do not establish merge
+rejection/recovery tests. A further clock, menu-save and native-adapter review
+passed 281 tests and selected-file Ruff. The retained status-overlay fixture's
+operator/context, parent checkpoint, saved files, fresh-reload observations and
+historical cleanup receipts reverified without running a game. Its four
+menu-save implementation modules are unchanged since accepted source d795ed6e.
+The other launcher/restart paths, native evidence, outcomes and website review
+remain; passing tests alone do not establish merge
 readiness for this 271-file, 31,717-line addition.
 
 The transport review identified a comparison-provenance gap: decision receipts
