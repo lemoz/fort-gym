@@ -804,6 +804,18 @@ def _require_share(token: str, *, scope: Optional[str] = None) -> ShareToken:
     return share
 
 
+@app.get("/public/watch-active")
+async def public_watch_active() -> JSONResponse:
+    from .watch import live_status
+
+    location = os.getenv("FORT_GYM_PUBLIC_CAMPAIGN_DIR")
+    try:
+        data = live_status(Path(location) if location else None)
+    except (OSError, ValueError, KeyError, TypeError):
+        raise HTTPException(status_code=503, detail="Spectator feed is unavailable") from None
+    return JSONResponse(data, headers=HTML_CACHE_HEADERS)
+
+
 @app.get("/health")
 async def health() -> JSONResponse:
     return JSONResponse({"status": "ok"})

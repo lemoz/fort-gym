@@ -1,0 +1,150 @@
+import hashlib
+import json
+from pathlib import Path
+import subprocess
+
+import pytest
+from fastapi.testclient import TestClient
+
+from fort_gym.bench.api.watch import FILENAME, SCHEMA, live_status, project_live
+
+ROOT = Path(__file__).resolve().parents[1]
+
+
+@pytest.fixture
+def value():
+    return {
+        "schema_version": SCHEMA,
+        "owner_alive": True,
+        "observed_at_unix": 1000,
+        "run_id": "fixture",
+        "model": "gpt-6-astra",
+        "frame": {
+            "decision": 97,
+            "captured_at_unix": 990,
+            "screen": {
+                "width": 1,
+                "height": 1,
+                "tile_order": "column_major",
+                "runs": [[1, 219, 7, 0]],
+            },
+            "action": {"intent": "Inspect", "keys": ["q"], "advance_ticks": 0},
+            "action_status": "chosen_not_execution_verified",
+        },
+    }
+
+
+def test_live_projection_is_allowlisted_and_expires(value):
+    value["memory"] = "private"
+    value["frame"]["action"]["memory_update"] = "private"
+    result = project_live(value, now=1000)
+    assert result["status"] == "running"
+    assert "private" not in json.dumps(result) and "memory" not in json.dumps(result)
+    assert result["frame"]["action_status"] == "chosen_not_execution_verified"
+    assert project_live(value, now=1031)["status"] == "stale"
+    value["owner_alive"] = False
+    assert project_live(value, now=1000)["status"] == "stopped"
+
+
+@pytest.mark.parametrize(
+    "key,changed",
+    [
+        ("owner_alive", 1),
+        ("observed_at_unix", True),
+        ("observed_at_unix", 1006),
+        ("run_id", "../private"),
+        ("schema_version", "wrong"),
+    ],
+)
+def test_invalid_live_observation_is_rejected(value, key, changed):
+    value[key] = changed
+    with pytest.raises(ValueError):
+        project_live(value, now=1000)
+
+
+def test_screens_and_execution_claims_are_bounded(value):
+    value["frame"]["action_status"] = "executed"
+    with pytest.raises(ValueError):
+        project_live(value, now=1000)
+    value["frame"]["action_status"] = "chosen_not_execution_verified"
+    value["frame"]["screen"]["runs"][0][0] = 10000
+    with pytest.raises(ValueError):
+        project_live(value, now=1000)
+
+
+def test_public_endpoint_no_connection_no_cache_and_no_private_errors(
+    tmp_path, value, monkeypatch
+):
+    from fort_gym.bench.api.server import app
+
+    monkeypatch.setenv("FORT_GYM_PUBLIC_CAMPAIGN_DIR", str(tmp_path))
+    client = TestClient(app)
+    assert client.get("/public/watch-active").json()["status"] == "not_connected"
+    target = tmp_path / FILENAME
+    target.write_text(json.dumps(value))
+    response = client.get("/public/watch-active")
+    assert (
+        response.status_code == 200 and "no-store" in response.headers["cache-control"]
+    )
+    assert response.json()["status"] == "stale"
+    target.write_text("private broken data")
+    response = client.get("/public/watch-active")
+    assert response.status_code == 503 and "private" not in response.text
+    target.unlink()
+    target.symlink_to(tmp_path / "missing")
+    with pytest.raises(ValueError):
+        live_status(tmp_path)
+
+
+def test_recordings_match_the_reviewed_export_and_contain_no_private_fields():
+    root = ROOT / "web/static/recordings"
+    catalog = json.loads((root / "catalog.json").read_text())
+    assert len(catalog["recordings"]) == 3
+    total = 0
+    for row in catalog["recordings"]:
+        path = root / (row["id"] + ".json")
+        assert hashlib.sha256(path.read_bytes()).hexdigest() == row["sha256"]
+        recording = json.loads(path.read_text())
+        assert recording["audit_sha256"] == row["audit_sha256"]
+        for frame in recording["frames"]:
+            assert set(frame) == {
+                "decision",
+                "screen",
+                "action",
+                "accepted",
+                "before",
+                "after",
+            }
+            assert set(frame["action"]) == {"intent", "keys", "advance_ticks"}
+        total += len(recording["frames"])
+    assert total == 288
+    astra = json.loads((root / "astra-97-256.json").read_text())
+    assert astra["saved_through_decision"] == 224 and astra["last_decision"] == 256
+
+
+def test_homepage_and_assets_work_on_production_baseline():
+    from fort_gym.bench.api.server import app
+
+    client = TestClient(app)
+    html = client.get("/").text
+    assert html.index('id="watch-root"') < html.index('class="home-hero"')
+    for route in [
+        "/static/home-watch.mjs",
+        "/static/home-watch-model.mjs",
+        "/static/home-watch.css",
+        "/static/recordings/catalog.json",
+        "/worlds",
+        "/health",
+    ]:
+        assert client.get(route).status_code == 200
+    assert "/admin" not in (ROOT / "web/static/home-watch.mjs").read_text()
+
+
+def test_homepage_client_contracts():
+    subprocess.run(
+        ["node", "--test", str(ROOT / "tests/home_watch_client.mjs")],
+        cwd=ROOT,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
