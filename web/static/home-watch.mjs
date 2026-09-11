@@ -1,4 +1,4 @@
-import {decodeScreen, frameIndex, liveState, validateRecording, renderCapturedScreen, initialRecording, recoverySummary, readLiveStatus} from './home-watch-model.mjs?v=20260911-live';
+import {decodeScreen, frameIndex, liveState, validateRecording, renderCapturedScreen, initialRecording, recoverySummary, readLiveStatus, campaignSummary, campaignHistory} from './home-watch-model.mjs?v=20260911-year-two';
 const $ = id => document.getElementById('watch-' + id);
 const root = $('root');
 if (root) {
@@ -65,10 +65,16 @@ if (root) {
         ? 'UNSAVED TAIL · observed actions after checkpoint ' + recording.saved_through_decision + '. The final save failed.'
         : 'This decision precedes or reaches saved checkpoint ' + recording.saved_through_decision + '.');
     $('boundary').className = 'watch-note' + (!live && frame.decision > recording.saved_through_decision ? ' watch-error' : '');
-    const recovered = !live && Boolean(recording.recovery);
-    $('recovery').hidden = $('prior').hidden = !recovered;
-    text('recovery', recovered ? recoverySummary(recording) : '');
-    $('prior').href = recovered ? '/?recording=' + encodeURIComponent(recording.recovery.source_recording_id) + '#watch-root' : '#watch-root';
+    const recovered = !live && Boolean(recording.recovery), outcome = !live && Boolean(recording.campaign);
+    $('recovery').hidden = $('prior').hidden = !(recovered || outcome);
+    text('recovery', outcome ? campaignHistory(recording) : recovered ? recoverySummary(recording) : '');
+    const prior = outcome ? recording.campaign.source_recording_id : recovered ? recording.recovery.source_recording_id : null;
+    $('prior').href = prior ? '/?recording=' + encodeURIComponent(prior) + '#watch-root' : '#watch-root';
+    text('prior', outcome ? 'View the preceding continuation →' : 'View the earlier failed window →');
+    $('outcome').hidden = !outcome;
+    text('outcome-summary', outcome ? campaignSummary(recording) : '');
+    $('result').href = outcome ? recording.campaign.result_url : '#watch-root';
+    $('reload').href = outcome ? recording.campaign.reload_url : '#watch-root';
     $('range').max = String(frames.length - 1); $('range').value = String(index);
     $('range').setAttribute('aria-valuetext', 'Decision ' + frame.decision);
     $('range').disabled = loading;

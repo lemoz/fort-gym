@@ -28,8 +28,8 @@
 <link rel="icon" type="image/png" sizes="32x32" href="/static/brand/favicon-32.png">
 <link rel="apple-touch-icon" sizes="180x180" href="/static/brand/apple-touch-icon.png">
 <link rel="stylesheet" href="/static/fort-labs.css?v=20260911-3">
-<link rel="stylesheet" href="/static/home-watch.css?v=1">
-<script type="module" src="/static/home-watch.mjs?v=20260911-live"></script>
+<link rel="stylesheet" href="/static/home-watch.css?v=20260911-year-two">
+<script type="module" src="/static/home-watch.mjs?v=20260911-year-two"></script>
 <style>
   .worlds-rail { padding: 24px 0 20px; border-bottom: 1px solid var(--line); }
   .worlds-rail-head { display: flex; justify-content: space-between; gap: 24px; align-items: center; margin-bottom: 12px; }
@@ -201,6 +201,13 @@
             <button type="button" id="watch-zoom" aria-pressed="false">Enlarge</button>
           </div>
           <p class="watch-caption" id="watch-caption">Captured game screens, not a generated visualization.</p>
+          <section class="watch-outcome" id="watch-outcome" aria-labelledby="watch-outcome-heading" hidden>
+            <h3 id="watch-outcome-heading">Saved outcome at the end of this window</h3>
+            <p id="watch-outcome-summary"></p>
+            <p class="watch-note">Survival, buildings, supplies and sampled jobs support a qualitative assessment that the fortress was operating. Production rates and stock accessibility were not measured. This is one trial, not a repeated model comparison.</p>
+            <a class="fl-link" id="watch-result" href="#watch-root">Inspect the recorded result →</a>
+            <a class="fl-link" id="watch-reload" href="#watch-root">Inspect the later reload check →</a>
+          </section>
         </div>
         <aside class="watch-sidebar" aria-label="Model actions">
           <div>
