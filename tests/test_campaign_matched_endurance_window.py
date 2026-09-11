@@ -16,6 +16,8 @@ RECORDS = {
     "sol_r1": "a624a9687257157aa91029d950ca1735a0e8f1baaa224cb66bba7efac50a1dbd",
     "terra_r1": "e81a20836eb6959a529b657a72339bca2e299203c73188006fb32d682c734e11",
     "terra_r2": "1966bf1e8229e8fbfd7a161d84c78da272dd3f5c9aa86040f59a8baa415ef1b8",
+    "sol_r2": "2f261d841808126b4f26cb55dcd47faae36ed37a7310c71648fae0fc531f26da",
+    "astra_r2": "b5b195022876f8342c26e97634a8645cfb8beb885475a493187dc5fff7d90f1e",
 }
 
 
@@ -282,3 +284,39 @@ def test_cli_emits_only_reproducible_configuration():
     result = subprocess.run(command, capture_output=True, check=True)
     assert result.stdout == encoded(module.prepare(sources))
     assert not result.stderr
+
+
+def test_all_six_native_input_packet_is_readiness_not_a_launch():
+    path = (
+        module.initial.PROJECT
+        / "experiments/evidence/keyboard_matched_endurance_inputs_20260911.json"
+    )
+    assert (
+        module.initial.sha(path)
+        == "6e10884604fb56214f834d91ca20df41e067eab6f13e6ad1cbef89d984ea41b7"
+    )
+    proof = json.loads(path.read_bytes())
+    assert proof["passed"] is proof["full_six_trial_source_cohort_audited"] is True
+    assert proof["new_model_calls"] == proof["new_game_ticks"] == 0
+    assert (
+        proof["launch_admitted"]
+        is proof["vm_started"]
+        is proof["fresh_native_reload_verified"]
+        is False
+    )
+    assert len(proof["inputs"]) == len(RECORDS) == 6
+    for identity in RECORDS:
+        sources = source_paths(identity)
+        record = json.loads(sources[-1][0].read_bytes())
+        row = next(row for row in proof["inputs"] if row["campaign_id"] == record["campaign_id"])
+        window = module.prepare(sources)
+        assert row["cursor"] == row["additional_response_limit"] == 64
+        assert row["end_decision"] == 128
+        assert row["checkpoint_sha256"] == record["checkpoint_sha256"]
+        assert row["public_result_sha256"] == sources[-1][1]
+        assert row["declaration_sha256"] == digest(window)
+        assert row["returned_tokens"] == record["usage"]["campaign_returned_tokens"]
+        assert (
+            row["complete_private_inventory_verified"] is row["memory_and_usage_preserved"] is True
+        )
+    assert b"/Users/" not in path.read_bytes() and b'"memory":' not in path.read_bytes()
