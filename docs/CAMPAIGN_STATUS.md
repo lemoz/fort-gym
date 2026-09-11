@@ -1,6 +1,6 @@
 # Campaign status
 
-Verified September 10, 2026 UTC. The Year-Two Autonomous Play objective remains
+Verified September 11, 2026 UTC. The Year-Two Autonomous Play objective remains
 unfinished; work continues toward the same objective. The owner has approved starting the project
 work for [Astra standard-input experiments](ASTRA_STANDARD_INPUT_EXPERIMENTS.md).
 
@@ -139,8 +139,23 @@ One clock timeout is retained; no save loss occurred. Source fresh load, memory
 and usage prefixes passed, and both shutdown commands returned 0. The final new
 save has not yet had a separate fresh reload. This is the fifth audited
 continuation; the recorded website registry still contains the first three.
-Astra attempt 2 has started as the last declared 32-to-64 continuation. Its live
-observations are provisional until the final save and independent audit.
+Astra attempt 2 completed the final declared 32-to-64 continuation and passed
+its native save, receipt and teardown audit. Its
+[record](../experiments/evidence/keyboard_matched_astra_r2_continuation_32_64_20260910.json)
+retains 10,500 new saved ticks (19,500 cumulative), 988,433 new returned tokens
+(1,976,997 cumulative), seven living dwarves, three placed beds, two workshops
+and one farm. Raw food remains 50 and drinks 60; functional-room coverage is
+unknown, not zero. Two blocking-menu outcomes and one clock timeout remain in
+the evidence. The source load and complete own memory/usage prefixes passed;
+both shutdown commands returned zero. The final new save has not had a separate
+fresh reload. Its recorded UTC date is September 11; the filename keeps the
+September 10 cohort identifier.
+
+All six attempts now have audited decision-64 saves: 384 cumulative responses
+and 11,403,734 returned tokens, with model dollar charges unreported. Both Astra
+attempts have completed some infrastructure; the Sol and Terra attempts have
+not yet done so. These early same-embark results are not a general model ranking
+or evidence of sustainable year-two play. No native owner is currently running.
 Native reload preserves the saved world and
 paused calendar, not a promise of identical open UI menus; initial screens are
 retained without human navigation. Continue in the declared

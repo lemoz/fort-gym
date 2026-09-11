@@ -8,6 +8,7 @@ import pytest
 
 EVIDENCE = Path(__file__).resolve().parents[1] / "experiments/evidence"
 RESULT = "keyboard_matched_astra_r1_continuation_32_64_20260910.json"
+ASTRA_TWO_RESULT = "keyboard_matched_astra_r2_continuation_32_64_20260910.json"
 SOL_RESULT = "keyboard_matched_sol_r1_continuation_32_64_20260910.json"
 SOL_TWO_RESULT = "keyboard_matched_sol_r2_continuation_32_64_20260910.json"
 TERRA_RESULT = "keyboard_matched_terra_r1_continuation_32_64_20260910.json"
@@ -21,6 +22,7 @@ ENDURANCE = "keyboard_matched_endurance_preparation_20260910.json"
     "filename,expected",
     [
         (RESULT, "2c8abe1f7135d94ed27aea51e18ebc59e0599205caf3f268f4480b0e377f3d29"),
+        (ASTRA_TWO_RESULT, "b5b195022876f8342c26e97634a8645cfb8beb885475a493187dc5fff7d90f1e"),
         (SOL_RESULT, "a624a9687257157aa91029d950ca1735a0e8f1baaa224cb66bba7efac50a1dbd"),
         (SOL_TWO_RESULT, "2f261d841808126b4f26cb55dcd47faae36ed37a7310c71648fae0fc531f26da"),
         (TERRA_RESULT, "e81a20836eb6959a529b657a72339bca2e299203c73188006fb32d682c734e11"),
@@ -254,3 +256,45 @@ def test_endurance_preparation_is_remote_tested_configuration_not_gameplay():
         assert window["comparison_target_decision"] == 128
         assert window["steps_per_segment"] == 64 and window["max_segments"] == 1
         assert len(window["source_result_chain_sha256"]) == 2
+
+
+def test_astra_second_continuation_retains_development_and_actual_recording_date():
+    record = json.loads((EVIDENCE / ASTRA_TWO_RESULT).read_bytes())
+    assert record["campaign_id"] == "matched-20260910-astra-r2"
+    assert record["recorded_date_utc"] == "2026-09-11"
+    assert record["new_responses"] == 32 and record["next_decision"] == 64
+    assert record["new_saved_ticks"] == 10500 and record["saved_elapsed_ticks"] == 19500
+    assert record["usage"]["new_returned_tokens"] == 988433
+    assert record["usage"]["campaign_returned_tokens"] == 1976997
+    assert record["prior_checkpoint_sha256"] == (
+        "66582a3d8fa05b8e8379456054fcc56786ef4a88214500aedfe9e8f4cea43679"
+    )
+    assert record["checkpoint_sha256"] == (
+        "a969fa5389bf450583172f086b6eb122d78039436f6427965abbfe5e6f34a3b1"
+    )
+    metrics = record["saved_metrics"]
+    assert metrics["population"] == 7 and metrics["recorded_dead_citizens"] == 0
+    assert metrics["completed_beds"] == 3 and metrics["completed_workshops"] == 2
+    assert metrics["completed_farms"] == 1 and metrics["functional_rooms"] is None
+    assert record["new_window_clock_outcomes"] == {
+        "blocking_native_menu": 2,
+        "no_error": 29,
+        "timeout_waiting_for_ticks": 1,
+    }
+    assert record["source_checkpoint_fresh_load_verified"] is True
+    assert record["final_fresh_reload_verified"] is record["sustainability_established"] is False
+    assert record["native_cleanup_verified"] is record["vm_teardown_verified"] is True
+
+
+def test_complete_six_64_decision_records_reconcile_without_a_ranking_claim():
+    names = (RESULT, SOL_RESULT, TERRA_RESULT, TERRA_TWO_RESULT, SOL_TWO_RESULT, ASTRA_TWO_RESULT)
+    records = [json.loads((EVIDENCE / name).read_bytes()) for name in names]
+    assert len({r["campaign_id"] for r in records}) == 6
+    assert all(r["next_decision"] == 64 for r in records)
+    assert sum(r["usage"]["campaign_accounted_responses"] for r in records) == 384
+    assert sum(r["usage"]["campaign_returned_tokens"] for r in records) == 11403734
+    assert all(r["usage"]["reported_charge_usd"] is None for r in records)
+    assert all(
+        r["matched_comparison_complete"] is r["sustainability_established"] is False
+        for r in records
+    )
