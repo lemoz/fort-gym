@@ -12,7 +12,38 @@ and [reload verification](#later-checkpoint-1057-verification-and-website-delive
 Do not confuse that achieved duration with the younger, independent matched
 cohort below. Long-term self-sufficiency and the full delivery goal remain open.
 
-## Current state: Astra decision 256 audited; other five at decision 128
+## Current state: displayed-key Astra pilot completed and audited
+
+The independent [displayed-key result](../experiments/evidence/keyboard_binding_astra_r1_20260911.json)
+now retains **32 model responses, 248 confirmed key presses, 15,500 saved ticks
+and 785,690 returned tokens**. Astra Medium used the unchanged declared
+`native_keyboard_bindings/v1` condition and the original fresh snapshot, with
+empty initial memory and no operator gameplay rescue. All seven dwarves remain
+alive with no recorded deaths. Completed construction changed from zero to two
+workshops and one farm; there are still zero completed placed beds. Food measured
+by the native raw-edibility predicate remains 50; drink stock remains 60.
+
+All 32 input batches were accepted. Decision 8 requested time while a blocking
+menu was open and advanced zero ticks; decision 9 exited that menu and advanced
+2,000 ticks. This observed recovery and sampled active jobs do not establish
+completed production or a general adaptation score. The result includes every
+decision's displayed keys, stated intent, actual elapsed time, returned tokens
+and measured fortress state. Intent is not a completion verdict.
+
+Independent audit verified all 32 actual provider receipts, saved trace/usage,
+the new checkpoint, preserved source snapshot and configuration, and native/
+container/VM teardown. The final save is at year 30, tick 32,301. Its separate
+fresh reload remains unverified. Dollar charges are unreported, not zero.
+This is 0.0384 elapsed years, not year two or demonstrated self-sufficiency.
+
+This new control condition is **separate from the historical six-attempt
+cohort** below. One short attempt is not a causal comparison or model ranking.
+Next: expose this distinct recorded result on the website, verify a fresh reload,
+then continue from its own decision-32 save before repeated three-model trials.
+The full Year-Two delivery objective remains active; main merge and public
+deployment remain open.
+
+## Historical matched cohort: Astra decision 256 audited; other five at 128
 
 Astra attempt 1 has completed its unchanged 128-to-256 continuation.
 The [audited result](../experiments/evidence/keyboard_matched_astra_r1_continuation_128_256_20260911.json)
