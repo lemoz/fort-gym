@@ -27,13 +27,14 @@
     <p class="campaign-intro">One full game year is 403,200 elapsed ticks from the starting save. Reaching year two is a checkpoint, not the end of play.</p>
     <section class="campaign-tracking" aria-labelledby="binding-results-title">
       <div class="campaign-tracking-heading">
-        <h2 id="binding-results-title">Displayed-key pilot</h2>
-        <button id="refresh-binding-results" type="button">Refresh pilot result</button>
+        <h2 id="binding-results-title">Displayed-key campaign</h2>
+        <button id="refresh-binding-results" type="button">Refresh campaign result</button>
       </div>
-      <p class="campaign-note">Astra Medium using the keys shown in the game menus. A separate 32-decision trial from the original starting save, with no direct build-queue shortcuts. This changed input condition is not included in the older matched-model totals below.</p>
-      <p id="binding-results-status" role="status" aria-live="polite">Loading recorded displayed-key trial…</p>
+      <p class="campaign-note">Astra Medium using the keys shown in the game menus, with no direct build-queue shortcuts. One fortress, continued from its own save with the same memory and controls. This input condition is separate from the older matched-model totals below.</p>
+      <p id="binding-results-status" role="status" aria-live="polite">Loading recorded displayed-key campaign…</p>
       <div id="binding-results-content" hidden></div>
-      <a href="/public/keyboard-binding-results">Open displayed-key result data</a>
+      <a href="/public/keyboard-binding-campaign">Open current campaign data</a>
+      <span> · </span><a href="/public/keyboard-binding-results">Original 32-decision trial</a>
     </section>
     <section class="campaign-tracking" aria-labelledby="keyboard-cohort-title">
       <div class="campaign-tracking-heading">
@@ -226,7 +227,7 @@
   <script src="/static/campaign-continuation-live.js?v=1" defer></script>
   <script src="/static/campaign-endurance-live.js?v=1" defer></script>
   <script src="/static/campaign-endurance-records.js?v=1" defer></script>
-  <script src="/static/campaign-binding-results.js?v=1" defer></script>
+  <script src="/static/campaign-binding-campaign.js?v=1" defer></script>
   <script src="/static/campaign-endurance-live-v2.js?v=1" defer></script>
   <script src="/static/campaign-continuation-records.js?v=1" defer></script>
 </body>

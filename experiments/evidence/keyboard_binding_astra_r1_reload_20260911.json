@@ -1,0 +1,118 @@
+{
+  "schema_version": "fortgym.public-binding-checkpoint-reload/v1",
+  "campaign_id": "bindings-20260911-astra-r1",
+  "status": "native_reload_and_loop_restore_verified",
+  "source_revision": "8b9fffa1de4f93506cbcbdf82fd154aeb17b5697",
+  "fixture_declaration_revision": "d405838333850ee05052be27cf8e2276dcb9d655",
+  "fixture_path": "experiments/keyboard_binding_reload_20260911/fixture-v2.py",
+  "fixture_sha256": "b1d2c802c4d14147064c929507de3b4f44f73d73ae360d35e13958193a493d26",
+  "image_id": "sha256:a33c46c55f8b389251acf49bd127e18b8a6713a13bd25619b84b49ec6e493374",
+  "checkpoint_sha256": "ce25bca850526f6863c2c6fb3d4ac3a048b3791898df764021d815d273db3541",
+  "prior_trial_result_path": "experiments/evidence/keyboard_binding_astra_r1_20260911.json",
+  "prior_trial_result_sha256": "b016efeb037b321455cec9c0df6ea5e9e21553ca1e561730ed1bc3ed03b975ae",
+  "prior_trial_result_unchanged": true,
+  "native_load_verified": true,
+  "normal_loop_restore_verified": true,
+  "original_checkpoint_unchanged": true,
+  "source_save_files_verified": 127,
+  "copied_save_delta": {
+    "path": "events-dfhack.log",
+    "source_size_bytes": 886,
+    "copied_size_bytes": 1190,
+    "appended_bytes": 304,
+    "appended_sha256": "103601e4b65cd43e7576fa6d09d794f17abceba0d3059a08c9eb57572e0039d6",
+    "source_prefix_unchanged": true,
+    "appended_events": [
+      "SC_WORLD_LOADED",
+      "SC_MAP_LOADED"
+    ],
+    "non_log_files_byte_identical": 126,
+    "whole_copied_save_tree_byte_identical": false,
+    "review_scope": "post_hoc_exact_load_log_classification"
+  },
+  "next_step": 32,
+  "committed_elapsed_ticks": 15500,
+  "native_boundary": {
+    "year": 30,
+    "year_tick": 32301,
+    "paused": true,
+    "screen_size": [
+      120,
+      40
+    ]
+  },
+  "restored_usage": {
+    "accounted_responses": 32,
+    "cost_basis": "codex_subscription_charge_unreported/v1",
+    "dispatched_requests": 32,
+    "returned_responses": 32,
+    "total_cost_usd": null,
+    "total_tokens": 785690
+  },
+  "restored_metrics": {
+    "completed_beds": 0,
+    "completed_farms": 1,
+    "completed_workshops": 2,
+    "drink_stock": 60,
+    "food_stock": 50,
+    "functional_rooms": 0,
+    "population": 7,
+    "recorded_dead_citizens": 0,
+    "stone_stock": null,
+    "wood_stock": null
+  },
+  "restored_agent_memory_configuration_prompt_and_history_unchanged": true,
+  "latest_original_usage_journal_used": true,
+  "menu": {
+    "saved_focus": "dwarfmode/Build/Type",
+    "loaded_focus": "dwarfmode/Default",
+    "focus_equal": false,
+    "full_menu_equivalence_claimed": false,
+    "manual_restoration": false,
+    "interpretation": "Native loading resets the transient build menu to the default screen; no gameplay keys or strategy corrections were supplied."
+  },
+  "audit": {
+    "passed": true,
+    "sha256": "e256412bbaae2d0cfc67c731f0ef752fd1ec23d348e0c4d7131dc3015a69b34d",
+    "review_source_sha256": "82c661ea4e28eec68cac7cfd5f2c974284bad775561920315a27732932288cd2",
+    "log_classifier_sha256": "3fd89be042b5f47ade276532faea7817d6b7636d89856d15f3296526eb734b06",
+    "original_strict_review_passed": false,
+    "original_strict_review_sha256": "258b171c36301dfd0f9042d198a144800b17f8cc211621447dc4a3ff68fbc02a",
+    "post_hoc_scoped_review": true,
+    "initial_failure": "The disposable copy's DFHack log gained two load-event lines. Whole copied-save byte equality failed; the original review and the run remain unchanged."
+  },
+  "preparation": {
+    "initial_fixture_passed": 9,
+    "initial_fixture_failed": 1,
+    "initial_failure": "Fresh runner omitted the optional empty discontinuities field. Fixture v2 uses the production resume default without changing the checkpoint.",
+    "executed_fixture_tests_passed": 10,
+    "log_delta_regressions_passed": 9
+  },
+  "lifecycle": {
+    "native_cleanup_verified": true,
+    "container_cleanup_verified": true,
+    "vm_teardown_verified": true,
+    "vm_live_observed_stopped": true,
+    "guest_poweroff_returncode": 0,
+    "vm_stop_returncode": 0,
+    "cpus": 2,
+    "vm_memory_gib": 3,
+    "vm_disk_gib": 32,
+    "container_network": "none",
+    "source_volume_read_only": true
+  },
+  "new_model_calls": 0,
+  "new_gameplay_actions": 0,
+  "new_gameplay_ticks": 0,
+  "new_native_saves": 0,
+  "cloud_vms_created": 0,
+  "proof_limits": {
+    "additional_autonomous_play": false,
+    "sustainability_proven": false,
+    "year_two_reached_in_this_trial": false,
+    "repeated_condition_ranking_supported": false,
+    "main_merged": false,
+    "public_website_deployed": false
+  },
+  "next": "Declare and run the next bounded own-save Astra window from decision 32 under the unchanged displayed-key condition; do not reuse the diagnostic runtime as the campaign source."
+}
