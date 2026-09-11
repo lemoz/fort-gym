@@ -14,7 +14,7 @@
 <meta property="og:image" content="https://fortgym.live/static/social/worlds.png?v=1"><meta property="og:image:secure_url" content="https://fortgym.live/static/social/worlds.png?v=1"><meta property="og:image:type" content="image/png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="Recorded Fort-Eval Dwarf Fortress worlds with public replay evidence">
 <meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="Recorded Worlds | Fort Labs"><meta name="twitter:description" content="Browse the Dwarf Fortress worlds built by evaluated AI agents and open every recorded run."><meta name="twitter:image" content="https://fortgym.live/static/social/worlds.png?v=1"><meta name="twitter:image:alt" content="Recorded Fort-Eval Dwarf Fortress worlds with public replay evidence">
 <link rel="icon" type="image/svg+xml" href="/static/brand/favicon.svg"><link rel="icon" type="image/png" sizes="32x32" href="/static/brand/favicon-32.png"><link rel="apple-touch-icon" sizes="180x180" href="/static/brand/apple-touch-icon.png">
-<link rel="stylesheet" href="/static/fort-labs.css?v=20260711-2">
+<link rel="stylesheet" href="/static/fort-labs.css?v=20260911-3">
 <style>
   .worlds-hero { padding: 50px 0 38px; border-bottom: 1px solid var(--line); }
   .worlds-hero-grid { display: grid; gap: 30px; }
@@ -109,13 +109,13 @@
   <div class="fl-wrap fl-nav">
     <a class="fl-brand" href="/"><span>FORT</span> LABS</a>
     <nav class="fl-nav-links" aria-label="Primary navigation">
-      <a href="/">Home</a><a href="/results">Results</a><a href="/protocols">Protocols</a><a href="/worlds" aria-current="page">Runs</a><a href="/findings">Findings</a><a href="/#about">About</a><a class="fl-live-link" href="/live"><span class="fl-status-dot" id="nav-live-dot"></span><span id="nav-live-label">No live run</span></a>
+      <a href="/">Home</a><a href="/results">Results</a><a href="/protocols">Protocols</a><a href="/worlds" aria-current="page">Runs</a><a href="/findings">Findings</a><a href="/#about">About</a><a class="fl-live-link" href="/#watch-root"><span class="fl-status-dot" id="nav-live-dot"></span><span id="nav-live-label">Watch</span></a>
     </nav>
     <button class="fl-menu-button" type="button" aria-label="Open navigation" aria-expanded="false" aria-controls="fl-mobile-menu" data-fl-menu-button>☰</button>
   </div>
 </header>
 <nav class="fl-mobile-menu" id="fl-mobile-menu" aria-label="Mobile navigation" aria-hidden="true" data-fl-mobile-menu data-open="false">
-  <a href="/">Home <span>01</span></a><a href="/results">Results <span>02</span></a><a href="/protocols">Protocols <span>03</span></a><a href="/worlds">Runs <span>04</span></a><a href="/findings">Findings <span>05</span></a><a href="/#about">About <span>06</span></a><a href="/live">Live viewer <span>07</span></a>
+  <a href="/">Home <span>01</span></a><a href="/results">Results <span>02</span></a><a href="/protocols">Protocols <span>03</span></a><a href="/worlds">Runs <span>04</span></a><a href="/findings">Findings <span>05</span></a><a href="/#about">About <span>06</span></a><a href="/#watch-root">Spectator <span>07</span></a>
 </nav>
 
 <main>
@@ -177,7 +177,7 @@
             <div><div class="fl-data-label">Protocol</div><div class="fl-data-value" id="featured-protocol">--</div></div>
             <div><div class="fl-data-label">Seed</div><div class="fl-data-value" id="featured-seed">--</div></div>
           </div>
-          <a class="fl-link" id="featured-link" href="/live">Open run →</a>
+          <a class="fl-link" id="featured-link" href="/#watch-root">Open run →</a>
         </div>
       </article>
       <div class="library-head"><div class="fl-kicker">Earlier run archive</div><div class="library-count" id="library-count">Loading…</div></div>
@@ -194,7 +194,7 @@
   <div class="fl-wrap fl-footer-grid">
     <div><div class="fl-footer-mark"><span>FORT</span> LABS</div><p class="fl-footer-copy">Worlds for long-horizon intelligence. Every public run opens into its recorded gameplay.</p></div>
     <div><div class="fl-footer-title">Explore</div><div class="fl-footer-links"><a href="/results">Results</a><a href="/protocols">Protocols</a><a href="/worlds">Runs</a><a href="/findings">Findings</a></div></div>
-    <div><div class="fl-footer-title">Research</div><div class="fl-footer-links"><a href="https://github.com/lemoz/fort-gym/blob/main/docs/FORT_EVAL_SPEC.md">Methodology</a><a href="https://github.com/lemoz/fort-gym">GitHub</a><a href="/live">Live viewer</a></div></div>
+    <div><div class="fl-footer-title">Research</div><div class="fl-footer-links"><a href="https://github.com/lemoz/fort-gym/blob/main/docs/FORT_EVAL_SPEC.md">Methodology</a><a href="https://github.com/lemoz/fort-gym">GitHub</a><a href="/#watch-root">Spectator</a></div></div>
     <div><div class="fl-footer-title">Archive</div><div class="fl-footer-links"><a href="/leaderboard">Historical leaderboard</a><a href="/worlds">Recorded worlds</a></div></div>
   </div>
 </footer>

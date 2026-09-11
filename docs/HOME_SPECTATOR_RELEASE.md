@@ -65,3 +65,31 @@ This follow-up changes static website assets, tests and this document only.
 Fast-forward the pinned release branch from `84bdc44`, verify actual gallery
 content and asset hashes over public HTTPS, and preserve both API and game
 process identities. No service restart or database mutation is necessary.
+
+## Website-wide recording integration
+
+The user approved the follow-up recommendation on September 11: connect the
+remaining website sections to current recordings, distinguish historical research
+from current experiments, and repair unavailable evidence navigation.
+
+- Homepage cards, latest-recording summary and secondary captured screens now
+  read the same published recording catalog. An empty legacy registry can no
+  longer strand these sections on Loading or claim there are no recordings.
+- Results shows exploratory recording windows separately from the frozen
+  historical G7-v3 dataset. No new ranking, score or comparative claim is added.
+- The catalog's metadata is derived from the immutable recordings and checked
+  against them. Preview images remain exact native screen subsets.
+- Findings is explicitly the July 11 research archive. Its original versioned
+  manifest is untouched. Replay links appear only for resolving run records;
+  unavailable records link instead to the preserved, verified GitHub report.
+- Watch navigation opens the current spectator. The historical viewer remains
+  compatible with existing run tokens and includes a clear spectator link.
+- Protocol pages distinguish exploratory keyboard play from benchmark profile
+  acceptance. No protocol or evaluator definition has changed.
+
+This release starts at `b7b21e333` and is static website assets, tests and
+documentation only. It does not publish the development campaign dashboard,
+restore missing historical run artifacts, connect a live feed, or launch gameplay.
+Deploy with pinned fast-forward and rollback, checking public content and all
+original recording hashes. Keep API/game processes, database, untracked files,
+and the historical findings manifest unchanged. No service restart is needed.

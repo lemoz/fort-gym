@@ -12,7 +12,7 @@
 <meta property="og:image" content="https://fortgym.live/static/social/results.png?v=1"><meta property="og:image:secure_url" content="https://fortgym.live/static/social/results.png?v=1"><meta property="og:image:type" content="image/png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="Fort-Eval results compared under declared protocols with recorded evidence">
 <meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="Results | Fort Labs"><meta name="twitter:description" content="Protocol-scoped Fort-Eval results and the recorded Dwarf Fortress runs behind every comparison."><meta name="twitter:image" content="https://fortgym.live/static/social/results.png?v=1"><meta name="twitter:image:alt" content="Fort-Eval results compared under declared protocols with recorded evidence">
 <link rel="icon" type="image/svg+xml" href="/static/brand/favicon.svg"><link rel="icon" type="image/png" sizes="32x32" href="/static/brand/favicon-32.png"><link rel="apple-touch-icon" sizes="180x180" href="/static/brand/apple-touch-icon.png">
-<link rel="stylesheet" href="/static/fort-labs.css?v=20260711-2">
+<link rel="stylesheet" href="/static/fort-labs.css?v=20260911-3">
 <style>
   .results-hero { padding: 58px 0 42px; border-bottom: 1px solid var(--line); }
   .results-hero-grid { display: grid; grid-template-columns: 1.25fr .75fr; gap: 70px; align-items: end; }
@@ -53,13 +53,13 @@
   <div class="fl-wrap fl-nav">
     <a class="fl-brand" href="/"><span>FORT</span> LABS</a>
     <nav class="fl-nav-links" aria-label="Primary navigation">
-      <a href="/">Home</a><a href="/results" aria-current="page">Results</a><a href="/protocols">Protocols</a><a href="/worlds">Runs</a><a href="/findings">Findings</a><a href="/#about">About</a><a class="fl-live-link" href="/live"><span class="fl-status-dot" id="nav-live-dot"></span><span id="nav-live-label">No live run</span></a>
+      <a href="/">Home</a><a href="/results" aria-current="page">Results</a><a href="/protocols">Protocols</a><a href="/worlds">Runs</a><a href="/findings">Findings</a><a href="/#about">About</a><a class="fl-live-link" href="/#watch-root"><span class="fl-status-dot" id="nav-live-dot"></span><span id="nav-live-label">Watch</span></a>
     </nav>
     <button class="fl-menu-button" type="button" aria-label="Open navigation" aria-expanded="false" aria-controls="fl-mobile-menu" data-fl-menu-button>☰</button>
   </div>
 </header>
 <nav class="fl-mobile-menu" id="fl-mobile-menu" aria-label="Mobile navigation" aria-hidden="true" data-fl-mobile-menu data-open="false">
-  <a href="/">Home <span>01</span></a><a href="/results">Results <span>02</span></a><a href="/protocols">Protocols <span>03</span></a><a href="/worlds">Runs <span>04</span></a><a href="/findings">Findings <span>05</span></a><a href="/#about">About <span>06</span></a><a href="/live">Live viewer <span>07</span></a>
+  <a href="/">Home <span>01</span></a><a href="/results">Results <span>02</span></a><a href="/protocols">Protocols <span>03</span></a><a href="/worlds">Runs <span>04</span></a><a href="/findings">Findings <span>05</span></a><a href="/#about">About <span>06</span></a><a href="/#watch-root">Spectator <span>07</span></a>
 </nav>
 
 <main>
@@ -68,20 +68,28 @@
       <div>
         <div class="fl-eyebrow">Fort-Eval results</div>
         <h1 class="fl-title" id="results-title">See what each model builds when the world keeps moving.</h1>
-        <p class="fl-copy">Every result belongs to one declared protocol and opens into the gameplay behind it.</p>
+        <p class="fl-copy">Explore the current gameplay recordings, then inspect historical benchmark results separately. Different interfaces and recording windows are not a model ranking.</p>
       </div>
-      <div class="results-contract" aria-label="Current result field">
+      <div class="results-contract" aria-label="Historical benchmark field">
         <div class="contract-row"><div class="contract-key">Profile</div><div class="contract-value">Easy v1</div></div>
         <div class="contract-row"><div class="contract-key">Pilot</div><div class="contract-value">P1 fixed seed</div></div>
         <div class="contract-row"><div class="contract-key">Ranking</div><div class="contract-value">Provisional only</div></div>
-        <div class="contract-row"><div class="contract-key">Protocol</div><div class="contract-value">fort-eval-easy-v1</div></div>
+        <div class="contract-row"><div class="contract-key">Protocol</div><div class="contract-value">fort-eval-easy-p1-g7-v3</div></div>
       </div>
     </div>
   </section>
 
-  <section class="results-band" aria-label="Result field summary">
+  <section class="fl-section" aria-labelledby="current-recordings-title">
+    <div class="fl-wrap">
+      <div class="fl-eyebrow">Current exploratory recordings</div>
+      <h2 class="fl-section-title" id="current-recordings-title">Watch the play. Keep the comparison honest.</h2>
+      <p class="fl-copy">Astra, Sol and Terra use different control conditions. These captured windows show actions and game responses, not scored head-to-head results or a completed Year-Two campaign.</p>
+      <div class="published-recording-list" data-published-recordings><p><a href="/worlds">Browse the three published replays →</a></p></div>
+    </div>
+  </section>
+  <section class="results-band" aria-label="Historical benchmark field summary">
     <div class="fl-wrap fl-data-grid results-band-grid">
-      <div class="fl-data-cell"><div class="fl-data-label">Field</div><div class="fl-data-value">Experimental comparisons</div></div>
+      <div class="fl-data-cell"><div class="fl-data-label">Historical field</div><div class="fl-data-value">Easy P1 G7-v3</div></div>
       <div class="fl-data-cell"><div class="fl-data-label">Candidate runs</div><div class="fl-data-value" id="candidate-count">--</div></div>
       <div class="fl-data-cell"><div class="fl-data-label">Eligible runs</div><div class="fl-data-value fl-data-value-acid" id="eligible-count">--</div></div>
       <div class="fl-data-cell"><div class="fl-data-label">Comparable groups</div><div class="fl-data-value" id="group-count">--</div></div>
@@ -91,10 +99,10 @@
   <section class="fl-section" aria-labelledby="cohort-title">
     <div class="fl-wrap cohort-layout">
       <div>
-        <div class="fl-eyebrow">One protocol / one field</div>
-        <h2 class="fl-title" id="cohort-title">The ranked table begins with a frozen world.</h2>
+        <div class="fl-eyebrow">Historical protocol / separate dataset</div>
+        <h2 class="fl-title" id="cohort-title">Comparable results need a shared condition.</h2>
         <p class="fl-copy">Shared worlds, prompts, memory, interfaces, models, code, and evaluator versions define one complete Easy v1 field.</p>
-        <a class="fl-link" href="/protocols/fort-eval-easy-v1">Open Easy v1 protocol →</a>
+        <a class="fl-link" href="/protocols/fort-eval-easy-p1-g7-v3">Open the frozen G7-v3 protocol →</a>
       </div>
       <div id="cohort-groups" aria-live="polite"><div class="fl-empty">Loading protocol-scoped results…</div></div>
     </div>
@@ -144,7 +152,7 @@
     $('eligible-count').textContent = payload.eligible_run_count ?? 0;
     $('group-count').textContent = groups.length;
     if (!groups.length) {
-      $('cohort-groups').innerHTML = `<div class="cohort-state"><strong>The Fable and Sol field opens here.</strong><p>Completed runs appear with their score, G7 verdict, and replay.</p></div>`;
+      $('cohort-groups').innerHTML = '<div class="cohort-state"><strong>No published results in this historical field.</strong><p>The current recordings above are a separate exploratory dataset. They have not been added to this benchmark table.</p></div>';
       return;
     }
     $('cohort-groups').innerHTML = groups.map(group => `<div class="group-block"><div class="group-key">${FL.escapeHtml(keyText(group.comparability))}</div><div class="fl-table-shell"><table class="fl-table"><thead><tr><th>Model</th><th>Verdict</th><th>G7</th><th>Runs</th><th>Scalar mean</th><th>Scalar best</th><th>Gameplay</th></tr></thead><tbody>${(group.model_results || []).map(row => { const label = row.public_label || row.model; const digest = row.model_digest && row.model_digest !== label ? `<div class="fl-mono">${FL.escapeHtml(row.model_digest)}</div>` : ''; const g7 = Object.entries(row.g7_outcomes || {}).map(([outcome, count]) => `${outcome} ${count}`).join(' · ') || 'Not reported'; const outcomeVector = row.result_kind === 'outcome_vector'; const token = row.representative_token || row.best_token; return `<tr><td><strong>${FL.escapeHtml(label)}</strong>${digest}</td><td class="fl-mono">${FL.escapeHtml(row.task_verdict || 'Not reported')}</td><td class="fl-mono">${FL.escapeHtml(g7)}</td><td class="fl-mono">${FL.escapeHtml(row.run_count)}</td><td class="fl-mono">${outcomeVector ? 'N/A' : FL.escapeHtml(FL.formatNumber(row.mean_score))}</td><td class="fl-mono">${outcomeVector ? 'N/A' : FL.escapeHtml(FL.formatNumber(row.best_score))}</td><td>${token ? `<a class="fl-link" href="/r/${encodeURIComponent(token)}">Watch →</a>` : 'Not reported'}</td></tr>`; }).join('')}</tbody></table></div></div>`).join('');
@@ -153,7 +161,7 @@
   function renderEvidence(items) {
     const runs = (items || []).slice(0, 3);
     if (!runs.length) {
-      $('run-evidence').innerHTML = '<div class="fl-empty">No replayable worlds are published yet.</div>';
+      $('run-evidence').innerHTML = '<div class="fl-empty">This historical field has no available replay evidence. Current recordings are shown above.</div>';
       return;
     }
     $('run-evidence').innerHTML = runs.map((run, index) => `<a class="evidence-run" href="${FL.runUrl(run)}"><div class="fl-media evidence-media"><canvas id="result-run-${index}"></canvas><div class="fl-media-source" id="result-source-${index}">Recorded frame</div></div><div class="evidence-meta"><div class="evidence-model">${FL.escapeHtml(run.model)}</div><div class="evidence-score">${FL.escapeHtml(FL.formatNumber(run.score))}</div></div></a>`).join('');
@@ -163,7 +171,7 @@
   async function loadEvidence(groups) {
     const tokens = [...new Set(groups.flatMap(group => (group.model_results || []).map(row => row.representative_token || row.best_token).filter(Boolean)))].slice(0, 3);
     if (!tokens.length) {
-      $('run-evidence').innerHTML = '<div class="fl-empty">Protocol replay evidence will appear with the first complete field.</div>';
+      $('run-evidence').innerHTML = '<div class="fl-empty">No replay evidence is listed for this historical protocol. Current recordings are shown above.</div>';
       return;
     }
     const settled = await Promise.allSettled(tokens.map(token => FL.fetchJson(`/public/runs/${encodeURIComponent(token)}`)));
@@ -185,5 +193,6 @@
   load();
 })();
 </script>
+<script type="module" src="/static/published-recordings.mjs?v=20260911-1"></script>
 </body>
 </html>
