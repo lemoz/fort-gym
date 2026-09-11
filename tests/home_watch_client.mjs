@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import {glyph, decodeScreen, frameIndex, liveState, validateRecording, initialRecording, recoverySummary} from '../web/static/home-watch-model.mjs';
+import {glyph, decodeScreen, frameIndex, liveState, validateRecording, initialRecording, recoverySummary, readLiveStatus} from '../web/static/home-watch-model.mjs';
 
 const screen = {width:2,height:2,tile_order:'column_major',runs:[[2,219,7,0],[1,1,15,0],[1,32,0,1]]};
 const frame = decision => ({decision,screen,action:{intent:'Intent ' + decision,keys:['q'],advance_ticks:0},
@@ -43,6 +43,22 @@ test('live status expires and cannot hide future timestamps', () => {
   assert.equal(liveState(live,1031),'stale');
   assert.throws(() => liveState(live,900));
   assert.equal(validateRecording(record('a')).frames.length,2);
+});
+
+test('static relay is a fallback, never a competing live owner', async () => {
+  const none={schema_version:'fortgym.watch-live/v1',status:'not_connected'};
+  const live={schema_version:'fortgym.watch-live/v1',status:'running',observed_at_unix:Math.floor(Date.now()/1000),fresh_for_seconds:30};
+  let paths=[];
+  assert.equal(await readLiveStatus(async path=>{paths.push(path);return live;}),live);
+  assert.deepEqual(paths,['/public/watch-active']);
+  paths=[];
+  assert.equal(await readLiveStatus(async path=>{paths.push(path);return path.startsWith('/public/')?none:live;}),live);
+  assert.equal(paths.length,2);
+  assert.match(paths[1],/^\/static\/live\/watch-active.json\?t=\d+$/);
+  for(const value of [null,{status:'running'}, {...live,observed_at_unix:Math.floor(Date.now()/1000)+60}])
+    assert.equal(await readLiveStatus(async path=>path.startsWith('/public/')?none:value),none);
+  assert.equal(await readLiveStatus(async path=>{if(path.startsWith('/static/'))throw Error('404');return none;}),none);
+  await assert.rejects(()=>readLiveStatus(async()=>{throw Error('primary unavailable');}));
 });
 
 test('every bundled real recording can be decoded', () => {
@@ -145,7 +161,7 @@ test('homepage controls, replay switching and live disconnect work in memory', a
     assert.equal(element('recovery').hidden,false);
     assert.equal(element('live').hidden,true);
     assert.match(element('connection').textContent,/expired/);
-    assert.ok(requests.every(url=>url.startsWith('/static/recordings/') || url==='/public/watch-active'));
+    assert.ok(requests.every(url=>url.startsWith('/static/recordings/') || url.startsWith('/static/live/watch-active.json?') || url==='/public/watch-active'));
   } finally {
     globalThis.document=original.document;globalThis.fetch=original.fetch;
     globalThis.setInterval=original.setInterval;globalThis.clearInterval=original.clearInterval;Date.now=original.now;

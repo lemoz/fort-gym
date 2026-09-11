@@ -1,4 +1,4 @@
-import {decodeScreen, frameIndex, liveState, validateRecording, renderCapturedScreen, initialRecording, recoverySummary} from './home-watch-model.mjs?v=20260911-recovery';
+import {decodeScreen, frameIndex, liveState, validateRecording, renderCapturedScreen, initialRecording, recoverySummary, readLiveStatus} from './home-watch-model.mjs?v=20260911-live';
 const $ = id => document.getElementById('watch-' + id);
 const root = $('root');
 if (root) {
@@ -154,7 +154,7 @@ if (root) {
     if (pollBusy || document.hidden) return;
     pollBusy = true;
     try {
-      const data = await json('/public/watch-active');
+      const data = await readLiveStatus(json);
       liveState(data);
       if (data.frame) decodeScreen(data.frame.screen);
       latestLive = data;
