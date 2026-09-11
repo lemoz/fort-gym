@@ -116,7 +116,7 @@ def test_http_preserves_older_endpoints_and_exposes_no_private_data(monkeypatch)
     assert response.json() == records.keyboard_binding_campaign()
     assert "/Users/" not in response.text and "memory_update" not in response.text
     page = client.get("/campaigns")
-    assert page.status_code == 200 and "/static/campaign-binding-campaign.js?v=2" in page.text
+    assert page.status_code == 200 and "/static/campaign-binding-campaign.js?v=3" in page.text
     assert "Original 32-decision trial" in page.text
     assert client.get("/static/campaign-binding-campaign.js").status_code == 200
     assert client.get("/static/campaign-binding-results.js").status_code == 200
