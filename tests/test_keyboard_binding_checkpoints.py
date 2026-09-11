@@ -9,6 +9,7 @@ import subprocess
 import pytest
 
 from fort_gym.bench.api import keyboard_binding_campaign as campaign
+from fort_gym.bench.api.keyboard_binding_stock_context import stock_context
 from fort_gym.bench.api.keyboard_binding_checkpoints import (
     mark_source_reload,
     validate_window_checkpoints,
@@ -289,6 +290,7 @@ def test_checkpoint_renderer_uses_safe_text_and_distinguishes_pause(paused):
     data["timeline"].extend(result["timeline"])
     data.update(
         responses=result["responses"],
+        stock_context=stock_context(result),
         status=result["status"],
         stop_reason=result["stop_reason"],
         saved_metrics=result["saved_metrics"],

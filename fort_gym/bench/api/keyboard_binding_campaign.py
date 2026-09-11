@@ -3,6 +3,7 @@
 from .keyboard_binding_results import REPOSITORY, SOURCE_REVISION, keyboard_binding_result
 from .keyboard_binding_results import RESULT_PATH as INITIAL_RESULT_PATH
 from .keyboard_endurance_records import read_result
+from .keyboard_binding_stock_context import stock_context
 from .keyboard_binding_checkpoints import (
     mark_source_reload,
     validate_window_checkpoints,
@@ -148,6 +149,7 @@ def keyboard_binding_campaign() -> dict:
         "saved_elapsed_ticks": result["saved_elapsed_ticks"],
         "ticks_per_year": result["ticks_per_year"],
         "saved_metrics": result["saved_metrics"],
+        "stock_context": stock_context(result),
         "usage": result["usage"],
         "confirmed_key_presses": confirmed_keys,
         "timeline": timeline,

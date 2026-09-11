@@ -44,6 +44,7 @@ function all(node, tag) { return (node.tag === tag ? [node] : []).concat(node.ch
   assert.equal(content.textContent, loadedText);
   assert.match(status.textContent, /last loaded recorded result remains/);
   fail = false;
+  delete data.stock_context; // Legacy response without the additive inventory context.
   data.saved_metrics.food_stock = null;
   data.timeline[0].model_intent = '<script>not executable</script>';
   data.result_url = 'javascript:alert(1)';
