@@ -16,6 +16,8 @@ TERRA_TWO_RESULT = "keyboard_matched_terra_r2_continuation_32_64_20260910.json"
 WEBSITE = "keyboard_matched_continuation_website_20260910.json"
 SAVED_WEBSITE = "keyboard_matched_saved_windows_website_20260910.json"
 ENDURANCE = "keyboard_matched_endurance_preparation_20260910.json"
+ENDURANCE_DELIVERY = "keyboard_matched_endurance_delivery_20260911.json"
+ENDURANCE_LAUNCH = "keyboard_matched_astra_r1_endurance_launch_20260911.json"
 
 
 @pytest.mark.parametrize(
@@ -30,6 +32,8 @@ ENDURANCE = "keyboard_matched_endurance_preparation_20260910.json"
         (WEBSITE, "c5cb272a0b62646fa6c495d5157b68a51a758544fc9c538bd715bf08dbf3f8c9"),
         (SAVED_WEBSITE, "a2d9a1ef556697a734c425a6c9c8571069d409719bd9d86ef16477926d79b57f"),
         (ENDURANCE, "46a6320ca1c2a23045a5d98df4d7ae30992d10e36e810b774df8f842e29939d9"),
+        (ENDURANCE_DELIVERY, "d465e575ce547461a878b845d82ca073440d8da47a7d90aaaeaa3c4cd39a5059"),
+        (ENDURANCE_LAUNCH, "631758a6b511a120b30c12e0767d1f714657351a5baf31eeccc92769cb644a27"),
     ],
 )
 def test_exact_versioned_projections_and_private_state_exclusion(filename, expected):
@@ -87,6 +91,36 @@ def test_saved_continuation_separates_new_work_from_its_own_baseline():
         "no_error": 29,
         "timeout_waiting_for_ticks": 2,
     }
+
+
+def test_endurance_delivery_does_not_claim_more_gameplay():
+    record = json.loads((EVIDENCE / ENDURANCE_DELIVERY).read_bytes())
+    assert record["artifact_kind"] == "runtime_and_website_readiness"
+    assert record["all_six_inputs_verified"] is True
+    assert record["runtime_revision"] == record["runtime_ci"]["head_sha"]
+    assert record["website_revision"] == record["website_ci"]["head_sha"]
+    assert record["runtime_ci"]["conclusion"] == record["website_ci"]["conclusion"] == "success"
+    assert record["recorded_continuation_windows"] == 6
+    assert record["recorded_continuation_boundaries"] == 192
+    assert record["campaign_accounted_responses"] == 384
+    assert record["reported_model_charge_usd"] is None
+    assert record["next_feed_status_at_prelaunch_http_acceptance"] == "not_connected"
+    assert record["new_gameplay_result_included"] is record["year_two_goal_complete"] is False
+
+
+def test_real_endurance_launch_is_provisional_not_a_final_save():
+    record = json.loads((EVIDENCE / ENDURANCE_LAUNCH).read_bytes())
+    live = record["observation"]
+    assert record["artifact_kind"] == "active_continuation_observation"
+    assert (live["start_decision"], live["end_decision"], live["response_limit"]) == (64, 128, 64)
+    assert live["responses"] == 2 and live["unsettled_claims"] == 1
+    assert live["campaign_returned_responses"] == 64 + live["responses"]
+    assert live["campaign_returned_tokens"] == 2468751 + live["returned_tokens"]
+    assert live["source_checkpoint_verified"] is True and live["new_save_verified"] is False
+    assert record["first_response_review"]["total_tokens"] == 52304
+    assert record["first_response_review"]["api_credentials_inherited"] is False
+    assert record["final_native_audit_completed"] is record["vm_teardown_verified"] is False
+    assert record["new_gameplay_result_included"] is record["year_two_goal_complete"] is False
 
 
 def test_website_receipt_is_historical_http_proof_not_deployment_or_gameplay():

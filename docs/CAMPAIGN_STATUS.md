@@ -4,7 +4,44 @@ Verified September 11, 2026 UTC. The Year-Two Autonomous Play objective remains
 unfinished; work continues toward the same objective. The owner has approved starting the project
 work for [Astra standard-input experiments](ASTRA_STANDARD_INPUT_EXPERIMENTS.md).
 
-## Latest matched pilot: all six initial windows audited
+## Current run: Astra resumed from decision 64
+
+Astra attempt 1 is now running its declared 64-to-128 window from its own
+verified save and memory. The first returned response passed an independent
+receipt audit: Astra Medium, subscription authentication, no inherited API
+credentials, valid action grammar and 52,304 returned tokens. A real live HTTP
+check confirmed the correct own-save baseline, new/cumulative counters and
+provisional-save labeling. The [launch observation](../experiments/evidence/keyboard_matched_astra_r1_endurance_launch_20260911.json)
+is a historical snapshot, not current process status or a final native audit.
+The bounded owner retains mandatory VM teardown; no new save is claimed yet.
+
+## Current delivery: six saved campaigns and longer-run support
+
+The configuration-driven endurance courier and all six own-save 64-to-128
+declarations are pushed at `45bb05c903181b6b2e4f61df3a4c0a8eca05b818` in
+[draft PR #150](https://github.com/lemoz/fort-gym/pull/150). Exact-head CI passed
+in run `34546882493`; the full local suite passed 4,735 tests with 10 skips.
+The separate 64-to-128 owner/auditor passed 59 offline tests, and its new
+result publisher passed 17 synthetic boundary tests. The full six-input audit
+verified own native-save inventories and settled memory/usage without model
+calls or new game ticks. Native source and historical owners remain frozen.
+
+The local website now serves `941ed46961c542d2f1fa97bd8154bf0465dbdd29`, pushed
+in [draft PR #151](https://github.com/lemoz/fort-gym/pull/151). It shows all six
+audited decision-64 outcomes and 192 new continuation boundaries, separately
+from the six initial windows. It adds a dedicated 64-to-128 live card while
+retaining the earlier observer routes and their original limits. Local tests
+passed 4,780 with 10 skips, including 157 focused old/new website checks.
+Exact-head GitHub CI passed in run `34547762151` before the gameplay launch.
+Exact-source HTTP verification passed: earlier results and historical data
+are unchanged, admin remains disabled, and the next-window feed correctly
+reports no connected observer before launch. No browser visual QA, public
+deployment or main merge is claimed. The [delivery receipt](../experiments/evidence/keyboard_matched_endurance_delivery_20260911.json)
+binds both pushed revisions, their passing CI, tests and prelaunch HTTP checks.
+These are delivery/readiness results,
+not additional gameplay or proof of a functioning year-two fortress.
+
+## Earlier matched pilot and website delivery history
 
 The matched cohort now has verified both Astra attempts, both Sol attempts and both
 Terra attempts. Terra retained 7,000 and 9,000 ticks respectively, with 32 responses per
@@ -155,7 +192,8 @@ All six attempts now have audited decision-64 saves: 384 cumulative responses
 and 11,403,734 returned tokens, with model dollar charges unreported. Both Astra
 attempts have completed some infrastructure; the Sol and Terra attempts have
 not yet done so. These early same-embark results are not a general model ranking
-or evidence of sustainable year-two play. No native owner is currently running.
+or evidence of sustainable year-two play. At completion of this decision-64
+cohort, no native owner was running; the next launch is recorded above.
 Native reload preserves the saved world and
 paused calendar, not a promise of identical open UI menus; initial screens are
 retained without human navigation. Continue in the declared
