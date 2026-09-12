@@ -17,17 +17,18 @@ and has not been used to replace a running cohort's frozen source or image.
 | Rejected-choice observer and exporters | `7cd3b96763998abfd99ed623630d658320a27918` |
 | Matched comparison, own-save tools and public records | 61 source files copied byte-for-byte from `727514096d8ec4fde22e4a0f47b5f7bf1bd5bd4e` |
 | Terra own-save result and index | `deb53296492a33cf163ca40b8f067bee11ce6308` and `293b4ca8ee1262d3bf5e7a029130b6cf16ecd300`, with cherry-pick provenance |
+| Astra own-save result and replay | Result `4b3617128f773b1a04120a405809731a66570a8c`, exact index/test bytes from `cb83c0f6ed7c568c8f26e1802b5107be0e9d080f`, viewer `d5ca3e30a77882eea7b01189c1ac7d41fce5bf0f` |
 
 The broad website and goal branches include unrelated historical calibration,
 provider and environment-layer work. Those branches were not merged wholesale.
 Existing main campaign navigation is retained alongside the homepage spectator.
-All twelve recording payloads are unchanged from the published viewer source.
+All thirteen recording payloads are unchanged from the validated viewer source.
 The integrated API reads its live-feed directory through the same settings
 object as the other campaign endpoints. Observer tests follow the current split
-between player and data-loading helper and the twelve-window catalog.
+between player and data-loading helper and the thirteen-window catalog.
 
 The matched source snapshot contains six first-boundary outcomes, Sol's
-128-budget startup failure and Terra's saved 128-response continuation.
+128-budget startup failure and Terra's and Astra's saved 128-response continuations.
 Later results on the goal branch must be integrated
 as separate immutable updates; this snapshot does not claim live queue status.
 The old owner README files are retained unchanged because they describe frozen
@@ -91,3 +92,20 @@ explicit API/Lua deltas and the screen-only observation boundary. This is a
 partial implementer review, not independent approval or review of every changed
 file. Generated protocol bindings and fresh-machine native provisioning remain
 unverified; no game, VM or model was launched for these checks.
+
+## Astra own-save update
+
+The result was cherry-picked with provenance, followed by the exact goal-branch
+index/test bytes and the validated thirteen-recording viewer. Only the existing
+integrated observer catalog count needed updating. The source reader matches
+both website tables, with six published results at 64 responses and three at the
+128-response budget. The new recording is the model's own continuation, not a
+seventh fresh trial. Sol's startup failure and all twelve older replay payloads
+remain unchanged. The earlier isolated setup acceptance still describes its
+exact twelve-recording source revision, not a rerun of this updated candidate.
+
+Exact public delivery and this candidate's CI are verified separately. This
+update does not change frozen native code, active gameplay or main-merge status.
+The updated integration passes 136 focused Python tests (three existing
+warnings) and all 50 Node viewer contracts. Both bundled reports reproduce the
+source reader's JSON exactly.
