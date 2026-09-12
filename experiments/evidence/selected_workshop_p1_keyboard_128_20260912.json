@@ -1,0 +1,155 @@
+{
+  "schema_version": "fortgym.selected-workshop-attempt-result/v1",
+  "date_utc": "2026-09-12",
+  "pair": 1,
+  "campaign_id": "selected-workshop-v1-p1-keyboard",
+  "condition": "keyboard",
+  "status": "saved",
+  "source_revision": "422c915d23bf828371be481d3079a23bbb3e9e94",
+  "image": "sha256:540dcf422a3bf40999b0e34f463e73936f14e3365fa7dcca5f2b41cf532c9364",
+  "study_declaration_sha256": "5c2dec772a38dab96ef3c0f6a2e7172fc32ec69cdffae64dd902ffbd91c53bf3",
+  "condition_sha256": "f09dc18e7e0f08647759a9c4bcca86f9894a5be1f1767b737a0ed3fac0c94cd9",
+  "model": "gpt-6-astra",
+  "reasoning_effort": "medium",
+  "control_profile": "native_keyboard_bindings/v1",
+  "comparison_boundary": 128,
+  "model_responses": 128,
+  "returned_tokens": 3530178,
+  "reported_charge_usd": null,
+  "cost_basis": "codex_subscription_charge_unreported/v1",
+  "audit_sha256": "9202a9fd406b8d5835fd59a0757478a73ab73faf4e0323b7c3c9885314e009cc",
+  "checkpoint_manifest_sha256": "2d9329032718827d7e71810f27f0c0151521380bded79d53db131e40792a2e1e",
+  "checkpoint_file_sha256": "65550e077ff3a75df3f2218cc55a7e523e0905aedcceceb3a1a575c787a4314a",
+  "checkpoint_verified": true,
+  "parent_64_checkpoint_fresh_reload_verified": true,
+  "final_checkpoint_fresh_reload_verified": false,
+  "saved_elapsed_ticks": 83800,
+  "saved_metrics": {
+    "population": 7,
+    "food_stock": 58,
+    "drink_stock": 111,
+    "wood_stock": null,
+    "stone_stock": null,
+    "functional_rooms": null,
+    "completed_workshops": 3,
+    "completed_beds": 4,
+    "completed_farms": 1,
+    "recorded_dead_citizens": 0
+  },
+  "boundary_64": {
+    "saved_elapsed_ticks": 18600,
+    "saved_metrics": {
+      "population": 7,
+      "food_stock": 40,
+      "drink_stock": 110,
+      "wood_stock": null,
+      "stone_stock": null,
+      "functional_rooms": null,
+      "completed_workshops": 2,
+      "completed_beds": 4,
+      "completed_farms": 1,
+      "recorded_dead_citizens": 0
+    },
+    "returned_tokens": 1778230,
+    "action_counts": {
+      "decisions": 64,
+      "action_routes": {
+        "KEYSTROKE": 64
+      },
+      "accepted_actions": 64,
+      "rejected_actions": 0,
+      "requested_key_presses": 426,
+      "empty_keyboard_batches": 0,
+      "known_keys_sent": 426,
+      "records_without_key_count": 0,
+      "requested_ticks": 19800,
+      "advanced_ticks": 18600,
+      "deferred_clock_requests": 1
+    }
+  },
+  "action_counts": {
+    "decisions": 128,
+    "action_routes": {
+      "KEYSTROKE": 128
+    },
+    "accepted_actions": 128,
+    "rejected_actions": 0,
+    "requested_key_presses": 637,
+    "empty_keyboard_batches": 1,
+    "known_keys_sent": 637,
+    "records_without_key_count": 0,
+    "requested_ticks": 87000,
+    "advanced_ticks": 83800,
+    "deferred_clock_requests": 2
+  },
+  "window_action_counts": [
+    {
+      "decisions": 64,
+      "action_routes": {
+        "KEYSTROKE": 64
+      },
+      "accepted_actions": 64,
+      "rejected_actions": 0,
+      "requested_key_presses": 426,
+      "empty_keyboard_batches": 0,
+      "known_keys_sent": 426,
+      "records_without_key_count": 0,
+      "requested_ticks": 19800,
+      "advanced_ticks": 18600,
+      "deferred_clock_requests": 1
+    },
+    {
+      "decisions": 64,
+      "action_routes": {
+        "KEYSTROKE": 64
+      },
+      "accepted_actions": 64,
+      "rejected_actions": 0,
+      "requested_key_presses": 211,
+      "empty_keyboard_batches": 1,
+      "known_keys_sent": 211,
+      "records_without_key_count": 0,
+      "requested_ticks": 67200,
+      "advanced_ticks": 65200,
+      "deferred_clock_requests": 1
+    }
+  ],
+  "memory_usage_and_history_preserved": true,
+  "original_inputs_unchanged": true,
+  "unchanged_model_prompt_controls_and_resources": true,
+  "no_human_gameplay_rescue": true,
+  "teardown_verified": true,
+  "operations": [
+    {
+      "receipt_sha256": "935a482f3b52b9bdb164e493e5ca91280e30e9dbc47bf2dbf220cbbee5601767",
+      "mode": "fresh",
+      "both_vms_stopped": true,
+      "both_disks_closed": true,
+      "prior_inventory_preserved": true,
+      "configs_unchanged": true,
+      "guest_poweroff_returncode": 0,
+      "redundant_vm_stop_returncode": 1
+    },
+    {
+      "receipt_sha256": "9c723e0fcd770c5e43f051dfc6c5a53f3a9910177147142c5e09a89afd478125",
+      "mode": "continue",
+      "both_vms_stopped": true,
+      "both_disks_closed": true,
+      "prior_inventory_preserved": true,
+      "configs_unchanged": true,
+      "guest_poweroff_returncode": 0,
+      "redundant_vm_stop_returncode": 0
+    }
+  ],
+  "replay": {
+    "id": "controls-p1-keyboard-1-128",
+    "frames": 128,
+    "sha256": "db74af4eb5a3c13297c363aecb9cfc0dad028f708edfdb9db9d7cd353a81e6b8",
+    "exported": true,
+    "website_published": false
+  },
+  "sustainability_proven": false,
+  "paired_comparison_complete": false,
+  "full_goal_complete": false,
+  "note": "A saved endpoint and accepted commands do not prove sustained production or intended gameplay success. This is the first keyboard policy sample on the shared seed. No comparative claim before the paired attempts. Final checkpoint has not had a separate fresh reload. Subscription dollar charges are unreported."
+}

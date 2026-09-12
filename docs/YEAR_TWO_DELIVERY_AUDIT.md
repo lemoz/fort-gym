@@ -7,6 +7,33 @@ Requirements come from [the approved goal](YEAR_TWO_CAMPAIGNS.md),
 [the standard-input phase](ASTRA_STANDARD_INPUT_EXPERIMENTS.md), and the
 [frozen displayed-key cohort](../experiments/keyboard_binding_comparison_20260911/cohort.json).
 
+The [first keyboard controls-study attempt](../experiments/evidence/selected_workshop_p1_keyboard_128_20260912.json)
+has now completed and passed the two-window native audit at decision 128. Its
+saved endpoint contains 83,800 elapsed ticks, seven living citizens, zero
+recorded deaths, four installed beds, three workshops, one farm, 58 edible food
+and 111 drinks. All 128 responses reconcile to 3,530,178 returned tokens and
+637 sent key presses. Accepted commands are not scored as intended outcomes;
+87,000 requested ticks produced 83,800 actual ticks, with two deferred requests.
+Subscription dollar charges remain unreported. This is about one fifth of an
+elapsed game year, not Year-Two success or proof of sustained production.
+
+The first save's fresh reload, restored memory/usage/history, unchanged source,
+image and resources, final saved checkpoint, native/container cleanup, both
+stopped VMs and closed disks all passed their respective checks. Prior inventory
+and original evidence are intact. The continuation's guest poweroff and VM stop
+both returned zero. The final save has not had a separate fresh reload. The
+combined 128-frame replay is exported, but is not yet in the public recording
+catalog. Its audit SHA256 is
+`9202a9fd406b8d5835fd59a0757478a73ab73faf4e0323b7c3c9885314e009cc`.
+The public feed published a verified stopped frame at decision 128; a later
+HTTPS check correctly projects that aged observation as stale. The retained
+payload SHA256 is
+`d7a53a7716b29f45808ded5b351e6e5aab603a6baac0cdbe9b8d71ec8ad2788b`.
+Both observers exited. The next declared attempt is pair-one shortcuts from
+the same fresh seed, not an extension of this keyboard sample. The other five
+attempts, comparative claims, endurance extension and main integration remain
+open. Older running/prelaunch statements below describe earlier boundaries.
+
 The [selected-workshop spectator release](../experiments/evidence/website_workshop_labels_release_20260912.json)
 is live at `e9c37db673055e74e850e703711275e1cfbfedad`, pushed through the existing
 website branch and draft PR171. Local and exact-head hosted validation pass;
