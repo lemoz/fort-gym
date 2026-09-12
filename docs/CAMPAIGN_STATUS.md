@@ -12,7 +12,7 @@ and [reload verification](#later-checkpoint-1057-verification-and-website-delive
 Do not confuse that achieved duration with the younger, independent matched
 cohort below. Long-term self-sufficiency and the full delivery goal remain open.
 
-## Current state: Terra saved at 128; Astra own-save continuation running
+## Current state: Terra and Astra saved at 128; Terra r2 next
 
 All six displayed-key fresh attempts have completed and passed their terminal
 audits at 64 responses. The [source-linked index](../experiments/evidence/keyboard_binding_comparison_20260911_index.json)
@@ -46,17 +46,26 @@ from its own checkpoint64, preserving memory, usage, feedback and native metrics
 Its first new subscription response and corrected load gate passed. Public frame67
 matched the original native screen, explicit action and retained provider events.
 The existing homepage relay now follows Astra; no service restart was needed.
-This startup is not terminal acceptance or a verified checkpoint128. Audit it
-when it settles, then continue Terra r2, Sol r2 and Astra r2 in declared order.
+The startup record remains immutable. [Astra r1 has now completed and passed its
+terminal audit](../experiments/evidence/keyboard_binding_comparison_astra_r1_128_20260912.json):
+128 total responses, 4,123,021 returned tokens and 55,700 saved game ticks.
+The final state has seven living citizens, zero recorded deaths, eight beds,
+three workshops, two farms, 61 food and 83 drinks. This window added 32,700 ticks
+and 575 confirmed key presses, with one blocking-menu clock outcome retained.
+Original checkpoint preservation and teardown are verified; the live relay
+published stopped and exited. The final checkpoint has not had a separate reload.
+This result is indexed remotely, while its recording and public-table update
+remain pending. Continue Terra r2, Sol r2 and Astra r2 in declared order.
 
 The isolated integration candidate is pushed as
 [draft PR176](https://github.com/lemoz/fort-gym/pull/176), head
-`5cedb5e91e0405e3b2ae0065c9a230a7ff02db88`. It combines native/main ancestry,
-the published viewer and matched tools; 5,398 Python tests and 48 Node contracts
-pass. Exact-head CI `34666311317` passed. The [partial source review](../experiments/evidence/keyboard_integration_review_176_20260912.json)
+`bce580ae30782b258453889283c10f1ccba06a7b`. It combines native/main ancestry,
+the published viewer and matched tools, including Terra's new result and replay;
+5,420 Python tests and all 49 Node contracts pass. Original-head CI `34666311317`
+passed; updated-head CI `34667725373` is pending. The [partial source review](../experiments/evidence/keyboard_integration_review_176_20260912.json)
 checks the changed keyboard paths and binding dispatch, with 198 focused tests.
-It is not full merge readiness. The latest viewer and Terra evidence are now being
-integrated and revalidated separately from that original candidate.
+It is not full merge readiness. The source comparison reader exactly reproduces
+both website tables, and the original Astra window is unchanged.
 The candidate is not merged or deployed, and does not replace the running source.
 
 The [delivery audit](YEAR_TWO_DELIVERY_AUDIT.md) separates the achieved

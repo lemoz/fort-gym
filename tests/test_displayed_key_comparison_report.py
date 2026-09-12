@@ -462,3 +462,25 @@ def test_terra_own_save_128_retains_growth_cost_unknowns_and_sol_failure():
     assert metrics["functional_rooms"] is None
     assert terra["native_teardown_verified"] is terra["vm_teardown_verified"] is True
     assert data["strong_ranking_supported"] is data["all_saved_boundaries_reached"] is False
+
+
+def test_astra_own_save_128_keeps_development_and_unequal_game_time_explicit():
+    data = read_comparison(
+        ROOT, "experiments/evidence/keyboard_binding_comparison_20260911_index.json", boundary=128
+    )
+    assert data["recorded_attempts"] == 3
+    assert data["outcome_counts"] == {"infrastructure_failure": 1, "saved": 2}
+    astra = data["trials"][2]["result"]
+    assert astra["status"] == "saved" and astra["responses"] == 128
+    assert astra["returned_tokens"] == 4123021 and astra["reported_charge_usd"] is None
+    assert astra["checkpoint"]["sha256"] == (
+        "ec1dcf452bc24ed744e982a02bccfac13851557f2e0f6ec7ddf65b1e1cb8f2ee"
+    )
+    assert astra["checkpoint"]["saved_elapsed_ticks"] == 55700
+    metrics = astra["checkpoint"]["metrics"]
+    assert (metrics["completed_beds"], metrics["completed_workshops"], metrics["completed_farms"]) == (8, 3, 2)
+    assert (metrics["population"], metrics["recorded_dead_citizens"]) == (7, 0)
+    assert (metrics["food_stock"], metrics["drink_stock"]) == (61, 83)
+    assert astra["native_teardown_verified"] is astra["vm_teardown_verified"] is True
+    assert all(row["result"] is None for row in data["trials"][3:])
+    assert data["strong_ranking_supported"] is data["all_saved_boundaries_reached"] is False
