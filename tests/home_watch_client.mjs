@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import {glyph, decodeScreen, frameIndex, liveState, validateRecording, initialRecording, recoverySummary, readLiveStatus, campaignSummary, campaignHistory} from '../web/static/home-watch-model.mjs';
+import {glyph, decodeScreen, frameIndex, liveState, validateRecording, initialRecording, recoverySummary, readLiveStatus, campaignSummary, campaignHistory, shortcutLabel, actionExecutionLabel} from '../web/static/home-watch-model.mjs';
 
 const yearTwo = () => JSON.parse(fs.readFileSync('web/static/recordings/astra-year-two-257-416.json'));
 
@@ -34,6 +34,25 @@ const recovered = () => ({...record('b'),saved_through_decision:98,recovery:{
   schema_version:'fortgym.watch-recovery/v1',restored_checkpoint:96,lost_decisions:32,lost_ticks:422,
   total_responses:130,source_recording_id:'a',source_checkpoint_sha256:'a'.repeat(64),
   uninterrupted_campaign:false,actions_replayed:false}});
+
+test('workshop shortcuts remain explicit in recorded, live, and rejected states', () => {
+  const data = record('shortcut');
+  const action = {intent:'Queue beds',keys:[],advance_ticks:100,
+    shortcut:{type:'WORKSHOP_JOB',item:'bed',quantity:2}};
+  data.frames[0].action = action;
+  assert.equal(validateRecording(data).frames[0].action,action);
+  assert.equal(shortcutLabel(action),'Workshop shortcut: queue 2 × bed');
+  assert.match(actionExecutionLabel(data.frames[0],false),/jobs queued.*products are not yet proved/);
+  assert.match(actionExecutionLabel(data.frames[0],true),/does not yet verify execution/);
+  assert.match(actionExecutionLabel({...data.frames[0],accepted:false},false),/not accepted/);
+  assert.match(actionExecutionLabel({...data.frames[0],action_status:'rejected'},true),/No job was queued/);
+  for (const quantity of [true,false,0,6,1.5,'2',null])
+    assert.throws(()=>shortcutLabel({...action,shortcut:{...action.shortcut,quantity}}));
+  for (const shortcut of [null,{}, {...action.shortcut,item:'unknown'}, {...action.shortcut,workshop_id:99}])
+    assert.throws(()=>shortcutLabel({...action,shortcut}));
+  assert.throws(()=>shortcutLabel({...action,keys:['q']}));
+  assert.equal(shortcutLabel({keys:['q']}),null);
+});
 
 test('recovery metadata preserves the lost window and cannot claim uninterrupted play', () => {
   assert.equal(validateRecording(recovered()).saved_through_decision,98);
@@ -171,8 +190,11 @@ test('homepage controls, replay switching and live disconnect work in memory', a
     assert.equal(element('recovery').hidden,true);
     assert.equal(element('prior').hidden,true);
     assert.match(element('execution').textContent,/does not yet verify/);
-    live.frame={...live.frame,decision:100}; await poll.fn();
+    live.frame={...live.frame,decision:100,action:{intent:'Queue two beds',keys:[],advance_ticks:100,
+      shortcut:{type:'WORKSHOP_JOB',item:'bed',quantity:2}}}; await poll.fn();
     assert.equal(element('decision').textContent,'Decision 100');
+    assert.equal(element('keys').children[0].textContent,'Workshop shortcut: queue 2 × bed');
+    assert.match(element('execution').textContent,/Chosen workshop shortcut.*does not yet verify/);
     await element('prev').emit('click');
     assert.equal(element('decision').textContent,'Decision 99');
     await poll.fn();
@@ -225,7 +247,7 @@ test('a recording deep link opens the chosen model without a live feed taking ov
   } finally { Object.assign(globalThis,originals); }
 });
 
-test('latest Year-Two replay displays its endpoint and hides it for live or other recordings', async () => {
+test('Year-Two replay displays its endpoint and hides it for other recordings', async () => {
   const originals = Object.fromEntries(['document','fetch','location','setInterval','clearInterval'].map(key=>[key,globalThis[key]]));
   const elements = new Map();
   for(const match of fs.readFileSync('web/landing.html','utf8').matchAll(/id="(watch-[^"]+)"/g))
@@ -233,7 +255,7 @@ test('latest Year-Two replay displays its endpoint and hides it for live or othe
   const get = id => elements.get('watch-'+id);
   const settle=async()=>{for(let n=0;n<10;n++)await new Promise(resolve=>setImmediate(resolve));};
   try {
-    globalThis.location={search:''};
+    globalThis.location={search:'?recording=astra-year-two-257-416'};
     globalThis.document={hidden:false,getElementById:id=>elements.get(id),createElement:tag=>new Element(tag),addEventListener(){}};
     globalThis.setInterval=()=>1; globalThis.clearInterval=()=>{};
     globalThis.fetch=async url=>({ok:true,json:async()=>url.includes('watch-active')
@@ -258,4 +280,46 @@ test('latest Year-Two replay displays its endpoint and hides it for live or othe
     assert.equal(get('prior').href,'/?recording=astra-97-256#watch-root');
     assert.match(get('recovery').textContent,/All 288 model responses/);
   } finally { Object.assign(globalThis,originals); }
+});
+
+for (const [model, repeat, first=1, size=64] of [['astra',1], ['terra',1], ['terra',2], ['sol',2], ['astra',2], ['terra',1,65], ['astra',1,65], ['terra',2,65], ['astra',2,65], ['astra','portable',1,4]]) test(model+' '+repeat+' from '+first+' scrubs audited frames', async () => {
+  const last=first+size-1, id=repeat==='portable'?'astra-portable-acceptance-1-4':model+'-matched-r'+repeat+'-'+first+'-'+last;
+  const recording=JSON.parse(fs.readFileSync('web/static/recordings/'+id+'.json'));
+  const originals=Object.fromEntries(['document','fetch','location','setInterval','clearInterval'].map(key=>[key,globalThis[key]]));
+  const elements=new Map();
+  for(const match of fs.readFileSync('web/landing.html','utf8').matchAll(/id="(watch-[^"]+)"/g))
+    elements.set(match[1],new Element(match[1]));
+  const get=id=>elements.get('watch-'+id);
+  try {
+    globalThis.location={search:'?recording='+id};
+    globalThis.document={hidden:false,getElementById:id=>elements.get(id),createElement:tag=>new Element(tag),addEventListener(){}};
+    globalThis.setInterval=()=>1;globalThis.clearInterval=()=>{};
+    globalThis.fetch=async url=>({ok:true,json:async()=>url.includes('watch-active')
+      ? {schema_version:'fortgym.watch-live/v1',status:'not_connected'}
+      : JSON.parse(fs.readFileSync('web'+url))});
+    await import('../web/static/home-watch.mjs?test=matched-'+model+'-'+repeat+'-'+first);
+    for(let n=0;n<10;n++) await new Promise(resolve=>setImmediate(resolve));
+    assert.equal(get('title').textContent,recording.title);
+    assert.equal(get('decision').textContent,'Decision '+first+' / '+last);
+    assert.equal(get('outcome').hidden,true);
+    for(const index of (size===4 ? [0,1,2,3] : model==='terra' && repeat===2 ? [2,3,7,22,24,45,50,61,62,63] : [5,15,31,54,63])) {
+      get('range').value=String(index);await get('range').emit('input');
+      assert.equal(get('decision').textContent,'Decision '+(index+first)+' / '+last);
+      assert.equal(get('intent').textContent,recording.frames[index].action.intent);
+      assert.equal(get('population').textContent,String(recording.frames[index].after.population));
+      assert.deepEqual(get('keys').children.map(key=>key.textContent),
+        recording.frames[index].action.keys.map(key=>key===' '?'SPACE':key));
+      assert.match(get('boundary').textContent,new RegExp('saved checkpoint '+last));
+      if(recording.frames[index].accepted===false) {
+        assert.equal(get('execution').textContent,'Key command was not accepted.');
+        assert.equal(get('advance').textContent,'0');
+      } else {
+        assert.equal(get('execution').textContent,'Key command accepted by the harness. Acceptance does not prove the intended outcome.');
+      }
+    }
+    assert.equal(get('next').disabled,true);
+    await get('prev').emit('click');
+    assert.equal(get('decision').textContent,'Decision '+(last-1)+' / '+last);
+    if(first===65) assert.equal(get('population').textContent,model==='terra' && repeat===1?'15':'7');
+  } finally {Object.assign(globalThis,originals);}
 });

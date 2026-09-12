@@ -77,6 +77,7 @@ export function validateRecording(data) {
   data.frames.forEach((frame, index) => {
     if (frame.decision !== data.first_decision + index) throw Error('Nonconsecutive recording');
     decodeScreen(frame.screen);
+    shortcutLabel(frame.action);
     if (typeof frame.action?.intent !== 'string' || !Array.isArray(frame.action.keys) ||
         frame.action.intent.length > 2000 || frame.action.keys.length > 128 ||
         !frame.action.keys.every(key => typeof key === 'string' && key.length <= 100) ||
@@ -86,6 +87,34 @@ export function validateRecording(data) {
         typeof frame.accepted !== 'boolean') throw Error('Invalid recorded action');
   });
   return data;
+}
+
+export function shortcutLabel(action) {
+  const shortcut = action?.shortcut;
+  if (shortcut === undefined) return null;
+  if (!shortcut || Object.keys(shortcut).sort().join(',') !== 'item,quantity,type' ||
+      shortcut.type !== 'WORKSHOP_JOB' || !Array.isArray(action.keys) || action.keys.length ||
+      !['bed','door','table','chair','barrel','bin','brew'].includes(shortcut.item) ||
+      !Number.isSafeInteger(shortcut.quantity) || shortcut.quantity < 1 || shortcut.quantity > 5) {
+    throw Error('Invalid selected-workshop shortcut');
+  }
+  return 'Workshop shortcut: queue ' + shortcut.quantity + ' × ' + shortcut.item;
+}
+
+export function actionExecutionLabel(frame, live) {
+  if (shortcutLabel(frame.action)) {
+    if (live) return frame.action_status === 'rejected'
+      ? 'Shortcut rejected. No job was queued.'
+      : 'Chosen workshop shortcut. This feed does not yet verify execution.';
+    return frame.accepted
+      ? 'Workshop jobs queued. Dwarves still need materials, labor and time; products are not yet proved.'
+      : 'Workshop shortcut was not accepted.';
+  }
+  return live ? frame.action_status === 'rejected'
+    ? 'Model command rejected. No keys were sent to the game.'
+    : 'Chosen keys. This feed does not yet verify their execution.'
+    : frame.accepted ? 'Key command accepted by the harness. Acceptance does not prove the intended outcome.'
+    : 'Key command was not accepted.';
 }
 
 export function validateRecovery(data) {

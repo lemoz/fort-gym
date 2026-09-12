@@ -178,3 +178,75 @@ Release scope is static website assets, documentation and tests only. No
 database migration, service restart, game command, model call or new VM.
 Use the same exact-head, allowlisted fast-forward deployment and verify
 public bytes, historical files, read-only database counts and service identities.
+
+## Selected-workshop action labels (September 12, 2026)
+
+This website-only update starts at `e8e3fb9ae284dd562089d434e0b8e88dc2c8b683`.
+The live receiver and replay viewer preserve the explicit `WORKSHOP_JOB` route,
+item and quantity, instead of dropping it or presenting an empty keyboard action.
+The item/quantity constants come unchanged from the frozen controls study at
+`422c915d23bf828371be481d3079a23bbb3e9e94`. Only the public projection is ported;
+the running study image, native control implementation, prompt and model settings
+are not changed by this website release.
+
+The viewer labels a chosen shortcut as unverified, a rejected shortcut as not
+queued, and an audited accepted shortcut as queued work, not finished products.
+Malformed quantities, unsupported jobs, mixed keyboard/shortcut actions and
+private shortcut fields are rejected. Private agent memory is not published.
+Keyboard captures and all sixteen existing recordings stay unchanged. Unit and
+in-memory interaction fixtures are website contracts, not model results.
+
+Deploy as an exact-head allowlisted fast-forward. The receiver starts a fresh
+Python process for each delivery, so its new projection loads without restarting
+the API or game service. The configured API still reports `not_connected` and
+the homepage uses the existing static relay. Preserve the active relay's run
+identity and non-regressing decisions, all recordings, database counts, service
+identities and untracked files. Do not inject synthetic shortcut frames into the
+public feed. No new host, dependency change or main-branch merge is included.
+
+## Earlier keyboard controls replay (September 12, 2026)
+
+Publish the audited `controls-p1-keyboard-1-128` recording unchanged, from frozen
+v1 source `422c915d23bf828371be481d3079a23bbb3e9e94`. Its SHA-256 is
+`db74af4eb5a3c13297c363aecb9cfc0dad028f708edfdb9db9d7cd353a81e6b8`, bound to
+audit `9202a9fd406b8d5835fd59a0757478a73ab73faf4e0323b7c3c9885314e009cc`.
+The catalog adds a `(v1)` display annotation without changing the recording's
+original title or bytes. This is not a corrected-v2 sample or a model ranking.
+
+The 128 captured decisions cover 83,800 elapsed game ticks and a verified
+own-save continuation at decision 64. The final save exists but has not had a
+separate fresh-reload check. Endpoint measurements are seven dwarves, no recorded
+deaths, four installed beds, three workshops, one farm, 58 food and 111 drinks.
+Stocks alone do not establish sustainability or a full elapsed year.
+
+Add the replay to the shared catalog, exact captured preview, and Runs gallery.
+The homepage and Results consume that catalog without new client code. Preserve
+all sixteen earlier recordings and the current v2 live feed. The total becomes
+17 recording windows and 1,252 frames. Publish only the exact tested static
+assets, tests and documentation; no model/game change, service restart, database
+mutation, dependency change, new host or main merge.
+
+## Corrected shortcuts controls replay (September 12, 2026)
+
+Start from public revision `c3278d47427902034622d5a330a5bfa823d7947a`.
+Add the audited `controls-v2-p1-shortcuts-1-128` recording unchanged, from
+frozen source `5ddf1e6718dab2e8351e8dc24a2afe5071cd2592`. Replay SHA-256:
+`9063c997563bd5c00eb3726acfff77088a50877dd66aeb12a95662b46c62d17b`.
+Its two-window audit SHA-256 is
+`628112a07c1181ce5fca4f94aa706c59579b60d8c867c1ae45983b3bcf179cff`.
+
+The final save retains 68,200 elapsed ticks, seven living dwarves, zero recorded
+deaths, seven beds, two workshops, one farm, 39 food and 115 drinks. The original
+64-decision save was freshly reloaded for the continuation; the final save has
+not had a separate fresh reload. Twelve accepted workshop shortcuts queued 36
+jobs, not 36 completed products. The paired keyboard result, sustained production
+and a comparative conclusion remain unproven. The actual run used 3,772,495
+returned tokens; subscription dollar charges are unreported.
+
+Preserve all seventeen prior recordings and previews, including the original
+v1 keyboard bytes and display label. The new total is eighteen windows and
+1,380 captured frames. The homepage and Results consume the shared catalog;
+the Runs gallery gets the matching captured preview and qualified result text.
+The live feed belongs to the new `selected-workshop-v2-p1-keyboard` attempt and
+must continue unchanged through this static release. No new viewer, synthetic
+frame, dependency, service restart, database mutation, host or main merge.
