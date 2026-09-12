@@ -1,7 +1,7 @@
 # Year-Two delivery audit
 
 Snapshot: September 12, 2026 UTC, goal branch
-`fecd68fd01176acdb96779845f334350df85fe48` before this documentation update.
+`4f14c3480ee5edd6aa896e71784174fd3d1d9eba` before this documentation update.
 This is a progress audit, not a completion certificate or a replacement goal.
 Requirements come from [the approved goal](YEAR_TWO_CAMPAIGNS.md),
 [the standard-input phase](ASTRA_STANDARD_INPUT_EXPERIMENTS.md), and the
@@ -32,6 +32,21 @@ already-versioned fixture traces remain unchanged. The base image reference
 comes from a historical inspection, not a new availability check. Both selected
 local Docker endpoints were unreachable. No image build, game, VM or model
 launch occurred. Native image construction and end-to-end acceptance remain open.
+
+A [later export-only operation](../experiments/evidence/keyboard_portable_base_export_20260912.json)
+reverified that base on the existing VM and exported it into private external
+project storage. All 41 OCI objects and 35 uncompressed filesystem layers pass
+digest verification; the exact index, image manifest and configuration identities
+are retained separately. The first verifier's legacy-ID assumption failed and
+was corrected in a separate offline verification, without reusing the operation.
+The 361,589,248-byte archive is not a public distribution artifact. The existing
+VM is stopped with its disk closed and its settings and Docker inventory unchanged.
+There was no game, model, image build, new VM, disk resize or evidence deletion.
+The original guest capacity shortage remains, so no frozen trial was consumed.
+The standalone source context remains unchanged and passes its digest check.
+Next import into a separately declared clean local runtime, build the source-bound
+image and verify native fresh/continuation behavior. This export does not itself
+prove import, source-image execution, native setup or gameplay acceptance.
 
 The isolated `codex/year-two-integration` worktree starts at current remote main.
 Merge `72f732546f1b6fa48a8074c582b8562f2592b92c` joins main's ancestry to frozen

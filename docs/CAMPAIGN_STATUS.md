@@ -125,6 +125,24 @@ Ignored private inputs are excluded; five already-versioned historical fixture
 files remain part of the exact source. Both local Docker endpoints were unreachable,
 so no image was built and the declared base tag/image was not reverified live.
 This closes source packaging, not base-runtime installation or native acceptance.
+
+The subsequent [export-only native setup step](../experiments/evidence/keyboard_portable_base_export_20260912.json)
+booted the existing stopped VM with its unchanged configuration and reverified
+the exact retained base image/tag. It exported 361,589,248 bytes into private
+project-owned external storage. An offline verifier followed the original OCI
+index through all 41 content-addressed objects and checked all 35 uncompressed
+filesystem layers. The initial legacy-config-ID check rejected the OCI index;
+that failure is retained, and the separate corrected verification did not reboot
+the VM or repeat the export. All 13 verifier tests pass. The original VM stopped,
+its data disk closed, and its configuration, global Docker context and inventory
+of 120 containers, 120 volumes and 77 images stayed unchanged. No game, model,
+image build, disk growth, deletion or frozen trial launch occurred. The original
+guest still has only 1,541,972 KiB available; its game floor remains unchanged.
+The prepared source context passed another digest-bound check. Next verify an
+import into a separate clean local runtime and construct the new source-bound
+image before native fresh/continuation acceptance. Export is not import or
+gameplay proof, and the archive remains private.
+
 The [additional setup and source review](../experiments/evidence/keyboard_integration_setup_review_176_20260912.json)
 verifies an isolated Python/viewer install and 659 focused tests on its exact
 prior head. A [separate protocol setup check](../experiments/evidence/keyboard_integration_protocol_setup_176_20260912.json)
@@ -136,7 +154,8 @@ and actual portable container acceptance remain unverified. The new public owner
 has also [read all six real model checkpoints](../experiments/evidence/keyboard_portable_owner_real_inputs_20260912.json),
 restoring each original memory and reconciling its usage without a game or model.
 It rejects executing their frozen declarations under its new source. No existing
-attempt was rerun, VM started or VM disk resized. Source review is still partial
+attempt was rerun, VM started or VM disk resized for those offline input checks.
+The later export-only boot above is separate. Source review is still partial
 rather than merge approval. The current
 source reader exactly reproduces the public five-result128 and six-result64
 tables.
