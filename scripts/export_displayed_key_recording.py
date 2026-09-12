@@ -1,4 +1,4 @@
-"""Export a saved fresh displayed-key trial with a pinned read-only observer.
+"""Export a saved displayed-key trial or own-save window with a pinned observer.
 
 This is a publication tool, not a native acceptance verifier. It requires the
 original successful terminal audit and checks its source bindings again.
@@ -52,20 +52,46 @@ def recorded_action(watch: Any, request: dict, result: dict, row: dict) -> dict:
     return action
 
 
-def export(attempt: Path, observer: Path, audit_sha: str, identity: str) -> dict[str, Any]:
-    audit_path = attempt / "terminal-review.json"
-    if sha(audit_path) != audit_sha:
-        raise ValueError("Audit digest differs")
-    audit = read(audit_path)
+def reviewed_window(audit: dict[str, Any]) -> tuple[int, int, int, str]:
+    """Keep original decision offsets and count only this window's elapsed time."""
     if not (
-        audit["schema_version"] == "fortgym.private-binding-trial-terminal-review/v1"
-        and audit["passed"] is True
+        audit["passed"] is True
         and audit["status"] == "completed"
         and audit["native_cleanup_verified"] is True
         and audit["vm_teardown_verified"] is True
         and audit["human_gameplay_rescue"] is False
     ):
-        raise ValueError("A saved, reviewed and torn-down fresh trial is required")
+        raise ValueError("A saved, reviewed and torn-down window is required")
+    schema = audit["schema_version"]
+    end = audit["responses"]
+    if schema == "fortgym.private-binding-trial-terminal-review/v1":
+        first, elapsed, profile = 0, audit["saved_elapsed_ticks"], audit["control_profile"]
+    elif schema == "fortgym.private-matched-window-terminal-review/v1":
+        first, elapsed = audit["first_step"], audit["new_saved_elapsed_ticks"]
+        profile = "native_keyboard_bindings/v1"
+        if not (
+            type(first) is type(audit["new_responses"]) is type(audit["next_step"]) is int
+            and first == audit["new_responses"] == 64
+            and audit["next_step"] == end == 128
+            and audit["source_checkpoint_fresh_load_verified"] is True
+            and type(elapsed) is int
+            and type(audit["saved_elapsed_ticks"]) is int
+            and audit["saved_elapsed_ticks"] >= elapsed
+        ):
+            raise ValueError("Continuation must preserve its reviewed 64-to-128 boundary")
+    else:
+        raise ValueError("Unsupported recording audit")
+    if type(end) is not int or end <= first or type(elapsed) is not int or elapsed < 0:
+        raise ValueError("Invalid recorded response or clock boundary")
+    return first, end, elapsed, profile
+
+
+def export(attempt: Path, observer: Path, audit_sha: str, identity: str) -> dict[str, Any]:
+    audit_path = attempt / "terminal-review.json"
+    if sha(audit_path) != audit_sha:
+        raise ValueError("Audit digest differs")
+    audit = read(audit_path)
+    first, end, elapsed, control_profile = reviewed_window(audit)
     revision = subprocess.check_output(
         ["git", "rev-parse", "HEAD"], cwd=observer, text=True
     ).strip()
@@ -94,15 +120,17 @@ def export(attempt: Path, observer: Path, audit_sha: str, identity: str) -> dict
         (read(path)["decision_index"], path.parent) for path in attempt.glob("model/*/summary.json")
     )
     if (
-        len(rows) != audit["responses"]
-        or len(entries) != len(rows)
-        or [index for index, _ in entries] != list(range(len(rows)))
-        or [row["step"] for row in rows] != list(range(len(rows)))
-        or len(audit["receipt_reviews"]) != len(rows)
+        len(rows) != end
+        or len(entries) != end - first
+        or [index for index, _ in entries] != list(range(end - first))
+        or [row["step"] for row in rows] != list(range(end))
+        or len(audit["receipt_reviews"]) != end - first
     ):
-        raise ValueError("Fresh saved boundary and receipt coverage differ")
+        raise ValueError("Saved window boundary and receipt coverage differ")
     frames = []
-    for (index, folder), row, receipt in zip(entries, rows, audit["receipt_reviews"], strict=True):
+    for (index, folder), row, receipt in zip(
+        entries, rows[first:], audit["receipt_reviews"], strict=True
+    ):
         request, response, summary = [
             read(folder / (name + ".json")) for name in ("request", "response", "summary")
         ]
@@ -115,6 +143,7 @@ def export(attempt: Path, observer: Path, audit_sha: str, identity: str) -> dict
             or receipt["decision_index"] != index
             or request["model"] != audit["model"]
             or request["reasoning_effort"] != audit["reasoning_effort"]
+            or request["control_profile"] != control_profile
             or summary["request_id"] != request["request_id"]
         ):
             raise ValueError("Screen, model receipt and native trace differ")
@@ -122,7 +151,7 @@ def export(attempt: Path, observer: Path, audit_sha: str, identity: str) -> dict
         clock, after = row["tick_advance"], row["state_after_advance"]
         frames.append(
             {
-                "decision": index + 1,
+                "decision": first + index + 1,
                 "screen": watch.screen_projection(request["screen"]),
                 "action": watch.action_projection(action),
                 "accepted": row["execute"]["accepted"],
@@ -135,17 +164,17 @@ def export(attempt: Path, observer: Path, audit_sha: str, identity: str) -> dict
                 },
             }
         )
-    if sum(frame["after"]["ticks_advanced"] for frame in frames) != audit["saved_elapsed_ticks"]:
+    if sum(frame["after"]["ticks_advanced"] for frame in frames) != elapsed:
         raise ValueError("Saved elapsed ticks differ")
     return {
         "schema_version": "fortgym.watch-recording/v1",
         "id": identity,
         "title": audit["model"] + " · matched trial " + str(audit["replicate"]),
         "model": audit["model"],
-        "control_profile": audit["control_profile"],
-        "first_decision": 1,
-        "last_decision": len(frames),
-        "saved_through_decision": len(frames),
+        "control_profile": control_profile,
+        "first_decision": first + 1,
+        "last_decision": end,
+        "saved_through_decision": end,
         "audit_sha256": audit_sha,
         "source_revision": audit["source_revision"],
         "recording_status": "saved",

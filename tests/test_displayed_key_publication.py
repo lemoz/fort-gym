@@ -134,16 +134,16 @@ def test_astra_repeat_preserves_its_distinct_development():
 def test_continuation_report_keeps_the_real_infrastructure_failure_and_parent_save():
     path = ROOT / "web/static/displayed-key-comparison-128.json"
     assert hashlib.sha256(path.read_bytes()).hexdigest() == (
-        "ba0da334733e478255e1422fb75fc915d8c7f58d9a8b795adb5220eac4f26aa1"
+        "4200bd8292baaf0d174ff849c44796feb9b32a6374377a0c34621c1b364c207f"
     )
     report = json.loads(path.read_text())
-    assert report["comparison_boundary"] == 128 and report["recorded_attempts"] == 1
+    assert report["comparison_boundary"] == 128 and report["recorded_attempts"] == 2
     result = report["trials"][0]["result"]
     assert result["status"] == "infrastructure_failure"
     assert result["responses"] == result["checkpoint"]["next_step"] == 64
     assert result["checkpoint"]["saved_elapsed_ticks"] == 2900
     assert result["returned_tokens"] == 1258321
-    assert all(row["result"] is None for row in report["trials"][1:])
+    assert all(row["result"] is None for row in report["trials"][2:])
     html = (ROOT / "web/results.html").read_text()
     assert 'for="matched-boundary"' in html and 'aria-controls="matched-table"' in html
     assert "Infrastructure failures are not model gameplay failures" in html
@@ -156,3 +156,25 @@ def test_current_comparison_is_not_the_legacy_benchmark():
     assert "not $0" in html
     assert "fort-eval-easy-p1-g7-v3" in html
     assert "completed Year-Two campaign" not in html
+
+
+def test_terra_continuation_replay_retains_original_decisions_and_growth():
+    path = ROOT / "web/static/recordings/terra-matched-r1-65-128.json"
+    assert hashlib.sha256(path.read_bytes()).hexdigest() == (
+        "259ef96059fee1d2ef35e51779fcd27747c7b9c68784579152fbccf848441146"
+    )
+    recording = json.loads(path.read_text())
+    report = json.loads((ROOT / "web/static/displayed-key-comparison-128.json").read_text())
+    result = report["trials"][1]["result"]
+    frames = recording["frames"]
+    assert [frame["decision"] for frame in frames] == list(range(65, 129))
+    assert recording["saved_through_decision"] == result["responses"] == 128
+    assert recording["audit_sha256"] == result["terminal_audit_sha256"]
+    assert sum(frame["after"]["ticks_advanced"] for frame in frames) == 116000
+    assert result["checkpoint"]["saved_elapsed_ticks"] == 4200 + 116000
+    assert frames[0]["after"]["population"] == 7 and frames[-1]["after"]["population"] == 15
+    assert result["returned_tokens"] == 3717561 and result["reported_charge_usd"] is None
+    assert result["checkpoint"]["metrics"]["completed_workshops"] == 1
+    assert result["checkpoint"]["metrics"]["completed_beds"] == 0
+    assert all(set(frame["action"]) == {"intent", "keys", "advance_ticks"} for frame in frames)
+    assert all(frame["accepted"] is True for frame in frames)

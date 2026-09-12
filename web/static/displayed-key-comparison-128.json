@@ -5,9 +5,10 @@
   "plan_url": "https://github.com/lemoz/fort-gym/blob/61fcca7177d8b66ddd7e12e4be0ab53bda5ffd5b/experiments/keyboard_binding_comparison_20260911/cohort.json",
   "plan_sha256": "da38987cb71b1bafde853d10e476e0c9539a950c9d90580ff1c2b1ba7cb839b0",
   "declared_attempts": 6,
-  "recorded_attempts": 1,
+  "recorded_attempts": 2,
   "outcome_counts": {
-    "infrastructure_failure": 1
+    "infrastructure_failure": 1,
+    "saved": 1
   },
   "all_attempts_reported": false,
   "all_saved_boundaries_reached": false,
@@ -53,10 +54,36 @@
       "model": "gpt-5.6-terra",
       "replicate": 1,
       "reasoning_effort": "medium",
-      "publication_state": "no_published_result",
-      "result": null,
-      "evidence_url": null,
-      "evidence_sha256": null
+      "publication_state": "recorded",
+      "result": {
+        "status": "saved",
+        "response_limit": 128,
+        "responses": 128,
+        "returned_tokens": 3717561,
+        "reported_charge_usd": null,
+        "checkpoint": {
+          "next_step": 128,
+          "sha256": "49d01b3ddfff2f87898b38c255fb1d931a3a78738527ac29fee809484bec9cad",
+          "saved_elapsed_ticks": 120200,
+          "metrics": {
+            "population": 15,
+            "recorded_dead_citizens": 0,
+            "food_stock": 36,
+            "drink_stock": 26,
+            "completed_beds": 0,
+            "completed_workshops": 1,
+            "completed_farms": 0,
+            "functional_rooms": null,
+            "stone_stock": null,
+            "wood_stock": null
+          }
+        },
+        "terminal_audit_sha256": "df238f47bfb4171329986f39b82da959cb485f8601e0ac3b6990becf8c8617c0",
+        "native_teardown_verified": true,
+        "vm_teardown_verified": true
+      },
+      "evidence_url": "https://github.com/lemoz/fort-gym/blob/deb53296492a33cf163ca40b8f067bee11ce6308/experiments/evidence/keyboard_binding_comparison_terra_r1_128_20260912.json",
+      "evidence_sha256": "0283bbcb92d4c79123c2a1f1175cc03ba06a5f93857fcf2bb4f811b08a6cf5e1"
     },
     {
       "campaign_id": "bindings-comparison-20260911-astra-r1",
