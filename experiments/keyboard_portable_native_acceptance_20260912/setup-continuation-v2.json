@@ -1,0 +1,17 @@
+{
+  "schema_version": "fortgym.portable-native-setup-continuation/v1",
+  "identity": "portable-native-20260912-v2",
+  "original_plan_sha256": "5ff6ccaeda6a4d97db7774348774eb2a24ab03555e97592af8fd3ce33061b6a7",
+  "prior_operation_result_sha256": "9e684527565c7af847616c9bcf00314dce12fbc02952ba3acadbba41610eb25b",
+  "existing_clean_vm_config_sha256": "07e069aafda062e8e1a6f9befd92c89e3e79e9dd6448066e94f19ba6be20cf3b",
+  "cause": "Effective Lima mount paths have trailing slashes; exact string comparison rejected otherwise identical paths and access modes.",
+  "correction": "Compare canonical directory paths while preserving exact count and writable flags. No extra directory or writable input mount is accepted.",
+  "new_vm_created": false,
+  "existing_profile": "fg-portable",
+  "vm_configuration_changes": false,
+  "source_context_changes": false,
+  "original_attempt_preserved": true,
+  "new_output_subdirectory": "native-v2",
+  "new_container_name": "fortgym-portable-native-20260912-v2",
+  "scope": "Complete original image import/build and two provider-free paused load checks with unchanged bounds and mandatory teardown. This is a new setup execution identity, not a frozen gameplay retry."
+}
