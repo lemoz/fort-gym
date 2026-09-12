@@ -1,0 +1,44 @@
+{
+  "schema_version": "fortgym.selected-workshop-terminal-preparation/v1",
+  "date_utc": "2026-09-12",
+  "campaign_id": "selected-workshop-v2-p2-shortcuts",
+  "state": "prepared_not_executed",
+  "source_revision": "5ddf1e6718dab2e8351e8dc24a2afe5071cd2592",
+  "study_declaration_sha256": "e325f69f40978a9a0b2ed962a505c893aa7ea397b569e3300455972d7b94ebc8",
+  "helpers": {
+    "capture_v2_p2_shortcuts_continuation.py": "f854aa9c2f5a57f51c6d463529b3dd7e8f9b5d478e998a1396fd2c20045f77de",
+    "test_v2_p2_shortcuts_reload_evidence.py": "4b0a23131c4bf8642dd6199bfccff68961c3d460e9a1943adadb4a1607e00d34",
+    "settle_v2_p2_shortcuts.py": "d86f162beea2c3a2a836396a2b8842c8100f91ad73a196be01f3d23e506ea1e0",
+    "test_v2_p2_shortcuts_settlement.py": "a2498b1141ac8dae14b9c67776fd06f7785e90074bd82dbc51aa1ef8ef716195"
+  },
+  "tests": {
+    "passed": 99,
+    "failed": 0,
+    "warnings": 2,
+    "ruff": "passed",
+    "junit_sha256": "2b78bf99746343c50e0bcefde5d1df52f4d48598f56ba583e6f50ed8c7d53f30",
+    "scope": "Combined offline tests for fresh start, live relay, continuation, reload-proof binding, terminal identity, teardown and non-overwrite. No native acceptance performed by these tests."
+  },
+  "expected_replay_id": "controls-v2-p2-shortcuts-1-128",
+  "replay_exported": false,
+  "website_published": false,
+  "actual_continuation_reload_verified": false,
+  "native_terminal_audit_performed": false,
+  "model_calls_by_preparation": 0,
+  "gameplay_inputs_by_preparation": 0,
+  "live_shortcut_proof": {
+    "decision": 11,
+    "route": "WORKSHOP_JOB",
+    "item": "bed",
+    "quantity": 5,
+    "action_status": "chosen_not_execution_verified",
+    "public_https_and_original_frame_action_verified": true,
+    "proof_sha256": "0377dc2092bb8a699975fd0c61272ecef8cb2db709490a0c84dd2e1dbf95ce01",
+    "payload_sha256": "086a68f48fe0fda17c9a5ecdc737fbc7819155cbb8afa3572f574006b787fe52",
+    "native_request_sha256": "d7f98ecb74cb2a144f157e4f292bdabef8884015a324a1c515279a1474d76eb3",
+    "browser_visual_qa": false
+  },
+  "subscription_charge_usd": null,
+  "full_goal_complete": false,
+  "note": "The original fresh trial is still running. Prepared helpers are not a final game outcome. Native save/reload, trace continuity and independent teardown must pass before the write-once terminal audit and replay export. Queued jobs do not establish completed products."
+}
