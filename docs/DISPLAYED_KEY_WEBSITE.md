@@ -222,3 +222,37 @@ test draft expected fields outside the public report; it was corrected to use
 the report's actual schema. A sandbox-denied socket test passed in the full
 localhost-enabled rerun. Selected Ruff checks pass. No browser visual QA was
 performed; exact public delivery is checked separately.
+
+## Terra repeat continuation and Sol repeat capacity outcome
+
+This update extends `d5ca3e30a77882eea7b01189c1ac7d41fce5bf0f` using the
+five-outcome source report at `1647d9b4c210e206769f9300a5006c0340388b56`.
+Terra r2's immutable result is at `aa12d891c00ede817b39b72752b37719a4b11e0a`.
+The new `terra-matched-r2-65-128` recording has digest
+`f8fb441bfd5201d7ac9c38f23a10d942fb7adf3ab02c369c8ebc94b287a657a0`
+and terminal audit
+`70b7a33f05fa26f9ecfb696e812fb1557fc3faa8e056c037d46b7b5dc6468d55`.
+
+Its 64 additional responses advance 108,000 ticks from its own unchanged
+64-response save. Seven dwarves remain alive with no recorded deaths, but
+there are no completed beds, workshops or farms. Food and drinks end at 36
+and 26. Returned tokens total 2,339,683; subscription charges are unreported.
+Elapsed time is not measured fortress development or sustainability proof.
+The parent loaded natively, while the final save has no separate fresh reload.
+
+Sol r2's continuation failed its declared guest-capacity floor before any
+game container, model call or gameplay input. Its reviewed result remains
+at `1b366a2ebb896866fe1c3d170f20a4b916de7609`, preserving the original
+64-response save, 10,400 ticks and 1,221,506 tokens. The failure gets an
+evidence link, not an invented replay. Astra r2 remains unpublished at 128.
+
+The 128-budget report now has three saved outcomes and two infrastructure
+failures. The shared catalog has fourteen windows and 1,056 captured frames.
+All thirteen older recordings and the six-outcome 64-budget report remain
+byte-identical. The exporter, native runtime and stopped observer are not
+changed. These windows are not fourteen independent trials or a robust ranking.
+
+Validation: 1,272 Python tests passed with five environment skips and eight
+dependency/deprecation warnings, plus all 51 Node player/gallery contracts.
+Selected Ruff checks and diff checks passed. Browser visual QA was not performed.
+Exact public delivery remains a separately verified release step.
