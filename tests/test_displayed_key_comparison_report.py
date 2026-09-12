@@ -77,12 +77,12 @@ def result(fixture, slot=0, status="saved", count=64):
     }
 
 
-def add(fixture, value):
+def add(fixture, value, *, boundary=64):
     root, _, index = fixture
     path = "experiments/evidence/synthetic-" + value["campaign_id"] + ".json"
     digest = write(root / path, value)
     index["results"][value["campaign_id"]] = {
-        "64": {"path": path, "sha256": digest, "revision": "2" * 40}
+        str(boundary): {"path": path, "sha256": digest, "revision": "2" * 40}
     }
     write(root / INDEX, index)
 
@@ -478,7 +478,11 @@ def test_astra_own_save_128_keeps_development_and_unequal_game_time_explicit():
     )
     assert astra["checkpoint"]["saved_elapsed_ticks"] == 55700
     metrics = astra["checkpoint"]["metrics"]
-    assert (metrics["completed_beds"], metrics["completed_workshops"], metrics["completed_farms"]) == (8, 3, 2)
+    assert (
+        metrics["completed_beds"],
+        metrics["completed_workshops"],
+        metrics["completed_farms"],
+    ) == (8, 3, 2)
     assert (metrics["population"], metrics["recorded_dead_citizens"]) == (7, 0)
     assert (metrics["food_stock"], metrics["drink_stock"]) == (61, 83)
     assert astra["native_teardown_verified"] is astra["vm_teardown_verified"] is True
@@ -500,7 +504,11 @@ def test_terra_repeat_128_preserves_time_without_inventing_development():
     )
     metrics = terra["checkpoint"]["metrics"]
     assert (metrics["population"], metrics["recorded_dead_citizens"]) == (7, 0)
-    assert (metrics["completed_beds"], metrics["completed_workshops"], metrics["completed_farms"]) == (0, 0, 0)
+    assert (
+        metrics["completed_beds"],
+        metrics["completed_workshops"],
+        metrics["completed_farms"],
+    ) == (0, 0, 0)
     assert (metrics["food_stock"], metrics["drink_stock"]) == (36, 26)
     assert terra["native_teardown_verified"] is terra["vm_teardown_verified"] is True
     assert data["strong_ranking_supported"] is False
@@ -523,3 +531,102 @@ def test_sol_repeat_capacity_failure_keeps_its_original_64_response_save():
     assert (metrics["food_stock"], metrics["drink_stock"]) == (50, 60)
     assert data["trials"][5]["publication_state"] == "no_published_result"
     assert data["strong_ranking_supported"] is data["all_saved_boundaries_reached"] is False
+
+
+@pytest.fixture
+def amended(fixture):
+    root, _, _ = fixture
+    relative = "experiments/keyboard_comparison_storage_amendment_20260912.json"
+    raw = (ROOT / relative).read_bytes()
+    (root / relative).write_bytes(raw)
+    declaration = json.loads(raw)
+    value = result(fixture, slot=5, status="budget_limited_pause", count=64)
+    value["response_limit"] = 128
+    value["evidence_details"] = {
+        "storage_amendment": {
+            **declaration["storage_binding"],
+            "declaration_sha256": hashlib.sha256(raw).hexdigest(),
+        },
+        "private_memory": "DO_NOT_EXPORT",
+    }
+    add(fixture, value, boundary=128)
+    return value
+
+
+def test_declared_storage_amendment_is_projected_without_private_details(fixture, amended):
+    data = read_comparison(fixture[0], INDEX, boundary=128)
+    note = data["trials"][5]["result"]["storage_amendment"]
+    assert note == {
+        "schema_version": "fortgym.public-comparison-storage-note/v1",
+        "first_step": 64,
+        "target_next_step": 128,
+        "disk_gib_before": 32,
+        "disk_gib_after": 40,
+        "other_conditions_unchanged": True,
+        "declaration_sha256": "eeb3fa8b08234819247b4dec7ecf50fda9f137fd57cabe07d1426d968d15116e",
+    }
+    assert any("storage-capacity amendment" in line for line in data["limits"])
+    assert "DO_NOT_EXPORT" not in json.dumps(data)
+    assert data["strong_ranking_supported"] is False
+
+
+@pytest.mark.parametrize(
+    "field,value",
+    [
+        ("cpu", 4),
+        ("memory_gib", 4),
+        ("disk_gib_after", 64),
+        ("disk_gib_before", 16),
+        ("mandatory_teardown", 1),
+        ("model_or_prompt_changes", 0),
+        ("native_source_or_image_changes", True),
+        ("other_configuration_changes", True),
+        ("campaign_id", "bindings-comparison-20260911-sol-r2"),
+        ("declaration_sha256", "a" * 64),
+        ("operation_receipt_sha256", "b" * 64),
+        ("private_path", "/private/DO_NOT_EXPORT"),
+    ],
+)
+def test_storage_amendment_cannot_change_conditions_or_leak_fields(fixture, amended, field, value):
+    amended["evidence_details"]["storage_amendment"][field] = value
+    add(fixture, amended, boundary=128)
+    with pytest.raises(ValueError, match="Storage amendment"):
+        read_comparison(fixture[0], INDEX, boundary=128)
+
+
+def test_later_storage_note_cannot_relabel_a_64_response_window(fixture, amended):
+    amended["response_limit"] = 64
+    add(fixture, amended)
+    with pytest.raises(ValueError, match="Storage amendment"):
+        report(fixture)
+
+
+def test_storage_note_cannot_relabel_a_different_attempt(fixture, amended):
+    other = result(fixture, slot=0, status="infrastructure_failure", count=64)
+    other["response_limit"] = 128
+    other["evidence_details"] = deepcopy(amended["evidence_details"])
+    add(fixture, other, boundary=128)
+    with pytest.raises(ValueError, match="Storage amendment"):
+        read_comparison(fixture[0], INDEX, boundary=128)
+
+
+def test_missing_or_changed_storage_declaration_is_not_accepted(fixture, amended):
+    path = fixture[0] / "experiments/keyboard_comparison_storage_amendment_20260912.json"
+    path.write_text("{}")
+    with pytest.raises(ValueError, match="bytes differ"):
+        read_comparison(fixture[0], INDEX, boundary=128)
+    path.unlink()
+    with pytest.raises(ValueError, match="missing"):
+        read_comparison(fixture[0], INDEX, boundary=128)
+
+
+def test_original_fresh_report_projection_is_unchanged():
+    data = read_comparison(
+        ROOT,
+        "experiments/evidence/keyboard_binding_comparison_20260911_index.json",
+        boundary=64,
+    )
+    raw = (json.dumps(data, indent=2, allow_nan=False) + "\n").encode()
+    assert hashlib.sha256(raw).hexdigest() == (
+        "323eb178749f324791ff0b384c069d667af2132e81770c11ff937a656aa1398d"
+    )

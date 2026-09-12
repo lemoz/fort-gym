@@ -87,12 +87,42 @@ def _reference(root: Path, reference: dict[str, Any]) -> tuple[dict[str, Any], s
     return value, f"https://github.com/lemoz/fort-gym/blob/{revision}/{path}"
 
 
+def _storage_note(root: Path, value: dict[str, Any], boundary: int) -> dict[str, Any] | None:
+    details = value.get("evidence_details", {})
+    if not isinstance(details, dict):
+        raise ValueError("Invalid result evidence details")
+    if "storage_amendment" not in details:
+        return None
+    digest = "eeb3fa8b08234819247b4dec7ecf50fda9f137fd57cabe07d1426d968d15116e"
+    declaration = read_evidence_object(
+        root, "experiments/keyboard_comparison_storage_amendment_20260912.json", digest
+    )
+    expected = {**declaration["storage_binding"], "declaration_sha256": digest}
+    if (
+        json.dumps(details["storage_amendment"], sort_keys=True, allow_nan=False)
+        != json.dumps(expected, sort_keys=True, allow_nan=False)
+        or expected["campaign_id"] != value["campaign_id"]
+        or expected["target_next_step"] != boundary
+    ):
+        raise ValueError("Storage amendment differs from its declared campaign and window")
+    return {
+        "schema_version": "fortgym.public-comparison-storage-note/v1",
+        "first_step": expected["first_step"],
+        "target_next_step": boundary,
+        "disk_gib_before": expected["disk_gib_before"],
+        "disk_gib_after": expected["disk_gib_after"],
+        "other_conditions_unchanged": True,
+        "declaration_sha256": digest,
+    }
+
+
 def _result(
     value: dict[str, Any],
     plan: dict[str, Any],
     declared: dict[str, Any],
     hashes: dict[str, str],
     boundary: int,
+    root: Path,
 ) -> dict[str, Any]:
     matching = {
         "schema_version": "fortgym.public-displayed-key-result/v1",
@@ -155,7 +185,7 @@ def _result(
         or not value["vm_teardown_verified"]
     ):
         raise ValueError("A saved boundary requires exact responses, checkpoint and teardown")
-    return {
+    result = {
         "status": value["status"],
         "response_limit": boundary,
         "responses": responses,
@@ -166,6 +196,10 @@ def _result(
         "native_teardown_verified": value["native_teardown_verified"],
         "vm_teardown_verified": value["vm_teardown_verified"],
     }
+    note = _storage_note(root, value, boundary)
+    if note is not None:
+        result["storage_amendment"] = note
+    return result
 
 
 def read_comparison(root: Path, index_path: str, *, boundary: int) -> dict[str, Any]:
@@ -245,7 +279,7 @@ def read_comparison(root: Path, index_path: str, *, boundary: int) -> dict[str, 
         url = None
         if reference is not None:
             value, url = _reference(root, reference)
-            result = _result(value, plan, row, hashes, boundary)
+            result = _result(value, plan, row, hashes, boundary, root)
         projected.append(
             {
                 "campaign_id": row["id"],
@@ -259,7 +293,7 @@ def read_comparison(root: Path, index_path: str, *, boundary: int) -> dict[str, 
             }
         )
     recorded = [row["result"] for row in projected if row["result"] is not None]
-    return {
+    report: dict[str, Any] = {
         "schema_version": "fortgym.public-displayed-key-comparison/v1",
         "cohort_id": plan["cohort_id"],
         "comparison_boundary": boundary,
@@ -285,3 +319,9 @@ def read_comparison(root: Path, index_path: str, *, boundary: int) -> dict[str, 
             "Unknown measurements and unreported subscription charges remain null, not zero.",
         ],
     }
+    if any("storage_amendment" in row for row in recorded):
+        report["limits"].append(
+            "A declared storage-capacity amendment is marked on its affected result; "
+            "VM storage configurations are not identical across these windows."
+        )
+    return report
