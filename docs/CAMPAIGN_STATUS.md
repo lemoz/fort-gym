@@ -16,10 +16,10 @@ cohort below. Long-term self-sufficiency and the full delivery goal remain open.
 
 All six displayed-key fresh attempts have completed and passed their terminal
 audits at 64 responses. The [source-linked index](../experiments/evidence/keyboard_binding_comparison_20260911_index.json)
-retains two attempts each for Sol, Terra and Astra. The [public release](../experiments/evidence/website_six_matched_release_20260912.json)
-now contains all six results, eleven recording windows and 864 captured
+retains two attempts each for Sol, Terra and Astra. The [public release](../experiments/evidence/website_terra_own_save_release_20260912.json)
+now contains all six fresh results, twelve recording windows and 928 captured
 decisions, with a selector for the declared 64- and 128-decision budgets.
-The older ten recording files remain unchanged.
+The older eleven recording files remain unchanged.
 
 The first Sol r1 continuation retained an
 [infrastructure startup failure](../experiments/evidence/keyboard_binding_comparison_sol_r1_128_startup_failure_20260911.json)
@@ -36,8 +36,10 @@ one completed workshop, no beds or farms, 36 food and 26 drinks. The new window
 added 116,000 ticks with no recorded clock error. Native cleanup, VM teardown
 and the unchanged original checkpoint were verified. This is not Year-Two or
 self-sufficiency proof, nor a separate fresh reload of the final checkpoint.
-The result and updated 128-budget index are pushed; its replay and public-table
-update remain pending, so the website still has only Sol's settled 128-stage row.
+The result and updated 128-budget index are pushed. Its own-save replay and
+public-table update are verified live at website revision
+`900e3eba6acd254ea340ecad0585b883279914ca`, with passing CI `34667274408`.
+The 128-budget table now shows Terra's saved result alongside Sol's startup failure.
 
 [Astra r1 started next](../experiments/evidence/matched_continuation_astra_r1_startup_20260912.json)
 from its own checkpoint64, preserving memory, usage, feedback and native metrics.
@@ -51,7 +53,10 @@ The isolated integration candidate is pushed as
 [draft PR176](https://github.com/lemoz/fort-gym/pull/176), head
 `5cedb5e91e0405e3b2ae0065c9a230a7ff02db88`. It combines native/main ancestry,
 the published viewer and matched tools; 5,398 Python tests and 48 Node contracts
-pass. Exact-head CI and source review remain separate from those local checks.
+pass. Exact-head CI `34666311317` passed. The [partial source review](../experiments/evidence/keyboard_integration_review_176_20260912.json)
+checks the changed keyboard paths and binding dispatch, with 198 focused tests.
+It is not full merge readiness. The latest viewer and Terra evidence are now being
+integrated and revalidated separately from that original candidate.
 The candidate is not merged or deployed, and does not replace the running source.
 
 The [delivery audit](YEAR_TWO_DELIVERY_AUDIT.md) separates the achieved

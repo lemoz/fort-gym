@@ -1,0 +1,93 @@
+{
+  "schema_version": "fortgym.website-own-save-release/v1",
+  "release_revision": "900e3eba6acd254ea340ecad0585b883279914ca",
+  "assets": {
+    "/static/displayed-key-comparison-128.json": {
+      "sha256": "4200bd8292baaf0d174ff849c44796feb9b32a6374377a0c34621c1b364c207f",
+      "mime": "application/json"
+    },
+    "/static/displayed-key-comparison.mjs": {
+      "sha256": "db4b7411465bca41343697b18364df5db5137a840d0753261513474869a001a1",
+      "mime": "text/javascript"
+    },
+    "/static/recordings/catalog.json": {
+      "sha256": "55b8e6bc4d1b76fb2c102ed96fce111af0e775ca875871e8720c30dd566234b4",
+      "mime": "application/json"
+    },
+    "/static/recordings/previews.json": {
+      "sha256": "be2decf1e6dccc6110f1e56f247a0dc8bb61358b3fccb756c6b174c60429e0af",
+      "mime": "application/json"
+    },
+    "/static/recordings/terra-matched-r1-65-128.json": {
+      "sha256": "259ef96059fee1d2ef35e51779fcd27747c7b9c68784579152fbccf848441146",
+      "mime": "application/json"
+    },
+    "/worlds": {
+      "sha256": "557579a3d243e0dd3133a37fcd30329ca5b625f18b7920687febfff4b5322de9",
+      "mime": "text/html"
+    }
+  },
+  "recordings": 12,
+  "captured_frames": 928,
+  "matched_rows": 6,
+  "published_results": 6,
+  "continuation_results": 2,
+  "decision_budgets": [
+    64,
+    128
+  ],
+  "historical_recordings_unchanged": true,
+  "immutable_source_links_resolve": true,
+  "relay_snapshot": {
+    "run_id": "bindings-comparison-20260911-astra-r1",
+    "model": "gpt-6-astra",
+    "status": "running",
+    "observed_at_unix": 1789179729
+  },
+  "passed": true,
+  "website_url": "https://fortgym.live/results#matched-comparison",
+  "replay_url": "https://fortgym.live/?recording=terra-matched-r1-65-128#watch-root",
+  "source_report_revision": "c7c4632018c81d419db5c6ee5b127376486ed4d7",
+  "observer_revision": "7cd3b96763998abfd99ed623630d658320a27918",
+  "private_receipt_sha256": {
+    "public-acceptance.json": "78d99cb7fb233df8457b5160d191056ef891ec2a943a5b2a99ab664db9a93b94",
+    "remote-acceptance.jsonl": "b42e8cf797f15511bfb90dd72ba927f0679c1af529412c2195ab624ae38f3891",
+    "build-receipt.json": "7f4d8b91d94a5c2ab96aad1d6dfaa7708ba147e7c0f07fb154e5da9c17f9bed9",
+    "deploy_remote.py": "c327ce99f5917a9eabe45caa7e488c87030413691a76d1e9494ba148e75ea219",
+    "verify_public.py": "7c5854624bf646a7fdeb5bc8bd198e7db00e0e3d5334b0a27b06b46ca0197898"
+  },
+  "ci": {
+    "run_id": 34667274408,
+    "head_sha": "900e3eba6acd254ea340ecad0585b883279914ca",
+    "status": "completed",
+    "conclusion": "success"
+  },
+  "validation": {
+    "full_local_tests_passed": 1269,
+    "skipped": 5,
+    "warnings": 7,
+    "node_playback_publication_tests_passed": 49,
+    "selected_ruff_passed": true,
+    "selected_mypy_passed": true,
+    "browser_visual_qa_performed": false
+  },
+  "native_and_api_service_identities_unchanged": true,
+  "database_counts_unchanged": true,
+  "untracked_files_preserved": true,
+  "service_restarts": 0,
+  "new_hosts": 0,
+  "main_merge": false,
+  "new_model_calls_by_website_tools": 0,
+  "new_gameplay_inputs_by_website_tools": 0,
+  "active_astra_relay_unchanged": true,
+  "strong_model_ranking_supported": false,
+  "full_goal_complete": false,
+  "limits": [
+    "Twelve recording windows are not twelve independent trials; all eleven previously published recordings are unchanged.",
+    "Six fresh outcomes are saved at 64 responses. The 128-budget table contains Terra's saved continuation and Sol's infrastructure startup failure, with four results not yet published.",
+    "Terra retains 120200 saved ticks, 15 living citizens, no recorded deaths, one workshop, no beds or farms, 36 food and 26 drinks. This is not Year-Two or self-sufficiency proof.",
+    "Astra's active continuation remains unaudited until terminal review; a live feed is not a settled result.",
+    "The parent Terra checkpoint was freshly loaded; the final checkpoint128 has not had a separate fresh reload.",
+    "Subscription dollar charges are unreported, not zero."
+  ]
+}
