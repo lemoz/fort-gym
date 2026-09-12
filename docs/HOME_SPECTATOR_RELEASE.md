@@ -372,3 +372,41 @@ Runs has the new captured card. Keep the sixth attempt's public live feed
 unchanged during this release. Full website/player tests, exact-head CI and
 public HTTPS checks remain required. No service restart, database mutation,
 new infrastructure, main merge, gameplay input or model call is included.
+
+## Final keyboard controls replay (September 12, 2026)
+
+Start from public revision `286e000e36cb21b23bd7dc66ed54494e259eceeb`.
+Add the original `controls-v2-p3-keyboard-1-128` recording, SHA-256
+`337ca3bd834be6f50c2d09afbd3668228eee69d142e65d632f0b013974cdb337`,
+bound to audit `52ecd5c277a001b91de5e1d62e76e5c09567bc001a9a6177fe345de55e9b1f58`
+and frozen native source `5ddf1e6718dab2e8351e8dc24a2afe5071cd2592`.
+The terminal result digest is
+`e21bf87ed2b3efc4305690cf3d7de723c2c9bc6faf4189a98d50751da32786d0`.
+
+The final save retains 46,400 elapsed ticks, seven living dwarves, no recorded
+deaths, seven installed beds, three workshops, one farm, 42 food and 122 drinks.
+All 128 keyboard actions were accepted, sending 751 keys with no workshop
+shortcuts. The native clock advanced 46,400 of 51,600 requested ticks, with no
+timeouts and three menu deferrals. All 3,753,509 returned tokens are accounted;
+subscription charges are unreported. Its own decision-64 checkpoint was freshly
+reloaded. The final save has no separate fresh-reload check. Guest poweroff
+returned one with `exit status 255`; the subsequent VM stop returned zero and
+independent stopped-VM and closed-disk checks passed. Original logs are retained.
+
+All six controls attempts now have terminal native audits. These are three
+paired policy samples on the same seed, not independent worlds, a control
+ranking, or sustainable-fortress proof. Keep the existing failure/death evidence.
+The shared homepage/Results catalog and Runs card now expose all six replays,
+with 23 total recording windows and 2,020 frames across the full site.
+Preserve all 22 prior recording files, catalog rows and previews.
+
+Local validation passed 1,305 Python tests with five skips and seven warnings,
+plus all 66 Node checks. The earlier full run retained one outdated gallery-count
+assertion failure and 1,304 passes; the initial Node run retained four outdated
+count assertions before their correction. These were release-test expectations,
+not altered replay data. The importer had 36 passing in-memory checks before use.
+Exact-head remote CI and public HTTPS verification are separate remaining gates.
+Preserve the active endurance campaign's live relay while publishing this static
+update. No service restart, database mutation, new infrastructure, main merge or
+new model invocation is part of website publication. Browser-only preview/QA is
+skipped in this background goal continuation.

@@ -42,19 +42,22 @@ def test_v2_shortcuts_replay_is_exactly_the_audited_two_window_export():
     check(data)
 
 
-def test_latest_replay_is_v2_and_does_not_claim_a_completed_comparison():
+def test_all_six_v2_replays_are_present_without_claiming_a_control_ranking():
     catalog = json.loads((RECORDINGS / "catalog.json").read_text())["recordings"]
-    assert catalog[0]["id"] == "controls-v2-p3-shortcuts-1-128"
-    assert catalog[1]["id"] == "controls-v2-p2-shortcuts-1-128"
-    assert catalog[2]["id"] == "controls-v2-p2-keyboard-1-128"
-    assert catalog[3]["id"] == "controls-v2-p1-keyboard-1-128"
-    assert catalog[4]["id"] == IDENTITY
-    assert catalog[5]["id"] == "controls-p1-keyboard-1-128"
+    assert catalog[0]["id"] == "controls-v2-p3-keyboard-1-128"
+    assert catalog[1]["id"] == "controls-v2-p3-shortcuts-1-128"
+    assert catalog[2]["id"] == "controls-v2-p2-shortcuts-1-128"
+    assert catalog[3]["id"] == "controls-v2-p2-keyboard-1-128"
+    assert catalog[4]["id"] == "controls-v2-p1-keyboard-1-128"
+    assert catalog[5]["id"] == IDENTITY
+    assert catalog[6]["id"] == "controls-p1-keyboard-1-128"
     assert "campaign" not in catalog[0]
     html = (ROOT / "web/worlds.html").read_text()
     assert "68,200 game ticks" in html and "queued jobs are not completed products" in html
     assert "first matched pair uses the same seed and 128-decision limit" in html
-    assert "one pair remains" in html
+    assert "one pair remains" not in html
+    assert "All three matched pairs are recorded" in html
+    assert "not independent worlds" in html
     assert "70,900 game ticks" in html and "43 food and 135 drinks" in html
     assert "paired keyboard run is still pending a final result" not in html
     assert "do not establish sustainability" in html
@@ -64,7 +67,28 @@ def test_latest_replay_is_v2_and_does_not_claim_a_completed_comparison():
     assert "49,600 game ticks" in html and "40 food and 136 drinks" in html
     assert "4,014,250 returned tokens" in html and "subscription dollar charges were not reported" in html
     assert "58,200 game ticks" in html and "56 food and 161 drinks" in html
-    assert "3,621,402 returned tokens" in html and "final keyboard result remains" in html
+    assert "3,621,402 returned tokens" in html and "final keyboard result remains" not in html
+    assert "46,400 game ticks" in html and "42 food and 122 drinks" in html
+    assert "3,753,509 returned tokens" in html and "751 key presses" in html
+
+
+def test_final_keyboard_replay_preserves_the_exact_saved_native_result():
+    raw = (RECORDINGS / "controls-v2-p3-keyboard-1-128.json").read_bytes()
+    assert hashlib.sha256(raw).hexdigest() == (
+        "337ca3bd834be6f50c2d09afbd3668228eee69d142e65d632f0b013974cdb337"
+    )
+    data = json.loads(raw)
+    assert data["source_revision"] == "5ddf1e6718dab2e8351e8dc24a2afe5071cd2592"
+    assert data["audit_sha256"] == "52ecd5c277a001b91de5e1d62e76e5c09567bc001a9a6177fe345de55e9b1f58"
+    assert data["control_profile"] == "native_keyboard_bindings/v1"
+    assert data["saved_through_decision"] == 128
+    assert [frame["decision"] for frame in data["frames"]] == list(range(1, 129))
+    assert sum(frame["after"]["ticks_advanced"] for frame in data["frames"]) == 46400
+    assert data["frames"][63]["after"]["tick"] == data["frames"][64]["before"]["tick"]
+    assert data["frames"][-1]["after"]["population"] == 7
+    assert all("shortcut" not in frame["action"] for frame in data["frames"])
+    assert sum(len(frame["action"]["keys"]) for frame in data["frames"]) == 751
+    assert all(frame["accepted"] for frame in data["frames"])
 
 
 def test_v2_pair3_shortcuts_preserves_its_original_audited_export():
