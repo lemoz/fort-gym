@@ -17,6 +17,10 @@ model selection, copied native runtimes, persistent checkpoints, serial continua
 and inspectable progress. Its [agent foundation](docs/CAMPAIGN_AGENT_FOUNDATION.md)
 preserves memory and cumulative usage. This is an experimental checkout-based
 runtime, not a completed year-two result or a cross-model ranking.
+For the integrated keyboard runner, six-attempt model comparison and playable
+recordings, start with [the current Year-Two guide](docs/YEAR_TWO_QUICKSTART.md).
+It separates current entry points from historical experiment notes and explains
+which setup commands need no model, game installation or private runtime assets.
 The [keyboard recovery contract](docs/CAMPAIGN_KEYBOARD_RECOVERY.md) distinguishes
 model input rejection from uncertain delivery and preserves interrupted evidence.
 
