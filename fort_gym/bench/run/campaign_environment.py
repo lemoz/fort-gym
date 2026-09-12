@@ -15,8 +15,16 @@ from ..config import get_settings
 from ..dfhack_backend import _hook_path, ensure_paused_external
 from ..dfhack_exec import DFHackError, run_lua_expr, run_lua_file
 from ..env.actions import INTERACT_ALLOWED_VIEWSCREEN_TYPES
+from ..env.campaign_keyboard import (
+    HELPER_CONTROL_PROFILE,
+    execute_campaign_keys,
+)
+from ..env.native_key_catalog import CAMPAIGN_KEYBOARD_PROFILES, KEYBOARD_PROFILES, NATIVE_PROFILE
+from ..env.display_key_catalog import BINDING_PROFILE
+from ..env.campaign_binding_keys import read_binding_index
 from ..env.dfhack_client import DFHackClient
 from ..env.executor import Executor
+from ..env.screen_observation import raw_screen
 from ..env.state_reader import StateReader
 from ..env.campaign_view import MAP_SCHEMA, view_selection
 from ..env.workshop_placement import (
@@ -26,6 +34,11 @@ from ..env.workshop_placement import (
     validate_policy,
 )
 from .campaign_save import native_save_status
+from .campaign_food import read_food_measurement, validate_profile, validate_timeout_seconds
+from .keyboard_clock import deferral_schema, validate_menu_deferral
+from .keyboard_clock_timeout import (
+    SCHEMA as CLOCK_UNAVAILABLE_SCHEMA, validate_clock_unavailable, validate_zero_tick_timeout,
+)
 
 
 def read_campaign_fort_metrics() -> dict[str, Any]:
@@ -53,12 +66,22 @@ class NativeCampaignEnvironment:
         expected_dfroot: Path,
         workshop_placement_policy: str = STRICT_FLOOR,
         max_advance_ticks: int = 2000,
+        control_profile: str = HELPER_CONTROL_PROFILE,
+        private_measurement_profile: str | None = None,
+        private_measurement_timeout_seconds: float = 5.0,
     ) -> None:
         if type(max_advance_ticks) is not int or not 1 <= max_advance_ticks <= 2500:
             raise ValueError("Invalid campaign tick limit")
+        if control_profile not in (HELPER_CONTROL_PROFILE, *KEYBOARD_PROFILES):
+            raise ValueError("Invalid campaign control profile")
+        self.control_profile = control_profile
+        self.private_measurement_profile = validate_profile(private_measurement_profile)
+        self.private_measurement_timeout_seconds = validate_timeout_seconds(private_measurement_timeout_seconds)
         self.max_advance_ticks = max_advance_ticks
         self.workshop_placement_policy = validate_policy(workshop_placement_policy)
         self.expected_dfroot = expected_dfroot.resolve()
+        if control_profile == BINDING_PROFILE:
+            read_binding_index(self.expected_dfroot)
         self._verify_runtime()
         settings = get_settings()
         self.client = DFHackClient(host=settings.DFHACK_HOST, port=settings.DFHACK_PORT)
@@ -107,6 +130,14 @@ class NativeCampaignEnvironment:
         }
         state["fort"] = read_campaign_fort_metrics()
         state["crew"] = read_campaign_job_metrics()
+        if getattr(self, "private_measurement_profile", None) is not None:
+            state["private_food_measurement"] = read_food_measurement(
+                expected_dfroot=self.expected_dfroot,
+                year=native["year"],
+                year_tick=native["year_tick"],
+                **({"timeout_seconds": self.private_measurement_timeout_seconds}
+                   if getattr(self, "private_measurement_timeout_seconds", 5.0) != 5.0 else {}),
+            )
         if self.workshop_placement_policy == NATIVE_GROUND:
             state["workshop_placement"] = policy_observation()
         # No G7 event monitor is started/reset here. Stock and structure observations
@@ -117,6 +148,38 @@ class NativeCampaignEnvironment:
     def screen(self) -> str:
         self._verify_runtime()
         return self.client.get_screen_text(include_visual_hints=True)
+
+    def screen_capture(self) -> dict:
+        """Read actual tiles at a stable paused boundary, without internal metrics.
+
+        This checks the loaded fortress and calendar around CopyScreen. It does
+        not force a render or prove that a frame reflects a just-dispatched key.
+        The keyboard executor still owns UI-transition/freshness validation.
+        """
+        self._verify_runtime()
+
+        def boundary() -> tuple[str, int, int]:
+            state = native_save_status()
+            name, year, tick = state.get("save_name"), state.get("year"), state.get("year_tick")
+            if (
+                state.get("ok") is not True
+                or state.get("paused") is not True
+                or not isinstance(name, str)
+                or not name
+                or type(year) is not int
+                or year < 0
+                or type(tick) is not int
+                or not 0 <= tick < 403200
+            ):
+                raise RuntimeError("Native screen capture requires a paused, identified fortress")
+            return name, year, tick
+
+        before = boundary()
+        capture = raw_screen(self.client.get_screen())
+        if boundary() != before:
+            raise RuntimeError("Native screen capture crossed a fortress or calendar boundary")
+        self._verify_runtime()
+        return capture
 
     def inspect_map(self, selection: dict | None) -> dict:
         """Read only the model-selected terrain window, without changing native UI."""
@@ -132,6 +195,23 @@ class NativeCampaignEnvironment:
 
     def apply(self, action: dict[str, Any], state: dict[str, Any]) -> dict[str, Any]:
         self._verify_runtime()
+        if getattr(self, "control_profile", None) == BINDING_PROFILE:
+            read_binding_index(self.expected_dfroot)
+        if getattr(self, "control_profile", HELPER_CONTROL_PROFILE) in KEYBOARD_PROFILES:
+            if action.get("type") != "KEYSTROKE":
+                return {
+                    "accepted": False,
+                    "why": "The native keyboard condition does not expose DFHack shortcuts",
+                    "command_mutation": "not_attempted",
+                }
+            params = action.get("params")
+            return execute_campaign_keys(
+                params.get("keys") if isinstance(params, dict) else None,
+                expected_dfroot=self.expected_dfroot,
+                year=state.get("year"),
+                year_tick=state.get("year_tick"),
+                control_profile=self.control_profile,
+            )
         viewscreen = state.get("viewscreen_type")
         if (
             state.get("pause_state") is True
@@ -164,13 +244,61 @@ class NativeCampaignEnvironment:
         before = self.observe()
         if ticks == 0:
             return before, {"ok": True, "ticks_advanced": 0, "skipped": True}
+        if getattr(self, "control_profile", HELPER_CONTROL_PROFILE) in CAMPAIGN_KEYBOARD_PROFILES:
+            # This v2 clock fix does not change the historical v1 condition.
+            # An empty keyboard batch is a read-only, runtime/calendar-bound
+            # probe. Never press Escape or alter a model-selected menu here.
+            def probe() -> dict:
+                execution = execute_campaign_keys(
+                    [], expected_dfroot=self.expected_dfroot,
+                    year=before.get("year"), year_tick=before.get("year_tick"),
+                    control_profile=NATIVE_PROFILE,
+                )
+                if execution.get("accepted") is not True:
+                    raise RuntimeError("Keyboard clock preflight could not attest native UI")
+                return execution["result"]["native_receipts"][0]["after"]
+
+            initial = probe()
+            schema = deferral_schema(initial)
+            if schema is not None:
+                after = self.observe()
+                receipt = {
+                    "schema_version": schema,
+                    "ok": False, "deferred": True, "error": "blocking_native_menu",
+                    "requested": ticks, "ticks_advanced": 0,
+                    "clock_dispatched": False, "timeout": False,
+                    "native_before": initial, "native_after": probe(),
+                }
+                error = validate_menu_deferral(
+                    receipt, requested_ticks=ticks, before=state, after=after
+                )
+                if error is not None:
+                    raise RuntimeError(error)
+                return after, receipt
         self.client.advance(
             ticks,
             interrupt_on_viewscreen_transition=True,
             viewscreen_before=str(before.get("viewscreen_type") or "unknown"),
             max_advance_ticks=self.max_advance_ticks,
         )
-        return self.observe(), dict(self.client.last_tick_info)
+        after, receipt = self.observe(), dict(self.client.last_tick_info)
+        if (
+            getattr(self, "control_profile", HELPER_CONTROL_PROFILE) in CAMPAIGN_KEYBOARD_PROFILES
+            and validate_zero_tick_timeout(receipt, requested_ticks=ticks, state=after) is None
+        ):
+            # Retain the failed operation verbatim and attest its settled native
+            # boundary. Do not retry, choose a key, or report requested time as real.
+            receipt = {
+                **receipt, "schema_version": CLOCK_UNAVAILABLE_SCHEMA,
+                "clock_unavailable": True, "clock_dispatched": True,
+                "native_before": initial, "native_after": probe(),
+            }
+            error = validate_clock_unavailable(
+                receipt, requested_ticks=ticks, before=state, after=after,
+            )
+            if error is not None:
+                raise RuntimeError(error)
+        return after, receipt
 
     def close(self) -> None:
         self.client.close()

@@ -8,6 +8,7 @@ fortress. The runtime launcher remains responsible for loading and verifying it.
 from __future__ import annotations
 
 import hashlib
+import io
 import json
 import os
 import shutil
@@ -15,7 +16,7 @@ from pathlib import Path
 from typing import Any
 
 from ..agent.base import Agent
-from .campaign_save import NativeSaveSnapshotter, save_inventory
+from .campaign_save import NativeSnapshotter, save_inventory
 
 
 class CampaignCheckpointError(RuntimeError):
@@ -95,18 +96,24 @@ def _verify_no_action_boundary(directory: Path, payload: dict) -> None:
         if trace:
             raise CampaignCheckpointError("Initial no-action checkpoint must have an empty trace")
     else:
-        rows = [json.loads(line) for line in trace.splitlines()]
-        if not trace.endswith(b"\n") or not rows or any(not isinstance(row, dict) for row in rows):
+        steps: list[Any] = []
+        final = None
+        for line in io.BytesIO(trace):
+            row = json.loads(line)
+            if not isinstance(row, dict):
+                raise CampaignCheckpointError("No-action checkpoint trace is incomplete")
+            if row.get("run_id") != payload.get("run_id"):
+                raise CampaignCheckpointError("No-action checkpoint trace cursor differs")
+            steps.append(row.get("step"))
+            final = row.get("tick_advance")
+        if not trace.endswith(b"\n") or not steps:
             raise CampaignCheckpointError("No-action checkpoint trace is incomplete")
-        steps = [row.get("step") for row in rows]
         if (
             any(type(step) is not int for step in steps)
             or steps[0] not in (0, 1)
             or steps != list(range(steps[0], cursor))
-            or any(row.get("run_id") != payload.get("run_id") for row in rows)
         ):
             raise CampaignCheckpointError("No-action checkpoint trace cursor differs")
-        final = rows[-1].get("tick_advance")
         if not isinstance(final, dict) or (final.get("end_year"), final.get("end_tick")) != (
             boundary["year"],
             boundary["year_tick"],
@@ -149,7 +156,7 @@ def create_checkpoint(
     *,
     campaign_id: str,
     agent: Agent,
-    snapshotter: NativeSaveSnapshotter,
+    snapshotter: NativeSnapshotter,
     trace_path: Path,
     last_committed_step: int,
     code_revision: str,
@@ -191,29 +198,42 @@ def create_checkpoint(
     empty_boundary = no_action_boundary is not None and last_committed_step == -1
     if not trace_bytes.endswith(b"\n") and not (empty_boundary and not trace_bytes):
         raise CampaignCheckpointError("Trace does not end at a committed newline")
-    rows = [json.loads(line) for line in trace_bytes.splitlines() if line.strip()]
-    if (not rows and not empty_boundary) or any(not isinstance(row, dict) for row in rows):
+    # The game is still loaded here. Retain the captured bytes, but decode only
+    # one observation at a time instead of expanding the whole campaign in RAM.
+    run_id = None
+    steps: list[Any] = []
+    tick_advance = None
+    for line in io.BytesIO(trace_bytes):
+        if not line.strip():
+            continue
+        row = json.loads(line)
+        if not isinstance(row, dict):
+            raise CampaignCheckpointError("Trace has no committed action records")
+        if not steps:
+            run_id = row.get("run_id")
+        elif row.get("run_id") != run_id:
+            raise CampaignCheckpointError("Trace cursor or run identity does not match the checkpoint")
+        steps.append(row.get("step"))
+        tick_advance = row.get("tick_advance")
+    if not steps and not empty_boundary:
         raise CampaignCheckpointError("Trace has no committed action records")
-    run_id = rows[0].get("run_id") if rows else campaign_id
-    steps = [row.get("step") for row in rows]
+    if not steps:
+        run_id = campaign_id
     if (
         not isinstance(run_id, str)
         or not run_id
-        or any(row.get("run_id") != run_id for row in rows)
         or any(type(step) is not int for step in steps)
         or (
             bool(steps)
             and (steps != list(range(steps[0], last_committed_step + 1)) or steps[0] not in (0, 1))
         )
-        or (empty_boundary and bool(rows))
+        or (empty_boundary and bool(steps))
     ):
         raise CampaignCheckpointError("Trace cursor or run identity does not match the checkpoint")
     parent_manifest = verify_checkpoint(parent) if parent is not None else None
     if parent_manifest is not None and parent_manifest["payload"].get("campaign_id") != campaign_id:
         raise CampaignCheckpointError("Parent checkpoint belongs to another campaign")
-    if rows:
-        tick_advance = rows[-1].get("tick_advance")
-    else:
+    if not steps:
         assert no_action_boundary is not None  # Empty trace requires the v3 boundary above.
         tick_advance = {
             "end_year": no_action_boundary.get("year"),
@@ -231,6 +251,10 @@ def create_checkpoint(
     ):
         raise CampaignCheckpointError("Same-run checkpoint must extend its parent trace")
 
+    # Keep the immutable bytes and final calendar receipt, not a second expanded
+    # copy of every observation while the snapshotter validates its own source.
+    if steps:
+        del row
     destination.mkdir(parents=False, mode=0o700, exist_ok=False)
     native = snapshotter.capture(destination / "game")
     if (native["year"], native["year_tick"]) != (

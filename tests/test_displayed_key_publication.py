@@ -1,0 +1,247 @@
+"""Public matched comparison and replay remain tied to reviewed real evidence."""
+
+import hashlib
+import json
+import subprocess
+from pathlib import Path
+
+import pytest
+
+ROOT = Path(__file__).resolve().parents[1]
+
+
+@pytest.mark.parametrize(
+    "name,replay_sha,ticks",
+    [
+        ("sol", "50bc9a2b94b6a0de3fadf1507ec59fbde845c2cc4e5461623d2c26e0dab78741", 2900),
+        ("terra", "3499bc18073141858398ab631389155a2672ded691b3b0324aaf5d26c7d5e6bb", 4200),
+        ("astra", "24380f7d5226ef28633b6eb37776ffa905069ac1cc1006b29ffd92b14950bfcc", 23000),
+    ],
+)
+def test_public_report_and_replay_bindings(name, replay_sha, ticks):
+    path = ROOT / "web/static/displayed-key-comparison.json"
+    assert hashlib.sha256(path.read_bytes()).hexdigest() == (
+        "323eb178749f324791ff0b384c069d667af2132e81770c11ff937a656aa1398d"
+    )
+    report = json.loads(path.read_text())
+    identity = "bindings-comparison-20260911-" + name + "-r1"
+    result = next(row for row in report["trials"] if row["campaign_id"] == identity)
+    assert report["recorded_attempts"] == 6 and report["strong_ranking_supported"] is False
+    replay_path = ROOT / ("web/static/recordings/" + name + "-matched-r1-1-64.json")
+    assert hashlib.sha256(replay_path.read_bytes()).hexdigest() == replay_sha
+    replay = json.loads(replay_path.read_text())
+    assert [frame["decision"] for frame in replay["frames"]] == list(range(1, 65))
+    assert replay["saved_through_decision"] == result["result"]["responses"] == 64
+    assert replay["audit_sha256"] == result["result"]["terminal_audit_sha256"]
+    assert sum(frame["after"]["ticks_advanced"] for frame in replay["frames"]) == ticks
+    assert result["result"]["checkpoint"]["saved_elapsed_ticks"] == ticks
+    assert replay["frames"][-1]["after"]["population"] == 7
+    assert all(frame["accepted"] for frame in replay["frames"])
+    forbidden = {
+        "memory",
+        "memory_update",
+        "reasoning",
+        "analysis",
+        "request",
+        "response",
+        "provider_events",
+        "account",
+        "access_token",
+        "api_key",
+        "prompt",
+    }
+
+    def check(value):
+        if isinstance(value, dict):
+            assert not forbidden.intersection(value)
+            for item in value.values():
+                check(item)
+        elif isinstance(value, list):
+            for item in value:
+                check(item)
+
+    check(replay)
+    check(report)
+
+
+def test_comparison_client():
+    subprocess.run(
+        ["node", "--test", "tests/displayed_key_comparison_client.mjs"], cwd=ROOT, check=True
+    )
+
+
+def test_terra_repeat_keeps_every_rejected_choice_and_actual_zero_time():
+    path = ROOT / "web/static/recordings/terra-matched-r2-1-64.json"
+    assert hashlib.sha256(path.read_bytes()).hexdigest() == (
+        "d34f451723a40ef11c2cb966b2c568702e44489163b51e79721bffb15aeaeeb1"
+    )
+    recording = json.loads(path.read_text())
+    frames = recording["frames"]
+    assert [frame["decision"] for frame in frames] == list(range(1, 65))
+    assert [frame["decision"] for frame in frames if frame["accepted"] is False] == (
+        [3, 4, 8, 23, 25, 46, 51, 62, 63]
+    )
+    assert all(frame["after"]["ticks_advanced"] == 0 for frame in frames)
+    assert all(set(frame["action"]) == {"intent", "keys", "advance_ticks"} for frame in frames)
+    report = json.loads((ROOT / "web/static/displayed-key-comparison.json").read_text())
+    result = report["trials"][3]["result"]
+    assert result["terminal_audit_sha256"] == recording["audit_sha256"]
+    assert result["returned_tokens"] == 1186821
+    assert result["checkpoint"]["saved_elapsed_ticks"] == 0
+    assert result["reported_charge_usd"] is None
+
+
+def test_sol_repeat_replay_matches_its_own_saved_result():
+    path = ROOT / "web/static/recordings/sol-matched-r2-1-64.json"
+    assert hashlib.sha256(path.read_bytes()).hexdigest() == (
+        "30b1aeced4a62c8882aa77004784d3057f84768c8b778c147b0adcc25f517152"
+    )
+    recording = json.loads(path.read_text())
+    frames = recording["frames"]
+    assert [frame["decision"] for frame in frames] == list(range(1, 65))
+    assert all(frame["accepted"] is True for frame in frames)
+    assert sum(frame["after"]["ticks_advanced"] for frame in frames) == 10400
+    assert sum(frame["action"]["advance_ticks"] == 0 for frame in frames) == 40
+    assert sum(frame["after"]["ticks_advanced"] == 0 for frame in frames) == 49
+    assert frames[-1]["after"]["population"] == 7
+    report = json.loads((ROOT / "web/static/displayed-key-comparison.json").read_text())
+    result = report["trials"][4]["result"]
+    assert result["terminal_audit_sha256"] == recording["audit_sha256"]
+    assert result["returned_tokens"] == 1221506
+    assert result["checkpoint"]["saved_elapsed_ticks"] == 10400
+    assert result["checkpoint"]["metrics"]["completed_beds"] == 0
+    assert result["reported_charge_usd"] is None
+
+
+def test_astra_repeat_preserves_its_distinct_development():
+    path = ROOT / "web/static/recordings/astra-matched-r2-1-64.json"
+    assert hashlib.sha256(path.read_bytes()).hexdigest() == (
+        "79ea8da55449f58aca9b9d6a98cd37db56b825d228bff10c6211961a9f2bfc30"
+    )
+    recording = json.loads(path.read_text())
+    assert [frame["decision"] for frame in recording["frames"]] == list(range(1, 65))
+    assert all(frame["accepted"] for frame in recording["frames"])
+    assert sum(frame["after"]["ticks_advanced"] for frame in recording["frames"]) == 9200
+    report = json.loads((ROOT / "web/static/displayed-key-comparison.json").read_text())
+    result = report["trials"][5]["result"]
+    assert result["terminal_audit_sha256"] == recording["audit_sha256"]
+    assert result["returned_tokens"] == 1549386
+    assert result["checkpoint"]["metrics"]["completed_workshops"] == 3
+    assert result["checkpoint"]["metrics"]["completed_beds"] == 0
+    assert result["checkpoint"]["metrics"]["completed_farms"] == 0
+
+
+def test_continuation_report_keeps_the_real_infrastructure_failure_and_parent_save():
+    path = ROOT / "web/static/displayed-key-comparison-128.json"
+    assert hashlib.sha256(path.read_bytes()).hexdigest() == (
+        "5a78f4917443c2eafd72e40f81e66d73803179254a0acbc70927fbc34e5a17bb"
+    )
+    report = json.loads(path.read_text())
+    assert report["comparison_boundary"] == 128 and report["recorded_attempts"] == 5
+    result = report["trials"][0]["result"]
+    assert result["status"] == "infrastructure_failure"
+    assert result["responses"] == result["checkpoint"]["next_step"] == 64
+    assert result["checkpoint"]["saved_elapsed_ticks"] == 2900
+    assert result["returned_tokens"] == 1258321
+    assert report["trials"][5]["result"] is None
+    html = (ROOT / "web/results.html").read_text()
+    assert 'for="matched-boundary"' in html and 'aria-controls="matched-table"' in html
+    assert "Infrastructure failures are not model gameplay failures" in html
+
+
+def test_current_comparison_is_not_the_legacy_benchmark():
+    html = (ROOT / "web/results.html").read_text()
+    assert html.index('id="matched-comparison"') < html.index('id="current-recordings-title"')
+    assert "not equal game time or token use" in html
+    assert "not $0" in html
+    assert "fort-eval-easy-p1-g7-v3" in html
+    assert "completed Year-Two campaign" not in html
+
+
+def test_terra_continuation_replay_retains_original_decisions_and_growth():
+    path = ROOT / "web/static/recordings/terra-matched-r1-65-128.json"
+    assert hashlib.sha256(path.read_bytes()).hexdigest() == (
+        "259ef96059fee1d2ef35e51779fcd27747c7b9c68784579152fbccf848441146"
+    )
+    recording = json.loads(path.read_text())
+    report = json.loads((ROOT / "web/static/displayed-key-comparison-128.json").read_text())
+    result = report["trials"][1]["result"]
+    frames = recording["frames"]
+    assert [frame["decision"] for frame in frames] == list(range(65, 129))
+    assert recording["saved_through_decision"] == result["responses"] == 128
+    assert recording["audit_sha256"] == result["terminal_audit_sha256"]
+    assert sum(frame["after"]["ticks_advanced"] for frame in frames) == 116000
+    assert result["checkpoint"]["saved_elapsed_ticks"] == 4200 + 116000
+    assert frames[0]["after"]["population"] == 7 and frames[-1]["after"]["population"] == 15
+    assert result["returned_tokens"] == 3717561 and result["reported_charge_usd"] is None
+    assert result["checkpoint"]["metrics"]["completed_workshops"] == 1
+    assert result["checkpoint"]["metrics"]["completed_beds"] == 0
+    assert all(set(frame["action"]) == {"intent", "keys", "advance_ticks"} for frame in frames)
+    assert all(frame["accepted"] is True for frame in frames)
+
+
+def test_astra_continuation_replay_retains_its_own_clock_and_development():
+    path = ROOT / "web/static/recordings/astra-matched-r1-65-128.json"
+    assert hashlib.sha256(path.read_bytes()).hexdigest() == (
+        "0f32a0439dafeef5d39dc70702bfbda902bd0e95006fe974744f00fc291a0489"
+    )
+    recording = json.loads(path.read_text())
+    report = json.loads((ROOT / "web/static/displayed-key-comparison-128.json").read_text())
+    result = report["trials"][2]["result"]
+    frames = recording["frames"]
+    assert [frame["decision"] for frame in frames] == list(range(65, 129))
+    assert recording["saved_through_decision"] == result["responses"] == 128
+    assert recording["audit_sha256"] == result["terminal_audit_sha256"]
+    assert sum(frame["after"]["ticks_advanced"] for frame in frames) == 32700
+    assert result["checkpoint"]["saved_elapsed_ticks"] == 23000 + 32700
+    assert frames[0]["after"]["population"] == frames[-1]["after"]["population"] == 7
+    assert result["returned_tokens"] == 4123021 and result["reported_charge_usd"] is None
+    metrics = result["checkpoint"]["metrics"]
+    assert [metrics[key] for key in (
+        "completed_beds", "completed_workshops", "completed_farms", "food_stock", "drink_stock",
+    )] == [8, 3, 2, 61, 83]
+    assert report["trials"][2]["evidence_url"] == (
+        "https://github.com/lemoz/fort-gym/blob/4b3617128f773b1a04120a405809731a66570a8c/"
+        "experiments/evidence/keyboard_binding_comparison_astra_r1_128_20260912.json"
+    )
+    assert report["strong_ranking_supported"] is False
+    assert all(frame["accepted"] is True for frame in frames)
+
+
+def test_terra_repeat_continuation_distinguishes_elapsed_time_from_development():
+    path = ROOT / "web/static/recordings/terra-matched-r2-65-128.json"
+    assert hashlib.sha256(path.read_bytes()).hexdigest() == (
+        "f8fb441bfd5201d7ac9c38f23a10d942fb7adf3ab02c369c8ebc94b287a657a0"
+    )
+    recording = json.loads(path.read_text())
+    report = json.loads((ROOT / "web/static/displayed-key-comparison-128.json").read_text())
+    result = report["trials"][3]["result"]
+    frames = recording["frames"]
+    assert [frame["decision"] for frame in frames] == list(range(65, 129))
+    assert recording["saved_through_decision"] == result["responses"] == 128
+    assert recording["audit_sha256"] == result["terminal_audit_sha256"]
+    assert sum(frame["after"]["ticks_advanced"] for frame in frames) == 108000
+    assert result["checkpoint"]["saved_elapsed_ticks"] == 108000
+    assert all(frame["after"]["population"] == 7 for frame in frames)
+    assert result["returned_tokens"] == 2339683 and result["reported_charge_usd"] is None
+    assert [result["checkpoint"]["metrics"][key] for key in (
+        "completed_beds", "completed_workshops", "completed_farms", "food_stock", "drink_stock",
+    )] == [0, 0, 0, 36, 26]
+    assert all(frame["accepted"] is True for frame in frames)
+    assert report["strong_ranking_supported"] is False
+
+
+def test_sol_capacity_failure_has_original_save_and_no_invented_recording():
+    report = json.loads((ROOT / "web/static/displayed-key-comparison-128.json").read_text())
+    row = report["trials"][4]
+    result = row["result"]
+    assert result["status"] == "infrastructure_failure"
+    assert result["responses"] == result["checkpoint"]["next_step"] == 64
+    assert result["checkpoint"]["saved_elapsed_ticks"] == 10400
+    assert result["returned_tokens"] == 1221506 and result["reported_charge_usd"] is None
+    assert row["evidence_url"] == (
+        "https://github.com/lemoz/fort-gym/blob/1b366a2ebb896866fe1c3d170f20a4b916de7609/"
+        "experiments/evidence/keyboard_binding_comparison_sol_r2_128_capacity_failure_20260912.json"
+    )
+    catalog = json.loads((ROOT / "web/static/recordings/catalog.json").read_text())
+    assert not any(item["id"] == "sol-matched-r2-65-128" for item in catalog["recordings"])

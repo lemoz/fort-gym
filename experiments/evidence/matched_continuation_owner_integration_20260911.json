@@ -1,0 +1,41 @@
+{
+  "schema_version": "fortgym.matched-continuation-owner-integration/v1",
+  "scope": "Bounded own-save lifecycle, settled terminal audit and public export; no native continuation launched.",
+  "native_source_revision": "d22f28d99f4fd103188979e964e148139d3f3efd",
+  "source_sha256": {
+    "local_lifecycle.py": "732b928c489f281008470d32d1cbfed0295a526a03e4524cf39e46b713d6d69c",
+    "local_owner.py": "f9bc94f057b3ff59937e8771c7279163cc6dc5c7b854b9dd90c51cba8e7b9a14",
+    "terminal_review.py": "db486e33aef29770c63c07eb372fa150f30c6294469003cf8f28864336f71aca",
+    "publish_result.py": "45b266bdd436467809e61c0f995c3c17c20fcb6b1d86a78aef2b1a8105913d6b"
+  },
+  "validation": {
+    "focused_tests_passed": 230,
+    "selected_ruff_passed": true,
+    "selected_mypy_passed": true,
+    "selected_mypy_source_files": 4,
+    "mypy_native_imports": "Resolved against the frozen native checkout.",
+    "actual_sol_and_terra_origin_specifications_verified": true,
+    "real_parent_checkpoints_unchanged": true,
+    "synthetic_lifecycle_cleanup_failure_coverage": true,
+    "synthetic_terminal_audit_and_public_export_coverage": true,
+    "full_regression_rerun": false,
+    "retained_full_suite_limit": "Earlier local full run: 3465 passed, 10 skipped, one unchanged host-hook versus pinned OCI-layer mismatch. This record does not claim that full suite is green."
+  },
+  "owner_lifecycle_integrated": true,
+  "settled_terminal_audit_integrated": true,
+  "allowlisted_public_result_export_integrated": true,
+  "prelaunch_or_infrastructure_failure_public_projection_integrated": false,
+  "raw_failure_evidence_retained": true,
+  "all_six_fresh_outcomes_required_before_continuation": true,
+  "own_parent_volume_readonly": true,
+  "separate_new_evidence_volume": true,
+  "mandatory_owned_vm_teardown": true,
+  "continuation_launched": false,
+  "native_continuation_audit_exercised": false,
+  "fresh_final_checkpoint_reload_verified": false,
+  "website_publication": false,
+  "model_calls_by_integration_checks": 0,
+  "gameplay_inputs_by_integration_checks": 0,
+  "vm_operations_by_integration_checks": 0,
+  "full_goal_complete": false
+}

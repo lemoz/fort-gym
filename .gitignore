@@ -17,3 +17,7 @@ artifacts/
 fort_gym/artifacts/
 tmp_*
 .worktrees/
+
+# Replaceable, allowlisted spectator derivative. Never a native artifact store.
+/web/static/live/watch-active.json
+/web/static/live/.watch-*

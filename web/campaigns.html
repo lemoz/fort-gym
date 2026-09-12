@@ -8,7 +8,7 @@
   <link rel="canonical" href="https://fortgym.live/campaigns">
   <link rel="icon" type="image/svg+xml" href="/static/brand/favicon.svg">
   <link rel="stylesheet" href="/static/fort-labs.css?v=20260711-2">
-  <link rel="stylesheet" href="/static/campaigns.css?v=2">
+  <link rel="stylesheet" href="/static/campaigns.css?v=3">
 </head>
 <body>
   <header class="fl-header">
@@ -25,6 +25,85 @@
       <button id="refresh-campaigns" type="button">Refresh evidence</button>
     </div>
     <p class="campaign-intro">One full game year is 403,200 elapsed ticks from the starting save. Reaching year two is a checkpoint, not the end of play.</p>
+    <section class="campaign-tracking" aria-labelledby="keyboard-cohort-title">
+      <div class="campaign-tracking-heading">
+        <h2 id="keyboard-cohort-title">Matched model trials</h2>
+        <button id="refresh-keyboard-cohort" type="button">Refresh matched results</button>
+      </div>
+      <p class="campaign-note">Astra, Sol and Terra at Medium reasoning. Two independent attempts each, starting from the same save with standard keyboard controls, a 120 × 40 screen and the same runtime. Each first window allows 32 decisions; later windows resume that attempt’s own fortress.</p>
+      <div class="campaign-condition" aria-labelledby="endurance-live-title">
+        <div class="campaign-tracking-heading">
+          <h3 id="endurance-live-title">Next window: decisions 64 to 128</h3>
+          <button id="refresh-endurance-live" type="button">Refresh current window</button>
+        </div>
+        <p id="endurance-live-status" role="status" aria-live="polite">Checking current gameplay window…</p>
+        <div id="endurance-live-content" hidden></div>
+        <a href="/public/keyboard-cohort-endurance-active">Open current window data</a>
+      </div>
+      <details class="campaign-condition" aria-labelledby="continuation-live-title">
+        <summary>Earlier window: decisions 32 to 64</summary>
+        <div class="campaign-tracking-heading">
+          <h3 id="continuation-live-title">Earlier continuation observer</h3>
+          <button id="refresh-continuation-live" type="button">Refresh continuation</button>
+        </div>
+        <p id="continuation-live-status" role="status" aria-live="polite">Checking saved-game continuation…</p>
+        <div id="continuation-live-content" hidden></div>
+        <a href="/public/keyboard-cohort-continuation-active">Open continuation data</a>
+      </details>
+      <div class="campaign-condition" aria-labelledby="endurance-records-title">
+        <div class="campaign-tracking-heading">
+          <h3 id="endurance-records-title">Latest verified fortresses</h3>
+          <button id="refresh-endurance-records" type="button">Refresh saved fortresses</button>
+        </div>
+        <p id="endurance-records-status" role="status" aria-live="polite">Loading verified fortress records…</p>
+        <div id="endurance-records-content" hidden></div>
+        <a href="/public/keyboard-cohort-endurance-records">Open recorded endurance data</a>
+      </div>
+      <details class="campaign-condition" aria-labelledby="matched-live-title">
+        <summary>Initial-start observer</summary>
+        <div class="campaign-tracking-heading">
+          <h3 id="matched-live-title">Initial-start feed</h3>
+          <button id="refresh-matched-live" type="button">Refresh current trial</button>
+        </div>
+        <p id="matched-live-status" role="status" aria-live="polite">Checking current trial…</p>
+        <div id="matched-live-content" hidden></div>
+        <a href="/public/keyboard-cohort-active">Open current trial data</a>
+      </details>
+      <div class="campaign-condition" aria-labelledby="continuation-records-title">
+        <div class="campaign-tracking-heading">
+          <h3 id="continuation-records-title">Verified continuation saves</h3>
+          <button id="refresh-continuation-records" type="button">Refresh saved results</button>
+        </div>
+        <p id="continuation-records-status" role="status" aria-live="polite">Loading saved continuation results…</p>
+        <div id="continuation-records-content" hidden></div>
+        <a href="/public/keyboard-cohort-continuations">Open saved continuation data</a>
+      </div>
+      <h3>Initial 32-decision windows</h3>
+      <p id="keyboard-cohort-status" role="status" aria-live="polite">Loading matched trial results…</p>
+      <div id="keyboard-cohort-content" hidden></div>
+      <a href="/public/keyboard-cohort">Open matched trial data</a>
+    </section>
+    <section class="campaign-tracking" aria-labelledby="keyboard-live-title">
+      <div class="campaign-tracking-heading">
+        <h2 id="keyboard-live-title">Live native run</h2>
+        <button id="refresh-keyboard-live" type="button">Refresh live status</button>
+      </div>
+      <p id="keyboard-live-status" role="status" aria-live="polite">Checking live status…</p>
+      <div id="keyboard-live-content" hidden></div>
+      <a href="/public/keyboard-active">Open live status data</a>
+      <div id="keyboard-admission" class="campaign-condition" aria-live="polite" hidden></div>
+    </section>
+    <section class="campaign-tracking" aria-labelledby="keyboard-title">
+      <div class="campaign-tracking-heading">
+        <h2 id="keyboard-title">Astra Medium · native keyboard play</h2>
+        <button id="refresh-keyboard-campaigns" type="button">Refresh keyboard results</button>
+      </div>
+      <p class="campaign-note">Standard game menus on a readable 120 × 40 screen. No direct workshop or build-queue shortcuts. These records follow one fortress, including a restart after lost unsaved progress. They are not separate attempts to rank or add together.</p>
+      <p id="keyboard-status" role="status" aria-live="polite">Loading recorded keyboard results…</p>
+      <div id="keyboard-results" hidden></div>
+      <p class="campaign-note">Charges for subscription calls are unreported, not zero. Accepted key events and elapsed time do not establish completed construction or a functioning fortress. Detailed game captures remain private.</p>
+      <a href="/public/keyboard-campaigns">Open keyboard milestone data</a>
+    </section>
     <section aria-labelledby="tracking-title" class="campaign-tracking">
       <div class="campaign-tracking-heading">
         <h2 id="tracking-title">Campaign performance</h2>
@@ -119,5 +198,14 @@
   </main>
   <script src="/static/campaigns.js?v=1" defer></script>
   <script src="/static/campaign-feed.js?v=7" defer></script>
+  <script src="/static/campaign-keyboard.js?v=16" defer></script>
+  <script src="/static/campaign-keyboard-live.js?v=4" defer></script>
+  <script src="/static/campaign-keyboard-admission.js?v=1" defer></script>
+  <script src="/static/campaign-matched.js?v=2" defer></script>
+  <script src="/static/campaign-matched-live.js?v=1" defer></script>
+  <script src="/static/campaign-continuation-live.js?v=1" defer></script>
+  <script src="/static/campaign-endurance-live.js?v=1" defer></script>
+  <script src="/static/campaign-endurance-records.js?v=1" defer></script>
+  <script src="/static/campaign-continuation-records.js?v=1" defer></script>
 </body>
 </html>

@@ -1,0 +1,29 @@
+{
+  "schema_version": "fortgym.codex-keyboard-condition/v4",
+  "condition_id": "binding-pilot-astra-medium-native-keyboard-120x40",
+  "model": "gpt-6-astra",
+  "reasoning_effort": "medium",
+  "transport": "codex-exec-chatgpt/v1",
+  "control_profile": "native_keyboard_bindings/v1",
+  "observation_profile": "native_screen_text/v1",
+  "advance_policy": "model_requested/v1",
+  "screen_size": [
+    120,
+    40
+  ],
+  "steps_per_segment": 32,
+  "max_segments": 1,
+  "max_dispatches": 1280,
+  "max_total_tokens": 40000000,
+  "max_advance_ticks": 2000,
+  "model_timeout_seconds": 180,
+  "exchange_timeout_seconds": 240,
+  "maximum_included_usage_percent": 98,
+  "account_admission": "fresh_read_before_each_model_invocation",
+  "actual_charge_usd": null,
+  "api_fallback": false,
+  "automatic_credit_purchase": false,
+  "automatic_reset_consumption": false,
+  "prompt_profile": "native_keyboard_binding_instructions/v1",
+  "bindings_sha256": "8176d2bd7a8d96f6bb12feb654519a8361a6f262363b84ec48963be832cb7efd"
+}

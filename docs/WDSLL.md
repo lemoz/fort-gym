@@ -1,5 +1,11 @@
 # WDSLL — What Does Success Look Like
 
+This document is the historical governed benchmark and its original gate log.
+The current [Year-Two Autonomous Play and Cross-Model Evaluation](YEAR_TWO_PROGRAM.md)
+program also supports standard native input and separately labelled shortcuts.
+The governed-only predicates below apply to this historical benchmark, not every
+exploratory campaign. They and the recorded gate outcomes remain unchanged.
+
 ## Success statement (the one metric)
 
 **An LLM policy, issuing only legal governed actions, takes the fixed embark

@@ -1,0 +1,33 @@
+{
+  "schema_version": "fortgym.codex-keyboard-window/v1",
+  "condition_id": "astra-medium-memory-replacement-from-775",
+  "original_condition": "campaign_astra_keyboard_memory_contract_20260909.json",
+  "continuation_from_next_step": 775,
+  "steps_per_segment": 64,
+  "max_segments": 1,
+  "reset_memory": false,
+  "reset_usage": false,
+  "strategy_intervention": false,
+  "snapshot_profile": "native_menu_preserving_save/v4",
+  "private_measurement_profile": "fortgym.campaign-food-measurement/v1",
+  "prompt_change": {
+    "schema_version": "fortgym.keyboard-prompt-change-declaration/v1",
+    "checkpoint_sha256": "7b69e64913adce2a9bfe3ecf539a8e91ea93edb4ce5c38e19c91279bb3b4e1bd",
+    "next_step": 775,
+    "previous": "native_keyboard_prompt/v1",
+    "profile": "native_keyboard_memory_replacement/v1"
+  },
+  "hypothesis": "Explicitly explaining complete memory replacement may reduce accidental memory clearing and repeated inspection. Only this contract paragraph changes; the model still chooses all keys, strategy and simulation advancement. Window t had 61 zero-tick decisions and three advancing decisions out of 64; one memory clear was directly observed in its first 17 responses. That does not prove the cause of repeated inspection.",
+  "continuity_note": "Continue the saved fortress at checkpoint 775 without another restart. Preserve its saved memory, all 906 responses, 28,911,047 campaign tokens and four loss records. Known discarded ticks are at least 35,091; the exact total remains unknown. Keep 69,004 historical failed-delivery tokens separately. Append the prompt-change record at the verified checkpoint boundary. This is an exploratory continuation with a different starting state from window t, not a matched causal comparison or independent model trial.",
+  "measurements": [
+    "actual_ticks_per_decision",
+    "zero_tick_decisions",
+    "repeated_screen_hashes",
+    "empty_memory_updates",
+    "population_and_recorded_deaths",
+    "food_and_drink_inventory_with_coverage",
+    "completed_farms_beds_workshops",
+    "returned_tokens_and_reported_charge"
+  ],
+  "budget_note": "Use the inherited cumulative 1,024-dispatch and 40-million-token ceiling with no extension or reset. At the starting checkpoint, 906 dispatches and 28,911,047 campaign tokens are accounted. Fresh subscription admission before each call; no API fallback, local model, purchase or reset. Dollar charges are unreported. Use one owned local VM and container with mandatory teardown and retained evidence."
+}

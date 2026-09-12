@@ -1,0 +1,27 @@
+{
+  "schema_version": "fortgym.codex-keyboard-window/v1",
+  "condition_id": "astra-medium-year-two-continuation-from-929",
+  "original_condition": "campaign_astra_keyboard_included_headroom_20260910.json",
+  "continuation_from_next_step": 929,
+  "continuation_checkpoint_sha256": "0875aab1e7f43fbdacc182902c2ffe96652de014e4cb8c47dbb18b8b3f42baa4",
+  "steps_per_segment": 32,
+  "max_segments": 4,
+  "reset_memory": false,
+  "reset_usage": false,
+  "strategy_intervention": false,
+  "snapshot_profile": "native_menu_preserving_save/v4",
+  "private_measurement_profile": "fortgym.campaign-food-measurement/v1",
+  "private_measurement_timeout_seconds": 15,
+  "runtime_rpc_transport": "native-rpc",
+  "resource_observation_profile": "fortgym.native-resource-observations/v1",
+  "host_read_policy": "owned_exchange_reads_three_attempts_with_private_receipts/v1",
+  "container_init_required": true,
+  "budget_extension": {
+    "max_dispatches": 1280,
+    "max_total_tokens": 40000000
+  },
+  "hypothesis": "Continue the same autonomous Astra fortress through its remaining first year and into year two if the model can sustain it. Observe whether native-keyboard workshop ordering, farming and fortress development maintain the 16-citizen settlement as calendar time advances. Four serial 32-decision segments allow up to 128 new responses, with an ordinary verified save and fresh native load between segments. This is exploratory continuation, not an independent trial or matched comparison. Do not force game-time advancement or intervene in strategy to reach the anniversary.",
+  "continuity_note": "Resume checkpoint 929, manifest 0875aab1e7f43fbdacc182902c2ffe96652de014e4cb8c47dbb18b8b3f42baa4, at 292582 retained elapsed ticks. Preserve 1111 responses, 35385830 campaign tokens, 35454834 all-attempt tokens, exact saved memory/configuration/prompt history and all six loss records with 48429 known lost ticks plus unknown remainders. Window aa saved 26 of 32 decisions and remains paused at its admission boundary; its unused slots are not retrospectively completed. No rollback, replay, prompt change or human rescue. Checkpoint 929 is verified in process but still requires its own fresh native load before further play.",
+  "measurement_note": "Retain the same 120x40 native-screen observation, native keyboard controls, maximum 2000 requested ticks per decision and separate private 15-second raw-food scans. Checkpoint 929 has 16 living citizens, no recorded deaths, 567 native drink units, 57 raw-edible food units with no trader flags, 11 beds, eight farms, four workshops, two tables and one chair. Raw stocks and their deltas do not establish sustainable production. Keep zero-tick menu decisions, cancellations, private unknown readings and resource pressure visible. No private-state measurements are added to the model prompt.",
+  "budget_note": "Append an explicit extension from 1152 to 1280 cumulative dispatches, bound to checkpoint 929, without changing the original base configuration or the existing 40000000-token ceiling. The original 41 remaining dispatches permit at most 82000 ticks, less than the 110618 ticks still needed even without menu work. This window admits at most 128 additional responses, reaching at most 1239 cumulative responses; native runtime and provider limits may stop it earlier. The unchanged token ceiling currently leaves 4614170 tokens, not a guaranteed response count or dollar reservation. Keep fresh account admission below the unchanged 98-percent included-usage cutoff before launch and every call. No API fallback, local model, credit purchase or reset. Keep the existing owner spending bounds. One owned local VM at a time with mandatory teardown; no merge or deployment. The VM owner must bind its finite runtime/courier limits to this four-segment window before execution; a declaration alone is not a launched or verified run."
+}

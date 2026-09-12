@@ -1,0 +1,15 @@
+{
+  "schema_version": "fortgym.codex-keyboard-window/v1",
+  "condition_id": "astra-medium-native-keyboard-v2-longer-menu-continuity",
+  "original_condition": "campaign_astra_keyboard_20260907.json",
+  "continuation_from_next_step": 296,
+  "steps_per_segment": 64,
+  "max_segments": 1,
+  "reset_memory": false,
+  "reset_usage": false,
+  "strategy_intervention": false,
+  "snapshot_profile": "native_menu_preserving_save/v3",
+  "hypothesis": "Keeping the native game process and menus across 64 decisions instead of reloading every 16 may reduce repeated navigation and increase model-selected game-time progress. This changes checkpoint cadence only, not the 64-response window bound or the model's strategy.",
+  "continuity_note": "Continue only from audited checkpoint f6f5ae7a888d79ec9dfc1e61e054bde58f0cfc9e8286908bfab02da3d75dbed0 at cursor 296. Its native snapshot inventory and save operation passed audit; the runner must verify loading it before any new model dispatch. Preserve 63,600 retained ticks, all memory, the one inherited 2,000-tick loss, 312 accounted responses and 10,215,904 campaign tokens. All prompts, controls, observations, model-selected strategy and maximum ticks per action remain unchanged. This is a sequential same-fortress experiment, not an independent or causally matched model trial. A longer segment also increases the unsaved tail exposed to a runtime failure.",
+  "budget_note": "Inherit the existing cumulative 1,024-dispatch / 40-million-token ceiling without extension or usage reset. Fresh subscription admission precedes every invocation. No API fallback, local model, purchase or reset. Charges remain unreported, not zero."
+}

@@ -1,0 +1,100 @@
+{
+  "schema_version": "fortgym.scripted-native-fresh-trial-acceptance/v1",
+  "recorded_date_utc": "2026-09-10",
+  "source_revision": "f970ba4382cf3b83452ae0ff1f8a240cd9507c1b",
+  "evidence_kind": "scripted_native_runtime_acceptance",
+  "campaign_id": "scripted-native-fresh-trial-fixture-v1",
+  "source_snapshot_receipt_sha256": "eaf5fa5a40014719e6c313f33497740e536a8faa1c90a84c4e09dcc380ac0595",
+  "condition": {
+    "model_identity_under_test": "gpt-6-astra",
+    "reasoning_effort": "medium",
+    "actual_model_invoked": false,
+    "control_profile": "native_keyboard/v2",
+    "observation_profile": "native_screen_text/v1",
+    "screen_size": [
+      120,
+      40
+    ],
+    "prompt_profile": "native_keyboard_memory_replacement/v1",
+    "snapshot_profile": "native_menu_preserving_save/v4",
+    "runtime_rpc_transport": "native-rpc",
+    "initial_memory": "empty",
+    "max_dispatches": 2,
+    "max_total_tokens": 1000
+  },
+  "verification": {
+    "fresh_start": true,
+    "first_checkpoint": true,
+    "ordinary_continuation": true,
+    "final_native_reload": true,
+    "empty_initial_memory_and_usage": true,
+    "prompt_origin_memory_trace_usage_preserved": true,
+    "shared_seed_unchanged": true,
+    "source_checkpoints_unchanged": true,
+    "native_cleanup": true,
+    "container_cleanup": true,
+    "local_vm_stopped": true,
+    "existing_astra_checkpoint_mounted": false
+  },
+  "fixture_outcome": {
+    "native_loads": 3,
+    "native_saves": 2,
+    "native_keys": [
+      "CURSOR_RIGHT",
+      "CURSOR_LEFT"
+    ],
+    "keys_confirmed": 2,
+    "saved_next_step": 2,
+    "paused_calendar": {
+      "year": 30,
+      "year_tick": 16801
+    },
+    "elapsed_ticks": 0,
+    "real_model_calls": 0,
+    "actual_provider_tokens": 0,
+    "synthetic_responses": 2,
+    "synthetic_ledger_tokens": 200,
+    "synthetic_usage_is_not_provider_usage": true,
+    "cloud_vms_created": 0
+  },
+  "checkpoints": {
+    "first_sha256": "04eccc8f1786950c383e6db0cef731b39009409ae76380dbd2090d94fe189d1e",
+    "final_sha256": "6a5a3c843743f137b3c8053051702d810d98489bd88ac8a1cc65f4cc3786b9d5"
+  },
+  "resources": {
+    "memory_limit_bytes": 1610612736,
+    "memory_peak_bytes": 1375010816,
+    "memory_limit_events": 0,
+    "oom_events": 0,
+    "oom_kills": 0,
+    "pids_limit": 256,
+    "pids_peak": 16,
+    "final_visible_zombies": 0,
+    "capacity_for_long_model_campaigns": "not_established"
+  },
+  "evidence": {
+    "private_audit_sha256": "1086e6dae1a0bd794543a5fcaab7602e778564cd5d6f075f00405f5e626c9a95",
+    "native_fixture_sha256": "b3dab331f2ffe05a712004506438b2af97a8205e3a39083f90f7d65ad36a8e2c",
+    "owner_receipt_sha256": "c02f39a118ebabdd22e0acdab083eac2d9ffa7dc864fcdb716d8343e3ee8cae0",
+    "native_fixture_result_sha256": "99dc801d0101035d23324f01ae555654a483525a6e488c913af4821cde2ec400",
+    "trace_sha256": "d562a9acff817597e709d961fd6a601a9a871c5fae4010379a2e5ea2ba803940",
+    "usage_journal_sha256": "fa08bfd6bdf224eb7debef0847f229ad060effe2c3cb7430857f56f6d54b7c11",
+    "source_ci_run": 34429026341,
+    "source_ci_conclusion": "success"
+  },
+  "proof_boundary": {
+    "autonomous_gameplay": false,
+    "actual_model_availability": false,
+    "cross_model_comparison": false,
+    "year_two_success": false,
+    "website_campaign_record": false,
+    "merge": false,
+    "production_deployment": false
+  },
+  "notes": [
+    "Production CLIs and the on-disk request/response exchange were unmodified. Responses were explicit local test doubles; no model courier or provider runtime was used.",
+    "Raw production segment autonomous flags are not a claim of autonomous play for this fixture. Do not import these synthetic records into campaign or comparison website data.",
+    "The existing Astra campaign remains at checkpoint 903 and 268582 retained elapsed ticks. This independent fixture added no campaign progress.",
+    "Two audit-only field-name assumptions were corrected against existing receipts. No native rerun or evidence rewrite occurred."
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "schema_version": "fortgym.codex-keyboard-window/v1",
+  "condition_id": "astra-medium-direct-rpc-from-807",
+  "original_condition": "campaign_astra_keyboard_memory_contract_20260909.json",
+  "continuation_from_next_step": 807,
+  "steps_per_segment": 32,
+  "max_segments": 1,
+  "reset_memory": false,
+  "reset_usage": false,
+  "strategy_intervention": false,
+  "snapshot_profile": "native_menu_preserving_save/v4",
+  "private_measurement_profile": "fortgym.campaign-food-measurement/v1",
+  "private_measurement_timeout_seconds": 15,
+  "runtime_rpc_transport": "native-rpc",
+  "resource_observation_profile": "fortgym.native-resource-observations/v1",
+  "host_read_policy": "owned_exchange_reads_three_attempts_with_private_receipts/v1",
+  "container_init_required": true,
+  "private_measurement_note": "The read-only checkpoint-807 diagnosis returned a complete unchanged-predicate scan in 5.886 seconds after the historical 5-second read timed out. This unexecuted window explicitly allows 15 seconds per private food scan; the same raw edible predicate and trader/job flags are retained, with no change to the model-visible screen, memory, prompt or controls. The diagnostic counted 263 edible units including 210 trader units, not 263 units of fortress-owned accessible food. Historical unknown measurements are not rewritten. Exact tile identity is observational, not a transport gate: paused clock and loaded identity remain mandatory, and original failed screen-equality probes stay failed.",
+  "hypothesis": "Direct DFHack RPC removes the per-helper CLI and PTY subprocess path observed timing out in w. A container init reaps orphaned children; retained cgroup and visible-process counters distinguish future resource-limit events from an unexplained shell failure. The original Cannot fork cause is not established. This is an infrastructure experiment, not a matched gameplay comparison.",
+  "continuity_note": "Use verified checkpoint 807, manifest 80d83164866f078a0e65254d953dac8e5b34298ca8c2bb85043e822d44fe0ce4, at 206582 saved ticks. W saved all 32 model decisions and 7982 new ticks before its second runtime failed with no new model request or trace/usage row. Preserve 989 responses, 31207909 campaign tokens, 31276913 all-attempt tokens, six prior loss records with a 48429-tick known lower bound and unknown remainders, gameplay memory, and the existing prompt metadata. W's second runtime final clock is unknown. No action replay or human gameplay rescue.",
+  "budget_note": "At most 32 additional decisions, reaching at most 1021 of the inherited 1024 dispatches and staying within the existing 40-million-token bound. Fresh subscription admission per call; no paid API fallback, local model, purchase or reset. Keep one owned local VM at a time, 2 CPUs, 3 GiB VM memory, 1536 MiB container memory and 256 task limit, with mandatory teardown. No merge or deployment."
+}

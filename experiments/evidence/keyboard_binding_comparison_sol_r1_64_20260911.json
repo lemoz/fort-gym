@@ -1,0 +1,88 @@
+{
+  "schema_version": "fortgym.public-displayed-key-result/v1",
+  "recorded_at_utc": "2026-09-11T21:07:58Z",
+  "cohort_id": "bindings-comparison-20260911",
+  "campaign_id": "bindings-comparison-20260911-sol-r1",
+  "model": "gpt-5.6-sol",
+  "replicate": 1,
+  "reasoning_effort": "medium",
+  "source_revision": "d22f28d99f4fd103188979e964e148139d3f3efd",
+  "image_id": "sha256:32bd022138a4772ed0c0d3a14f94feab8ad4a4cd183a20a8cd098745aedbd10d",
+  "seed_receipt_sha256": "eaf5fa5a40014719e6c313f33497740e536a8faa1c90a84c4e09dcc380ac0595",
+  "condition_file_sha256": "15119adc949afe3b691485a944856a295d8e9b0ccc57657a9f1086f8dddd3db4",
+  "trial_file_sha256": "964d7bccd0764e4d94737dd4211d89fb3a221491dad9cbee83d48559415996d7",
+  "response_limit": 64,
+  "status": "saved",
+  "responses": 64,
+  "returned_tokens": 1258321,
+  "reported_charge_usd": null,
+  "human_gameplay_rescue": false,
+  "native_teardown_verified": true,
+  "vm_teardown_verified": true,
+  "terminal_audit_sha256": "00dfe1b920ef9299acab6c77bcb38199317c5e423d57ebf24663264876330ed6",
+  "checkpoint": {
+    "next_step": 64,
+    "sha256": "985f00da901dfd8edd684e4bb242cec022a9f8937d3f5f733ff7567684ebdb0e",
+    "saved_elapsed_ticks": 2900,
+    "metrics": {
+      "completed_beds": 0,
+      "completed_farms": 0,
+      "completed_workshops": 0,
+      "drink_stock": 60,
+      "food_stock": 50,
+      "functional_rooms": 0,
+      "population": 7,
+      "recorded_dead_citizens": 0,
+      "stone_stock": null,
+      "wood_stock": null
+    }
+  },
+  "evidence_details": {
+    "declaration_revision": "61fcca7177d8b66ddd7e12e4be0ab53bda5ffd5b",
+    "fresh_empty_memory_usage_history_verified": true,
+    "native_key_receipts_verified": true,
+    "confirmed_key_presses": 235,
+    "source_trace_sha256": "d049e5c2be2748b59cd26394fc3cc134be3a7e0c7dc8d46c4d69765cf9178602",
+    "source_usage_sha256": "5402a3729386d643fa6bbb2255ab069e2f44ec732b2ef948a34b1eff81b030c9",
+    "fresh_final_checkpoint_reload_verified": false,
+    "initial_metrics": {
+      "completed_beds": 0,
+      "completed_farms": 0,
+      "completed_workshops": 0,
+      "drink_stock": 60,
+      "food_stock": 50,
+      "functional_rooms": 0,
+      "population": 7,
+      "recorded_dead_citizens": 0,
+      "stone_stock": null,
+      "wood_stock": null
+    },
+    "observed_job_type_boundaries": {
+      "PickupEquipment": 3,
+      "no_current_job": 64
+    },
+    "single_down_level_key_replies": 37,
+    "zero_advance_replies": 57,
+    "total_requested_ticks": 3600,
+    "actual_saved_ticks": 2900,
+    "cloud_vms_created": 0,
+    "vm_config_unchanged": true,
+    "reported_hardware_energy_cost_usd": null
+  },
+  "assessment": {
+    "functioning_fortress_established": false,
+    "year_two_reached": false,
+    "strong_model_ranking_supported": false,
+    "production_rates": null,
+    "consumption_rates": null,
+    "summary": "This first short trial made little measured fortress-development progress and spent many replies on level navigation. It is not a model ranking.",
+    "limits": [
+      "Saved means checkpoint and teardown verified, not successful autonomous fortress management.",
+      "The 37 single down-level key replies requested navigation; they do not prove 37 distinct level changes.",
+      "Job-type counts are sampled boundaries, not completed production or all intervening activity.",
+      "Food and drink are observed stocks; ownership, accessibility and production rates are not established.",
+      "Subscription charges and hardware energy costs are unreported, not zero.",
+      "The separate fresh-load check will occur through a declared continuation or reload; this result does not claim it."
+    ]
+  }
+}

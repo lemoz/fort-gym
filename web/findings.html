@@ -12,7 +12,7 @@
 <meta property="og:image" content="https://fortgym.live/static/social/findings.png?v=1"><meta property="og:image:secure_url" content="https://fortgym.live/static/social/findings.png?v=1"><meta property="og:image:type" content="image/png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="Fort Labs findings from real Dwarf Fortress agent runs">
 <meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="Findings | Fort Labs"><meta name="twitter:description" content="Curated findings from real Dwarf Fortress agent runs, linked to recorded gameplay and source documentation."><meta name="twitter:image" content="https://fortgym.live/static/social/findings.png?v=1"><meta name="twitter:image:alt" content="Fort Labs findings from real Dwarf Fortress agent runs">
 <link rel="icon" type="image/svg+xml" href="/static/brand/favicon.svg"><link rel="icon" type="image/png" sizes="32x32" href="/static/brand/favicon-32.png"><link rel="apple-touch-icon" sizes="180x180" href="/static/brand/apple-touch-icon.png">
-<link rel="stylesheet" href="/static/fort-labs.css?v=20260711-2">
+<link rel="stylesheet" href="/static/fort-labs.css?v=20260911-3">
 <style>
   .findings-hero { padding: 58px 0 42px; border-bottom: 1px solid var(--line); }
   .findings-hero-grid { display: grid; grid-template-columns: 1.2fr .8fr; gap: 70px; align-items: end; }
@@ -81,14 +81,18 @@
 </style>
 </head>
 <body>
-<header class="fl-header"><div class="fl-wrap fl-nav"><a class="fl-brand" href="/"><span>FORT</span> LABS</a><nav class="fl-nav-links" aria-label="Primary navigation"><a href="/">Home</a><a href="/results">Results</a><a href="/protocols">Protocols</a><a href="/worlds">Runs</a><a href="/findings" aria-current="page">Findings</a><a href="/#about">About</a><a class="fl-live-link" href="/live"><span class="fl-status-dot" id="nav-live-dot"></span><span id="nav-live-label">No live run</span></a></nav><button class="fl-menu-button" type="button" aria-label="Open navigation" aria-expanded="false" aria-controls="fl-mobile-menu" data-fl-menu-button>☰</button></div></header>
-<nav class="fl-mobile-menu" id="fl-mobile-menu" aria-label="Mobile navigation" aria-hidden="true" data-fl-mobile-menu data-open="false"><a href="/">Home <span>01</span></a><a href="/results">Results <span>02</span></a><a href="/protocols">Protocols <span>03</span></a><a href="/worlds">Runs <span>04</span></a><a href="/findings">Findings <span>05</span></a><a href="/#about">About <span>06</span></a><a href="/live">Live viewer <span>07</span></a></nav>
+<header class="fl-header"><div class="fl-wrap fl-nav"><a class="fl-brand" href="/"><span>FORT</span> LABS</a><nav class="fl-nav-links" aria-label="Primary navigation"><a href="/">Home</a><a href="/results">Results</a><a href="/protocols">Protocols</a><a href="/worlds">Runs</a><a href="/findings" aria-current="page">Findings</a><a href="/#about">About</a><a class="fl-live-link" href="/#watch-root"><span class="fl-status-dot" id="nav-live-dot"></span><span id="nav-live-label">Watch</span></a></nav><button class="fl-menu-button" type="button" aria-label="Open navigation" aria-expanded="false" aria-controls="fl-mobile-menu" data-fl-menu-button>☰</button></div></header>
+<nav class="fl-mobile-menu" id="fl-mobile-menu" aria-label="Mobile navigation" aria-hidden="true" data-fl-mobile-menu data-open="false"><a href="/">Home <span>01</span></a><a href="/results">Results <span>02</span></a><a href="/protocols">Protocols <span>03</span></a><a href="/worlds">Runs <span>04</span></a><a href="/findings">Findings <span>05</span></a><a href="/#about">About <span>06</span></a><a href="/#watch-root">Spectator <span>07</span></a></nav>
 
 <main>
-  <p class="findings-status" id="findings-load-status" role="status" aria-live="polite">Loading findings.</p>
+  <aside class="fl-wrap publication-note" aria-label="Historical research notice">
+    <p><strong>Historical research · July 11, 2026.</strong> This report and its gate verdicts describe the experiments available on that date, not the current campaign state. Some original replay records are no longer publicly available; the pinned source reports remain linked.</p>
+    <a class="fl-link" href="/worlds">Explore the current Astra, Sol and Terra recordings →</a>
+  </aside>
+  <p class="findings-status" id="findings-load-status" role="status" aria-live="polite">Loading historical findings.</p>
   <section class="findings-hero" aria-labelledby="findings-title"><div class="fl-wrap findings-hero-grid"><div><div class="fl-eyebrow">Research note 001 / Fort-Eval</div><h1 class="fl-title" id="findings-title">What agents reveal when the world keeps pushing back.</h1><p class="fl-copy">Dwarf Fortress turns plans into consequences. These findings follow what models built, where they stalled, and which measurements changed after the replay audit.</p></div><div class="findings-byline"><div class="byline-row"><span class="byline-key">Published by</span><span>Fort Labs Research</span></div><div class="byline-row"><span class="byline-key">As of</span><span id="findings-as-of">Loading…</span></div><div class="byline-row"><span class="byline-key">Source</span><span>FINDINGS.md + WDSLL.md</span></div><div class="byline-row"><span class="byline-key">Evidence</span><span>Recorded runs + declared gates</span></div></div></div></section>
 
-  <section class="gate-band" aria-label="Current gate status"><div class="fl-wrap fl-data-grid gate-grid" id="gate-grid"><div class="fl-data-cell">Loading current gate status…</div></div></section>
+  <section class="gate-band" aria-label="Historical gate snapshot"><div class="fl-wrap fl-data-grid gate-grid" id="gate-grid"><div class="fl-data-cell">Loading the July 11 gate snapshot…</div></div></section>
 
   <section class="fl-section" aria-labelledby="lead-title"><div class="fl-wrap lead-layout"><div class="lead-copy"><div class="fl-eyebrow">Lead finding</div><h2 class="lead-claim" id="lead-title">Agents can build real forts. The frontier is keeping them alive.</h2><p class="fl-copy">The action substrate now produces legal, visible Dwarf Fortress progress. Reliable adaptation, resource flow, and long-horizon survival remain the open work.</p><div class="finding-links"><a class="fl-link" href="#all-findings">Read the findings &rarr;</a><a class="fl-link" href="/protocols/fort-eval-easy-v1">Read the protocol &rarr;</a></div></div><div class="lead-evidence"><div class="fl-media lead-media"><canvas id="lead-canvas"></canvas><div class="fl-media-source" id="lead-source">Recorded frame</div></div><div class="lead-caption"><div><strong id="lead-run-title">Loading representative run…</strong><span id="lead-run-meta">Recorded Dwarf Fortress evidence</span></div><a class="fl-link" id="lead-run-link" href="/worlds">Open replay &rarr;</a></div></div></div></section>
 
@@ -109,8 +113,10 @@
   const $ = id => document.getElementById(id);
   FL.initShell();
 
-  function findingMarkup(finding) {
-    const replay = finding.run_token ? `<a class="fl-link" href="/r/${encodeURIComponent(finding.run_token)}">Open replay &rarr;</a>` : '';
+  function findingMarkup(finding, available) {
+    const replay = !finding.run_token ? '' : available?.has(finding.run_token)
+      ? `<a class="fl-link" href="/r/${encodeURIComponent(finding.run_token)}">Open historical run &rarr;</a>`
+      : `<span class="historical-status">${available ? 'Historical replay unavailable · read the source report' : 'Checking historical replay availability…'}</span>`;
     const evidenceSource = finding.evidence_url ? `<a class="fl-link" href="${FL.escapeHtml(finding.evidence_url)}">Open evidence &rarr;</a>` : '';
     return `<article class="finding-row"><div><div class="finding-index">${FL.escapeHtml(finding.index)}</div><div class="finding-status">${FL.escapeHtml(finding.status)}</div></div><h3>${FL.escapeHtml(finding.title)}</h3><div class="finding-body"><p class="finding-claim">${FL.escapeHtml(finding.claim)}</p><p class="finding-evidence"><strong>Evidence</strong><br>${FL.escapeHtml(finding.evidence)}</p><p class="finding-caveat"><strong>Boundary</strong><br>${FL.escapeHtml(finding.caveat)}</p><div class="finding-links"><a class="fl-link" href="${FL.escapeHtml(finding.source_url)}">Read source &rarr;</a>${evidenceSource}${replay}</div></div></article>`;
   }
@@ -127,7 +133,10 @@
     }
     $('evidence-grid').innerHTML = items.map(({entry, run}, index) => {
       const meta = run ? `${run.model} · ${run.seed_save || 'seed not reported'} · score ${FL.formatNumber(run.score)}` : 'Run metadata temporarily unavailable';
-      return `<a class="evidence-card${run ? '' : ' is-unavailable'}" href="/r/${encodeURIComponent(entry.token)}"><div class="fl-media evidence-media"><canvas id="finding-run-${index}"></canvas><div class="fl-media-source" id="finding-source-${index}">${run ? 'Recorded frame' : 'Metadata unavailable'}</div></div><div class="evidence-card-copy"><div class="evidence-top"><div class="evidence-label">${FL.escapeHtml(entry.label)}</div><div class="evidence-verdict">${FL.escapeHtml(entry.verdict)}</div></div><div class="evidence-meta">${FL.escapeHtml(meta)}</div><p class="evidence-note">${FL.escapeHtml(entry.note)}</p></div></a>`;
+      const tag = run ? 'a' : 'article';
+      const target = run ? ` href="/r/${encodeURIComponent(entry.token)}"` : '';
+      const fallback = run ? '' : `<p class="historical-status">Historical replay unavailable.</p><a class="fl-link" href="${FL.escapeHtml(entry.source_url)}">Read the historical report &rarr;</a>`;
+      return `<${tag} class="evidence-card${run ? '' : ' is-unavailable'}"${target}><div class="fl-media evidence-media"><canvas id="finding-run-${index}"></canvas><div class="fl-media-source" id="finding-source-${index}">${run ? 'Recorded frame' : 'Historical replay unavailable'}</div></div><div class="evidence-card-copy"><div class="evidence-top"><div class="evidence-label">${FL.escapeHtml(entry.label)}</div><div class="evidence-verdict">Historical: ${FL.escapeHtml(entry.verdict)}</div></div><div class="evidence-meta">${FL.escapeHtml(meta)}</div><p class="evidence-note">${FL.escapeHtml(entry.note)}</p>${fallback}</div></${tag}>`;
     }).join('');
     return Promise.all(items.map(({run}, index) => {
       if (run) return FL.loadRunFrame(run, $(`finding-run-${index}`), $(`finding-source-${index}`));
@@ -141,10 +150,15 @@
       const manifest = await FL.fetchJson('/static/findings-v1.json');
       $('findings-as-of').textContent = `${manifest.as_of} · ${manifest.version}`;
       $('gate-grid').innerHTML = (manifest.gate_status || []).map(item => `<div class="fl-data-cell"><div class="fl-data-label">${FL.escapeHtml(item.gate)}</div><div class="gate-value ${FL.escapeHtml(item.status)}">${FL.escapeHtml(item.status)}</div><div class="gate-detail">${FL.escapeHtml(item.detail)}</div></div>`).join('');
-      $('finding-list').innerHTML = (manifest.findings || []).map(findingMarkup).join('');
+      $('finding-list').innerHTML = (manifest.findings || []).map(finding => findingMarkup(finding)).join('');
 
-      const settled = await Promise.allSettled((manifest.evidence_runs || []).map(loadRun));
-      const records = settled.map((item, index) => item.status === 'fulfilled' ? item.value : {entry: manifest.evidence_runs[index], run: null});
+      const entries = (manifest.evidence_runs || []).map(entry => ({...entry,
+        source_url: manifest.findings.find(finding => finding.run_token === entry.token)?.source_url ||
+          'https://github.com/lemoz/fort-gym/blob/' + manifest.source_revision + '/docs/FINDINGS.md'}));
+      const settled = await Promise.allSettled(entries.map(loadRun));
+      const records = settled.map((item, index) => item.status === 'fulfilled' ? item.value : {entry: entries[index], run: null});
+      const available = new Set(records.filter(item => item.run).map(item => item.entry.token));
+      $('finding-list').innerHTML = (manifest.findings || []).map(finding => findingMarkup(finding, available)).join('');
       const frameResults = await renderEvidence(records);
       const lead = records.find(item => item.entry.lead === true) || records[0];
       if (lead) {
@@ -152,7 +166,8 @@
         const leadFrame = frameResults[leadIndex];
         $('lead-run-title').textContent = lead.entry.label;
         $('lead-run-meta').textContent = lead.run ? `${lead.entry.verdict} · ${lead.run.model} · score ${FL.formatNumber(lead.run.score)}` : `${lead.entry.verdict} · run metadata temporarily unavailable`;
-        $('lead-run-link').href = `/r/${encodeURIComponent(lead.entry.token)}`;
+        $('lead-run-link').href = lead.run ? `/r/${encodeURIComponent(lead.entry.token)}` : lead.entry.source_url;
+        $('lead-run-link').textContent = lead.run ? 'Open historical run →' : 'Read the historical report →';
         if (leadFrame?.status === 'recorded') {
           FL.renderScreenText($('lead-canvas'), leadFrame.preview.screen_text);
           $('lead-source').textContent = `Recorded step ${leadFrame.preview.step ?? lead.run.step ?? '--'}`;
@@ -172,7 +187,7 @@
       const degraded = [];
       if (unavailableCount) degraded.push(`Run metadata is unavailable for ${unavailableCount} evidence ${unavailableCount === 1 ? 'run' : 'runs'}.`);
       if (frameGapCount) degraded.push(`Recorded frames are missing or unavailable for ${frameGapCount} evidence ${frameGapCount === 1 ? 'run' : 'runs'}.`);
-      $('findings-load-status').textContent = degraded.length ? `Findings loaded. ${degraded.join(' ')}` : 'Findings and recorded evidence loaded.';
+      $('findings-load-status').textContent = degraded.length ? `Historical findings loaded. ${degraded.join(' ')} Source reports remain available.` : 'Historical findings and recorded evidence loaded.';
     } catch (_) {
       $('gate-grid').innerHTML = '<div class="fl-data-cell">Gate status is temporarily unavailable.</div>';
       $('finding-list').innerHTML = '<div class="fl-empty">Curated findings are temporarily unavailable.</div>';
