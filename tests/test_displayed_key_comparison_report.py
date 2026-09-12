@@ -486,7 +486,7 @@ def test_astra_own_save_128_keeps_development_and_unequal_game_time_explicit():
     assert (metrics["population"], metrics["recorded_dead_citizens"]) == (7, 0)
     assert (metrics["food_stock"], metrics["drink_stock"]) == (61, 83)
     assert astra["native_teardown_verified"] is astra["vm_teardown_verified"] is True
-    assert data["trials"][5]["result"] is None
+    assert data["trials"][5]["result"]["status"] == "saved"
     assert data["strong_ranking_supported"] is data["all_saved_boundaries_reached"] is False
 
 
