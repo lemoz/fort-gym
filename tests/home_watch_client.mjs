@@ -260,7 +260,7 @@ test('Year-Two replay displays its endpoint and hides it for other recordings', 
   } finally { Object.assign(globalThis,originals); }
 });
 
-for (const [model, repeat, first=1, size=64] of [['astra',1], ['terra',1], ['terra',2], ['sol',2], ['astra',2], ['terra',1,65], ['astra',1,65], ['terra',2,65], ['astra','portable',1,4]]) test(model+' '+repeat+' from '+first+' scrubs audited frames', async () => {
+for (const [model, repeat, first=1, size=64] of [['astra',1], ['terra',1], ['terra',2], ['sol',2], ['astra',2], ['terra',1,65], ['astra',1,65], ['terra',2,65], ['astra',2,65], ['astra','portable',1,4]]) test(model+' '+repeat+' from '+first+' scrubs audited frames', async () => {
   const last=first+size-1, id=repeat==='portable'?'astra-portable-acceptance-1-4':model+'-matched-r'+repeat+'-'+first+'-'+last;
   const recording=JSON.parse(fs.readFileSync('web/static/recordings/'+id+'.json'));
   const originals=Object.fromEntries(['document','fetch','location','setInterval','clearInterval'].map(key=>[key,globalThis[key]]));

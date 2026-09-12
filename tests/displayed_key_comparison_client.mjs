@@ -68,7 +68,7 @@ test('128 budget shows an infrastructure failure at its original 64-response sav
     assert.equal(url,'/static/displayed-key-comparison-128.json');
     return {ok:true,json:async()=>continued};
   },128);
-  assert.equal(doc.nodes['matched-summary'].textContent,'5 of 6 reviewed results published · 128-decision budget');
+  assert.equal(doc.nodes['matched-summary'].textContent,'6 of 6 reviewed results published · 128-decision budget');
   assert.equal(doc.nodes['matched-download'].href,'/static/displayed-key-comparison-128.json');
   const rows=doc.nodes['matched-table'].children[0].children[0].children[2].children;
   assert.match(text(rows[0]),/Sol · 1 Infrastructure failure 64 2,900 7 \/ 0/);
@@ -81,10 +81,20 @@ test('128 budget shows an infrastructure failure at its original 64-response sav
   assert.ok(rows[3].children.at(-1).children.some(link=>link.href==='/?recording=terra-matched-r2-65-128#watch-root'));
   assert.match(text(rows[4]),/Sol · 2 Infrastructure failure 64 10,400 7 \/ 0/);
   assert.doesNotMatch(text(rows[4]),/Saved 128|Replay/);
-  for(const row of rows.slice(5)) {
-    assert.match(text(row),/No published result/);
-    assert.equal(row.children[2].textContent,'—');
-  }
+  assert.match(text(rows[5]),/Astra · 2 Storage: 32 → 40 GiB from decision 65 Saved 128 50,400 7 \/ 0 7 \/ 3 \/ 1 42 \/ 121 3,483,445/);
+  assert.ok(rows[5].children.at(-1).children.some(link=>link.href==='/?recording=astra-matched-r2-65-128#watch-root'));
+});
+
+test('an unpublished slot still stays visible without invented numbers or replay',async()=>{
+  const data=structuredClone(continued), row=data.trials[5];
+  Object.assign(row,{publication_state:'no_published_result',result:null,evidence_url:null});
+  data.recorded_attempts=5;
+  const doc=document();
+  await renderComparison(doc,async()=>({ok:true,json:async()=>data}),128);
+  const rendered=doc.nodes['matched-table'].children[0].children[0].children[2].children[5];
+  assert.match(text(rendered),/No published result/);
+  assert.equal(rendered.children[2].textContent,'—');
+  assert.doesNotMatch(text(rendered),/Replay|Storage:/);
 });
 
 test('undeclared budgets and cross-budget payloads cannot be rendered',()=>{
@@ -129,7 +139,7 @@ for(const oldFails of [false,true]) test('a stale budget request cannot replace 
   if(oldFails) rejectOld(Error('old request failed'));
   else resolveOld({ok:true,json:async()=>source});
   await older;
-  assert.match(doc.nodes['matched-summary'].textContent,/5 of 6.*128-decision budget/);
+  assert.match(doc.nodes['matched-summary'].textContent,/6 of 6.*128-decision budget/);
   assert.equal(doc.nodes['matched-download'].href,'/static/displayed-key-comparison-128.json');
   assert.equal(doc.nodes['matched-table'].attributes['aria-busy'],'false');
 });

@@ -283,3 +283,30 @@ warnings, and all 52 Node player/gallery contracts passed, including scrubbing
 all four new decisions. Scoped Ruff and diff checks pass. The sandbox initially
 denied one localhost socket test; the complete localhost-enabled rerun passed.
 Browser visual QA was not performed; public delivery is verified separately.
+
+## Astra repeat completes the declared 128-decision comparison
+
+The source report at `41afc03fe871517a0f6a21b40dba31aeb410b81c` now contains
+all six outcomes: four saved continuations and two unchanged Sol infrastructure
+failures. The subsequent source test correction changes no report bytes.
+Astra repeat 2 saved 50,400 total ticks, seven living citizens, zero recorded
+deaths, seven beds, three workshops and one farm. Food is 42 and drinks are 121.
+The complete attempt accounts for 3,483,445 tokens; dollar charges remain null.
+The original save and all model/keyboard receipts reconcile, and native/VM
+teardown passed. A separate fresh load of the new final save is not claimed.
+
+The new `astra-matched-r2-65-128` replay retains 64 captured decisions and
+41,200 new ticks. Its digest is
+`5bdeb2650b4562c3327c7a699ae4e88458052155c507546c138c63a02a809215`, bound to
+terminal audit `31dceaeea4f5b20f98b08bca0b029233ae0419fd1c8d8a8302afb6704f7325f7`.
+It becomes the latest replay on the homepage and links from Results and Worlds.
+The gallery has sixteen windows and 1,124 frames; all fifteen earlier recordings
+and the six-outcome 64-decision report remain byte-identical.
+
+Only Astra repeat 2's continuation is labelled with the declared 32-to-40 GiB
+storage amendment. Model, prompt, controls, CPU and RAM were unchanged; storage
+conditions were not identical across these windows. Infrastructure failures stay
+visible. This small cohort does not establish a strong model ranking, and stock
+snapshots do not establish production rates or sustainable operation. The
+comparison script/style URLs are versioned so returning visitors load the labels.
+This section describes the release contents; public acceptance is recorded separately.
