@@ -1,0 +1,63 @@
+{
+  "schema_version": "fortgym.selected-workshop-final-pair-preparation/v1",
+  "date_utc": "2026-09-12",
+  "status": "prepared_not_executed",
+  "source_revision": "5ddf1e6718dab2e8351e8dc24a2afe5071cd2592",
+  "image": "sha256:dcbc9b042538401a146159fcf5f6456b21dc900c4649369c008f7a77f661fed3",
+  "study_declaration_sha256": "e325f69f40978a9a0b2ed962a505c893aa7ea397b569e3300455972d7b94ebc8",
+  "attempts": [
+    {
+      "campaign_id": "selected-workshop-v2-p3-shortcuts",
+      "study_order_one_based": 5,
+      "previous_required": "selected-workshop-v2-p2-shortcuts",
+      "operator": "run_v2_p3_shortcuts_fresh.py",
+      "condition": "shortcuts-condition.json",
+      "trial": "shortcuts-trial.json"
+    },
+    {
+      "campaign_id": "selected-workshop-v2-p3-keyboard",
+      "study_order_one_based": 6,
+      "previous_required": "selected-workshop-v2-p3-shortcuts",
+      "operator": "run_v2_p3_keyboard_fresh.py",
+      "condition": "keyboard-condition.json",
+      "trial": "keyboard-trial.json"
+    }
+  ],
+  "artifact_directory": "fort_gym/artifacts/selected-workshop-study-20260912",
+  "artifact_sha256": {
+    "run_v2_p3_shortcuts_fresh.py": "1b9c40d470ba2eef0d9cdfad5dc88486b6ef09f05b17ff62b36b2c78a8e80fb7",
+    "run_v2_p3_keyboard_fresh.py": "382a7910004a6c1938fc72d00037c445993fcc60bb27408a3eab6bf32f6793fe",
+    "test_v2_p3_shortcuts_preparation.py": "569747da64d76440318acf443ce18171139069abe7cf70db985d4ad8315fc5ea",
+    "test_v2_p3_keyboard_preparation.py": "e332d36ea1740b8ce4de11501776fec1827715bffc930a0fce3c371b833f2053",
+    "v2-p3-fresh-preparation-tests.xml": "7b0d428150bd03210ea8a5d3dbb3ce13616efdd56387c4a4a3b93bc9c883be3b",
+    "v2-p3-fresh-preparation-README.md": "e9fd1cdf4bca060d837f916582c45b6e24eb16ad84288122cab5653f252e6787"
+  },
+  "bounds": {
+    "model": "gpt-6-astra",
+    "reasoning_effort": "medium",
+    "screen_size": [
+      120,
+      40
+    ],
+    "original_seed": true,
+    "initial_memory": "empty",
+    "first_window_responses": 64,
+    "max_attempt_responses": 128,
+    "max_attempt_returned_tokens": 8000000,
+    "max_simultaneous_game_vms": 1,
+    "mandatory_teardown": true,
+    "source_image_condition_changes": false
+  },
+  "validation": {
+    "offline_tests_passed": 26,
+    "ruff_passed": true,
+    "missing_incomplete_or_mismatched_predecessor_rejected": true,
+    "original_condition_selection_verified": true,
+    "operation_and_attempt_outputs_absent": true,
+    "native_game_started": false,
+    "model_calls": 0,
+    "live_publication_performed": false,
+    "main_merged": false
+  },
+  "note": "Only the final pair's first-window operators are prepared. Actual preceding terminal results, startup allowance and VM checks are still required. Their own-save continuation and public replay evidence must be captured separately. This preparation neither interrupts the active pair-two shortcut run nor supplies a final game outcome. Subscription dollar charges remain unreported, not zero."
+}
