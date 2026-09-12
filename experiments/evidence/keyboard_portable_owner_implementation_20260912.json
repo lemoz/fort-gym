@@ -1,0 +1,71 @@
+{
+  "schema_version": "fortgym.portable-keyboard-owner-implementation/v1",
+  "source_revision": "df2d35ea323ac4b1cb15675e40f12f514210b24c",
+  "pull_request": 176,
+  "scope": [
+    "Configured entry point for fresh native-keyboard starts and unchanged own-save continuations on an existing local Docker engine.",
+    "Explicit image, source, runtime, Python and working-directory settings; no dated private operator import.",
+    "Memory-preserving bounded courier, single-use model responses, original input bytes, retained failures and ownership-checked container stop."
+  ],
+  "source_sha256": {
+    "fort_gym/bench/run/keyboard_docker_plan.py": "14eed4d0f6754d4537a697301c7beb628f241c39eb69c64ddb8e176a684f657f",
+    "fort_gym/bench/run/keyboard_docker_owner.py": "242c4b05d0242c397da91ff2a5b233452ecd0edda71ff7107bf58e9e5a63ad88",
+    "fort_gym/bench/run/keyboard_window_courier.py": "8477837572d0c58f4f00798013287504cd1fa5ff7fd16bc8caa6692e3de8fc01",
+    "scripts/campaign_keyboard_docker.py": "3e918e97f5c76653e893a52d4df1d74406923d611de4f97e2996e9941dc95925"
+  },
+  "validation": {
+    "full_python_passed": 5459,
+    "skipped": 10,
+    "warnings": 7,
+    "focused_owner_and_courier_passed": 71,
+    "node_viewer_contracts_passed": 51,
+    "selected_ruff_passed": true,
+    "selected_mypy": {
+      "passed": true,
+      "source_files": 4,
+      "follow_imports": "silent"
+    },
+    "cli_help_executed": true,
+    "cli_check_read_only_unit_test_passed": true,
+    "real_input_preflight": "experiments/evidence/keyboard_portable_owner_real_inputs_20260912.json"
+  },
+  "exact_head_ci": {
+    "run_id": 34672652444,
+    "head_sha": "df2d35ea323ac4b1cb15675e40f12f514210b24c",
+    "status": "completed",
+    "conclusion": "success"
+  },
+  "review_kind": "partial_implementer_source_review_not_independent_full_integration_approval",
+  "review_findings_fixed": [
+    "A source/image-pinned declaration now rejects a different configured runtime before container creation.",
+    "Campaign, original condition digest and declared parent usage bindings are checked.",
+    "Read-only condition and declaration copies preserve original bytes, not a reserialized substitute."
+  ],
+  "real_inputs": {
+    "checkpoints": 6,
+    "models": 3,
+    "own_memory_preserved": true,
+    "usage_reconciled": true,
+    "original_checkpoints_unchanged": true,
+    "frozen_declarations_reject_new_source_execution": true,
+    "private_receipt_sha256": "7359c4d0cee7e3470df9e738ecf18e741b51de8b0b3ea65d14f80a63a79d7049"
+  },
+  "experiment_model_calls": 0,
+  "docker_daemon_calls": 0,
+  "game_launches": 0,
+  "vm_launches": 0,
+  "website_changed": false,
+  "native_container_acceptance": false,
+  "native_wire_compatibility_verified": false,
+  "native_image_built": false,
+  "main_merged": false,
+  "full_goal_complete": false,
+  "limits": [
+    "The container lifecycle was exercised with Docker doubles, not a real native container.",
+    "The six real checkpoints were verified and their model state restored offline, not loaded in Dwarf Fortress.",
+    "The entry point requires an existing compatible image and local engine; image construction, native wire compatibility, live-observer wiring for this layout and remaining source review are outstanding.",
+    "Explicit recovery, prompt changes and budget extensions retain their existing dedicated launchers; they are not silently rewritten as ordinary continuations.",
+    "The host free-space check is not a guest-disk reservation or permission to lower another experiment's floor. No frozen attempt was rerun and no storage grew or evidence was deleted.",
+    "Scoped type/lint checks do not clear pre-existing repository-wide static-check debt. Passing CI does not authorize a main merge or prove the full gameplay goal."
+  ]
+}

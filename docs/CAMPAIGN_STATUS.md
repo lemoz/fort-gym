@@ -104,12 +104,14 @@ remains unresolved. The full goal stays active.
 
 The isolated integration candidate is pushed as
 [draft PR176](https://github.com/lemoz/fort-gym/pull/176), head
-`a259382aa174e46d27a8081cb811a097cb4084bf`. It includes the Terra r2/Sol r2
-results, five-outcome128 index and fourteen-recording viewer. Its updated full
-suite passes 5,426 Python tests with ten skips and seven warnings, plus all 51
-Node contracts and 126 focused comparison/viewer/exporter tests. The final
-documentation/evidence-only follow-up passes 61 focused tests; its CI is being
-checked separately. The earlier candidate's CI `34669546552` passed.
+`df2d35ea323ac4b1cb15675e40f12f514210b24c`. It retains the Terra r2/Sol r2
+results, five-outcome128 index and fourteen-recording viewer, and adds the
+[configured portable Docker owner](../experiments/evidence/keyboard_portable_owner_implementation_20260912.json)
+for fresh and unchanged own-save attempts. The current full suite passes 5,459
+Python tests with ten skips and seven warnings, plus all 51 Node contracts.
+All 71 focused owner/courier tests, selected Ruff checks and four-file mypy
+checks pass. Exact-head CI `34672652444` passed; prior integration CI
+`34671288581` passed as well.
 The [additional setup and source review](../experiments/evidence/keyboard_integration_setup_review_176_20260912.json)
 verifies an isolated Python/viewer install and 659 focused tests on its exact
 prior head. A [separate protocol setup check](../experiments/evidence/keyboard_integration_protocol_setup_176_20260912.json)
@@ -117,7 +119,11 @@ now generates and imports all eight official 52.04-r1 binding modules in that
 isolated environment, with partial round trips for 131 message types. It leaves
 the original acceptance and frozen experiment bindings unchanged. No game or
 model was contacted; actual wire compatibility, fresh-machine native provisioning
-and portable owner acceptance remain unverified. Source review is still partial
+and actual portable container acceptance remain unverified. The new public owner
+has also [read all six real model checkpoints](../experiments/evidence/keyboard_portable_owner_real_inputs_20260912.json),
+restoring each original memory and reconciling its usage without a game or model.
+It rejects executing their frozen declarations under its new source. No existing
+attempt was rerun, VM started or storage changed. Source review is still partial
 rather than merge approval. The current
 source reader exactly reproduces the public five-result128 and six-result64
 tables.

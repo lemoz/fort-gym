@@ -1,0 +1,91 @@
+{
+  "schema_version": "fortgym.portable-owner-real-input-acceptance/v1",
+  "passed": true,
+  "source_revision": "df2d35ea323ac4b1cb15675e40f12f514210b24c",
+  "parents": [
+    {
+      "campaign_id": "bindings-comparison-20260911-sol-r1",
+      "model": "gpt-5.6-sol",
+      "checkpoint_sha256": "985f00da901dfd8edd684e4bb242cec022a9f8937d3f5f733ff7567684ebdb0e",
+      "saved_cursor": 64,
+      "accounted_responses": 64,
+      "returned_tokens": 1258321,
+      "saved_elapsed_ticks": 2900,
+      "memory_restored_exactly": true,
+      "original_checkpoint_unchanged": true,
+      "new_source_execution_rejected_for_frozen_declaration": true
+    },
+    {
+      "campaign_id": "bindings-comparison-20260911-terra-r1",
+      "model": "gpt-5.6-terra",
+      "checkpoint_sha256": "8338569453b6c517ff5e314d2f76a76de02b7735887edbbc27800a6599b12292",
+      "saved_cursor": 64,
+      "accounted_responses": 64,
+      "returned_tokens": 1589877,
+      "saved_elapsed_ticks": 4200,
+      "memory_restored_exactly": true,
+      "original_checkpoint_unchanged": true,
+      "new_source_execution_rejected_for_frozen_declaration": true
+    },
+    {
+      "campaign_id": "bindings-comparison-20260911-astra-r1",
+      "model": "gpt-6-astra",
+      "checkpoint_sha256": "e718b389f37cfe11fab4121f3b3fec3e1da72e3f62e04d9f45658dde556eba63",
+      "saved_cursor": 64,
+      "accounted_responses": 64,
+      "returned_tokens": 1671491,
+      "saved_elapsed_ticks": 23000,
+      "memory_restored_exactly": true,
+      "original_checkpoint_unchanged": true,
+      "new_source_execution_rejected_for_frozen_declaration": true
+    },
+    {
+      "campaign_id": "bindings-comparison-20260911-terra-r2",
+      "model": "gpt-5.6-terra",
+      "checkpoint_sha256": "1b44d26183b728cd9c94f54704c86a408ea983a4f279a4b07d4eee1ea9cbc417",
+      "saved_cursor": 64,
+      "accounted_responses": 64,
+      "returned_tokens": 1186821,
+      "saved_elapsed_ticks": 0,
+      "memory_restored_exactly": true,
+      "original_checkpoint_unchanged": true,
+      "new_source_execution_rejected_for_frozen_declaration": true
+    },
+    {
+      "campaign_id": "bindings-comparison-20260911-sol-r2",
+      "model": "gpt-5.6-sol",
+      "checkpoint_sha256": "e082332f969bef80a5ff4049206fa2a6a4580ab26c0b4ddad6e8bb3a74fd4f59",
+      "saved_cursor": 64,
+      "accounted_responses": 64,
+      "returned_tokens": 1221506,
+      "saved_elapsed_ticks": 10400,
+      "memory_restored_exactly": true,
+      "original_checkpoint_unchanged": true,
+      "new_source_execution_rejected_for_frozen_declaration": true
+    },
+    {
+      "campaign_id": "bindings-comparison-20260911-astra-r2",
+      "model": "gpt-6-astra",
+      "checkpoint_sha256": "cfd3f704e93715803964cc47d21647edac01b6f0d96a99d39bbff1d49b5d21ef",
+      "saved_cursor": 64,
+      "accounted_responses": 64,
+      "returned_tokens": 1549386,
+      "saved_elapsed_ticks": 9200,
+      "memory_restored_exactly": true,
+      "original_checkpoint_unchanged": true,
+      "new_source_execution_rejected_for_frozen_declaration": true
+    }
+  ],
+  "model_calls": 0,
+  "docker_daemon_calls": 0,
+  "game_launches": 0,
+  "vm_launches": 0,
+  "native_container_acceptance": false,
+  "image_compatibility_verified": false,
+  "verification_script_sha256": "7df72b3a916401bd8d90d9997faab3ee5e7a000bc511305fe2cef4e4fbdc2dc4",
+  "limits": [
+    "Real saved files and model memory were read and restored offline, not loaded in a native game.",
+    "This is not authorization or proof to rerun any existing identity with a new owner."
+  ],
+  "private_receipt_sha256": "7359c4d0cee7e3470df9e738ecf18e741b51de8b0b3ea65d14f80a63a79d7049"
+}
