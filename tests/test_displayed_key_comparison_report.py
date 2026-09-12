@@ -468,8 +468,8 @@ def test_astra_own_save_128_keeps_development_and_unequal_game_time_explicit():
     data = read_comparison(
         ROOT, "experiments/evidence/keyboard_binding_comparison_20260911_index.json", boundary=128
     )
-    assert data["recorded_attempts"] == 5
-    assert data["outcome_counts"] == {"infrastructure_failure": 2, "saved": 3}
+    assert data["recorded_attempts"] == 6
+    assert data["outcome_counts"] == {"infrastructure_failure": 2, "saved": 4}
     astra = data["trials"][2]["result"]
     assert astra["status"] == "saved" and astra["responses"] == 128
     assert astra["returned_tokens"] == 4123021 and astra["reported_charge_usd"] is None
@@ -529,7 +529,7 @@ def test_sol_repeat_capacity_failure_keeps_its_original_64_response_save():
     metrics = sol["checkpoint"]["metrics"]
     assert (metrics["population"], metrics["recorded_dead_citizens"]) == (7, 0)
     assert (metrics["food_stock"], metrics["drink_stock"]) == (50, 60)
-    assert data["trials"][5]["publication_state"] == "no_published_result"
+    assert data["trials"][5]["publication_state"] == "recorded"
     assert data["strong_ranking_supported"] is data["all_saved_boundaries_reached"] is False
 
 
@@ -618,6 +618,35 @@ def test_missing_or_changed_storage_declaration_is_not_accepted(fixture, amended
     path.unlink()
     with pytest.raises(ValueError, match="missing"):
         read_comparison(fixture[0], INDEX, boundary=128)
+
+
+def test_astra_repeat_128_records_development_and_amended_capacity():
+    data = read_comparison(
+        ROOT, "experiments/evidence/keyboard_binding_comparison_20260911_index.json", boundary=128
+    )
+    assert data["recorded_attempts"] == 6
+    result = data["trials"][5]["result"]
+    assert result["status"] == "saved" and result["responses"] == 128
+    assert result["returned_tokens"] == 3483445
+    assert result["reported_charge_usd"] is None
+    assert result["terminal_audit_sha256"] == (
+        "31dceaeea4f5b20f98b08bca0b029233ae0419fd1c8d8a8302afb6704f7325f7"
+    )
+    assert result["checkpoint"]["sha256"] == (
+        "2560a4d7f1140223b35c41eca89b6b5d702179a59f27fb0f38898e13fcd07c2e"
+    )
+    assert result["checkpoint"]["saved_elapsed_ticks"] == 50400
+    metrics = result["checkpoint"]["metrics"]
+    assert [metrics[key] for key in (
+        "population", "recorded_dead_citizens", "completed_beds",
+        "completed_workshops", "completed_farms", "food_stock", "drink_stock",
+    )] == [7, 0, 7, 3, 1, 42, 121]
+    assert result["storage_amendment"]["disk_gib_after"] == 40
+    assert result["native_teardown_verified"] is result["vm_teardown_verified"] is True
+    assert data["strong_ranking_supported"] is data["all_saved_boundaries_reached"] is False
+    assert [data["trials"][slot]["result"]["status"] for slot in (0, 4)] == [
+        "infrastructure_failure", "infrastructure_failure"
+    ]
 
 
 def test_original_fresh_report_projection_is_unchanged():

@@ -7,6 +7,18 @@ Requirements come from [the approved goal](YEAR_TWO_CAMPAIGNS.md),
 [the standard-input phase](ASTRA_STANDARD_INPUT_EXPERIMENTS.md), and the
 [frozen displayed-key cohort](../experiments/keyboard_binding_comparison_20260911/cohort.json).
 
+The [Astra r2 terminal result](../experiments/evidence/keyboard_binding_comparison_astra_r2_128_20260912.json)
+now closes the declared 128-decision comparison: all six outcomes are recorded,
+four saved continuations and two preserved Sol infrastructure failures.
+Astra r2 retained 50,400 elapsed ticks (41,200 new), seven living citizens, zero
+recorded deaths, seven beds, three workshops, one farm, 42 food and 121 drinks.
+All 64 new responses and 403 key presses reconcile; its total usage is 3,483,445
+tokens, with subscription dollar charges unreported. Its original save is
+unchanged and both native cleanup and local VM teardown passed. The final save
+has not had a separate fresh reload. The stock snapshots do not prove sustained
+production, and the storage amendment remains disclosed. Website publication of
+this result/replay follows separately; no longer endurance run is launched yet.
+
 Latest experiment update: [Astra r2 startup](../experiments/evidence/matched_continuation_astra_r2_startup_20260912.json)
 records a real own-save launch from decision 64 toward the declared 128 boundary,
 with the original native clock, memory, history, usage and feedback preserved.

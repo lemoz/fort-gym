@@ -15,6 +15,11 @@
   },
   "results": {
     "bindings-comparison-20260911-astra-r2": {
+      "128": {
+        "path": "experiments/evidence/keyboard_binding_comparison_astra_r2_128_20260912.json",
+        "sha256": "f92270fac8c90bae4a9d73b519641985acc2dd848e869f1ecc0261a0e0f7161a",
+        "revision": "e517a42b26c6b31fd98ad5ab086b2e43e56d58f2"
+      },
       "64": {
         "path": "experiments/evidence/keyboard_binding_comparison_astra_r2_64_20260911.json",
         "sha256": "5905e6bb70fb9a3db7b0fa3038a6bf87c8230b788d2d301133c6d1d2daec868f",
