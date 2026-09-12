@@ -1,0 +1,125 @@
+{
+  "schema_version": "fortgym.website-own-save-release/v1",
+  "release_revision": "e8e3fb9ae284dd562089d434e0b8e88dc2c8b683",
+  "assets": {
+    "/results": {
+      "sha256": "cc95ac8034dd517719cdf2d329f44690cf6c09618a04e477c609645f3d373a45",
+      "mime": "text/html"
+    },
+    "/static/displayed-key-comparison-128.json": {
+      "sha256": "f8e26272d9ef4e297c560212a5928edfaf92f0b3f3cb3472d8f8335292ab87e2",
+      "mime": "application/json"
+    },
+    "/static/displayed-key-comparison.css": {
+      "sha256": "decfaf9fccc28662aa65ef1d23fa1e06a9c95b9f708945b347806eec43fb07c8",
+      "mime": "text/css"
+    },
+    "/static/displayed-key-comparison.mjs": {
+      "sha256": "4099d1790bde452af261768ce065c5ed7bb637f8086994baad8e013b7708ef9e",
+      "mime": "text/javascript"
+    },
+    "/static/recordings/astra-matched-r2-65-128.json": {
+      "sha256": "5bdeb2650b4562c3327c7a699ae4e88458052155c507546c138c63a02a809215",
+      "mime": "application/json"
+    },
+    "/static/recordings/catalog.json": {
+      "sha256": "045cad95e63925567c0a7fcce233aa9f20829d025a5a551e1922f7a9c20e3a26",
+      "mime": "application/json"
+    },
+    "/static/recordings/previews.json": {
+      "sha256": "014bca5b5a1ace7e81c2d6498381d7509fef10a147fc73a304d47c9b34151896",
+      "mime": "application/json"
+    },
+    "/worlds": {
+      "sha256": "62233f47e83e4096c1c124fc1ef8489c3348206697e6c79c7c4b7997f618736c",
+      "mime": "text/html"
+    }
+  },
+  "recordings": 16,
+  "captured_frames": 1124,
+  "matched_rows": 6,
+  "published_results": 6,
+  "continuation_results": 6,
+  "decision_budgets": [
+    64,
+    128
+  ],
+  "historical_recordings_unchanged": true,
+  "immutable_source_links_resolve": true,
+  "declared_storage_amendment_visible": true,
+  "relay_snapshot": {
+    "run_id": "bindings-comparison-20260911-astra-r2-64-128",
+    "model": "gpt-6-astra",
+    "status": "stopped",
+    "observed_at_unix": 1789208343
+  },
+  "passed": true,
+  "recorded_at_utc": "2026-09-12 10:34:57 UTC",
+  "website_url": "https://fortgym.live/results#matched-comparison",
+  "replay_url": "https://fortgym.live/?recording=astra-matched-r2-65-128#watch-root",
+  "source_report_revision": "41afc03fe871517a0f6a21b40dba31aeb410b81c",
+  "source_verification_revision": "d3065ce7c66fffa7e2c8873bedfdd47fff390d82",
+  "result_revision": "e517a42b26c6b31fd98ad5ab086b2e43e56d58f2",
+  "result_sha256": "f92270fac8c90bae4a9d73b519641985acc2dd848e869f1ecc0261a0e0f7161a",
+  "terminal_audit_sha256": "31dceaeea4f5b20f98b08bca0b029233ae0419fd1c8d8a8302afb6704f7325f7",
+  "observer_revision": "7cd3b96763998abfd99ed623630d658320a27918",
+  "private_receipt_sha256": {
+    "public-acceptance.json": "bfdac3e4ca79fa179a10688ed54acb4bfcbf45e5cf8850c1a5c906cbd7d1445c",
+    "remote-acceptance.jsonl": "b2e815d23afeb45a2b653bd577a3327f82424a7952037ebda9a20682b55fafa2",
+    "build-receipt.json": "9f5e24ba4d794a3f5fe240c53a12d76a40506ab58250113fcfcd345bf6ecba86",
+    "browser-acceptance.json": "2d82c85ecbfd5ed70319a63a8c24421f541ee3e83377c9ec63a95f519fbd7078",
+    "build.py": "60a3f1a2ac2c45120ec74f5540cddc1a9f43bea39971f0462213c1dbf49953a0",
+    "deploy_remote.py": "8bf9bcb7a38048401759956b70e1d4d7d60365d90941156a75c525209adbdd1d",
+    "publish.py": "73a61e26faaac9ac44a1bebdf2fc52cb0885c150c25c83678cce5a20b1df7133"
+  },
+  "ci": {
+    "run_id": 34688450135,
+    "head_sha": "e8e3fb9ae284dd562089d434e0b8e88dc2c8b683",
+    "status": "completed",
+    "conclusion": "success",
+    "passed": 1274,
+    "skipped": 5,
+    "warnings": 7
+  },
+  "validation": {
+    "full_local_tests_passed": 1274,
+    "skipped": 5,
+    "warnings": 7,
+    "focused_publication_tests_passed": 48,
+    "node_playback_publication_tests_passed": 61,
+    "source_report_and_continuation_tests_passed": 130,
+    "selected_ruff_passed": true,
+    "browser_visual_qa_performed": true,
+    "browser_next_decision_and_scrub_verified": [
+      65,
+      66,
+      128
+    ],
+    "browser_comparison_boundaries_verified": [
+      64,
+      128
+    ],
+    "initial_stale_test_expectations_corrected": true
+  },
+  "native_and_api_service_identities_unchanged": true,
+  "database_counts_unchanged": true,
+  "untracked_files_preserved": true,
+  "service_restarts": 0,
+  "new_hosts": 0,
+  "main_merge": false,
+  "new_model_calls_by_website_tools": 0,
+  "new_gameplay_inputs_by_website_tools": 0,
+  "stopped_astra_relay_preserved": true,
+  "strong_model_ranking_supported": false,
+  "full_goal_complete": false,
+  "limits": [
+    "Sixteen recording windows are not sixteen independent trials; all fifteen previously published recordings are unchanged.",
+    "Six fresh outcomes are saved at 64 responses. The completed 128-budget table retains four saved continuations and two infrastructure failures.",
+    "Astra repeat 2 retained 50400 total ticks, seven living citizens, no recorded deaths, seven beds, three workshops and one farm, with 42 food and 121 drinks. Stocks and sampled activity do not establish sustainable production.",
+    "The 32-to-40 GiB storage-only amendment is marked on Astra repeat 2's decisions 65-128; model, prompt, controls, CPU and RAM are unchanged. This is not identical storage across the cohort.",
+    "The parent was loaded natively; final checkpoint128 has not had a separate fresh reload.",
+    "Subscription dollar charges remain unreported, not zero.",
+    "At a narrow in-app viewport the sixteen-entry recording selector pushes the game screen below the initial fold. The verified player works; a more compact selector remains a usability improvement.",
+    "Portable-owner live follow, the separate standard-input/shortcut paired study, longer gameplay and stronger sustainability measurement remain goal work. PR176 has not been merged."
+  ]
+}
