@@ -12,7 +12,7 @@ and [reload verification](#later-checkpoint-1057-verification-and-website-delive
 Do not confuse that achieved duration with the younger, independent matched
 cohort below. Long-term self-sufficiency and the full delivery goal remain open.
 
-## Current state: Terra and Astra saved at 128; Terra r2 next
+## Current state: Terra and Astra saved at 128; Terra r2 running
 
 All six displayed-key fresh attempts have completed and passed their terminal
 audits at 64 responses. The [source-linked index](../experiments/evidence/keyboard_binding_comparison_20260911_index.json)
@@ -57,15 +57,24 @@ published stopped and exited. The final checkpoint has not had a separate reload
 This result is indexed remotely, while its recording and public-table update
 remain pending. Continue Terra r2, Sol r2 and Astra r2 in declared order.
 
+[Terra r2 has started](../experiments/evidence/matched_continuation_terra_r2_startup_20260912.json)
+from its own unchanged checkpoint64 after Astra's audit and teardown. Its initial
+native load preserves the original zero-elapsed-tick state, memory and usage.
+The first new response used 18,062 tokens; public frame69 matched its original
+screen, explicit action and response receipt. The existing homepage relay now
+follows Terra r2. This is startup evidence, not a verified checkpoint128 result.
+
 The isolated integration candidate is pushed as
 [draft PR176](https://github.com/lemoz/fort-gym/pull/176), head
 `bce580ae30782b258453889283c10f1ccba06a7b`. It combines native/main ancestry,
 the published viewer and matched tools, including Terra's new result and replay;
 5,420 Python tests and all 49 Node contracts pass. Original-head CI `34666311317`
-passed; updated-head CI `34667725373` is pending. The [partial source review](../experiments/evidence/keyboard_integration_review_176_20260912.json)
+passed, and updated-head CI `34667725373` also passed. The [partial source review](../experiments/evidence/keyboard_integration_review_176_20260912.json)
 checks the changed keyboard paths and binding dispatch, with 198 focused tests.
 It is not full merge readiness. The source comparison reader exactly reproduces
 both website tables, and the original Astra window is unchanged.
+The integration snapshot includes Terra's 128 result; Astra's newer result/index
+and replay remain a separate integration/publication update.
 The candidate is not merged or deployed, and does not replace the running source.
 
 The [delivery audit](YEAR_TWO_DELIVERY_AUDIT.md) separates the achieved
