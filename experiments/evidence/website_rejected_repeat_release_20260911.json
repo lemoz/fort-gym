@@ -1,0 +1,81 @@
+{
+  "schema_version": "fortgym.website-rejected-repeat-release/v1",
+  "release_revision": "d4a3745b70ecf7fc78835c435aca73d4e4aaaa25",
+  "assets": {
+    "/results": {
+      "sha256": "6d31c6932c985504e08faac1c33ccea9ab5db4ee06892182ef733fcdbc60bfb4",
+      "mime": "text/html"
+    },
+    "/static/displayed-key-comparison.json": {
+      "sha256": "d5d0a334e02017288595bafa825ba0ebcd2e2e669ac4864150ba79610de47baf",
+      "mime": "application/json"
+    },
+    "/static/displayed-key-comparison.mjs": {
+      "sha256": "c0fafa39c173aaf0f43c2b574023c1da91ab9a3ce8efc26301c5a5d86dbd4059",
+      "mime": "text/javascript"
+    },
+    "/static/recordings/catalog.json": {
+      "sha256": "9bb691fb7fe0f27b5ba74ada2aee376564e5889f0d9123b44f9051897575fbf3",
+      "mime": "application/json"
+    },
+    "/static/recordings/previews.json": {
+      "sha256": "6fb32fa7f77068ef622e081ca95efc9ed47c02e4cd930e04774a05b9568d8c57",
+      "mime": "application/json"
+    },
+    "/static/recordings/terra-matched-r2-1-64.json": {
+      "sha256": "d34f451723a40ef11c2cb966b2c568702e44489163b51e79721bffb15aeaeeb1",
+      "mime": "application/json"
+    },
+    "/worlds": {
+      "sha256": "a30ba2b0b686e0189409d0764482a8c95149f4455323fa674305fe63d0d7102a",
+      "mime": "text/html"
+    }
+  },
+  "recordings": 9,
+  "captured_frames": 736,
+  "matched_rows": 6,
+  "published_results": 4,
+  "historical_recordings_unchanged": true,
+  "immutable_source_links_resolve": true,
+  "relay_snapshot": {
+    "run_id": "bindings-comparison-20260911-sol-r2",
+    "model": "gpt-5.6-sol",
+    "status": "running",
+    "observed_at_unix": 1789171374
+  },
+  "passed": true,
+  "website_url": "https://fortgym.live/results#matched-comparison",
+  "replay_url": "https://fortgym.live/?recording=terra-matched-r2-1-64#watch-root",
+  "source_report_revision": "d7944ae7114fcaff185ad880dbb9d1747b390112",
+  "observer_revision": "7cd3b96763998abfd99ed623630d658320a27918",
+  "public_acceptance_sha256": "d82b4bb7faeee0918767ee89df5039c382573b4a1e01462b4fcb540c4ed89b2c",
+  "build_receipt_sha256": "18ed5dd6de0344d53db973f65eb9ee449353e570ef07e9a539d30f82775c4fb3",
+  "ci": {
+    "run_id": 34660113400,
+    "head_sha": "d4a3745b70ecf7fc78835c435aca73d4e4aaaa25",
+    "status": "completed",
+    "conclusion": "success"
+  },
+  "validation": {
+    "full_local_tests_passed": 1245,
+    "skipped": 5,
+    "warnings": 7,
+    "node_playback_publication_tests_passed": 36,
+    "selected_ruff_passed": true,
+    "selected_mypy_passed": true,
+    "browser_visual_qa_performed": false
+  },
+  "native_and_api_service_identities_unchanged": true,
+  "database_counts_unchanged": true,
+  "untracked_files_preserved": true,
+  "service_restarts": 0,
+  "new_hosts": 0,
+  "main_merge": false,
+  "new_model_calls_by_website_tools": 0,
+  "new_gameplay_inputs_by_website_tools": 0,
+  "terra_repeat_rejected_commands_visible": 9,
+  "first_attempt_reexports_byte_identical": true,
+  "active_sol_relay_source_changed": false,
+  "strong_model_ranking_supported": false,
+  "full_goal_complete": false
+}
