@@ -50,7 +50,7 @@ def seed(directory):
 
 
 def run_fixture(attempt, origin, mode, *, model="gpt-6-astra", segments=1, token_limit=None,
-                dispatch_limit=None, budget_window=False, extension=None):
+                dispatch_limit=None, budget_window=False, extension=None, declaration_override=None):
     condition = config(model=model)
     if token_limit is not None:
         condition["max_total_tokens"] = token_limit
@@ -104,6 +104,8 @@ def run_fixture(attempt, origin, mode, *, model="gpt-6-astra", segments=1, token
         )
         if extension is not None:
             declaration["budget_extension"] = extension
+    if declaration_override is not None:
+        declaration = deepcopy(declaration_override)
     write(condition_path, condition)
     write(declaration_path, declaration)
     inputs = prepare_inputs(condition_path, declaration_path, origin, campaign_id, mode=mode)
