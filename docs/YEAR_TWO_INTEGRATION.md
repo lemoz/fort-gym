@@ -70,5 +70,24 @@ declared JSON without launching anything.
 
 The verified public release and partial review records are copied byte-for-byte
 from goal-branch commit `1fcc81bda`. The original native runtime, all previous
-recordings and active observer source are unchanged. This update still requires
-its own exact-head CI and the remaining integration review before main merge.
+recordings and active observer source are unchanged. Exact-head CI `34667725373`
+passed for `bce580ae30782b258453889283c10f1ccba06a7b`; the remaining integration
+review is still required before main merge.
+
+## Isolated Python setup and additional source review
+
+The [setup/review record](../experiments/evidence/keyboard_integration_setup_review_176_20260912.json)
+binds an isolated checkout and new Python 3.11.15 environment to that same head.
+Installation and dependency checks passed. Comparison reports matched the
+bundled tables, all three declared model conditions loaded, and the local CLI
+served twelve byte-verified recordings with 928 frames. Without an observer,
+the public endpoint correctly reported no connected session. The local server
+was stopped after verification.
+
+All 659 focused tests passed in the fresh environment, with three existing
+dependency/deprecation warnings. The record adds full-source review hashes for
+sixteen measurement, accounting, historical-result and observer modules, plus
+explicit API/Lua deltas and the screen-only observation boundary. This is a
+partial implementer review, not independent approval or review of every changed
+file. Generated protocol bindings and fresh-machine native provisioning remain
+unverified; no game, VM or model was launched for these checks.

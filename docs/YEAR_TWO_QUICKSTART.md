@@ -57,6 +57,21 @@ observer, recordings remain usable; the website does not invent an active run.
 `FORT_GYM_PUBLIC_CAMPAIGN_DIR` optionally selects a directory containing an
 allowlisted observer derivative. Never point it at private model transcripts.
 
+### Verified setup scope
+
+An isolated checkout of `bce580ae30782b258453889283c10f1ccba06a7b`, installed
+in a new Python 3.11.15 virtual environment using the commands above, passed
+dependency checks, all three model-condition parsers, the comparison/window
+commands, and local HTTP checks for twelve recordings containing 928 frames.
+The same fresh environment passed 659 focused tests. The local server was
+stopped afterward. See the [setup and review record](../experiments/evidence/keyboard_integration_setup_review_176_20260912.json)
+for the resolved dependency versions and exact source boundary.
+
+This verifies the Python tools and bundled viewer, not a fresh game installation,
+generated DFHack protocol bindings, browser visual behavior or a portable native
+owner. Those checks made no model calls and launched no game or VM. Installing
+the optional provider dependencies does not authorize disabled providers.
+
 ## Running a new native experiment
 
 The game-side entry points are `scripts.campaign_keyboard_trial run` for a fresh
