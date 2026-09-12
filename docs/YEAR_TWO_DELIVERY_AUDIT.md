@@ -17,10 +17,16 @@ frame was published. Both project VMs and data disks are stopped/closed, with
 native cleanup, original saves, declared resources and prior inventory verified.
 The guest poweroff command returned one; the subsequent VM stop returned zero.
 
-A separate `codex/selected-workshop-courier-v5` branch contains the one-line
-forwarding correction and four real-courier offline regressions, all reproduced
-as failures before the fix. Its focused suite passes 217 tests. The frozen
-study checkout is unchanged. Further v1 attempts are halted pending a declared
+A separate [courier repair](../experiments/evidence/selected_workshop_courier_repair_20260912.json)
+is pushed at `5ddf1e6718dab2e8351e8dc24a2afe5071cd2592` in draft
+[PR178](https://github.com/lemoz/fort-gym/pull/178), stacked on the frozen
+shortcuts branch, not main. It contains the one-line forwarding correction and
+four real-courier offline regressions, all reproduced as failures before the
+fix. Its focused suite passes 217 tests. The full run passes 5,693 with ten
+skips and one sandbox-denied localhost bind; the same failed test passes with
+the required permission. The original report is retained. Exact-head hosted
+CI was in progress when this repair receipt was captured. The frozen study
+checkout is unchanged. Further v1 attempts are halted pending a declared
 corrected-runtime revision; the failed identity will not be reused or hidden.
 This is an implementation step under the active goal, not a new approval gate.
 The keyboard replay below still awaits website catalog publication.

@@ -1,0 +1,54 @@
+{
+  "schema_version": "fortgym.selected-workshop-courier-repair/v1",
+  "date_utc": "2026-09-12",
+  "source_revision": "5ddf1e6718dab2e8351e8dc24a2afe5071cd2592",
+  "frozen_study_source_revision": "422c915d23bf828371be481d3079a23bbb3e9e94",
+  "frozen_study_source_unchanged": true,
+  "branch": "codex/selected-workshop-courier-v5",
+  "remote_head_verified": true,
+  "pull_request": 178,
+  "pull_request_draft": true,
+  "pull_request_base": "codex/selected-workshop-shortcuts",
+  "main_merged": false,
+  "production_change": "Forward the declared prompt_profile for v5 in keyboard_courier.answer_request, as already done for v3 and v4.",
+  "instruction_text_or_game_controls_changed": false,
+  "models_budgets_or_resources_changed": false,
+  "original_failure_receipt_sha256": "f34712a34d33d9293aa7aeead1f0e9e67455708a14286638fca7cc49308e29a4",
+  "red_regressions": {
+    "failed": 4,
+    "sha256": "3899cb4d5ab18d6d7af902c7f9fa319f2523a5c5d9ad020195ae8cee3190ed26"
+  },
+  "focused_tests": {
+    "passed": 217,
+    "warnings": 2,
+    "sha256": "20a051c87c932b5c16b9f045edefbceaba3a1dd4a9d5a0f3c705e1e5fe520e93"
+  },
+  "full_local_run": {
+    "passed": 5693,
+    "failed": 1,
+    "skipped": 10,
+    "warnings": 7,
+    "sha256": "d4924901011200784003258ad7037e259e8a433475ba271e5c538f049ee3a89a",
+    "sole_failure": "test_available_port_skips_bound_port: sandbox denied binding 127.0.0.1"
+  },
+  "unchanged_failed_test_authorized_rerun": {
+    "passed": 1,
+    "warnings": 2,
+    "sha256": "f4b13ca03250e3c7cce66e25abadbb96163f9b0cbef6ee0e0bf2797bd73705c1",
+    "code_workaround": false
+  },
+  "ruff_changed_files_passed": true,
+  "diff_check_passed": true,
+  "hosted_ci_at_capture": {
+    "run": 34695820599,
+    "head": "5ddf1e6718dab2e8351e8dc24a2afe5071cd2592",
+    "status": "in_progress"
+  },
+  "provider_calls_during_repair_tests": 0,
+  "new_native_acceptance": false,
+  "corrected_runtime_declared": false,
+  "v1_comparison_halted_for_declared_revision": true,
+  "both_project_vms_stopped": true,
+  "keyboard_128_replay_website_published": false,
+  "full_goal_complete": false
+}
