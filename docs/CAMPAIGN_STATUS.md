@@ -16,10 +16,10 @@ cohort below. Long-term self-sufficiency and the full delivery goal remain open.
 
 All six displayed-key fresh attempts have completed and passed their terminal
 audits at 64 responses. The [source-linked index](../experiments/evidence/keyboard_binding_comparison_20260911_index.json)
-retains two attempts each for Sol, Terra and Astra. The [public release](../experiments/evidence/website_astra_own_save_release_20260912.json)
-now contains all six fresh results, thirteen recording windows and 992 captured
+retains two attempts each for Sol, Terra and Astra. The [public release](../experiments/evidence/website_repeat_outcomes_release_20260912.json)
+now contains all six fresh results, fourteen recording windows and 1,056 captured
 decisions, with a selector for the declared 64- and 128-decision budgets.
-The older twelve recording files remain unchanged.
+The older thirteen recording files remain unchanged.
 
 The first Sol r1 continuation retained an
 [infrastructure startup failure](../experiments/evidence/keyboard_binding_comparison_sol_r1_128_startup_failure_20260911.json)
@@ -73,9 +73,9 @@ farms. Food and drink stocks fell to 36 and 26. This is elapsed-time progress,
 not demonstrated fortress development or sustainable management. The original
 save, memory and usage were preserved. Native/VM teardown and stopped-relay
 publication passed; no local game is running. Its final checkpoint has not had a
-separate fresh reload. At that point the index had four 128-budget outcomes; this
-new Terra result's replay and integration update remain pending. Sol r2 and
-Astra r2 are next, subject to the unchanged capacity and allowance checks.
+separate fresh reload. At that point the index had four 128-budget outcomes;
+its replay and integration were then pending. The following Sol r2 capacity
+failure supersedes that earlier launch-queue snapshot.
 
 Sol r2's read-only preflight passed its own-save, frozen-source, CI and current
 allowance checks. It launched no VM or model. Guest free space is checked by the
@@ -93,22 +93,29 @@ and usage offline. The comparison preserves that 64-response, 10,400-tick,
 The index now has five 128-budget outcomes: three saved windows and two startup
 infrastructure failures. Astra r2 has not launched; do not consume its identity
 against the same known capacity shortage. No retry, evidence deletion, disk
-growth, paid fallback or cloud VM was used. Publishing Terra r2's replay and
-these latest results, remaining source review and portable setup work can
-continue while native capacity remains unresolved. The full goal stays active.
+growth, paid fallback or cloud VM was used. Terra r2's replay and both latest
+table outcomes are now verified live at website revision
+`674a12c7c3ba499739e28959bd6c864386c14e33`, following CI `34670777013`.
+The website passed 1,272 Python tests and 51 Node contracts. Public HTTPS checks
+verified all fourteen recordings and the immutable source links; original
+recordings, service identities, database counts and stopped relay are unchanged.
+Remaining source review and portable setup work continue while native capacity
+remains unresolved. The full goal stays active.
 
 The isolated integration candidate is pushed as
 [draft PR176](https://github.com/lemoz/fort-gym/pull/176), head
-`3b5b0aa1f6b12fae042a7c7304e74eb6be1effd3`. It now includes Astra r1's result,
-index and thirteen-recording viewer. Its 136 focused Python tests and 50 Node
-contracts pass; exact-head CI `34669546552` passed. The
-earlier combined candidate passed 5,420 full-suite tests and CI `34667725373`.
+`062ee6252b899bcbe94f4281a0c8643ae4265a11`. It includes the Terra r2/Sol r2
+results, five-outcome128 index and fourteen-recording viewer. Its updated full
+suite passes 5,426 Python tests with ten skips and seven warnings, plus all 51
+Node contracts and 126 focused comparison/viewer/exporter tests. Exact-head
+CI `34671086332` is being checked separately; the earlier candidate's CI
+`34669546552` passed.
 The [additional setup and source review](../experiments/evidence/keyboard_integration_setup_review_176_20260912.json)
 verifies an isolated Python/viewer install and 659 focused tests on its exact
 prior head. Generated bindings and fresh-machine native provisioning are still
 unverified, and source review is partial rather than merge approval. The current
-source reader exactly reproduces the public three-result128 and six-result64
-tables; Terra r2's just-completed result is a later update.
+source reader exactly reproduces the public five-result128 and six-result64
+tables.
 The candidate is not merged or deployed, and does not replace the running source.
 
 The [delivery audit](YEAR_TWO_DELIVERY_AUDIT.md) separates the achieved
