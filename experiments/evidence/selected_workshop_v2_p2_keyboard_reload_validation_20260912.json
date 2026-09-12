@@ -1,0 +1,43 @@
+{
+  "schema_version": "fortgym.selected-workshop-reload-validation/v1",
+  "campaign_id": "selected-workshop-v2-p2-keyboard",
+  "date": "2026-09-12",
+  "actual_receipt": {
+    "file": "selected_workshop_v2_p2_keyboard_64_20260912.json",
+    "sha256": "86ae480845478a8d6034f383c1580c4878c6ab14443a369da4816b7be8e2e989"
+  },
+  "source_revision": "5ddf1e6718dab2e8351e8dc24a2afe5071cd2592",
+  "helper": {
+    "helper": "capture_v2_p2_keyboard_continuation.py",
+    "helperSha": "181cf91fac826c36426b8c9ced9ce973c96cc69694e564ace233f674a0f8f347",
+    "test": "test_v2_p2_keyboard_reload_evidence.py",
+    "testSha": "3d617f36b20a4c792db5081c691aea2498e66bef1e8d92bd199b7b4ca4ed83de",
+    "report": "v2-p2-keyboard-reload-final-tests.xml",
+    "reportSha": "f6af0292e5b3a78931b34dc01454a5714d04b29e8bc192c3a3dc414f8f485491",
+    "passed": 78,
+    "warnings": 2,
+    "readme": "v2-p2-keyboard-reload-README.md",
+    "executed": true
+  },
+  "offline_tests": {
+    "passed": 78,
+    "failed": 0,
+    "warnings": 2,
+    "ruff": "passed",
+    "scope": "Public receipt binding and owner/window transitions, continuation preparation, and terminal-audit boundaries. Not a completed 128-response gameplay result."
+  },
+  "actual_execution": {
+    "native_checkpoint64_audit_passed": true,
+    "first_vm_teardown_verified": true,
+    "actual_continuation_clock_and_metrics_match": true,
+    "exact_agent_state_and_history_match": true,
+    "trace_and_usage_prefixes_preserved": true,
+    "first_continuation_response_tokens": 43251,
+    "public_frame_verified": 68,
+    "helper_consumed": true,
+    "gameplay_inputs_by_verifier": 0,
+    "model_calls_by_verifier": 0
+  },
+  "terminal_128_verified": false,
+  "full_goal_complete": false
+}
