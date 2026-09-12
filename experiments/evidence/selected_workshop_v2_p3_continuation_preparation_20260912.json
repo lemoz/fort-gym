@@ -1,0 +1,61 @@
+{
+  "schema_version": "fortgym.selected-workshop-final-pair-continuation-preparation/v1",
+  "date_utc": "2026-09-12",
+  "status": "prepared_not_executed",
+  "source_revision": "5ddf1e6718dab2e8351e8dc24a2afe5071cd2592",
+  "image": "sha256:dcbc9b042538401a146159fcf5f6456b21dc900c4649369c008f7a77f661fed3",
+  "study_declaration_sha256": "e325f69f40978a9a0b2ed962a505c893aa7ea397b569e3300455972d7b94ebc8",
+  "preceding_fresh_preparation": "selected_workshop_v2_p3_fresh_preparation_20260912.json",
+  "artifact_directory": "fort_gym/artifacts/selected-workshop-study-20260912",
+  "artifact_sha256": {
+    "prepare_v2_p3_shortcuts_continuation.py": "25d2fafec194e0646468e6a6f0a12ecf93a2f7e537126a119340872a1decd1a9",
+    "run_v2_p3_shortcuts_continue.py": "44ddfcb1e236611339c8966ef1284c41b01be57a0401782d725bb42cb9250275",
+    "relay_v2_p3_shortcuts_continue.py": "106c6aa5e66f3b1eb21f3828b6d3aea3aaa4ef619017ddc547ae67c9f1432594",
+    "test_v2_p3_shortcuts_continuation_preparation.py": "dad494a43af344b37db2d8019bb49544fe5a8261a0a467878a301cf9abe9297f",
+    "prepare_v2_p3_keyboard_continuation.py": "5785403bcc0a0fdab17b9769de1b7e066c98a1efcd36241d0a9eaa54fdb24f43",
+    "run_v2_p3_keyboard_continue.py": "698f4a8842d2abfe6621178b9815b804a7c4ccecfdb4d8a812cabcc65e40fb6c",
+    "relay_v2_p3_keyboard_continue.py": "34388738d61b4c8e5cf464bce58c27f6d979a3ea697c817ce97dc9943852326a",
+    "test_v2_p3_keyboard_continuation_preparation.py": "a6c1917acf465defa95acd7e87b92584e2a5bed48bd24f76baeb4d5e3dacd076",
+    "v2-p3-continuation-preparation-README.md": "7bed551c3e5e747951524346d0318a5317f61f2523c4919d62a9e3ac8a288839",
+    "v2-p3-continuation-preparation-tests.xml": "175b7e551dfbefe3136093bd5db5b65ac6d7762f7127eac9a128cdb4acbba38b"
+  },
+  "attempts": [
+    {
+      "campaign_id": "selected-workshop-v2-p3-shortcuts",
+      "study_order_one_based": 5,
+      "control_profile": "native_keyboard_selected_workshop_jobs/v1"
+    },
+    {
+      "campaign_id": "selected-workshop-v2-p3-keyboard",
+      "study_order_one_based": 6,
+      "control_profile": "native_keyboard_bindings/v1"
+    }
+  ],
+  "bounds": {
+    "first_step": 64,
+    "window_end_decision": 128,
+    "max_new_responses": 64,
+    "max_cumulative_returned_tokens": 8000000,
+    "own_checkpoint_required": true,
+    "exact_original_condition_required": true,
+    "reset_memory": false,
+    "reset_usage": false,
+    "prompt_change": false,
+    "budget_extension": false,
+    "max_simultaneous_vms": 1,
+    "mandatory_teardown": true
+  },
+  "verification": {
+    "passed_tests": 78,
+    "warnings": 2,
+    "scope": "Combined final-pair fresh/continuation offline tests, including terminal-owner rejection and phase/profile-specific public-relay checks.",
+    "ruff_passed": true,
+    "final_pair_audit_window_operation_and_continuation_outputs_absent": true,
+    "native_launch_performed": false,
+    "model_calls": 0,
+    "cloud_vm_created": false,
+    "active_source_changed": false
+  },
+  "remaining": "Actual fresh runs and audited first64 saves must precede these continuations. Capture each stopped public first64 frame and actual reload separately. Final native audits and replay publication are still required; this preparation supplies none of those outcomes.",
+  "full_goal_complete": false
+}

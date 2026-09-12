@@ -1,0 +1,28 @@
+{
+  "schema_version": "fortgym.workshop-job-clock-feedback-ci/v1",
+  "date_utc": "2026-09-12",
+  "source_revision": "af922cb4c3e0cf33bfe62cf6ba702bdf83363e1a",
+  "preparation_receipt": "workshop_job_clock_feedback_preparation_20260912.json",
+  "pull_request": "https://github.com/lemoz/fort-gym/pull/179",
+  "ci_run": {
+    "id": 34714726586,
+    "url": "https://github.com/lemoz/fort-gym/actions/runs/34714726586",
+    "head_sha": "af922cb4c3e0cf33bfe62cf6ba702bdf83363e1a",
+    "status": "completed",
+    "conclusion": "success",
+    "job_id": 103609820744,
+    "job_completed_at": "2026-09-12T19:44:00Z",
+    "command": "python -m pytest -q",
+    "runner": "ubuntu-latest",
+    "python_version": "3.11",
+    "passed": 5544,
+    "skipped": 173,
+    "warnings": 7
+  },
+  "scope": "Exact-head hosted regression tests passed. Hosted skips differ from the retained local suite, which passed 5707 with 10 skips. CI is not native gameplay acceptance or a merge/deploy.",
+  "native_acceptance_performed": false,
+  "active_cohort_source_unchanged": "5ddf1e6718dab2e8351e8dc24a2afe5071cd2592",
+  "main_merged": false,
+  "website_deployed": false,
+  "full_goal_complete": false
+}

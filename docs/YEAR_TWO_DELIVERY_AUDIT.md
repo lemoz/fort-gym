@@ -40,7 +40,10 @@ public HTTPS frame 69 matches its captured request and chosen action. It is
 continuing toward decision 128, not a terminal result. [Terminal tools](../experiments/evidence/selected_workshop_v2_p2_shortcuts_terminal_preparation_20260912.json)
 remain prepared, not consumed. [Pair-three fresh-window operators](../experiments/evidence/selected_workshop_v2_p3_fresh_preparation_20260912.json)
 passed 26 offline tests but have not started. They follow in the original
-declared order; no remaining attempt is silently replaced.
+declared order; no remaining attempt is silently replaced. Their
+[own-save continuation operators](../experiments/evidence/selected_workshop_v2_p3_continuation_preparation_20260912.json)
+are also prepared, with 78 combined fresh/continuation tests passed. None of
+those operators or relays has run, and no future checkpoint is assumed.
 
 A [separate workshop job-screen feedback correction](../experiments/evidence/workshop_job_clock_feedback_preparation_20260912.json)
 is pushed for draft review as PR179. It recognizes the exact paused `Workshop/Job`
@@ -48,6 +51,9 @@ focus without inserting keys, dismissing menus or relabeling historical timeouts
 The active study source/image are unchanged. Local verification passed 5,707
 tests with ten skips and 128 final focused checks. Broad lint/type failures match
 the unchanged baseline; native acceptance of this correction is still pending.
+[Exact-head hosted CI](../experiments/evidence/workshop_job_clock_feedback_ci_20260912.json)
+has now passed 5,544 tests with 173 skips and seven warnings. That hosted result
+does not replace the differently skipped local suite or the native-game gate.
 
 The [latest verified website delivery](../experiments/evidence/selected_workshop_v2_p2_keyboard_website_20260912.json)
 is revision `553528797ec140f2f2d50b623897cb3b3cf33811`: twenty original recording
