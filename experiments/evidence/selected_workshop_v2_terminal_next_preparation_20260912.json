@@ -1,0 +1,76 @@
+{
+  "schema_version": "fortgym.selected-workshop-terminal-next-preparation/v1",
+  "date_utc": "2026-09-12",
+  "study_id": "selected-workshop-v2",
+  "status": "prepared_not_executed",
+  "source_revision": "5ddf1e6718dab2e8351e8dc24a2afe5071cd2592",
+  "image": "sha256:dcbc9b042538401a146159fcf5f6456b21dc900c4649369c008f7a77f661fed3",
+  "study_declaration_sha256": "e325f69f40978a9a0b2ed962a505c893aa7ea397b569e3300455972d7b94ebc8",
+  "current_campaign": "selected-workshop-v2-p1-shortcuts",
+  "next_campaign": "selected-workshop-v2-p1-keyboard",
+  "source_and_conditions_unchanged": true,
+  "helpers_sha256": {
+    "settle_v2_p1_shortcuts.py": "f8b0c938dcf3c137fadec0794a43793abb6b8a4b200e024c11a799c9c6e8e662",
+    "test_v2_shortcuts_settlement.py": "6d7b605d8efc259c7a8f93e903181950f9d25c830783bd39085a91858c556db8",
+    "run_v2_p1_keyboard_fresh.py": "f07f6cf1141da18f463f8c427813b95b1eff288275f113212d16ee8821054034",
+    "test_v2_keyboard_preparation.py": "68d13080c6a481b8640dd815ccea1a0a55fb2ffb090577ac2060b72187ebe368"
+  },
+  "validation": {
+    "operator_tests": {
+      "passed": 45,
+      "failed": 0,
+      "report_sha256": "0f3d90bec28a6570407cfee334624bc36747366a579f1208007dda6a00b36e71"
+    },
+    "result_summary_and_comparison_tests": {
+      "passed": 117,
+      "failed": 0,
+      "report_sha256": "19dddf0661f73fa565110dbc872bb0a4fe2bfe8100dd9ace361c4c72b863fc1e"
+    },
+    "ruff": "passed",
+    "exact_head_remote_ci_verified": false
+  },
+  "terminal_helper": {
+    "requires_finished_owners_and_teardown": true,
+    "current_vm_and_disk_checks": true,
+    "audits_original_two_window_native_chain": true,
+    "output_decisions": 128,
+    "write_once": true,
+    "separates_keyboard_keys_workshop_queues_and_actual_ticks": true,
+    "queued_jobs_are_not_completed_products": true,
+    "gameplay_inputs": 0,
+    "model_calls": 0,
+    "website_publication": false,
+    "executed": false
+  },
+  "next_attempt": {
+    "mode": "fresh",
+    "original_seed": true,
+    "empty_initial_memory": true,
+    "condition": "keyboard-condition.json",
+    "trial": "keyboard-trial.json",
+    "same_model_source_image_and_resources": true,
+    "requires_previous_audited_128_result": true,
+    "one_existing_local_vm": true,
+    "mandatory_teardown": true,
+    "launched": false
+  },
+  "live_verification": {
+    "mode": "continue",
+    "status": "running",
+    "decision": 88,
+    "owner_alive": true,
+    "observed_at_unix": 1789224902,
+    "proof_sha256": "e5edfa438e0e5ecfe2d47394fe2b6f98e483011c239a35e4c69775662616a025",
+    "public_payload_sha256": "0737c50f9f6b4ad4115577513b82f9457f62b11dddb29a88494904abf1ef9321",
+    "original_request_sha256": "62d89e0a453d1753a3d8e7dae01da9d8ab6faded86f87f3947fff946ea5c6c2d",
+    "original_frame_and_action_verified": true,
+    "action_status": "chosen_not_execution_verified",
+    "browser_visual_qa": false,
+    "note": "The initial sandboxed process-identity check was denied; the unchanged verifier passed with permission. This is an observed live frame, not terminal acceptance."
+  },
+  "checkpoint_128_verified": false,
+  "paired_comparison_complete": false,
+  "full_goal_complete": false,
+  "actual_subscription_charge_usd": null,
+  "note": "Preparation does not restart or intervene in the current run. The existing bounded continuation owns teardown. No new VM, provider call, API fallback, reset, website release or main merge is performed by these preparation checks."
+}

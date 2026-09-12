@@ -23,6 +23,16 @@ result or paired comparison. The bounded continuation owner still owns teardown.
 A 64-frame replay (ten shortcut actions) was exported and validated but has not
 been added to the public catalog. Source/image and model conditions are unchanged.
 
+The [terminal audit and next keyboard attempt are now prepared](../experiments/evidence/selected_workshop_v2_terminal_next_preparation_20260912.json),
+with 45 offline operator checks and 117 result-summary/comparison tests passing.
+The terminal helper requires both finished owners, current VM/disk teardown and
+the complete audited own-save chain before exporting the 128-frame result.
+The next operator uses the original fresh seed and unchanged keyboard condition.
+Neither helper has executed its terminal audit or next launch. A fresh HTTPS
+check verifies the existing continuation's original frame/action at decision88;
+the current owner remains active. No runtime-source change, website release,
+new VM, main merge or completed paired comparison is claimed by this preparation.
+
 Earlier [v2 running progress](../experiments/evidence/selected_workshop_v2_p1_shortcuts_progress_20260912.json):
 20 completed responses, 549,985 returned tokens, 8,400 elapsed ticks, seven living
 dwarves and two completed workshops. Two accepted workshop actions encountered
