@@ -1,0 +1,40 @@
+{
+  "schema_version": "fortgym.native-keyboard-restart-summary/v1",
+  "source_revision": "93af69fe4866cf325dcae3a8b4099bc458b6fdfc",
+  "model": "gpt-6-astra",
+  "reasoning_effort": "medium",
+  "control_profile": "native_keyboard/v2",
+  "observation_profile": "native_screen_text/v1",
+  "snapshot_profile": "native_menu_preserving_save/v1",
+  "original_failure": "astra_native_keyboard_checkpoint_failure_20260907",
+  "parent_checkpoint_sha256": "073ac57c4b80227368d5bd6b6367ba4e214fc629dbbaf604c498b24b7a80e642",
+  "checkpoint_sha256": "aabb513a50309812f900d9e346807710acb0935f271a200e9df4cda59aef1cdb",
+  "independent_retained_evidence_audit_passed": true,
+  "native_checkpoint_verified": true,
+  "teardown_verified": true,
+  "source_checkpoint_and_failed_window_unchanged": true,
+  "model_memory_restored_from_checkpoint": true,
+  "uninterrupted_campaign": false,
+  "historical_tail_replayed": false,
+  "independent_comparison_attempt": false,
+  "progress": {
+    "restored_checkpoint_cursor": 184,
+    "checkpoint_cursor": 200,
+    "new_model_responses": 16,
+    "new_accepted_decisions": 16,
+    "cumulative_model_responses": 216,
+    "new_elapsed_ticks": 2000,
+    "retained_elapsed_ticks": 46000,
+    "discarded_native_ticks": 2000
+  },
+  "usage": {
+    "new_tokens": 518169,
+    "campaign_tokens": 6984036,
+    "all_attempt_tokens": 7053040,
+    "lost_tail_tokens_retained": 531913,
+    "historical_failed_delivery_tokens": 69004,
+    "reported_charge_usd": null,
+    "cost_basis": "codex_subscription_charge_unreported/v1"
+  },
+  "scope": "Authored non-content summary of a completed, audited loss-aware restart. Astra chose 16 new accepted responses after restoring checkpoint 184 and its memory. All 200 prior responses remain accounted, including the unsaved tail. New branch checkpoint 200 is verified; it is not the original failed window's missing state. Retained elapsed time is 46,000 ticks, not the sum of both branches. No historical action was replayed. This is not uninterrupted play, an independent comparison attempt, fortress-sustainability evidence, or a live activity indicator."
+}

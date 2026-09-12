@@ -1,0 +1,28 @@
+{
+  "schema_version": "fortgym.codex-keyboard-window/v1",
+  "condition_id": "astra-medium-direct-rpc-included-headroom-from-903",
+  "original_condition": "campaign_astra_keyboard_included_headroom_20260910.json",
+  "continuation_from_next_step": 903,
+  "steps_per_segment": 32,
+  "max_segments": 1,
+  "reset_memory": false,
+  "reset_usage": false,
+  "strategy_intervention": false,
+  "snapshot_profile": "native_menu_preserving_save/v4",
+  "private_measurement_profile": "fortgym.campaign-food-measurement/v1",
+  "private_measurement_timeout_seconds": 15,
+  "runtime_rpc_transport": "native-rpc",
+  "resource_observation_profile": "fortgym.native-resource-observations/v1",
+  "host_read_policy": "owned_exchange_reads_three_attempts_with_private_receipts/v1",
+  "container_init_required": true,
+  "hypothesis": "Continue the same autonomous Astra fortress from checkpoint 903 for one bounded 32-decision segment. Observe whether the existing food and drink production sustains the growing fortress while progressing toward its first elapsed year. This is exploratory continuation, not a matched comparison. The only operating-policy change is a declared included-usage admission cutoff of 98 rather than 90 percent; actual provider limit checks remain enabled before every call.",
+  "continuity_note": "Resume original checkpoint 903, manifest 08142546e6f470fe0d83e91bdc50db9efe332378ffaaf30613a27e91d72e5e37, at 268582 elapsed ticks. Retain 1085 responses, 34521087 campaign tokens, 34590091 all-attempt tokens, exact saved memory/configuration and all six loss records with 48429 known lost ticks plus unknown remainders. No rollback, replay, prompt change or human gameplay rescue. Checkpoint 903 separately passed a fresh native reload; this run must still verify its own load. Sealed prelaunch window z remains unchanged.",
+  "measurement_note": "Keep the existing private 15-second raw-edible food scan with trader/job flags, outside the model's native-screen observation. Y ended with 47 raw-edible units, zero trader/in-job units, 520 drinks, 16 living citizens and no recorded deaths; ownership, accessibility and production/consumption rates remain unmeasured. Its native evidence includes 11 beds, eight completed farms, four workshops, one table and one chair. Retain all resource readings: Y reached its 1536 MiB limit with 3371 memory-limit events and no OOM or OOM kill. Headroom remains unproven.",
+  "budget_note": "At most 32 additional decisions, reaching at most 1117 accounted responses. Preserve the inherited 1152-dispatch and 40-million-token ceilings and every previous budget extension; no extension or reset in this window. Fresh subscription admission before every call now uses an explicitly declared 98-percent cutoff, still below the included-usage limit and rejecting any reached provider limit. There is no atomic quota reservation or guaranteed number of remaining calls. No API fallback, local model, purchase or reset. The owner-authorized project dollar cap is unchanged; actual charges remain unreported, not inferred from token counts. One owned local VM at a time, 2 CPUs, 3 GiB VM memory, 1536 MiB container memory and 256 tasks, with mandatory teardown. No merge or deployment.",
+  "admission_policy_change": {
+    "previous_condition": "campaign_astra_keyboard_memory_contract_20260909.json",
+    "previous_maximum_included_usage_percent": 90,
+    "maximum_included_usage_percent": 98,
+    "basis": "Explicitly version the harness operating threshold for continued work within the existing user-authorized experiment and spending scope; this does not change provider limits, consume reset credits or authorize purchases."
+  }
+}

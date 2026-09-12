@@ -1,0 +1,106 @@
+{
+  "schema_version": "fortgym.native-keyboard-continuation-summary/v2",
+  "status": "completed",
+  "source_revision": "c9b8607cc13047bf5e5202f397ab44bc6522f59f",
+  "model": "gpt-6-astra",
+  "reasoning_effort": "medium",
+  "control_profile": "native_keyboard/v2",
+  "observation_profile": "native_screen_text/v1",
+  "captured_screen_size": [
+    120,
+    40
+  ],
+  "snapshot_profile": "native_menu_preserving_save/v3",
+  "parent_record": "astra_native_keyboard_quarter_year_continuation_20260908",
+  "parent_checkpoint_sha256": "7bc4350c68c1ecb81bb88a7df58ea3e34db95c9bfe7f926d633858bb6de6eae7",
+  "parent_checkpoint_cursor": 503,
+  "steps_per_segment": 64,
+  "checkpoints": [
+    {
+      "cursor": 567,
+      "sha256": "045fcbbfe8d34fc8b29ee1f14ece2a672b65ff1f68edce044c746dc0d3d5d17d",
+      "elapsed_native_ticks": 122200,
+      "parent_sha256": "7bc4350c68c1ecb81bb88a7df58ea3e34db95c9bfe7f926d633858bb6de6eae7",
+      "checkpoint_verified": true
+    }
+  ],
+  "new_model_calls": 64,
+  "new_accepted_decisions": 64,
+  "cumulative_model_responses": 583,
+  "new_elapsed_ticks": 7200,
+  "retained_elapsed_ticks": 122200,
+  "new_tokens": 1954115,
+  "campaign_tokens": 18636365,
+  "all_attempt_tokens": 18705369,
+  "discarded_native_ticks": 2000,
+  "native_save_loss_restarts": 1,
+  "reported_charge_usd": null,
+  "cost_basis": "codex_subscription_charge_unreported/v1",
+  "independent_retained_evidence_audit_passed": true,
+  "original_checkpoint_unchanged": true,
+  "memory_and_usage_preserved_across_segments": true,
+  "inherited_discontinuity_unchanged": true,
+  "uninterrupted_campaign": false,
+  "new_restart_performed": false,
+  "reset_memory": false,
+  "reset_usage": false,
+  "strategy_intervention": false,
+  "historical_failed_run_reclassified_as_success": false,
+  "final_checkpoint_fresh_reload_verified": false,
+  "teardown_verified": true,
+  "scope": "The native game completed 64 accepted decisions from checkpoint 503, advanced 7,200 ticks and saved checkpoint 567. The outer operator failed while observing the exchange directory after all 64 responses returned. Its exit-137 error remains retained; its underlying cause is unverified. Independent native save, lineage, usage, gameplay and clock audits passed, as did game/container/VM teardown. This is native completion with an operator warning, not a wholly clean run. Population increased from seven to twelve, with no recorded citizen deaths. Completed farm plots, installed beds and workshops stayed at five, four and three; pending plots do not count as completed. Existing drink units increased without production attribution. The final save needed fresh-load verification when the gameplay window ended; subsequent diagnostic proof is separate. No new loss, replay, restart, strategy intervention, model-memory reset or budget extension occurred. The inherited 2,000-tick loss and earlier failures remain explicit. Native game content, saves, coordinates and model traces remain private. No year-two sustainability, independent model comparison, merge or deployment claim.",
+  "outcome_counts": {
+    "schema_version": "fortgym.keyboard-outcome-counts/v1",
+    "independent_private_review_passed": true,
+    "counts": {
+      "population": {
+        "start": 7,
+        "end": 12
+      },
+      "completed_farms": {
+        "start": 5,
+        "end": 5
+      },
+      "completed_beds": {
+        "start": 4,
+        "end": 4
+      },
+      "completed_workshops": {
+        "start": 3,
+        "end": 3
+      },
+      "recorded_dead_citizens": {
+        "start": 0,
+        "end": 0
+      },
+      "drink_units": {
+        "start": 172,
+        "end": 181
+      }
+    },
+    "advancing_decisions": 4,
+    "zero_tick_decisions": 60,
+    "food_stock": null,
+    "production_and_consumption": "not_measured",
+    "sustainability": "not_established"
+  },
+  "execution_counts": {
+    "schema_version": "fortgym.keyboard-execution-counts/v1",
+    "independent_private_review_passed": true,
+    "requested_elapsed_ticks": 7200,
+    "model_input_rejections": 0,
+    "rejected_native_key_events": 0,
+    "menu_deferrals": 0,
+    "clock_unavailable_timeouts": 0
+  },
+  "operator_status": "failed",
+  "operator_observation_warning": {
+    "operator_status": "failed",
+    "native_window_status": "completed",
+    "kind": "exchange_observation_error",
+    "command_exit_code": 137,
+    "underlying_cause": "unverified",
+    "original_error_retained": true
+  }
+}
+

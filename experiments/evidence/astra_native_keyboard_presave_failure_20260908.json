@@ -1,0 +1,99 @@
+{
+  "schema_version": "fortgym.native-keyboard-presave-failure-summary/v1",
+  "status": "failed",
+  "source_revision": "15af09ffeaf5022be0b2b4c91c858b718fbb522a",
+  "model": "gpt-6-astra",
+  "reasoning_effort": "medium",
+  "control_profile": "native_keyboard/v2",
+  "observation_profile": "native_screen_text/v1",
+  "captured_screen_size": [
+    120,
+    40
+  ],
+  "snapshot_profile": "native_menu_preserving_save/v3",
+  "private_measurement_profile": "fortgym.campaign-food-measurement/v1",
+  "parent_record": "astra_native_keyboard_food_continuation_20260908",
+  "last_verified_checkpoint_cursor": 631,
+  "last_verified_checkpoint_sha256": "7ea1b53b0ce6081ab935cd68a720d81330d08b3c6dfbcfd2ec4b01ecc8c2b283",
+  "failure": {
+    "stage": "identity_probe_before_native_save_request",
+    "native_save_requested": false,
+    "probe_assertion": "Identity probe requires a native screen",
+    "rejected_stack_entry_type": "not_recorded",
+    "underlying_stack_cause": "unverified",
+    "checkpoint_error": "Native menu identity probe returned malformed JSON",
+    "native_window_status": "failed",
+    "operator_status": "failed",
+    "container_exit_code": 1,
+    "oom_killed": false
+  },
+  "progress": {
+    "observed_trace_next_step": 695,
+    "observed_trace_elapsed_ticks": 164600,
+    "checkpointed_elapsed_ticks": 143400,
+    "unsaved_new_native_ticks": 21200,
+    "new_model_calls": 64,
+    "new_accepted_decisions": 64,
+    "new_rejected_decisions": 0,
+    "accounted_model_responses": 711,
+    "advancing_decisions": 11,
+    "zero_tick_decisions": 53
+  },
+  "usage": {
+    "new_tokens": 1968854,
+    "campaign_tokens": 22819077,
+    "all_attempt_tokens": 22888081,
+    "reported_charge_usd": null,
+    "cost_basis": "codex_subscription_charge_unreported/v1"
+  },
+  "observed_unsaved_outcomes": {
+    "counts": {
+      "population": {
+        "start": 12,
+        "end": 12
+      },
+      "completed_farms": {
+        "start": 7,
+        "end": 7
+      },
+      "completed_beds": {
+        "start": 5,
+        "end": 5
+      },
+      "completed_workshops": {
+        "start": 4,
+        "end": 4
+      },
+      "recorded_dead_citizens": {
+        "start": 0,
+        "end": 0
+      },
+      "food_stock": {
+        "start": 82,
+        "end": 43
+      },
+      "drink_stock": {
+        "start": 179,
+        "end": 228
+      }
+    },
+    "food_observed_boundaries": 65,
+    "food_complete_measurements": 63,
+    "food_unknown_measurements": 2,
+    "food_final_observation_is_saved": false,
+    "sustainability": "not_established",
+    "production_and_consumption": "not_measured",
+    "accessibility": "not_assessed"
+  },
+  "last_checkpoint_save_files_unchanged_except_event_log": true,
+  "original_checkpoint_unchanged": true,
+  "new_checkpoint_created": false,
+  "new_restart_performed": false,
+  "inherited_save_loss_restarts": 1,
+  "inherited_discarded_native_ticks": 2000,
+  "original_failure_preserved": true,
+  "teardown_verified": true,
+  "independent_failure_audit_passed": true,
+  "private_failure_audit_sha256": "8abba48e8f28781676bcffb0037f00226d1ea87267623192fcb75bf87154ee8d",
+  "scope": "Astra completed 64 accepted native-keyboard inputs and 21,200 new game ticks in window o, but the pre-save identity probe rejected a screen-stack entry before requesting a native save. The old error label says malformed JSON; the retained raw response is a Lua assertion. The offending stack entry type was not recorded, so the deeper cause remains unverified. The runtime save files still match checkpoint 631 apart from the event log, and no checkpoint 695 exists. All 711 model responses and usage remain accounted. Twelve dwarves were alive; observed drinks changed 179 to 228 and private food 82 to 43, but these end states are not saved progress. Food was complete at 63 of 65 observed boundaries and unknown at two. The model received its declared screen-only observations, not private evaluation counts. The game, container and VM were stopped. No new restart, replay, memory reset, usage reset or strategy intervention was performed. This is a failed checkpoint attempt, not a completed continuation, successful recovery, fortress-collapse finding or year-two outcome. The implementation's recorded-data adapter still ends at completed checkpoint 631. The local preview at port 8857 was unreachable when checked; no live website update is claimed. Displaying this failed attempt requires a separate failure surface."
+}

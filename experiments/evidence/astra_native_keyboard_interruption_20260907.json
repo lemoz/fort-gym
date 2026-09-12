@@ -1,0 +1,32 @@
+{
+  "schema_version": "fortgym.native-keyboard-interruption/v1",
+  "source_revision": "a004c490f6a6953d1858bb16272934b260fcf1b4",
+  "model": "gpt-6-astra",
+  "reasoning_effort": "medium",
+  "control_profile": "native_keyboard/v2",
+  "observation_profile": "native_screen_text/v1",
+  "captured_screen_size": [120, 40],
+  "terminal_reason": "native_tick_timeout",
+  "independent_retained_evidence_audit_passed": true,
+  "teardown_verified": true,
+  "recovery_requires_reconciliation": true,
+  "forensic_save_is_resumable_checkpoint": false,
+  "progress": {
+    "committed_decisions": 100,
+    "returned_model_decisions": 101,
+    "native_key_events_confirmed": 435,
+    "failed_tail_key_events_confirmed": 3,
+    "elapsed_native_ticks": 29000,
+    "latest_verified_checkpoint_cursor": 88,
+    "uncheckpointed_committed_decisions": 12
+  },
+  "usage": {
+    "campaign_tokens": 3231792,
+    "all_attempt_tokens": 3300796,
+    "historical_failed_delivery_tokens": 69004,
+    "failed_tail_model_tokens_included": 34441,
+    "reported_charge_usd": null,
+    "cost_basis": "codex_subscription_charge_unreported/v1"
+  },
+  "scope": "Authored non-content operational counters only. The original failed result, model usage, committed trace and newer native save remain retained. This publication neither repairs nor rewinds the campaign, and is not a fortress-success assessment."
+}

@@ -1,0 +1,35 @@
+{
+  "schema_version": "fortgym.codex-keyboard-window/v1",
+  "condition_id": "astra-medium-controller-restart-from-775",
+  "original_condition": "campaign_astra_keyboard_memory_contract_20260909.json",
+  "continuation_from_next_step": 775,
+  "steps_per_segment": 32,
+  "max_segments": 2,
+  "reset_memory": false,
+  "reset_usage": false,
+  "strategy_intervention": false,
+  "snapshot_profile": "native_menu_preserving_save/v4",
+  "private_measurement_profile": "fortgym.campaign-food-measurement/v1",
+  "host_read_policy": "owned_exchange_reads_three_attempts_with_private_receipts/v1",
+  "restart": {
+    "schema_version": "fortgym.native-save-loss-restart/v1",
+    "failure_kind": "controller_termination_after_input",
+    "source_segment": 0,
+    "source_revision": "806793b665627ada130f76efeeecfee77aa790ed",
+    "restored_next_step": 775,
+    "lost_trace_next_step": 807
+  },
+  "hypothesis": "A maximum of three attempts for read-only exchange probes, with fresh running-state checks and retained diagnostics, should tolerate a transient host read without replaying a model call or game input. Two 32-decision segments should bound unsaved exposure below the previous single 64-decision segment. This is an exploratory infrastructure/cadence change, not a matched causal or cross-model comparison.",
+  "continuity_note": "Restore gameplay and memory only from checkpoint 775 at 198600 saved ticks. Retain 957 responses, 30345981 campaign tokens and 30414985 all-attempt tokens including 69004 historical failed deliveries. Append window v's 12724 known unsaved ticks with unknown final uncommitted time. Six losses have a 48429-tick known lower bound plus unknown remainders. Preserve the original memory-contract prompt change at usage 906 / 28911047 without reapplying it. The original source lacks final agent/result/save-attempt files; validate its original journal, trace, failure, load and cleanup instead of fabricating those files. No action replay or gameplay rescue.",
+  "measurements": [
+    "new_verified_checkpoint_and_actual_elapsed_ticks",
+    "retained_read_failures_and_bounded_retry_outcomes",
+    "modal_deferrals_and_model_selected_continuation",
+    "zero_tick_decisions_and_repeated_screens",
+    "memory_clears",
+    "native_population_and_recorded_deaths",
+    "food_drink_workshop_bed_farm_observations",
+    "all_returned_tokens_and_reported_charge"
+  ],
+  "budget_note": "Keep the inherited cumulative 1024-dispatch / 40-million-token limit. This window begins with 957 accounted dispatches and allows at most 64 more. Fresh subscription admission before each invocation, no API fallback, local model, purchase or reset. Actual charge is unreported. One owned local VM/container with mandatory teardown, retained immutable evidence and no production deployment."
+}

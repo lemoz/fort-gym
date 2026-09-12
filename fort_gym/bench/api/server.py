@@ -335,6 +335,109 @@ async def public_campaign_feed() -> JSONResponse:
     return JSONResponse(data, headers=HTML_CACHE_HEADERS)
 
 
+@app.get("/public/keyboard-campaigns")
+async def public_keyboard_campaigns() -> JSONResponse:
+    from .campaign_keyboard_records import keyboard_campaign_records
+
+    try:
+        data = keyboard_campaign_records()
+    except (OSError, ValueError, KeyError, TypeError):
+        raise HTTPException(status_code=503, detail="Keyboard evidence is unavailable") from None
+    return JSONResponse(data, headers=HTML_CACHE_HEADERS)
+
+
+@app.get("/public/keyboard-cohort")
+async def public_keyboard_cohort() -> JSONResponse:
+    from .keyboard_cohort import keyboard_cohort
+
+    try:
+        data = keyboard_cohort()
+    except (OSError, ValueError, KeyError, TypeError):
+        raise HTTPException(status_code=503, detail="Matched trial evidence is unavailable") from None
+    return JSONResponse(data, headers=HTML_CACHE_HEADERS)
+
+
+@app.get("/public/keyboard-admission")
+async def public_keyboard_admission() -> JSONResponse:
+    from .keyboard_admission import admission_record
+
+    try:
+        data = admission_record()
+    except (OSError, ValueError, KeyError, TypeError):
+        raise HTTPException(status_code=503, detail="Recorded admission evidence is unavailable") from None
+    return JSONResponse(data, headers=HTML_CACHE_HEADERS)
+
+
+@app.get("/public/keyboard-cohort-active")
+async def public_keyboard_cohort_active() -> JSONResponse:
+    from .keyboard_cohort_live import live_status
+
+    location = get_settings().FORT_GYM_PUBLIC_CAMPAIGN_DIR
+    try:
+        data = live_status(Path(location) if location else None)
+    except (OSError, ValueError, KeyError, TypeError):
+        raise HTTPException(status_code=503, detail="Live matched status is unavailable") from None
+    return JSONResponse(data, headers=HTML_CACHE_HEADERS)
+
+
+@app.get("/public/keyboard-active")
+async def public_keyboard_active() -> JSONResponse:
+    from .keyboard_live import live_status
+
+    location = get_settings().FORT_GYM_PUBLIC_CAMPAIGN_DIR
+    try:
+        data = live_status(Path(location) if location else None)
+    except (OSError, ValueError, KeyError, TypeError):
+        raise HTTPException(status_code=503, detail="Live keyboard status is unavailable") from None
+    return JSONResponse(data, headers=HTML_CACHE_HEADERS)
+
+
+@app.get("/public/keyboard-cohort-continuation-active")
+async def public_keyboard_continuation_active() -> JSONResponse:
+    from .keyboard_continuation_live import live_status
+
+    location = get_settings().FORT_GYM_PUBLIC_CAMPAIGN_DIR
+    try:
+        data = live_status(Path(location) if location else None)
+    except (OSError, ValueError, KeyError, TypeError):
+        raise HTTPException(status_code=503, detail="Continuation status is unavailable") from None
+    return JSONResponse(data, headers=HTML_CACHE_HEADERS)
+
+
+@app.get("/public/keyboard-cohort-continuations")
+async def public_keyboard_continuations() -> JSONResponse:
+    from .keyboard_continuations import keyboard_continuations
+
+    try:
+        data = keyboard_continuations()
+    except (OSError, ValueError, KeyError, TypeError):
+        raise HTTPException(status_code=503, detail="Recorded continuations are unavailable") from None
+    return JSONResponse(data, headers=HTML_CACHE_HEADERS)
+
+
+@app.get("/public/keyboard-cohort-endurance-active")
+async def public_keyboard_endurance_active() -> JSONResponse:
+    from .keyboard_endurance_live import live_status
+
+    location = get_settings().FORT_GYM_PUBLIC_CAMPAIGN_DIR
+    try:
+        data = live_status(Path(location) if location else None)
+    except (OSError, ValueError, KeyError, TypeError):
+        raise HTTPException(status_code=503, detail="Endurance status is unavailable") from None
+    return JSONResponse(data, headers=HTML_CACHE_HEADERS)
+
+
+@app.get("/public/keyboard-cohort-endurance-records")
+async def public_keyboard_endurance_records() -> JSONResponse:
+    from .keyboard_endurance_records import keyboard_endurance_records
+
+    try:
+        data = keyboard_endurance_records()
+    except (OSError, ValueError, KeyError, TypeError):
+        raise HTTPException(status_code=503, detail="Recorded endurance evidence is unavailable") from None
+    return JSONResponse(data, headers=HTML_CACHE_HEADERS)
+
+
 @app.get("/protocols/{slug}", response_class=HTMLResponse)
 async def serve_protocol_detail(slug: str):
     """Serve protocol-specific metadata while the client resolves the detail body."""
