@@ -21,12 +21,12 @@ ROOT = Path(__file__).resolve().parents[1]
 def test_public_report_and_replay_bindings(name, replay_sha, ticks):
     path = ROOT / "web/static/displayed-key-comparison.json"
     assert hashlib.sha256(path.read_bytes()).hexdigest() == (
-        "fa7657045238bf7232567f2e293b518fcaed2d9c6bc47989812e3fe519419217"
+        "323eb178749f324791ff0b384c069d667af2132e81770c11ff937a656aa1398d"
     )
     report = json.loads(path.read_text())
     identity = "bindings-comparison-20260911-" + name + "-r1"
     result = next(row for row in report["trials"] if row["campaign_id"] == identity)
-    assert report["recorded_attempts"] == 5 and report["strong_ranking_supported"] is False
+    assert report["recorded_attempts"] == 6 and report["strong_ranking_supported"] is False
     replay_path = ROOT / ("web/static/recordings/" + name + "-matched-r1-1-64.json")
     assert hashlib.sha256(replay_path.read_bytes()).hexdigest() == replay_sha
     replay = json.loads(replay_path.read_text())
@@ -111,7 +111,42 @@ def test_sol_repeat_replay_matches_its_own_saved_result():
     assert result["checkpoint"]["saved_elapsed_ticks"] == 10400
     assert result["checkpoint"]["metrics"]["completed_beds"] == 0
     assert result["reported_charge_usd"] is None
-    assert report["trials"][5]["result"] is None
+
+
+def test_astra_repeat_preserves_its_distinct_development():
+    path = ROOT / "web/static/recordings/astra-matched-r2-1-64.json"
+    assert hashlib.sha256(path.read_bytes()).hexdigest() == (
+        "79ea8da55449f58aca9b9d6a98cd37db56b825d228bff10c6211961a9f2bfc30"
+    )
+    recording = json.loads(path.read_text())
+    assert [frame["decision"] for frame in recording["frames"]] == list(range(1, 65))
+    assert all(frame["accepted"] for frame in recording["frames"])
+    assert sum(frame["after"]["ticks_advanced"] for frame in recording["frames"]) == 9200
+    report = json.loads((ROOT / "web/static/displayed-key-comparison.json").read_text())
+    result = report["trials"][5]["result"]
+    assert result["terminal_audit_sha256"] == recording["audit_sha256"]
+    assert result["returned_tokens"] == 1549386
+    assert result["checkpoint"]["metrics"]["completed_workshops"] == 3
+    assert result["checkpoint"]["metrics"]["completed_beds"] == 0
+    assert result["checkpoint"]["metrics"]["completed_farms"] == 0
+
+
+def test_continuation_report_keeps_the_real_infrastructure_failure_and_parent_save():
+    path = ROOT / "web/static/displayed-key-comparison-128.json"
+    assert hashlib.sha256(path.read_bytes()).hexdigest() == (
+        "ba0da334733e478255e1422fb75fc915d8c7f58d9a8b795adb5220eac4f26aa1"
+    )
+    report = json.loads(path.read_text())
+    assert report["comparison_boundary"] == 128 and report["recorded_attempts"] == 1
+    result = report["trials"][0]["result"]
+    assert result["status"] == "infrastructure_failure"
+    assert result["responses"] == result["checkpoint"]["next_step"] == 64
+    assert result["checkpoint"]["saved_elapsed_ticks"] == 2900
+    assert result["returned_tokens"] == 1258321
+    assert all(row["result"] is None for row in report["trials"][1:])
+    html = (ROOT / "web/results.html").read_text()
+    assert 'for="matched-boundary"' in html and 'aria-controls="matched-table"' in html
+    assert "Infrastructure failures are not model gameplay failures" in html
 
 
 def test_current_comparison_is_not_the_legacy_benchmark():

@@ -5,12 +5,12 @@
   "plan_url": "https://github.com/lemoz/fort-gym/blob/61fcca7177d8b66ddd7e12e4be0ab53bda5ffd5b/experiments/keyboard_binding_comparison_20260911/cohort.json",
   "plan_sha256": "da38987cb71b1bafde853d10e476e0c9539a950c9d90580ff1c2b1ba7cb839b0",
   "declared_attempts": 6,
-  "recorded_attempts": 5,
+  "recorded_attempts": 6,
   "outcome_counts": {
-    "saved": 5
+    "saved": 6
   },
-  "all_attempts_reported": false,
-  "all_saved_boundaries_reached": false,
+  "all_attempts_reported": true,
+  "all_saved_boundaries_reached": true,
   "trials": [
     {
       "campaign_id": "bindings-comparison-20260911-sol-r1",
@@ -197,10 +197,36 @@
       "model": "gpt-6-astra",
       "replicate": 2,
       "reasoning_effort": "medium",
-      "publication_state": "no_published_result",
-      "result": null,
-      "evidence_url": null,
-      "evidence_sha256": null
+      "publication_state": "recorded",
+      "result": {
+        "status": "saved",
+        "response_limit": 64,
+        "responses": 64,
+        "returned_tokens": 1549386,
+        "reported_charge_usd": null,
+        "checkpoint": {
+          "next_step": 64,
+          "sha256": "cfd3f704e93715803964cc47d21647edac01b6f0d96a99d39bbff1d49b5d21ef",
+          "saved_elapsed_ticks": 9200,
+          "metrics": {
+            "population": 7,
+            "recorded_dead_citizens": 0,
+            "food_stock": 50,
+            "drink_stock": 60,
+            "completed_beds": 0,
+            "completed_workshops": 3,
+            "completed_farms": 0,
+            "functional_rooms": null,
+            "stone_stock": null,
+            "wood_stock": null
+          }
+        },
+        "terminal_audit_sha256": "6e255c110250f65c1daf0b94482c2e2ae53af3335991a09258178802fd89bea4",
+        "native_teardown_verified": true,
+        "vm_teardown_verified": true
+      },
+      "evidence_url": "https://github.com/lemoz/fort-gym/blob/993c757e1e9d867f819fec77fe60a1fa177fd4a9/experiments/evidence/keyboard_binding_comparison_astra_r2_64_20260911.json",
+      "evidence_sha256": "5905e6bb70fb9a3db7b0fa3038a6bf87c8230b788d2d301133c6d1d2daec868f"
     }
   ],
   "strong_ranking_supported": false,

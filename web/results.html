@@ -13,7 +13,7 @@
 <meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="Results | Fort Labs"><meta name="twitter:description" content="Protocol-scoped Fort-Eval results and the recorded Dwarf Fortress runs behind every comparison."><meta name="twitter:image" content="https://fortgym.live/static/social/results.png?v=1"><meta name="twitter:image:alt" content="Fort-Eval results compared under declared protocols with recorded evidence">
 <link rel="icon" type="image/svg+xml" href="/static/brand/favicon.svg"><link rel="icon" type="image/png" sizes="32x32" href="/static/brand/favicon-32.png"><link rel="apple-touch-icon" sizes="180x180" href="/static/brand/apple-touch-icon.png">
 <link rel="stylesheet" href="/static/fort-labs.css?v=20260911-3">
-<link rel="stylesheet" href="/static/displayed-key-comparison.css?v=20260911-1">
+<link rel="stylesheet" href="/static/displayed-key-comparison.css?v=20260912-boundaries">
 <style>
   .results-hero { padding: 58px 0 42px; border-bottom: 1px solid var(--line); }
   .results-hero-grid { display: grid; grid-template-columns: 1.25fr .75fr; gap: 70px; align-items: end; }
@@ -85,12 +85,13 @@
     <div class="fl-wrap">
       <div class="fl-eyebrow">Current experiment · displayed keyboard controls</div>
       <h2 class="fl-section-title" id="matched-title">Same start. Same controls. Six attempts.</h2>
-      <p class="fl-copy">Astra, Sol and Terra each get two fresh attempts from the same fortress seed. All use Medium reasoning, the same prompt and a 120 × 40 text screen. This table compares the first 64 model decisions, not equal game time or token use.</p>
+      <p class="fl-copy">Astra, Sol and Terra each get two fresh attempts from the same fortress seed. All use Medium reasoning, the same prompt and a 120 × 40 text screen. Compare equal decision budgets, not equal game time or token use. At 128, each model continues its own save and memory.</p>
+      <div class="comparison-controls"><label for="matched-boundary">Decision budget</label><select id="matched-boundary" aria-controls="matched-table"><option value="64">64 decisions · fresh starts</option><option value="128">128 decisions · own-save continuations</option></select></div>
       <p class="comparison-summary" id="matched-summary" role="status">Loading saved experiment results…</p>
       <div id="matched-table"></div>
-      <p class="comparison-note">Blank results mean no reviewed result is published here yet, not failure or zero progress. <a href="/#watch-root">Watch the active session →</a></p>
+      <p class="comparison-note">Blank results mean no reviewed result is published here yet, not failure or zero progress. An unfinished run may retain an earlier checkpoint. Infrastructure failures are not model gameplay failures. <a href="/#watch-root">Watch the active session →</a></p>
       <p class="comparison-note">Supplies are saved stock counts, not production rates or proof the dwarves can access them. Model charges are unreported by the subscription, not $0. These early, single-seed attempts do not establish a model ranking.</p>
-      <p class="comparison-note"><a id="matched-plan" href="https://github.com/lemoz/fort-gym/blob/61fcca7177d8b66ddd7e12e4be0ab53bda5ffd5b/experiments/keyboard_binding_comparison_20260911/cohort.json">Read the frozen experiment plan →</a> · <a href="/static/displayed-key-comparison.json">Download the source-linked results</a></p>
+      <p class="comparison-note"><a id="matched-plan" href="https://github.com/lemoz/fort-gym/blob/61fcca7177d8b66ddd7e12e4be0ab53bda5ffd5b/experiments/keyboard_binding_comparison_20260911/cohort.json">Read the frozen experiment plan →</a> · <a id="matched-download" href="/static/displayed-key-comparison.json">Download the selected results</a></p>
       <noscript>Enable JavaScript for the table, or download the source-linked results above.</noscript>
     </div>
   </section>
@@ -210,6 +211,6 @@
 })();
 </script>
 <script type="module" src="/static/published-recordings.mjs?v=20260911-recovery"></script>
-<script type="module" src="/static/displayed-key-comparison.mjs?v=20260911-sol-repeat"></script>
+<script type="module" src="/static/displayed-key-comparison.mjs?v=20260912-boundaries"></script>
 </body>
 </html>

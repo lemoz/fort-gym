@@ -117,3 +117,42 @@ and 800 captured decisions, not ten independent trials. Homepage live priority,
 manual replay selection, service identities and the active Astra r2 relay remain
 unchanged. A source update is not public delivery until the exact release passes
 existing-host and external HTTPS checks.
+
+## Complete fresh cohort and continuation budgets
+
+This update extends `6452fc2345c2eb99beab6485d367a203007a34e0` using the
+source index at `99121512af7ab3bb9d960076fae5554795432e30`. The default
+64-decision report now includes all six audited fresh attempts. The independent
+128-decision report includes Sol r1's startup infrastructure failure, with its
+unchanged parent checkpoint at 64 responses, 2,900 ticks and 1,258,321 tokens.
+There were no new provider calls or gameplay decisions in that failed window.
+Its failure review remains linked; no repaired continuation is inferred.
+
+The results page offers the two predeclared decision budgets and changes the
+download link with the selection. Responses and saved state remain distinct
+from the chosen budget. Missing outcomes remain unknown. The selected budget is
+validated against each report, and a late response for an older selection cannot
+replace the current table or clear it with a stale error. Only actual published
+recordings receive replay links; no 128-decision replay is invented.
+
+The added `astra-matched-r2-1-64` recording has 64 original frames with digest
+`79ea8da55449f58aca9b9d6a98cd37db56b825d228bff10c6211961a9f2bfc30`.
+It is bound to terminal audit
+`6e255c110250f65c1daf0b94482c2e2ae53af3335991a09258178802fd89bea4`.
+The saved outcome is three workshops, no placed beds or farm plots, seven living
+citizens, no recorded deaths, 9,200 game ticks and 1,549,386 tokens. Food and drink
+stocks remained 50 and 60. All requested time advanced without clock errors,
+but 59 of 64 responses requested no time advance.
+
+All ten earlier recording files remain byte-identical. The gallery contains
+eleven windows and 864 captured decisions, not eleven independent trials.
+These early outcomes do not establish sustainability or a robust model ranking.
+The update preserves existing hosting, services, live-observer priority, manual
+replay selection and older Year-Two/recovery evidence.
+
+Validation: 1,248 Python tests passed with five skips and seven warnings, plus
+44 Node interaction tests. Selected Ruff checks and the recording exporter's
+type check passed. The first sandboxed full run blocked one local socket test;
+the complete unrestricted rerun above passed without source changes. Browser
+visual QA was not performed. Public delivery remains a separate exact-revision
+check, not a consequence of these local tests.
