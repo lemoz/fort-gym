@@ -279,3 +279,35 @@ this document change. The homepage and Results use the same catalog and viewer.
 Preserve the latest live-feed identity, API/game services, database counts and
 untracked files. No service restart, new host, game command, model call or main
 merge is part of this static release.
+
+## Pair-two keyboard controls replay (September 12, 2026)
+
+Start from public revision `fc6f648ab27dbd39e60139e5995ae3992d232a8e`.
+Add the original `controls-v2-p2-keyboard-1-128` recording with SHA-256
+`9d15f665d816f9ba53f6b332480bc6017c192bcc8f50d73a208c0e067563c76e`,
+bound to audit `ba2df79ae65339ed9681446d530b25c24a4ae5136764cae979b38420bf8ddf14`
+and frozen native source `5ddf1e6718dab2e8351e8dc24a2afe5071cd2592`.
+
+All 128 decisions used keyboard controls, with 731 confirmed key presses.
+The final save retains 51,900 elapsed ticks, six living dwarves, one recorded
+death, seven beds, five workshops, one farm, 61 food and 122 drinks. Native
+incident evidence identifies drowning, first observed at decision 86; it does
+not establish the exact death time or which model action caused it. The incident
+receipt was pushed at `3539c605c3634dea2a7d89e6735a1f2dc2f01af5`.
+The own-save continuation at decision 64 passed a fresh reload. The final save
+has no separate fresh-reload check. Returned tokens total 3,954,012; subscription
+dollar charges remain unreported, not zero.
+
+The guest-poweroff command returned one with only `exit status 255` in its log;
+no more specific cause is proven. The subsequent VM-stop command succeeded.
+Independent terminal checks verified both VMs stopped, disks closed, unchanged
+configurations and inventory. Original evidence retains both return codes.
+
+Preserve the bytes, catalog rows and previews of all nineteen older recordings.
+The total becomes twenty recording windows and 1,636 captured frames, not
+twenty independent campaigns. The second pair's shortcuts attempt is pending.
+No control ranking, sustainable fortress or full elapsed year is claimed.
+The homepage and Results share the catalog; Runs adds the native captured card.
+Retain the stopped pair-two keyboard feed without presenting it as a live game.
+No API/game service restart, database mutation, untracked-file change, new
+infrastructure, game input or model call is part of this website release.

@@ -44,9 +44,10 @@ def test_v2_shortcuts_replay_is_exactly_the_audited_two_window_export():
 
 def test_latest_replay_is_v2_and_does_not_claim_a_completed_comparison():
     catalog = json.loads((RECORDINGS / "catalog.json").read_text())["recordings"]
-    assert catalog[0]["id"] == "controls-v2-p1-keyboard-1-128"
-    assert catalog[1]["id"] == IDENTITY
-    assert catalog[2]["id"] == "controls-p1-keyboard-1-128"
+    assert catalog[0]["id"] == "controls-v2-p2-keyboard-1-128"
+    assert catalog[1]["id"] == "controls-v2-p1-keyboard-1-128"
+    assert catalog[2]["id"] == IDENTITY
+    assert catalog[3]["id"] == "controls-p1-keyboard-1-128"
     assert "campaign" not in catalog[0]
     html = (ROOT / "web/worlds.html").read_text()
     assert "68,200 game ticks" in html and "queued jobs are not completed products" in html
@@ -55,6 +56,9 @@ def test_latest_replay_is_v2_and_does_not_claim_a_completed_comparison():
     assert "70,900 game ticks" in html and "43 food and 135 drinks" in html
     assert "paired keyboard run is still pending a final result" not in html
     assert "do not establish sustainability" in html
+    assert "51,900 game ticks" in html and "61 food and 122 drinks" in html
+    assert "One recorded drowning" in html
+    assert "second pair's shortcuts run is still pending" in html
 
 
 def test_v2_keyboard_replay_is_the_audited_128_decision_own_save_export():
@@ -73,4 +77,25 @@ def test_v2_keyboard_replay_is_the_audited_128_decision_own_save_export():
     assert data["frames"][-1]["after"]["population"] == 7
     assert all("shortcut" not in frame["action"] for frame in data["frames"])
     assert sum(len(frame["action"]["keys"]) for frame in data["frames"]) == 669
+    assert all(frame["accepted"] for frame in data["frames"])
+
+
+def test_v2_pair2_keyboard_preserves_audited_progress_and_population_loss():
+    raw = (RECORDINGS / "controls-v2-p2-keyboard-1-128.json").read_bytes()
+    assert hashlib.sha256(raw).hexdigest() == (
+        "9d15f665d816f9ba53f6b332480bc6017c192bcc8f50d73a208c0e067563c76e"
+    )
+    data = json.loads(raw)
+    assert data["source_revision"] == "5ddf1e6718dab2e8351e8dc24a2afe5071cd2592"
+    assert data["audit_sha256"] == "ba2df79ae65339ed9681446d530b25c24a4ae5136764cae979b38420bf8ddf14"
+    assert data["control_profile"] == "native_keyboard_bindings/v1"
+    assert data["saved_through_decision"] == 128
+    assert [frame["decision"] for frame in data["frames"]] == list(range(1, 129))
+    assert sum(frame["after"]["ticks_advanced"] for frame in data["frames"]) == 51900
+    assert data["frames"][63]["after"]["tick"] == data["frames"][64]["before"]["tick"]
+    assert data["frames"][84]["after"]["population"] == 7
+    assert data["frames"][85]["after"]["population"] == 6
+    assert data["frames"][-1]["after"]["population"] == 6
+    assert all("shortcut" not in frame["action"] for frame in data["frames"])
+    assert sum(len(frame["action"]["keys"]) for frame in data["frames"]) == 731
     assert all(frame["accepted"] for frame in data["frames"])
