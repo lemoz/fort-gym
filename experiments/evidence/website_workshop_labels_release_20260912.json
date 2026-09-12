@@ -1,0 +1,59 @@
+{
+  "schema_version": "fortgym.website-shortcut-label-release/v1",
+  "passed": true,
+  "release_revision": "e9c37db673055e74e850e703711275e1cfbfedad",
+  "ci_run": 34694029676,
+  "ci": {
+    "conclusion": "success",
+    "headSha": "e9c37db673055e74e850e703711275e1cfbfedad",
+    "status": "completed"
+  },
+  "assets": {
+    "/": {
+      "sha256": "722a058301e1e994cb0ac3ef0ea6d253b2154b467e2efbc2c90c1905c0b83bf9",
+      "mime": "text/html"
+    },
+    "/static/home-watch.mjs": {
+      "sha256": "e85cef71b7e2c09abee4159cd3474d58b8c041a5396a4fd9bd6ad3abf52af4ed",
+      "mime": "text/javascript"
+    },
+    "/static/home-watch-model.mjs": {
+      "sha256": "9bc89eb35488c0a7be905197cd9a75c878cff93bdfd06cb0d9075100088d1e23",
+      "mime": "text/javascript"
+    }
+  },
+  "full_tests_passed": 1295,
+  "skipped": 5,
+  "warnings": 7,
+  "node_contract_tests_passed": 62,
+  "unit_and_relay_focused_tests_passed": 51,
+  "recordings": 16,
+  "captured_frames": 1124,
+  "historical_recordings_unchanged": true,
+  "new_recordings_published": 0,
+  "current_live_campaign": "selected-workshop-v1-p1-keyboard",
+  "observed_live_decision": 99,
+  "public_shortcut_execution_observed": false,
+  "shortcut_fixture_checks_passed": true,
+  "synthetic_frames_published": false,
+  "browser_visual_qa": false,
+  "service_identities_unchanged": true,
+  "database_unchanged": true,
+  "untracked_files_preserved": true,
+  "website_url": "https://fortgym.live/",
+  "new_hosts": 0,
+  "service_restarts": 0,
+  "main_merge": false,
+  "game_or_model_changes": false,
+  "gameplay_inputs": 0,
+  "model_calls": 0,
+  "remote_receipt_sha256": "97715991143861698fa8131c30fe11a0a0598405797e8d8241876b2490c65f61",
+  "junit_sha256": "1a03a5f5489ad1c86facae5287b139b83c469fea2b3753fff4e82877e147dd79",
+  "operator_sha256": "35812441b594877d81c7178666576a6edef4b3c5d7a8cf0af3b159870395396f",
+  "limits": [
+    "This release prepares shortcut display and receiver semantics. No scored public shortcut action has occurred yet; synthetic fixtures were not published.",
+    "Browser visual QA was not performed for this release. Local interaction contracts, exact-head hosted CI, remote service/data checks and public HTTPS asset/recording hashes passed.",
+    "The current keyboard attempt is still running toward128. Three paired controls outcomes and longer sustainability/endurance work remain.",
+    "No main merge, runtime image change, dependency change, new host or service restart."
+  ]
+}

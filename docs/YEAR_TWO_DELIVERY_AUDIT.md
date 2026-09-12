@@ -7,6 +7,25 @@ Requirements come from [the approved goal](YEAR_TWO_CAMPAIGNS.md),
 [the standard-input phase](ASTRA_STANDARD_INPUT_EXPERIMENTS.md), and the
 [frozen displayed-key cohort](../experiments/keyboard_binding_comparison_20260911/cohort.json).
 
+The [selected-workshop spectator release](../experiments/evidence/website_workshop_labels_release_20260912.json)
+is live at `e9c37db673055e74e850e703711275e1cfbfedad`, pushed through the existing
+website branch and draft PR171. Local and exact-head hosted validation pass;
+the local suite reports 1,295 tests with five skips and seven warnings, plus 62
+Node interaction/publication checks and 51 focused projection/relay checks.
+The sole initial full-suite failure was a sandbox-denied localhost bind; the
+authorized rerun passed without a code workaround.
+
+The receiver and player now preserve an explicit workshop shortcut, item and
+quantity. Chosen, rejected and queued work have distinct labels; queued jobs
+are not presented as completed products. The native control study remains
+frozen at its original source/image. All sixteen recordings and 1,124 frames,
+API/game service identities, database counts and unrelated remote files remain
+unchanged. Public asset hashes and the still-active keyboard feed at decision 99
+passed verification. No service restart, new host or main merge occurred. No
+synthetic shortcut frame was published, and an actual scored shortcut action
+is still pending the next declared attempt. Browser visual QA was not performed
+for this release; the existing public viewer was kept as the viewing surface.
+
 The [first keyboard controls-study window](../experiments/evidence/selected_workshop_p1_keyboard_64_20260912.json)
 is audited through decision 64 and its own-save continuation is running toward
 128 as `selected-workshop-v1-p1-keyboard`. The first save contains 18,600 elapsed
