@@ -5,7 +5,7 @@
   "base": "f1aa05f429c189b67891cf2629e8e00329222aca",
   "pull_request": 176,
   "review_kind": "implementer_source_review_not_independent_approval",
-  "decision": "Ready for normal merge after exact-head hosted CI succeeds; no branch protection bypass.",
+  "decision": "Approved by implementer for normal exact-head merge after local/hosted tests and local browser/API acceptance; no branch protection bypass.",
   "changed_production_file_count": 138,
   "current_full_source_reads": 43,
   "prior_exact_hash_matches": 95,
@@ -1475,8 +1475,13 @@
     },
     "hosted_ci": {
       "run_id": 34684501253,
-      "status": "in_progress",
-      "head": "0547261450262c8d0b59486b566a2404e02895f9"
+      "status": "completed",
+      "conclusion": "success",
+      "head": "0547261450262c8d0b59486b566a2404e02895f9",
+      "passed": 5467,
+      "skipped": 154,
+      "warnings": 7,
+      "url": "https://github.com/lemoz/fort-gym/actions/runs/34684501253"
     }
   },
   "http_acceptance": {
