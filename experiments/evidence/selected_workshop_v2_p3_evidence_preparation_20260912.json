@@ -1,0 +1,69 @@
+{
+  "schema_version": "fortgym.selected-workshop-final-pair-evidence-preparation/v1",
+  "date_utc": "2026-09-12",
+  "status": "prepared_not_executed",
+  "source_revision": "5ddf1e6718dab2e8351e8dc24a2afe5071cd2592",
+  "study_declaration_sha256": "e325f69f40978a9a0b2ed962a505c893aa7ea397b569e3300455972d7b94ebc8",
+  "artifact_directory": "fort_gym/artifacts/selected-workshop-study-20260912",
+  "artifact_sha256": {
+    "relay_v2_p3_shortcuts.py": "1656b9ac47ad8a51b00340d128b3b45624ed885664ea3109b3df9f59cb7ad238",
+    "verify_v2_p3_shortcuts_public.py": "f1eb8b1a24d5f6ec3ebdddf5b98105f93882a4d49bbaab4131ba536cfdfc560c",
+    "capture_v2_p3_shortcuts_start.py": "7882e65cd6248a4c8fedacddd8a603a96f7b26bac67ee44b3c6d0607c0bff06d",
+    "capture_v2_p3_shortcuts_continuation.py": "34de213ba1de80f31e7b9797e9a441d956729e6bcf84688c5471be2ed832f8a8",
+    "settle_v2_p3_shortcuts.py": "f8616787bf73b3cc0eb6284e81a04f9503a2060cf35b28a577ff96579aaa4911",
+    "test_v2_p3_shortcuts_live.py": "c25aa25ceaa29ad5bcc923e206c2e0f39ea31fc61c52ce1814fdfb7f79ada528",
+    "test_v2_p3_shortcuts_reload_evidence.py": "97fce5bccf11cc299a215a94cbbf9b4d9c790bfbf7f07825b8012d7e3b9bdb53",
+    "test_v2_p3_shortcuts_settlement.py": "7e60c6ee280bda9508f3cab9c958cad7b9552b08b37cbac1d68bf71724843a87",
+    "relay_v2_p3_keyboard.py": "76a64009c34b7fccf664386417636b6e754663da3cbb2f24d2d2b23356f958fd",
+    "verify_v2_p3_keyboard_public.py": "8c38d6cd350ff42c5c130064d9c83bebf65e26543533ac934e82bdb25b150443",
+    "capture_v2_p3_keyboard_start.py": "e09f853bc9b6122a3d1efe7a16a61ca8caa6a64fbc7d53595008be46bd6ef3ac",
+    "capture_v2_p3_keyboard_continuation.py": "4172145956c2e14e14ebd4d1966f6b6b1788292ce9e1f8f13626b5be5fc7ce6a",
+    "settle_v2_p3_keyboard.py": "8f884094c04215d75448d5e143aa2e853d02e4fb3208bb0575dd4692b8c1dbc1",
+    "test_v2_p3_keyboard_live.py": "327a00b75912661cb4e8a1b528ce93ce3bb685bdf9c74e018f156f89657d6304",
+    "test_v2_p3_keyboard_reload_evidence.py": "b9d549c15e1baec1d55a1d7a9cab23ccf5088c9abf8b92cf475bc3b2918b0fc9",
+    "test_v2_p3_keyboard_settlement.py": "fdeb995adbe58d964efe5059c93407870bb610d5a07abbd37a196df2f8a7391c",
+    "v2-p3-evidence-preparation-README.md": "936f71a92c3815ff1d94da72d7b0c7e4b370b7a3c30d4b2690baeadf0ff6e089",
+    "v2-p3-evidence-preparation-tests.xml": "48d9bb95678e914714d280e1283184beeb3effdb93edea401c0dc2a0dc8154a2"
+  },
+  "previous_preparation_receipts": [
+    "selected_workshop_v2_p3_fresh_preparation_20260912.json",
+    "selected_workshop_v2_p3_continuation_preparation_20260912.json"
+  ],
+  "expected_campaigns": [
+    "selected-workshop-v2-p3-shortcuts",
+    "selected-workshop-v2-p3-keyboard"
+  ],
+  "expected_replay_ids": [
+    "controls-v2-p3-shortcuts-1-128",
+    "controls-v2-p3-keyboard-1-128"
+  ],
+  "tests": {
+    "passed": 198,
+    "warnings": 2,
+    "ruff_passed": true,
+    "scope": "Combined fresh, continuation, live-owner transition, verifier-identity, reload binding and settlement checks for both final-pair conditions. Exact pair/condition result labels and write-once terminal outputs are checked."
+  },
+  "required_evidence_order": [
+    "Original-seed startup, empty memory and actual returned model response",
+    "Live HTTPS proof bound to the original captured request and exact owner",
+    "Saved first64 checkpoint and independent VM/disk teardown",
+    "Original first64 stopped public frame before replacing the feed",
+    "Actual own-save continuation with exact native state, memory, usage and history",
+    "Two-window native terminal audit and mandatory teardown",
+    "Replay export and separate public website delivery"
+  ],
+  "runtime_state": {
+    "either_final_pair_campaign_started": false,
+    "native_acceptance_performed": false,
+    "first64_or_final128_result_claimed": false,
+    "public_relay_started": false,
+    "replay_exported": false,
+    "website_published": false,
+    "model_calls_by_preparation": 0,
+    "gameplay_inputs_by_preparation": 0
+  },
+  "current_cohort_unchanged": true,
+  "main_merged": false,
+  "full_goal_complete": false,
+  "note": "Prepared operators are not an executed result. They retain unknown subscription dollar charges, historical timeouts and native outcomes. They cannot launch an out-of-order run, borrow a save, reset state or substitute missing runtime evidence. Public replay delivery follows actual terminal audit."
+}

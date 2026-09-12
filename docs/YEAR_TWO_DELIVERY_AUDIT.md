@@ -43,7 +43,10 @@ passed 26 offline tests but have not started. They follow in the original
 declared order; no remaining attempt is silently replaced. Their
 [own-save continuation operators](../experiments/evidence/selected_workshop_v2_p3_continuation_preparation_20260912.json)
 are also prepared, with 78 combined fresh/continuation tests passed. None of
-those operators or relays has run, and no future checkpoint is assumed.
+those operators or relays has run, and no future checkpoint is assumed. Their
+[live/reload/terminal evidence helpers](../experiments/evidence/selected_workshop_v2_p3_evidence_preparation_20260912.json)
+are prepared as well, with 198 combined offline tests passed. The actual native
+results and public replay deliveries still have to occur.
 
 A [separate workshop job-screen feedback correction](../experiments/evidence/workshop_job_clock_feedback_preparation_20260912.json)
 is pushed for draft review as PR179. It recognizes the exact paused `Workshop/Job`
