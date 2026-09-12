@@ -1,0 +1,54 @@
+{
+  "schema_version": "fortgym.selected-workshop-keyboard-continuation-preparation/v1",
+  "date_utc": "2026-09-12",
+  "study_id": "selected-workshop-v2",
+  "campaign_id": "selected-workshop-v2-p1-keyboard",
+  "status": "prepared_not_launched",
+  "source_revision": "5ddf1e6718dab2e8351e8dc24a2afe5071cd2592",
+  "image": "sha256:dcbc9b042538401a146159fcf5f6456b21dc900c4649369c008f7a77f661fed3",
+  "study_declaration_sha256": "e325f69f40978a9a0b2ed962a505c893aa7ea397b569e3300455972d7b94ebc8",
+  "unchanged_fresh_operator_sha256": "f07f6cf1141da18f463f8c427813b95b1eff288275f113212d16ee8821054034",
+  "helpers_sha256": {
+    "prepare_v2_p1_keyboard_continuation.py": "fa9350787ecdb31d4f71a67e9597fbb772ca9e0e85bba6ce029e53db0612602f",
+    "run_v2_p1_keyboard_continue.py": "649c8ec3352e4117c1820d37abd32f8664660f5eee3e4a0fff4cea0b776448ba",
+    "relay_v2_p1_keyboard_continue.py": "16088058e9a0ac0fb64ce53ec9e079046366bbf43efd3901cd86a310f6167da5",
+    "test_v2_keyboard_continuation_preparation.py": "246fbf0c3defb26799ce7834276e38b5fac454171491076aa65cc336a5dee80a"
+  },
+  "validation": {
+    "passed": 26,
+    "failed": 0,
+    "warnings": 2,
+    "warning_kind": "existing Pydantic class-based config deprecation",
+    "report_sha256": "c96c066bc4852c49e1274f785ab5432d2c0a32bfb429b33759da70bc62998421",
+    "ruff": "passed"
+  },
+  "continuation": {
+    "requires_actual_64_checkpoint_and_owner_teardown": true,
+    "reaudits_original_seed_and_checkpoint": true,
+    "own_save_only": true,
+    "reset_memory": false,
+    "reset_usage": false,
+    "first_step": 64,
+    "last_step_exclusive": 128,
+    "max_additional_responses": 64,
+    "original_attempt_token_ceiling": 8000000,
+    "same_source_image_model_prompt_controls_observations_and_resources": true,
+    "one_existing_local_vm": true,
+    "mandatory_teardown": true
+  },
+  "public_live": {
+    "existing_receiver": true,
+    "requires_actual_continuation_owner": true,
+    "expected_cursor": 64,
+    "expected_control_profile": "native_keyboard_bindings/v1",
+    "no_competing_fresh_relay": true
+  },
+  "checkpoint64_audited_by_preparation": false,
+  "continuation_launched": false,
+  "preparation_model_calls": 0,
+  "preparation_gameplay_inputs": 0,
+  "website_release": false,
+  "main_merge": false,
+  "full_goal_complete": false,
+  "note": "The current fresh keyboard run is still active. These offline preparations do not modify or restart it. Actual first-window terminal proof must precede auditing and launch."
+}

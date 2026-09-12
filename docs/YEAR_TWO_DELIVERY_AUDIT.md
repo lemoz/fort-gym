@@ -42,6 +42,12 @@ original capture/action. The single existing local VM is active under its bounde
 owner's teardown responsibility; no checkpoint64 or keyboard terminal result is
 yet claimed. Website replay publication remains separate from this live proof.
 
+The [keyboard own-save continuation helpers](../experiments/evidence/selected_workshop_v2_keyboard_continuation_preparation_20260912.json)
+are prepared and passed 26 offline checks with two existing Pydantic deprecation
+warnings. They require the actual first64 save and completed owner/VM teardown,
+reaudit the retained evidence and preserve the original cumulative conditions.
+This preparation does not launch a continuation or alter the current fresh run.
+
 Earlier, the [v2 shortcuts checkpoint64 and actual continuation](../experiments/evidence/selected_workshop_v2_p1_shortcuts_64_20260912.json)
 now pass the retained native/owner audit and initial reload checks. The save
 contains 27,000 elapsed ticks, seven living dwarves, two beds, two workshops,
