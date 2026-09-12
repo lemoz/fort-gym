@@ -1,6 +1,7 @@
 """Portable owner wiring uses synthetic saves, Docker and model doubles only."""
 
 import json
+import subprocess
 from pathlib import Path
 from types import SimpleNamespace
 import sys
@@ -269,7 +270,7 @@ class FakeDocker:
             "Config": {"Labels": {plan.LABEL: "foreign" if self.foreign_owner else self.nonce}},
         }
 
-    def call(self, *arguments):
+    def call(self, *arguments, **kwargs):
         self.calls.append(list(arguments))
         if arguments[0] == "create":
             self.nonce = arguments[arguments.index("--label") + 1].split("=")[1]
@@ -392,6 +393,47 @@ def test_unknown_create_result_reconciles_the_actual_predeclared_container_name(
     assert result["container_id"] == "c" * 64
 
 
+@pytest.mark.parametrize("stopped", [True, False])
+@pytest.mark.parametrize("error_type", [subprocess.TimeoutExpired, KeyboardInterrupt])
+def test_uncertain_stop_is_reinspected_without_retrying_stop(arguments, error_type, stopped):
+    clients = []
+
+    class UncertainStopDocker(FakeDocker):
+        def call(self, *parts, **kwargs):
+            value = super().call(*parts)
+            if parts[0] == "stop":
+                assert kwargs["timeout"] == 45
+                self.state["Running"] = not stopped
+                if error_type is subprocess.TimeoutExpired:
+                    raise error_type(parts, 45)
+                raise error_type()
+            return value
+
+    def factory(*args):
+        client = UncertainStopDocker(*args)
+        clients.append(client)
+        return client
+
+    def interrupted(*args, **kwargs):
+        raise RuntimeError("Synthetic courier interruption")
+
+    result = owner.run_owner(arguments, client_factory=factory, fresh_server=interrupted,
+                            allowance_check=lambda *args, **kwargs: {"allowed": True})
+    client = clients[0]
+    assert result["status"] == "failed"
+    assert result["container_stopped_verified"] is stopped
+    assert result["stop_error_type"] == error_type.__name__
+    if stopped:
+        assert read(arguments.output / "container-stopped.json")["State"]["Running"] is False
+    else:
+        assert result["cleanup_error_type"] == "ValueError"
+        assert not (arguments.output / "container-stopped.json").exists()
+    assert sum(call[0] == "stop" for call in client.calls) == 1
+    stop = next(i for i, call in enumerate(client.calls) if call[0] == "stop")
+    assert client.calls[stop + 1] == ["inspect", client.identity]
+    assert result["model_responses"] == [] and result["original_inputs_unchanged"]
+
+
 def test_admission_pause_does_not_create_a_container_or_make_model_calls(arguments):
     result, client = execute(arguments, admission=False)
     assert result["status"] == "budget_limited_pause"
@@ -498,6 +540,16 @@ def test_docker_machine_output_keeps_stderr_warning_separate(tmp_path):
     assert (tmp_path / "docker-0001-create.stderr.log").read_text() == (
         "WARNING: image platform differs\n"
     )
+
+
+def test_docker_call_preserves_default_timeout_and_allows_stop_reply_overhead(tmp_path):
+    client = owner.DockerClient(Path(sys.executable), "fixture", tmp_path)
+    calls = []
+    client.run = lambda command, label, timeout: calls.append((command, label, timeout)) or ""
+    client.call("inspect", "a" * 64)
+    client.call("stop", "--time", "30", "a" * 64, timeout=45)
+    assert [row[2] for row in calls] == [30, 45]
+    assert calls[1][0] == client.command + ["stop", "--time", "30", "a" * 64]
 
 
 def test_docker_failed_command_retains_both_streams_without_retry(tmp_path):

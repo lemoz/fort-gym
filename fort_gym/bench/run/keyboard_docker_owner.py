@@ -63,8 +63,8 @@ class DockerClient:
     def output_command(self, command: list[str]) -> str:
         return self.run(command, "read")
 
-    def call(self, *arguments: str) -> str:
-        return self.run(self.command + list(arguments), "command")
+    def call(self, *arguments: str, timeout: int = 30) -> str:
+        return self.run(self.command + list(arguments), "command", timeout)
 
     def inspect(self, identity: str) -> dict:
         records = json.loads(self.call("inspect", identity))
@@ -274,7 +274,14 @@ def run_owner(
                 identity = owned_container(observed, runtime, nonce)
                 result["container_id"] = identity
                 if observed["State"]["Running"]:
-                    client.call("stop", "--time", "30", identity)
+                    try:
+                        # Allow Docker's full grace period plus reply overhead.
+                        client.call("stop", "--time", "30", identity, timeout=45)
+                    except (Exception, KeyboardInterrupt) as error:
+                        # A lost reply is not a live/dead verdict. Preserve the
+                        # failed command, then inspect this exact owned ID once;
+                        # never retry stop or turn a failed attempt into success.
+                        result.update(status="failed", stop_error_type=type(error).__name__)
                 stopped = client.inspect(identity)
                 if (
                     owned_container(stopped, runtime, nonce) != identity

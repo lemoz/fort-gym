@@ -182,6 +182,13 @@ returned tokens and responses with unknown token counts are separate fields.
 These count the new window, not cumulative usage in the native checkpoint.
 An uncertain delivery never triggers another inference.
 
+Stopping the owned container allows its 30-second grace period plus reply
+overhead. If that command times out or is interrupted, the owner retains the
+error and inspects the same container ID once. Verified stop and failed command
+remain separate facts: the attempt still fails, and no stop, game input or
+model request is retried. If the container is still running or its identity
+cannot be verified, cleanup remains explicitly unverified.
+
 Recovery, prompt-change and budget-extension declarations retain their
 dedicated launchers and audits. This owner rejects those windows instead of
 silently simplifying them. Fresh-machine portability, a live spectator run
@@ -195,6 +202,12 @@ control Docker, or change saved evidence. Publish only their allowlisted
 derivatives, never raw requests, responses, agent memory or transcripts.
 
 Export ordered, completed windows with their exact independent audit:
+
+The current exporter accepts the retained `portable-owner-continuity-audit/v1`
+format from the two-VM acceptance setup, including that setup's VM stop fields.
+It is not yet a general audit generator for arbitrary single-engine runs. A
+versioned, reusable run-audit contract remains to be added; operators must not
+invent VM stop assertions or stop an unrelated shared VM to satisfy this format.
 
     python -m scripts.export_keyboard_docker_recording \
       --attempt /absolute/fresh-output --attempt /absolute/continuation-output \

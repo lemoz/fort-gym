@@ -5,6 +5,42 @@ matched-comparison tooling on main's ancestry. It is isolated from all executing
 game, model courier and observer checkouts. It is not a new experimental condition
 and has not been used to replace a running cohort's frozen source or image.
 
+## Current delivery and runtime review
+
+The later portable owner passed native fresh/own-save acceptance at exact source
+`40b106b95f483b534a738622e75c4147a1270a96`: two new Astra decisions, its own
+checkpoint reload, and two continuation decisions, with 95,786 returned tokens.
+All four decisions were paused. This is save/resume evidence, not fortress growth
+or a fresh acceptance of every later source change. See the current
+[quickstart](YEAR_TWO_QUICKSTART.md) for the immutable result and commands.
+
+The spectator integration at `c0f6dd458adaa6aaa437b2d71e17a13664454f4c` passes
+5,546 local tests (ten skips), 52 Node contracts and hosted CI `34680939875`
+(5,402 tests, 154 skips). The separately published website has fifteen recording
+windows and 1,060 frames, including the four-decision native acceptance replay.
+Actual portable live follow remains unverified; its next check belongs alongside
+an otherwise-needed game, not another acceptance-only model run.
+
+The current runtime/recovery review found a cleanup reporting defect: a timed-out
+or interrupted Docker stop skipped the final state inspection. The owner now
+allows reply overhead beyond the stop grace period, retains the command failure,
+and performs one read-only inspection of the exact owned container. It never
+repeats the stop or any model/game input. Failed attempt and verified stop remain
+separate facts; unknown or still-running state is not described as stopped.
+All 313 focused owner, spectator, courier and recovery tests pass, and the changed
+owner and test pass scoped Ruff; the owner also passes scoped mypy.
+
+This adds implementer review of the portable launch, packaging, recovery and
+saved-segment audit paths. Remaining public projection, viewer/exporter and
+evaluation files are tracked separately before a merge decision. Review also
+identified that the portable recording exporter consumes the two-VM acceptance
+audit format, not a general single-engine run audit. That portability limitation
+is retained explicitly in its commands guide; historical audits are unchanged.
+No game, VM,
+model call or website deployment occurred during this review. The sections below
+retain earlier exact-source validation; their then-open acceptance statements
+are historical, not instructions to repeat completed work.
+
 ## Source boundaries
 
 | Component | Retained source |
@@ -23,10 +59,11 @@ and has not been used to replace a running cohort's frozen source or image.
 The broad website and goal branches include unrelated historical calibration,
 provider and environment-layer work. Those branches were not merged wholesale.
 Existing main campaign navigation is retained alongside the homepage spectator.
-All fourteen recording payloads are unchanged from the validated viewer source.
+All fourteen earlier recording payloads are unchanged from the validated viewer
+source; the portable acceptance recording is a separate fifteenth payload.
 The integrated API reads its live-feed directory through the same settings
 object as the other campaign endpoints. Observer tests follow the current split
-between player and data-loading helper and the fourteen-window catalog.
+between player and data-loading helper and the fifteen-window catalog.
 
 The matched source snapshot contains six first-boundary outcomes and five
 128-budget outcomes: three saved continuations and two infrastructure failures.

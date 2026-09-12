@@ -19,7 +19,7 @@ by the ongoing matched cohort and not a claim of deployment or main merge.
   starts failed infrastructure gates with their original checkpoints preserved.
   Astra r2 has no 128-response result; the latest known guest capacity shortage
   prevents its launch without changing storage conditions.
-- A homepage player, fourteen immutable recording windows, the Worlds gallery,
+- A homepage player, fifteen immutable recording windows, the Worlds gallery,
   comparison tables, and an optional read-only live observer.
 
 These short matched starts are not the earlier exploratory Astra Year-Two run.
@@ -84,9 +84,9 @@ unchanged. The explicit generation command for that tested schema is:
 This proves generation/import, not compatibility with any chosen running game.
 Use the schema declared for the target runtime; do not replace an existing
 experiment's frozen bindings. These checks made no model calls and launched no
-game or VM. Fresh-machine game provisioning and portable native-owner acceptance
-remain open. Installing optional provider dependencies does not authorize
-disabled providers.
+game or VM. The later portable acceptance below is a separate exact-source
+runtime check, not a retroactive extension of this setup receipt. Installing
+optional provider dependencies does not authorize disabled providers.
 
 ## Running a new native experiment
 
@@ -109,8 +109,13 @@ A [public Docker owner](KEYBOARD_DOCKER_OWNER.md) now composes fresh starts and
 unchanged own-save continuations with explicit image, source and container paths.
 Its check command verifies local inputs without contacting Docker or a model;
 run uses an already available local engine and owns stopping one container.
-Offline tests cover the orchestration and exchange boundaries. Actual native
-container acceptance and fresh-machine image construction remain unverified;
+The public owner passed a real two-decision Astra fresh run and two-decision
+own-save continuation at source `40b106b95f483b534a738622e75c4147a1270a96`.
+[The immutable acceptance result](https://github.com/lemoz/fort-gym/blob/7fe87fb6addc031a95f421ef985f139375fe8920/experiments/evidence/keyboard_portable_owner_acceptance_20260912.json)
+binds that source/image and reports 95,786 returned tokens. All four decisions
+were paused: this proves native save/resume, not new fortress growth. A separate
+clean local VM was used, but arbitrary fresh-machine provisioning is not proved.
+Newer spectator and cleanup changes do not claim another native acceptance;
 the frozen matched cohort must not switch to this new entry point.
 
 For the next image, use [source-bound image packaging](KEYBOARD_IMAGE_CONTEXT.md)
@@ -134,3 +139,12 @@ See [comparison reporting](DISPLAYED_KEY_COMPARISON.md) and
 and explicit action descriptions, not private model reasoning or hidden memory.
 Committing a result, publishing it, and verifying a public replay are separate
 delivery steps. Neither a test suite nor a checkpoint alone completes the goal.
+
+Portable-owner outputs can be projected by
+`scripts.export_keyboard_docker_recording` and
+`scripts.campaign_keyboard_docker_observe`; see
+[their commands and proof boundaries](KEYBOARD_DOCKER_OWNER.md#spectator-output).
+The [four-decision save/resume replay](https://fortgym.live/?recording=astra-portable-acceptance-1-4#watch-root)
+is published separately from the model comparison. Actual portable live follow
+still needs verification during the next otherwise-needed game; stopped
+capture and synthetic lifecycle tests do not claim live native broadcasting.
