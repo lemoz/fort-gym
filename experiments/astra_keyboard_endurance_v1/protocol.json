@@ -1,0 +1,38 @@
+{
+  "schema_version": "fortgym.astra-keyboard-endurance-protocol/v1",
+  "phase": "prepared_not_launched",
+  "campaign_id": "astra-keyboard-endurance-v1",
+  "condition": "condition.json",
+  "fresh_trial": "trial.json",
+  "implementation_parent": "7594b3b2d762195627046baa64091577a7c64d69",
+  "source_image_bound_after_review_and_build": true,
+  "initial_budget": {
+    "max_dispatches": 4,
+    "max_total_tokens": 500000
+  },
+  "target_budget": {
+    "max_dispatches": 1028,
+    "max_total_tokens": 40000000
+  },
+  "responses_per_window": 64,
+  "first_anniversary_elapsed_ticks": 403200,
+  "one_campaign_not_independent_window_trials": true,
+  "initial_four_responses_are_only_a_save_boundary": true,
+  "stop_at_first_anniversary": false,
+  "human_gameplay_rescue": false,
+  "source_or_image_migration": false,
+  "comparison_cohort": "separate_exploratory_campaign_not_pooled_with_selected_workshop_v2",
+  "activation_requires": [
+    "finish_all_six_frozen_v2_controls_attempts_with_actual_outcomes",
+    "review_and_exact_head_ci",
+    "bind_actual_candidate_image_and_runtime",
+    "single_existing_local_vm_available_with_mandatory_teardown",
+    "fresh_per_call_subscription_admission_within_existing_spending_bounds"
+  ],
+  "native_acceptance_performed": false,
+  "model_calls_by_preparation": 0,
+  "new_cloud_vm": false,
+  "api_fallback": false,
+  "automatic_purchase_or_reset": false,
+  "notes": "Targets are cumulative token/response ceilings, not dollar reservations or success criteria. Reaching a bound is a budget-limited pause, not fortress collapse. Preserve and continue the same save; any later ceiling increase needs a new recorded append, not a reset. Native acceptance, long-play outcomes and website delivery are unproven."
+}
