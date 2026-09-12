@@ -42,10 +42,18 @@ input JSON outside the checkout or in its ignored artifact area.
 
 Use the numeric UID/GID of the host account that will run the portable owner,
 not the example values above. The owner uses that account for its bind-mounted
-evidence. The image recipe assigns the source and generated dependencies to
-the declared account, so Git can verify its own checkout without a global
+evidence. The image recipe assigns the source, generated dependencies and a
+copy of the native runtime assets to the declared account, so Git can verify
+its own checkout without a global
 safe-directory exception. The source destination must not already exist in the
 base image and must not overlap its Python or game assets.
+
+The runtime asset copy comes from a named stage of the same selected base. It
+adds an owned layer to the derived image, preserves permission bits and leaves
+the immutable base image unchanged. This supports retained installations whose
+asset directories are accessible only to their original UID. The game still
+runs unprivileged from a separate owned runtime copy. Account for the added
+image-layer size when checking Docker storage; this does not reserve capacity.
 
 The base must provide compatible Linux DF/DFHack assets and shared libraries,
 Python 3.11 with the harness dependencies, Git and util-linux `script`. The new

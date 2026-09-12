@@ -153,7 +153,8 @@ def dockerfile(config: dict) -> str:
     )
     return "\n".join(
         [
-            f"FROM {config['base_reference']}",
+            f"FROM {config['base_reference']} AS fortgym_runtime_source",
+            "FROM fortgym_runtime_source",
             "RUN "
             + json.dumps(
                 [
@@ -165,6 +166,11 @@ def dockerfile(config: dict) -> str:
             # A new source location avoids overwriting a base image's retained repo.
             f"COPY --chown={owner} source/ {project}/",
             f"COPY --chown={owner} bindings/ {project}/{GENERATED}/",
+            # The retained game installation can contain owner-only directories.
+            # Copy its assets into a new owned image layer without changing the
+            # immutable base, granting broad mode bits, or running a game as root.
+            f"COPY --from=fortgym_runtime_source --chown={owner} "
+            f"{config['runtime_directory']}/ {config['runtime_directory']}/",
             f"USER {owner}",
             f"WORKDIR {project}",
             "ENV FORT_GYM_DISABLE_DOTENV=1 PYTHONDONTWRITEBYTECODE=1 DF_PROTO_ENABLED=1",

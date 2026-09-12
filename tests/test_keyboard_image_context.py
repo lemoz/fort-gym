@@ -191,7 +191,8 @@ def test_changed_binding_or_host_capacity_prevents_export(inputs, monkeypatch):
 def test_image_recipe_has_no_downloads_game_launch_or_private_operator_import(inputs):
     _, config, _ = inputs
     recipe = image.dockerfile(config)
-    assert recipe.startswith("FROM fixture-game:local-v1\n")
+    assert recipe.startswith("FROM fixture-game:local-v1 AS fortgym_runtime_source\nFROM fortgym_runtime_source\n")
+    assert "COPY --from=fortgym_runtime_source --chown=501:20 /opt/df/ /opt/df/" in recipe
     assert "COPY --chown=501:20 source/ /workspace/fort-gym/" in recipe
     assert "USER 501:20" in recipe
     assert "DF_PROTO_ENABLED=1" in recipe
@@ -203,6 +204,17 @@ def test_image_recipe_has_no_downloads_game_launch_or_private_operator_import(in
         word not in recipe
         for word in ("curl ", "apt-get", "pip install", "local_owner", "source.bundle")
     )
+
+
+def test_recipe_owns_runtime_asset_copy_without_chmod_or_mutating_base(inputs):
+    _, config, _ = inputs
+    recipe = image.dockerfile({**config, "uid": 1234, "gid": 2345})
+    lines = recipe.splitlines()
+    copy = "COPY --from=fortgym_runtime_source --chown=1234:2345 /opt/df/ /opt/df/"
+    assert copy in lines
+    assert lines.index(copy) < lines.index("USER 1234:2345")
+    assert "chmod" not in recipe and "RUN chown" not in recipe
+    assert recipe.count("AS fortgym_runtime_source") == 1
 
 
 def execute_recipe_probe(inputs, tmp_path, monkeypatch, *, launcher_mode=0o744):
