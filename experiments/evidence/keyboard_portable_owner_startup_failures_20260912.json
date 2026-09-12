@@ -1,0 +1,92 @@
+{
+  "schema_version": "fortgym.portable-owner-startup-failures/v1",
+  "scope": "Independent acceptance identities, not frozen model-comparison replicates",
+  "attempts": [
+    {
+      "campaign_id": "portable-owner-20260912-astra-r1",
+      "source_revision": "7acb4f72b254f9e9d41f7b0a3751f00b99d402cc",
+      "image": "sha256:9bd47dc58da41bc5001d77c2bd67e6162ab7108e1f431e455b7e304338d0421d",
+      "status": "infrastructure_failure",
+      "model_calls": 0,
+      "returned_tokens": 0,
+      "native_game_output_created": false,
+      "container_state": {
+        "Dead": false,
+        "Error": "",
+        "ExitCode": 0,
+        "FinishedAt": "0001-01-01T00:00:00Z",
+        "OOMKilled": false,
+        "Paused": false,
+        "Pid": 0,
+        "Restarting": false,
+        "Running": false,
+        "StartedAt": "0001-01-01T00:00:00Z",
+        "Status": "created"
+      },
+      "container_stopped_verified": true,
+      "both_vms_stopped": true,
+      "both_vm_disks_closed": true,
+      "original_inputs_and_vm_configs_unchanged": true,
+      "owner_result_sha256": "858ced254413a797fe5886cc06715864f32621c09be7f9a05a0961a9a08c4b41",
+      "vm_operation_sha256": "cd5ccfcc752d0bd4212426459523faf11a251be4c856c5839e36f257eff2c260",
+      "container_inspection_sha256": "59cf44a02b0d016da9fc9da6dbeffdf4e202c300b64ac9a40ab9e2be2499ca2a"
+    },
+    {
+      "campaign_id": "portable-owner-20260912-astra-r2",
+      "source_revision": "d4a54b7ebe6753c80b19cc454f9bfbe365173e1b",
+      "image": "sha256:08be1b113760e9afb722c829a6f6ea2ea0e694d1510e08852db1db079a97cc02",
+      "status": "infrastructure_failure",
+      "model_calls": 0,
+      "returned_tokens": 0,
+      "native_game_output_created": false,
+      "container_state": {
+        "Dead": false,
+        "Error": "",
+        "ExitCode": 143,
+        "FinishedAt": "2026-09-12T06:42:02.82576225Z",
+        "OOMKilled": false,
+        "Paused": false,
+        "Pid": 0,
+        "Restarting": false,
+        "Running": false,
+        "StartedAt": "2026-09-12T06:42:02.660464083Z",
+        "Status": "exited"
+      },
+      "container_stopped_verified": true,
+      "both_vms_stopped": true,
+      "both_vm_disks_closed": true,
+      "original_inputs_and_vm_configs_unchanged": true,
+      "owner_result_sha256": "cd98e39554d0843967981b213221f141c237ec08a9a8cd7a0ec86393761bca87",
+      "vm_operation_sha256": "56e2d3af55567d065cbb7e3e4d38f033a4718a5d170c958061836e63ec039fe8",
+      "container_inspection_sha256": "41743ccead59a2ca3f9299bc2e54af431ae92be337c5be9ca917a9876ddeeeb9"
+    }
+  ],
+  "causes": [
+    {
+      "campaign_id": "portable-owner-20260912-astra-r1",
+      "cause": "Docker platform warning on stderr combined with valid ID on stdout; strict ID parsing failed before container start.",
+      "correction": "Retain stdout and stderr separately. Do not relax ID/ownership validation.",
+      "fix_revision": "d4a54b7ebe6753c80b19cc454f9bfbe365173e1b",
+      "red_regression_failures": 2,
+      "focused_tests_passed": 127,
+      "full_local": {
+        "passed": 5515,
+        "skipped": 10,
+        "warnings": 7,
+        "seconds": 258.7
+      }
+    },
+    {
+      "campaign_id": "portable-owner-20260912-astra-r2",
+      "cause": "Read-only probe guard hard-coded /evidence/astra/exchange and rejected /fortgym-evidence/native/exchange before executing the first probe.",
+      "correction": "Bind exact listing/readiness probes to the declared courier directory. Keep finite read-only retry limits and reject arbitrary commands.",
+      "fix_revision": "40b106b95f483b534a738622e75c4147a1270a96",
+      "focused_tests_passed": 131
+    }
+  ],
+  "cloud_spend_usd": 0,
+  "model_call_charges_usd": 0,
+  "local_energy_and_subscription_cost_usd": null,
+  "goal_complete": false,
+  "old_inputs_images_containers_evidence_preserved": true
+}
