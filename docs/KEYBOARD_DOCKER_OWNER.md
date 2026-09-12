@@ -10,6 +10,11 @@ acceptance. Keep existing frozen trials on their original owner and source.
 Do not move the unfinished matched Astra attempt to this entry point to bypass
 the known capacity gate.
 
+The [source-context packager](KEYBOARD_IMAGE_CONTEXT.md) prepares an independent
+checkout and checksum-bound generated bindings for a new image, without the
+dated private build scripts. It does not install a base runtime or execute a
+Docker build; those and actual native acceptance remain separate steps.
+
 When a declaration pins its original source/image, campaign, condition digest
 or prior usage, those bindings are checked. A different runtime cannot silently
 reuse a frozen declaration. Condition and declaration files are copied byte-for-byte.

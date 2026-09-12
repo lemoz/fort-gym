@@ -113,6 +113,11 @@ Offline tests cover the orchestration and exchange boundaries. Actual native
 container acceptance and fresh-machine image construction remain unverified;
 the frozen matched cohort must not switch to this new entry point.
 
+For the next image, use [source-bound image packaging](KEYBOARD_IMAGE_CONTEXT.md)
+to export the exact clean commit and declared generated bindings. Its standalone
+context can be verified without the originating checkout. Preparation is offline;
+the compatible base image and actual build/game validation remain separate.
+
 For a new study, declare a new identity and condition; retain its selected model,
 input profile, seed, prompt and budget throughout a campaign. The outer owner
 supplies a credential-free game exchange, dispatches model requests, records
