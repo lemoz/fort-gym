@@ -1,0 +1,53 @@
+{
+  "schema_version": "fortgym.selected-workshop-live-preparation/v1",
+  "date_utc": "2026-09-12",
+  "study_id": "selected-workshop-v2",
+  "campaign_id": "selected-workshop-v2-p2-keyboard",
+  "status": "prepared_not_launched",
+  "source_revision": "5ddf1e6718dab2e8351e8dc24a2afe5071cd2592",
+  "image": "sha256:dcbc9b042538401a146159fcf5f6456b21dc900c4649369c008f7a77f661fed3",
+  "helpers_sha256": {
+    "relay_v2_p2_keyboard.py": "efc8e435f94938d6409c4d366208df48906b4b66b7b9a34c75a11603f4dcb268",
+    "verify_v2_p2_keyboard_public.py": "d9613959eca133e536cab6624fffac8262e8c7dee7c39b8450ac446229fd260d",
+    "capture_v2_p2_keyboard_start.py": "af699db4e1fafedc01467539613c127ed73d7125d127727b912f91c0e465b495",
+    "test_v2_p2_keyboard_live.py": "89cd9a4ed42a2ddc387eb32dd512e6ad441b2033802317e1fd28e07d69f4bd72"
+  },
+  "validation": {
+    "passed": 21,
+    "failed": 0,
+    "warnings": 2,
+    "warning_kind": "existing Pydantic class-based config deprecation",
+    "report_sha256": "546db22428495a93897dc5d4814a345e238d8b4ec39258954df3802e37c93bef",
+    "ruff": "passed"
+  },
+  "public_live": {
+    "requires_actual_fresh_owner_and_returned_response": true,
+    "expected_initial_cursor": 0,
+    "expected_control_profile": "native_keyboard_bindings/v1",
+    "old_relay_must_exit_before_start": true,
+    "existing_receiver": true,
+    "new_service": false,
+    "prepared_only": true
+  },
+  "startup_proof": {
+    "requires_original_seed_clock_and_metrics": true,
+    "requires_empty_initial_memory_and_usage": true,
+    "requires_actual_public_frame_proof": true,
+    "performed": false
+  },
+  "pending_p1_website_helpers": {
+    "baseline_revision": "5887540702b9aeedb656363b4a4cc1988131a197",
+    "deploy_helper_sha256": "141270cd7464cd4f770675adf3bb05f8c13c4764836ac393c3b5c0d47ed43722",
+    "publish_helper_sha256": "1ee8ffe84d57fee0b941640aef2de8db827b5b090fe17143c9723fba9e2d9cfb",
+    "requires_actual_audited_terminal_result_and_exact_replay_digest": true,
+    "requires_successful_full_tests_and_exact_head_ci": true,
+    "preserves_historical_recordings_live_feed_services_database_and_untracked_files": true,
+    "deployment_performed": false
+  },
+  "preparation_model_calls": 0,
+  "preparation_gameplay_inputs": 0,
+  "active_experiment_changed": false,
+  "main_merge": false,
+  "full_goal_complete": false,
+  "note": "The pair-one keyboard continuation remains the only active game. Pair-two helpers are prepared and offline-tested but unlaunched. Website publication still requires the actual completed pair-one recording, final source validation and public verification."
+}
