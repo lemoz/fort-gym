@@ -105,6 +105,14 @@ installer. Its historical example identities must not be launched again.
 Fresh-machine native provisioning and a complete portable owner setup have not
 been accepted merely by integrating these source files.
 
+A [public Docker owner](KEYBOARD_DOCKER_OWNER.md) now composes fresh starts and
+unchanged own-save continuations with explicit image, source and container paths.
+Its check command verifies local inputs without contacting Docker or a model;
+run uses an already available local engine and owns stopping one container.
+Offline tests cover the orchestration and exchange boundaries. Actual native
+container acceptance and fresh-machine image construction remain unverified;
+the frozen matched cohort must not switch to this new entry point.
+
 For a new study, declare a new identity and condition; retain its selected model,
 input profile, seed, prompt and budget throughout a campaign. The outer owner
 supplies a credential-free game exchange, dispatches model requests, records

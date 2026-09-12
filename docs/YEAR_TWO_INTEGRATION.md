@@ -147,3 +147,27 @@ generation/import part of setup, not native wire compatibility, fresh-machine
 game provisioning or portable owner acceptance. The frozen cohort's bindings
 are not regenerated. The [repeat website release record](../experiments/evidence/website_repeat_outcomes_release_20260912.json)
 separately verifies public delivery at `674a12c7c3ba499739e28959bd6c864386c14e33`.
+
+## Portable Docker owner implementation
+
+The earlier documentation/evidence candidate `a259382aa174e46d27a8081cb811a097cb4084bf`
+passed exact-head CI `34671288581`; the preceding code candidate also passed
+`34671086332`. The next source update adds a public configured Docker owner for
+fresh and unchanged own-save attempts, with a local-files-only check command.
+It uses an already available image and local engine, keeps host model receipts
+separate from the networkless game, and verifies stopping its own container.
+No dated private operator or installation path is imported by the new entry.
+
+The shared courier retains its historical defaults while allowing explicit
+native output, Python and checkout paths. Existing frozen source/image/owners
+remain unchanged. Recovery, prompt changes and budget extensions retain their
+separate launchers instead of being reinterpreted as ordinary continuations.
+
+Validation: 5,455 Python tests pass, with ten skips and seven existing warnings.
+The 67 focused owner/courier tests cover fresh memory exchange, own-save routing,
+unknown usage, interrupted creation/delivery, foreign-container rejection and
+owned stop. Selected Ruff checks and mypy on the four affected source files
+with imports followed silently pass. This is implementer review and offline
+regression evidence, not native container acceptance or a main-merge decision.
+See [the setup and execution contract](KEYBOARD_DOCKER_OWNER.md) for outstanding
+image construction, native wire compatibility and live-observer integration.

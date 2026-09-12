@@ -8,11 +8,12 @@ from __future__ import annotations
 
 import json
 import re
+import shlex
 import subprocess
 import time
 from collections.abc import Callable
 from dataclasses import dataclass
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Protocol
 
 from ..agent.keyboard_courier import answer_request
@@ -66,6 +67,42 @@ def serve_window(
 ) -> None:
     """Answer each new request once; retain errors and never retry an inference."""
     limit, seconds = window_bounds(condition, window)
+    _serve(exchange, condition, limit=limit, seconds=seconds, initial_memory=initial_memory,
+           executable=executable, decisions=decisions, answer=answer, clock=clock, wait=wait,
+           emit=emit)
+
+
+def serve_fresh(exchange: Exchange, condition: dict, trial: dict, **options) -> None:
+    """Serve a declared fresh start without fabricating a continuation cursor."""
+    validate_condition(condition)
+    if (trial.get("schema_version") != "fortgym.keyboard-fresh-trial/v1"
+            or trial.get("initial_memory") != "empty"
+            or trial.get("strategy_intervention") is not False):
+        raise ValueError("Fresh courier requires an independent empty-memory trial")
+    limit = positive(trial.get("steps_per_segment"), "fresh steps", maximum=64)
+    if limit > condition["max_dispatches"]:
+        raise ValueError("Fresh courier exceeds the declared dispatch ceiling")
+    _serve(exchange, condition, limit=limit,
+           seconds=limit * (condition["exchange_timeout_seconds"] + 120) + 300,
+           initial_memory="", **options)
+
+
+def container_path(value: str) -> str:
+    """Require a literal normalized absolute path inside the selected container."""
+    if (not isinstance(value, str) or not value.startswith("/") or value == "/"
+            or str(PurePosixPath(value)) != value or ".." in PurePosixPath(value).parts
+            or any(ord(char) < 32 for char in value)):
+        raise ValueError("Invalid container path")
+    return value
+
+
+def _serve(
+    exchange: Exchange, condition: dict, *, limit: int, seconds: int,
+    initial_memory: str, executable: Path, decisions: list[dict],
+    answer: Callable = answer_request, clock: Callable[[], float] = time.monotonic,
+    wait: Callable[[float], None] = time.sleep, emit: Callable[[dict], None] | None = None,
+) -> None:
+    native_output = container_path(getattr(exchange, "native_output", "/evidence/astra"))
     if not isinstance(initial_memory, str) or decisions:
         raise ValueError("A new window requires its own memory and empty decision receipt list")
     if not exchange.out.is_absolute() or exchange.out.is_symlink() or not exchange.out.is_dir():
@@ -105,7 +142,7 @@ def serve_window(
                 raise ValueError("Request does not continue its bound memory or screen condition")
             if not handshake:
                 exchange.deliver(
-                    ["probe", "--output", "/evidence/astra/transport-probe.json"],
+                    ["probe", "--output", native_output + "/transport-probe.json"],
                     {"probe": "bounded-json-delivery/v1"},
                     "model-handoff-preflight",
                 )
@@ -121,7 +158,7 @@ def serve_window(
                 [
                     "publish-response",
                     "--exchange",
-                    "/evidence/astra/exchange",
+                    native_output + "/exchange",
                     "--request-id",
                     identifier,
                 ],
@@ -152,6 +189,17 @@ class DockerExchange:
     run: Callable
     process: Callable = subprocess.run
     failures: int = 0
+    native_output: str = "/evidence/astra"
+    python_executable: str = "/opt/python/bin/python3.11"
+    project_directory: str | None = None
+
+    def __post_init__(self) -> None:
+        if not re.fullmatch(r"[a-zA-Z0-9][a-zA-Z0-9_.-]{0,127}", self.name):
+            raise ValueError("Invalid container identity")
+        container_path(self.native_output)
+        container_path(self.python_executable)
+        if self.project_directory is not None:
+            container_path(self.project_directory)
 
     @property
     def inspection(self) -> list[str]:
@@ -180,16 +228,18 @@ class DockerExchange:
         )
 
     def pending(self) -> list[str] | None:
+        path = shlex.quote(self.native_output + "/exchange")
         value = self._observe(
-            "if test -d /evidence/astra/exchange; then ls -1 /evidence/astra/exchange; fi"
+            "if test -d " + path + "; then ls -1 " + path + "; fi"
         )
         return None if value is None else value.splitlines()
 
     def copy_request(self, identifier: str, directory: Path) -> bool:
         if re.fullmatch(r"[a-f0-9]{32}", identifier) is None:
             raise ValueError("Invalid native request identifier")
-        remote = "/evidence/astra/exchange/" + identifier
-        ready = self._observe("if test -f " + remote + "/request.json; then echo ready; fi")
+        remote = self.native_output + "/exchange/" + identifier
+        ready = self._observe("if test -f " + shlex.quote(remote + "/request.json")
+                              + "; then echo ready; fi")
         if ready != "ready":
             return False
         directory.mkdir(mode=0o700)
@@ -208,8 +258,9 @@ class DockerExchange:
                 + [
                     "exec",
                     "-i",
+                    *(["--workdir", self.project_directory] if self.project_directory else []),
                     self.name,
-                    "/opt/python/bin/python3.11",
+                    self.python_executable,
                     "-m",
                     "scripts.campaign_keyboard_native",
                     *arguments,
