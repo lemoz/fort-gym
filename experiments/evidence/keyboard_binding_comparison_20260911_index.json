@@ -22,6 +22,11 @@
       }
     },
     "bindings-comparison-20260911-sol-r2": {
+      "128": {
+        "path": "experiments/evidence/keyboard_binding_comparison_sol_r2_128_capacity_failure_20260912.json",
+        "sha256": "26b13b3e56ae36bbe7275d23e8d7dc772d6297bbfbf8372e9891649fdaac30eb",
+        "revision": "1b366a2ebb896866fe1c3d170f20a4b916de7609"
+      },
       "64": {
         "path": "experiments/evidence/keyboard_binding_comparison_sol_r2_64_20260911.json",
         "sha256": "be4253d4a09e4e572c03ac8a27f999937d48d473a7ec946d09216e9e221fc798",
@@ -29,6 +34,11 @@
       }
     },
     "bindings-comparison-20260911-terra-r2": {
+      "128": {
+        "path": "experiments/evidence/keyboard_binding_comparison_terra_r2_128_20260912.json",
+        "sha256": "208349c0ca22ac964f3459faf3aec8b789130afad9940d205cac0189b956ac5e",
+        "revision": "aa12d891c00ede817b39b72752b37719a4b11e0a"
+      },
       "64": {
         "path": "experiments/evidence/keyboard_binding_comparison_terra_r2_64_20260911.json",
         "sha256": "4d3c774271afe9c21802638db175d06cbd5d76cbf2196cde0115e8c68b620854",
