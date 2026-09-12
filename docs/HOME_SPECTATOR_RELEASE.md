@@ -178,3 +178,28 @@ Release scope is static website assets, documentation and tests only. No
 database migration, service restart, game command, model call or new VM.
 Use the same exact-head, allowlisted fast-forward deployment and verify
 public bytes, historical files, read-only database counts and service identities.
+
+## Selected-workshop action labels (September 12, 2026)
+
+This website-only update starts at `e8e3fb9ae284dd562089d434e0b8e88dc2c8b683`.
+The live receiver and replay viewer preserve the explicit `WORKSHOP_JOB` route,
+item and quantity, instead of dropping it or presenting an empty keyboard action.
+The item/quantity constants come unchanged from the frozen controls study at
+`422c915d23bf828371be481d3079a23bbb3e9e94`. Only the public projection is ported;
+the running study image, native control implementation, prompt and model settings
+are not changed by this website release.
+
+The viewer labels a chosen shortcut as unverified, a rejected shortcut as not
+queued, and an audited accepted shortcut as queued work, not finished products.
+Malformed quantities, unsupported jobs, mixed keyboard/shortcut actions and
+private shortcut fields are rejected. Private agent memory is not published.
+Keyboard captures and all sixteen existing recordings stay unchanged. Unit and
+in-memory interaction fixtures are website contracts, not model results.
+
+Deploy as an exact-head allowlisted fast-forward. The receiver starts a fresh
+Python process for each delivery, so its new projection loads without restarting
+the API or game service. The configured API still reports `not_connected` and
+the homepage uses the existing static relay. Preserve the active relay's run
+identity and non-regressing decisions, all recordings, database counts, service
+identities and untracked files. Do not inject synthetic shortcut frames into the
+public feed. No new host, dependency change or main-branch merge is included.
