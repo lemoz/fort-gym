@@ -224,6 +224,7 @@ class DockerExchange:
                 self.out / "terminal-observation-warning.json", value
             ),
             max_live_read_attempts=3,
+            exchange_directory=self.native_output + "/exchange",
             retain_failure=self._failure,
         )
 

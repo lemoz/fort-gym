@@ -1,5 +1,6 @@
 import hashlib
 import json
+import shlex
 import subprocess
 
 import pytest
@@ -33,7 +34,8 @@ LIVE = {
 STOPPED = {**LIVE, "Status": "exited", "Running": False, "Pid": 0}
 
 
-def run(values, *, command=LIST, limit=3, recorder=None):
+def run(values, *, command=LIST, limit=3, recorder=None,
+        directory="/evidence/astra/exchange"):
     calls, failures, warnings, waits = [], [], [], []
 
     def output(request):
@@ -50,6 +52,7 @@ def run(values, *, command=LIST, limit=3, recorder=None):
             inspect_command=INSPECT,
             retain_warning=warnings.append,
             max_live_read_attempts=limit,
+            exchange_directory=directory,
             retain_failure=recorder or failures.append,
             wait=waits.append,
         )
@@ -83,6 +86,43 @@ def test_exact_request_readiness_probe_is_supported():
     ]
     execute, calls, *_ = run(["ready"], command=command)
     assert execute() == "ready" and calls == [command]
+
+
+@pytest.mark.parametrize("directory", [
+    "/fortgym-evidence/native/exchange", "/evidence/native run/exchange",
+    "/evidence/it's literal; not a command/exchange",
+])
+def test_declared_layout_retains_the_same_bounded_read_only_retry(directory):
+    path = shlex.quote(directory + "/" + "a" * 32 + "/request.json")
+    command = [*LIST[:-1], f"if test -f {path}; then echo ready; fi"]
+    execute, calls, failures, warnings, waits = run(
+        [RuntimeError("read"), json.dumps(LIVE), "ready"],
+        command=command, directory=directory,
+    )
+    assert execute() == "ready" and calls == [command, INSPECT, command]
+    assert len(failures) == 1 and warnings == [] and waits == [0.5]
+
+
+@pytest.mark.parametrize("directory", [
+    "/different/exchange", "/", "relative", "/evidence/../exchange",
+    "/evidence//exchange", "/evidence/exchange\n", None,
+])
+def test_wrong_or_ambiguous_declared_root_cannot_authorize_a_read(directory):
+    execute, calls, *_ = run([], directory=directory)
+    with pytest.raises(ValueError, match="exact read-only"):
+        execute()
+    assert calls == []
+
+
+@pytest.mark.parametrize("suffix", ["; echo extra", " && echo extra"])
+def test_portable_read_cannot_append_other_shell_statements(suffix):
+    directory = "/fortgym-evidence/native/exchange"
+    command = [*LIST[:-1], "if test -f " + directory + "/" + "a" * 32
+               + "/request.json; then echo ready; fi" + suffix]
+    execute, calls, *_ = run([], command=command, directory=directory)
+    with pytest.raises(ValueError, match="exact read-only"):
+        execute()
+    assert calls == []
 
 
 def test_read_bound_does_not_retry_forever_or_return_fake_empty():

@@ -163,6 +163,10 @@ Docker command stdout is retained in .log and stderr in .stderr.log. Only
 stdout is parsed as an ID or JSON; stderr warnings remain inspectable and do
 not contaminate the machine result. Nonzero exit codes still fail without a
 retry, and the exact container ID and ownership checks remain unchanged.
+The courier binds read-only exchange probes to its declared output directory,
+including this owner's /fortgym-evidence/native layout. This permits only the
+same exact listing and request-readiness probes, not arbitrary commands or
+model/input retries. The historical /evidence/astra layout remains supported.
 Publish only existing allowlisted observer and audited result/recording
 derivatives, never private model data.
 

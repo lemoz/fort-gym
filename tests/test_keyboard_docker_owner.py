@@ -446,6 +446,26 @@ def test_configured_transport_paths_are_quoted_and_python_is_explicit(tmp_path, 
     ]
 
 
+@pytest.mark.parametrize("native_output", [
+    "/fortgym-evidence/native", "/evidence/astra", "/evidence/native run",
+])
+def test_actual_observation_guard_accepts_declared_courier_layout(tmp_path, native_output):
+    calls = []
+    identifier = "a" * 32
+
+    def output(command):
+        calls.append(command)
+        return "" if "test -d" in command[-1] else "ready"
+
+    exchange = courier.DockerExchange(
+        "owned", tmp_path, ["docker"], {}, output, lambda *args: None,
+        native_output=native_output,
+    )
+    assert exchange.pending() == []
+    assert exchange.copy_request(identifier, tmp_path / identifier) is True
+    assert len(calls) == 2
+
+
 def test_runtime_preflight_requires_local_engine_exact_image_and_no_implicit_volumes(tmp_path):
     client = owner.DockerClient(Path(sys.executable), "fixture", tmp_path)
     values = [

@@ -5,12 +5,16 @@ from __future__ import annotations
 from collections.abc import Callable
 import hashlib
 import json
+from pathlib import PurePosixPath
 import re
+import shlex
 import subprocess
 import time
 
 
-def _exchange_read(command: list[str], inspection: list[str]) -> bool:
+def _exchange_read(
+    command: list[str], inspection: list[str], directory: str = "/evidence/astra/exchange"
+) -> bool:
     """Only the two existing, literal exchange probes may opt into retries."""
     if (
         len(inspection) < 5
@@ -25,17 +29,24 @@ def _exchange_read(command: list[str], inspection: list[str]) -> bool:
     prefix, owner = inspection[:-4], inspection[-3]
     if command[:-1] != prefix + ["exec", owner, "/bin/sh", "-c"]:
         return False
-    listing = (
-        "if test -d /evidence/astra/exchange; then ls -1 /evidence/astra/exchange; fi"
-    )
-    return (
-        command[-1] == listing
-        or re.fullmatch(
-            r"if test -f /evidence/astra/exchange/[a-f0-9]{32}/request\.json; then echo ready; fi",
-            command[-1],
-        )
-        is not None
-    )
+    if (not isinstance(directory, str) or not directory.startswith("/")
+            or directory == "/" or str(PurePosixPath(directory)) != directory
+            or ".." in PurePosixPath(directory).parts
+            or any(ord(char) < 32 for char in directory)):
+        return False
+    quoted = shlex.quote(directory)
+    if command[-1] == f"if test -d {quoted}; then ls -1 {quoted}; fi":
+        return True
+    try:
+        # Extract only a candidate path. The exact canonical command comparison
+        # below still rejects extra statements, options, and shell substitutions.
+        candidate = PurePosixPath(shlex.split(command[-1])[3].removesuffix(";"))
+    except (ValueError, IndexError):
+        return False
+    if (candidate.name != "request.json" or candidate.parent.parent != PurePosixPath(directory)
+            or re.fullmatch(r"[a-f0-9]{32}", candidate.parent.name) is None):
+        return False
+    return command[-1] == f"if test -f {shlex.quote(str(candidate))}; then echo ready; fi"
 
 
 def _read_failure(
@@ -72,6 +83,7 @@ def observe_container_output(
     inspect_command: list[str],
     retain_warning: Callable[[dict], None],
     max_live_read_attempts: int = 1,
+    exchange_directory: str = "/evidence/astra/exchange",
     retain_failure: Callable[[dict], None] | None = None,
     wait: Callable[[float], None] = time.sleep,
 ) -> str | None:
@@ -87,7 +99,7 @@ def observe_container_output(
     if type(max_live_read_attempts) is not int or not 1 <= max_live_read_attempts <= 3:
         raise ValueError("Container reads require a finite attempt bound")
     if max_live_read_attempts > 1 and (
-        retain_failure is None or not _exchange_read(command, inspect_command)
+        retain_failure is None or not _exchange_read(command, inspect_command, exchange_directory)
     ):
         raise ValueError(
             "Retries require an exact read-only exchange probe and failure recorder"
