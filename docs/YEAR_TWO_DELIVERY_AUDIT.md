@@ -7,6 +7,29 @@ Requirements come from [the approved goal](YEAR_TWO_CAMPAIGNS.md),
 [the standard-input phase](ASTRA_STANDARD_INPUT_EXPERIMENTS.md), and the
 [frozen displayed-key cohort](../experiments/keyboard_binding_comparison_20260911/cohort.json).
 
+Latest experiment update: [Astra r2 startup](../experiments/evidence/matched_continuation_astra_r2_startup_20260912.json)
+records a real own-save launch from decision 64 toward the declared 128 boundary,
+with the original native clock, memory, history, usage and feedback preserved.
+It used the [explicit storage-only amendment](../experiments/keyboard_comparison_storage_amendment_20260912.json):
+the existing local VM data disk grew from 32 to 40 GiB, retaining all prior
+containers, volumes and images. No cloud VM was created. Model, prompt, game
+controls, CPU, RAM and native source/image are unchanged. The original capacity
+failure remains an infrastructure outcome, not a model failure or a removed trial.
+
+The recorded startup also verifies public captured screen/action delivery at
+decision 69 without a new site deployment. It is not a terminal result or proof
+of a newly saved checkpoint. Read the result index for settled outcomes and the
+expiring live feed for current activity; the older "unlaunched" statements below
+are historical. The reusable portable observer still has a separate live-follow
+acceptance requirement because this cohort uses its frozen observer.
+
+Comparison reporting at source `a6af8e613e9539a495f686d787aadc41b560f34a`
+and website labels at `aede4fce16e2b37e7ba0db44e82afd53f51be9be` are pushed.
+The latter passes exact-head hosted CI `34687412026`; these new labels are not
+yet deployed. They mark only the affected 65–128 window, preserve the original
+64-response report byte-for-byte and do not imply a saved outcome. These later
+changes are not part of the separately reviewed PR176 candidate below.
+
 ## Evidence and remaining work
 
 Current integration review: [the final source review](../experiments/evidence/keyboard_integration_final_review_176_20260912.json)
