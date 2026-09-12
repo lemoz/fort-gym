@@ -13,8 +13,8 @@ This summary supersedes the capture-time running/preparation statements in the
 historical sections below. Original result manifests and earlier evidence are
 unchanged. The full Year-Two/cross-model goal is still active.
 
-Four of the six declared v2 attempts have terminal native audits at decision
-128. All four freshly reloaded their own decision-64 save; none of these final
+Five of the six declared v2 attempts have terminal native audits at decision
+128. All five freshly reloaded their own decision-64 save; none of these final
 128 saves has had a separate fresh-reload check. The source/image, original
 seed, Astra Medium model and per-attempt ceilings match the v2 declaration.
 
@@ -24,6 +24,7 @@ seed, Astra Medium model and per-attempt ceilings match the v2 declaration.
 | [Pair 1 keyboard](../experiments/evidence/selected_workshop_v2_p1_keyboard_128_20260912.json) | 70,900 | 7 / 0 | 7 / 2 / 1 | 43 / 135 | 3,879,799 |
 | [Pair 2 keyboard](../experiments/evidence/selected_workshop_v2_p2_keyboard_128_20260912.json) | 51,900 | 6 / 1 | 7 / 5 / 1 | 61 / 122 | 3,954,012 |
 | [Pair 2 shortcuts](../experiments/evidence/selected_workshop_v2_p2_shortcuts_128_20260912.json) | 49,600 | 7 / 0 | 10 / 2 / 2 | 40 / 136 | 4,014,250 |
+| [Pair 3 shortcuts](../experiments/evidence/selected_workshop_v2_p3_shortcuts_128_20260912.json) | 58,200 | 7 / 0 | 7 / 2 / 1 | 56 / 161 | 3,621,402 |
 
 The pair-two keyboard death is a [native-recorded drowning](../experiments/evidence/selected_workshop_v2_p2_keyboard_drowning_20260912.json),
 first observed at decision 86. The observation boundary does not establish its
@@ -57,30 +58,47 @@ remain recorded; queued jobs are not completed products. Both VMs stopped,
 their disks closed and their configurations/inventory remained unchanged;
 owner, guest-poweroff and VM-stop return codes were zero.
 
-The same-save continuation is now running within the original 128-response,
-eight-million-token ceiling. Its actual native load matched the saved clock
-and metrics; exact agent memory/usage/history and trace prefixes were preserved.
-Its first continuation response returned 25,316 tokens. Public HTTPS frame 66
-matches the original screen and chosen action, with no private transcript
-publication. The stopped first-64 public frame was retained before switching
-the feed. The new owner retains mandatory teardown. No decision-128 save or
-terminal result is claimed, and subscription charges remain unreported.
+The same-save continuation has now finished at the original 128-response
+boundary. Its [terminal native result](../experiments/evidence/selected_workshop_v2_p3_shortcuts_128_20260912.json)
+retains 58,200 elapsed ticks, seven living dwarves, no recorded deaths, seven
+beds, two workshops, one farm, 56 food and 161 drinks. All 128 actions were
+accepted: 116 keyboard actions sent 741 keys and twelve shortcuts queued 49
+jobs. Three zero-tick timeouts and two deferrals remain; 66,600 requested ticks
+are not substituted for actual game time. Returned tokens total 3,621,402.
+The final save has no separate fresh-reload check. Both windows' owner,
+guest-poweroff and VM-stop return codes were zero; VM/disk/configuration and
+inventory checks passed. Audit digest:
+`432b19374f5e5c1260adcbd390679feb2e8cf83775e10e1ae56fec875396f106`.
+Replay digest:
+`02b139ad1021de3e560d20a2404944121cfc896b5477180c8c3e3a0dde71226a`.
+The actual stopped public frame 128 matched its original request and chosen
+action before the live feed changed, with payload digest
+`858056e64635c807c1c51384f0bf7858e644af6e450825ddbafe1babceff111d`.
+Subscription charges remain unreported, not zero.
 The [earlier fresh-start snapshot](../experiments/evidence/selected_workshop_v2_p3_shortcuts_startup_20260912.json)
 remains unchanged as historical evidence of the original seed and empty memory.
 The [fresh-window operators](../experiments/evidence/selected_workshop_v2_p3_fresh_preparation_20260912.json)
-passed 26 offline tests. The final keyboard attempt has not started. Their
+passed 26 offline tests. The final keyboard attempt is now running. Their
 [own-save continuation operators](../experiments/evidence/selected_workshop_v2_p3_continuation_preparation_20260912.json)
 are also prepared, with 78 combined fresh/continuation tests passed. The shortcut
-continuation operator and relay are now running; the final keyboard operators
-remain unused, and no future checkpoint is assumed. Their
+operators and relays are consumed; the final keyboard fresh operator and relay
+are active. No future keyboard checkpoint is assumed. Their
 [live/reload/terminal evidence helpers](../experiments/evidence/selected_workshop_v2_p3_evidence_preparation_20260912.json)
-passed 198 combined offline tests. The shortcut fresh operator/relay and its
-actual reload capture are now consumed. Its terminal evidence, the final
-keyboard run and both public replay deliveries remain.
+passed 198 combined offline tests. A further scoped rerun passed all 99 keyboard
+helper checks after explicitly loading the frozen runtime package; earlier
+invocations loaded the unrelated root package and failed imports, not gameplay.
+The sixth attempt's [startup receipt](../experiments/evidence/selected_workshop_v2_p3_keyboard_startup_20260912.json)
+verifies the original seed, empty initial memory and four actual keyboard
+responses using 96,053 returned tokens. Its public frame 4 matches the original
+screen/action, and the single existing local VM retains mandatory teardown.
+The source, image, model, seed and original budgets are unchanged. No new
+cloud VM, paid API fallback, human gameplay input or future terminal result
+is included. The final keyboard result and both replay deliveries remain.
 The [fifth-attempt replay importer](../experiments/evidence/selected_workshop_v2_p3_shortcuts_website_preparation_20260912.json)
-is prepared with 35 passing in-memory checks, including its exact result-file
-binding and preservation of all 21 existing recordings/previews. It has not
-imported or published a future result; actual terminal audit and release remain.
+passed 35 in-memory checks, including its exact result-file binding and
+preservation of all 21 existing recordings/previews. It has now imported the
+actual terminal replay into the isolated website branch. Local website tests,
+exact-head CI and public release remain separate from native completion.
 
 A [separate workshop job-screen feedback correction](../experiments/evidence/workshop_job_clock_feedback_preparation_20260912.json)
 is pushed for draft review as PR179. It recognizes the exact paused `Workshop/Job`
