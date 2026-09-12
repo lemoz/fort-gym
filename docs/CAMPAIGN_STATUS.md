@@ -12,14 +12,14 @@ and [reload verification](#later-checkpoint-1057-verification-and-website-delive
 Do not confuse that achieved duration with the younger, independent matched
 cohort below. Long-term self-sufficiency and the full delivery goal remain open.
 
-## Current state: Terra and Astra saved at 128; Terra r2 running
+## Current state: three saved continuations; Sol r2 is next
 
 All six displayed-key fresh attempts have completed and passed their terminal
 audits at 64 responses. The [source-linked index](../experiments/evidence/keyboard_binding_comparison_20260911_index.json)
-retains two attempts each for Sol, Terra and Astra. The [public release](../experiments/evidence/website_terra_own_save_release_20260912.json)
-now contains all six fresh results, twelve recording windows and 928 captured
+retains two attempts each for Sol, Terra and Astra. The [public release](../experiments/evidence/website_astra_own_save_release_20260912.json)
+now contains all six fresh results, thirteen recording windows and 992 captured
 decisions, with a selector for the declared 64- and 128-decision budgets.
-The older eleven recording files remain unchanged.
+The older twelve recording files remain unchanged.
 
 The first Sol r1 continuation retained an
 [infrastructure startup failure](../experiments/evidence/keyboard_binding_comparison_sol_r1_128_startup_failure_20260911.json)
@@ -39,13 +39,13 @@ self-sufficiency proof, nor a separate fresh reload of the final checkpoint.
 The result and updated 128-budget index are pushed. Its own-save replay and
 public-table update are verified live at website revision
 `900e3eba6acd254ea340ecad0585b883279914ca`, with passing CI `34667274408`.
-The 128-budget table now shows Terra's saved result alongside Sol's startup failure.
+That release added Terra's saved result alongside Sol's startup failure.
 
 [Astra r1 started next](../experiments/evidence/matched_continuation_astra_r1_startup_20260912.json)
 from its own checkpoint64, preserving memory, usage, feedback and native metrics.
 Its first new subscription response and corrected load gate passed. Public frame67
 matched the original native screen, explicit action and retained provider events.
-The existing homepage relay now follows Astra; no service restart was needed.
+At startup the existing homepage relay followed Astra; no service restart was needed.
 The startup record remains immutable. [Astra r1 has now completed and passed its
 terminal audit](../experiments/evidence/keyboard_binding_comparison_astra_r1_128_20260912.json):
 128 total responses, 4,123,021 returned tokens and 55,700 saved game ticks.
@@ -54,27 +54,46 @@ three workshops, two farms, 61 food and 83 drinks. This window added 32,700 tick
 and 575 confirmed key presses, with one blocking-menu clock outcome retained.
 Original checkpoint preservation and teardown are verified; the live relay
 published stopped and exited. The final checkpoint has not had a separate reload.
-This result is indexed remotely, while its recording and public-table update
-remain pending. Continue Terra r2, Sol r2 and Astra r2 in declared order.
+Its recording and public-table update are now verified live at website revision
+`d5ca3e30a77882eea7b01189c1ac7d41fce5bf0f`, following CI `34669433044`.
+The website has three 128-budget outcomes, including Sol's unchanged failure.
 
 [Terra r2 has started](../experiments/evidence/matched_continuation_terra_r2_startup_20260912.json)
 from its own unchanged checkpoint64 after Astra's audit and teardown. Its initial
 native load preserves the original zero-elapsed-tick state, memory and usage.
 The first new response used 18,062 tokens; public frame69 matched its original
-screen, explicit action and response receipt. The existing homepage relay now
-follows Terra r2. This is startup evidence, not a verified checkpoint128 result.
+screen, explicit action and response receipt. The existing homepage relay
+followed Terra r2. The startup record remains unchanged.
+
+[Terra r2 has now completed and passed its terminal audit](../experiments/evidence/keyboard_binding_comparison_terra_r2_128_20260912.json).
+It retains 128 responses, 2,339,683 tokens and 108,000 saved ticks, all advanced
+in this window, with 39 confirmed key presses and no clock errors. Seven dwarves
+remain alive with no recorded deaths, but still no completed beds, workshops or
+farms. Food and drink stocks fell to 36 and 26. This is elapsed-time progress,
+not demonstrated fortress development or sustainable management. The original
+save, memory and usage were preserved. Native/VM teardown and stopped-relay
+publication passed; no local game is running. Its final checkpoint has not had a
+separate fresh reload. The goal-branch index has four 128-budget outcomes; this
+new Terra result's replay and integration update remain pending. Sol r2 and
+Astra r2 are next, subject to the unchanged capacity and allowance checks.
+
+Sol r2's read-only preflight passed its own-save, frozen-source, CI and current
+allowance checks. It launched no VM or model. Guest free space is checked by the
+owner after boot and before any game allocation; no capacity is assumed from
+this offline preflight, and no storage growth or evidence deletion is authorized.
 
 The isolated integration candidate is pushed as
 [draft PR176](https://github.com/lemoz/fort-gym/pull/176), head
-`bce580ae30782b258453889283c10f1ccba06a7b`. It combines native/main ancestry,
-the published viewer and matched tools, including Terra's new result and replay;
-5,420 Python tests and all 49 Node contracts pass. Original-head CI `34666311317`
-passed, and updated-head CI `34667725373` also passed. The [partial source review](../experiments/evidence/keyboard_integration_review_176_20260912.json)
-checks the changed keyboard paths and binding dispatch, with 198 focused tests.
-It is not full merge readiness. The source comparison reader exactly reproduces
-both website tables, and the original Astra window is unchanged.
-The integration snapshot includes Terra's 128 result; Astra's newer result/index
-and replay remain a separate integration/publication update.
+`3b5b0aa1f6b12fae042a7c7304e74eb6be1effd3`. It now includes Astra r1's result,
+index and thirteen-recording viewer. Its 136 focused Python tests and 50 Node
+contracts pass; exact-head CI `34669546552` passed. The
+earlier combined candidate passed 5,420 full-suite tests and CI `34667725373`.
+The [additional setup and source review](../experiments/evidence/keyboard_integration_setup_review_176_20260912.json)
+verifies an isolated Python/viewer install and 659 focused tests on its exact
+prior head. Generated bindings and fresh-machine native provisioning are still
+unverified, and source review is partial rather than merge approval. The current
+source reader exactly reproduces the public three-result128 and six-result64
+tables; Terra r2's just-completed result is a later update.
 The candidate is not merged or deployed, and does not replace the running source.
 
 The [delivery audit](YEAR_TWO_DELIVERY_AUDIT.md) separates the achieved

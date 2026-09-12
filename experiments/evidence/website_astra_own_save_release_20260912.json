@@ -1,0 +1,93 @@
+{
+  "schema_version": "fortgym.website-own-save-release/v1",
+  "release_revision": "d5ca3e30a77882eea7b01189c1ac7d41fce5bf0f",
+  "assets": {
+    "/static/displayed-key-comparison-128.json": {
+      "sha256": "ae4d85923e62237407aa0b0604948d9cef5c0f56dddbc80619398f02fa175655",
+      "mime": "application/json"
+    },
+    "/static/displayed-key-comparison.mjs": {
+      "sha256": "9313e05e0ec65204e942879c5a4b7fe7524718892099554398c718eb7680ac6e",
+      "mime": "text/javascript"
+    },
+    "/static/recordings/astra-matched-r1-65-128.json": {
+      "sha256": "0f32a0439dafeef5d39dc70702bfbda902bd0e95006fe974744f00fc291a0489",
+      "mime": "application/json"
+    },
+    "/static/recordings/catalog.json": {
+      "sha256": "78fe01297419b4747bdc67e298389cb53fb16a59c284f7987f058582f90fe2b6",
+      "mime": "application/json"
+    },
+    "/static/recordings/previews.json": {
+      "sha256": "b18f3f100be8c0060e21d84bd82337cc354c93066233fc403492bb1b7c95750e",
+      "mime": "application/json"
+    },
+    "/worlds": {
+      "sha256": "883c821ed1cee327d67838a65065c77e18f95fbb0b757250b8d4f8798e755148",
+      "mime": "text/html"
+    }
+  },
+  "recordings": 13,
+  "captured_frames": 992,
+  "matched_rows": 6,
+  "published_results": 6,
+  "continuation_results": 3,
+  "decision_budgets": [
+    64,
+    128
+  ],
+  "historical_recordings_unchanged": true,
+  "immutable_source_links_resolve": true,
+  "relay_snapshot": {
+    "run_id": "bindings-comparison-20260911-terra-r2",
+    "model": "gpt-5.6-terra",
+    "status": "running",
+    "observed_at_unix": 1789182585
+  },
+  "passed": true,
+  "website_url": "https://fortgym.live/results#matched-comparison",
+  "replay_url": "https://fortgym.live/?recording=astra-matched-r1-65-128#watch-root",
+  "source_report_revision": "eff32477b54f18d3e1f25c05768cb55813181207",
+  "observer_revision": "7cd3b96763998abfd99ed623630d658320a27918",
+  "private_receipt_sha256": {
+    "public-acceptance.json": "e3c383e7db79479b889472870da7ba2872201f946b39f13ea12ddb58de9a3626",
+    "remote-acceptance.jsonl": "a2840013c688227b09581983508b681020180913c406295ce754a62f2abf6a64",
+    "build-receipt.json": "e673f3825c3bc2e1c52d3ce5020f55201e38b2de7508dc0393e91ece124ab1f4",
+    "deploy_remote.py": "120f6e6796ec65a083c44a368b5f8c71c1f009d50c111293a328aa22d713d86a",
+    "verify_public.py": "47df55c79c1f3e388f137908be3d52344540029f3f4742096bd0a16f7ca7e32e",
+    "publish.py": "5e9381413d56a4bda13c7076d47473eb72a13fad3ed840069785c7c9b143e25f"
+  },
+  "ci": {
+    "run_id": 34669433044,
+    "head_sha": "d5ca3e30a77882eea7b01189c1ac7d41fce5bf0f",
+    "status": "completed",
+    "conclusion": "success"
+  },
+  "validation": {
+    "full_local_tests_passed": 1270,
+    "skipped": 5,
+    "warnings": 7,
+    "node_playback_publication_tests_passed": 50,
+    "selected_ruff_passed": true,
+    "browser_visual_qa_performed": false
+  },
+  "native_and_api_service_identities_unchanged": true,
+  "database_counts_unchanged": true,
+  "untracked_files_preserved": true,
+  "service_restarts": 0,
+  "new_hosts": 0,
+  "main_merge": false,
+  "new_model_calls_by_website_tools": 0,
+  "new_gameplay_inputs_by_website_tools": 0,
+  "active_terra_relay_unchanged": true,
+  "strong_model_ranking_supported": false,
+  "full_goal_complete": false,
+  "limits": [
+    "Thirteen recording windows are not thirteen independent trials; all twelve previously published recordings are unchanged.",
+    "Six fresh outcomes are saved at 64 responses. The 128-budget table contains Terra and Astra saved continuations plus Sol's infrastructure startup failure, with three results not yet published.",
+    "Astra retains 55700 saved ticks, seven living citizens, no recorded deaths, eight beds, three workshops, two farms, 61 food and 83 drinks. Stocks do not prove sustainable production or Year-Two completion.",
+    "The playing Terra r2 continuation remains unaudited until terminal review; a live feed is not a settled result.",
+    "The Astra parent checkpoint was freshly loaded; final checkpoint128 has not had a separate fresh reload.",
+    "Subscription dollar charges remain unreported, not zero."
+  ]
+}

@@ -468,8 +468,8 @@ def test_astra_own_save_128_keeps_development_and_unequal_game_time_explicit():
     data = read_comparison(
         ROOT, "experiments/evidence/keyboard_binding_comparison_20260911_index.json", boundary=128
     )
-    assert data["recorded_attempts"] == 3
-    assert data["outcome_counts"] == {"infrastructure_failure": 1, "saved": 2}
+    assert data["recorded_attempts"] == 4
+    assert data["outcome_counts"] == {"infrastructure_failure": 1, "saved": 3}
     astra = data["trials"][2]["result"]
     assert astra["status"] == "saved" and astra["responses"] == 128
     assert astra["returned_tokens"] == 4123021 and astra["reported_charge_usd"] is None
@@ -482,5 +482,25 @@ def test_astra_own_save_128_keeps_development_and_unequal_game_time_explicit():
     assert (metrics["population"], metrics["recorded_dead_citizens"]) == (7, 0)
     assert (metrics["food_stock"], metrics["drink_stock"]) == (61, 83)
     assert astra["native_teardown_verified"] is astra["vm_teardown_verified"] is True
-    assert all(row["result"] is None for row in data["trials"][3:])
+    assert all(row["result"] is None for row in data["trials"][4:])
     assert data["strong_ranking_supported"] is data["all_saved_boundaries_reached"] is False
+
+
+def test_terra_repeat_128_preserves_time_without_inventing_development():
+    data = read_comparison(
+        ROOT, "experiments/evidence/keyboard_binding_comparison_20260911_index.json", boundary=128
+    )
+    terra = data["trials"][3]["result"]
+    assert terra["status"] == "saved" and terra["responses"] == 128
+    assert terra["returned_tokens"] == 1186821 + 1152862
+    assert terra["reported_charge_usd"] is None
+    assert terra["checkpoint"]["saved_elapsed_ticks"] == 108000
+    assert terra["checkpoint"]["sha256"] == (
+        "4f72e7a9a8baa2d470826622818d8ab22222a7d398ee1bd6e39c8ed9bbd071d4"
+    )
+    metrics = terra["checkpoint"]["metrics"]
+    assert (metrics["population"], metrics["recorded_dead_citizens"]) == (7, 0)
+    assert (metrics["completed_beds"], metrics["completed_workshops"], metrics["completed_farms"]) == (0, 0, 0)
+    assert (metrics["food_stock"], metrics["drink_stock"]) == (36, 26)
+    assert terra["native_teardown_verified"] is terra["vm_teardown_verified"] is True
+    assert data["strong_ranking_supported"] is False
