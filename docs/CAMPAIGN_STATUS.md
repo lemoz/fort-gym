@@ -12,7 +12,36 @@ and [reload verification](#later-checkpoint-1057-verification-and-website-delive
 Do not confuse that achieved duration with the younger, independent matched
 cohort below. Long-term self-sufficiency and the full delivery goal remain open.
 
-## Current comparison work: Astra r2 resumed and broadcasting
+## Current experiment: selected-workshop v2, pair one
+
+The [complete v1 keyboard replay](https://fortgym.live/?recording=controls-p1-keyboard-1-128#watch-root)
+is now published on the homepage, Results and Runs surfaces. The
+[website acceptance receipt](../experiments/evidence/selected_workshop_v1_keyboard_website_20260912.json)
+verifies all 128 new frames and all sixteen historical recordings over HTTPS.
+The existing v2 live feed, services and database counts were preserved. Website
+source `c3278d47427902034622d5a330a5bfa823d7947a` is pushed, locally tested
+(1,298 passed, five skipped), and exact-head remote CI passed. Main is unmerged.
+
+The corrected shortcuts condition is running under the existing bounded owner,
+with mandatory VM teardown. The [retained progress snapshot](../experiments/evidence/selected_workshop_v2_p1_shortcuts_progress_20260912.json)
+covers 20 completed model decisions, 549,985 returned tokens, and 8,400 elapsed
+game ticks. Seven dwarves are alive, with two completed workshops, no installed
+beds or farm yet, 50 food and 60 drinks. These are provisional observations, not
+a saved endpoint or a claim that the paired study is complete.
+
+Two workshop shortcuts queued successfully but their requested time advance
+timed out at the native Workshop Job screen with zero game ticks. On each next
+decision Astra pressed Escape itself and advanced 2,000 ticks. No operator keys,
+restart or gameplay rescue occurred. The frozen menu-deferral code recognizes
+AddJob, not this Job focus; retain the observed waits in this cohort rather than
+silently changing its runtime. Revisit the deferral coverage in a later revision.
+
+Next: finish the first 64-response window, audit its saved native boundary and
+teardown, then continue from that same save to response 128. All six declared v2
+attempts keep the same source, image, conditions and resources. Earlier v1 results
+are not pooled into the corrected comparison. The broader goal remains active.
+
+## Historical comparison work: Astra r2 continuation
 
 The [explicit storage amendment](../experiments/keyboard_comparison_storage_amendment_20260912.json)
 expanded only the existing fg-v2 data disk from 32 to 40 GiB. The operation

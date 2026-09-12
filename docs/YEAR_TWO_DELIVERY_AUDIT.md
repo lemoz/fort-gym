@@ -7,6 +7,25 @@ Requirements come from [the approved goal](YEAR_TWO_CAMPAIGNS.md),
 [the standard-input phase](ASTRA_STANDARD_INPUT_EXPERIMENTS.md), and the
 [frozen displayed-key cohort](../experiments/keyboard_binding_comparison_20260911/cohort.json).
 
+Latest [v2 running progress](../experiments/evidence/selected_workshop_v2_p1_shortcuts_progress_20260912.json):
+20 completed responses, 549,985 returned tokens, 8,400 elapsed ticks, seven living
+dwarves and two completed workshops. Two accepted workshop actions encountered
+bounded zero-tick clock waits at `dwarfmode/QueryBuilding/Some/Workshop/Job`.
+The following model decisions independently pressed Escape and advanced 2,000
+ticks each. This is model recovery, not operator rescue or a completed save.
+The source/image and original records remain unchanged. The menu-focus coverage
+gap is retained as an observation for a future revision, not fixed mid-cohort.
+
+The [128-decision v1 keyboard replay is now public](../experiments/evidence/selected_workshop_v1_keyboard_website_20260912.json)
+at website revision `c3278d47427902034622d5a330a5bfa823d7947a`. Exact-head
+CI `34697428321` passed after 1,298 local tests and 31 Node contracts passed.
+HTTPS checks verify the new replay's original hash and all sixteen earlier
+recordings, with 17 windows and 1,252 total frames. The catalog labels this as
+v1, separate from corrected v2. Homepage, Results, Runs, current live feed,
+service identities, database counts and untracked files were verified; no
+restart, synthetic frame, private context or main merge was involved. This was
+HTTP/contract acceptance, not a new browser visual test.
+
 The [first v2 shortcuts window](../experiments/evidence/selected_workshop_v2_p1_shortcuts_startup_20260912.json)
 is now running as `selected-workshop-v2-p1-shortcuts`. Its loaded clock and
 measured initial state match the original fresh seed, with empty agent memory
@@ -47,8 +66,8 @@ starts with shortcuts again. All six identities are new, with each attempt
 saving at 64 and continuing only from its own save to 128. V1 outcomes remain
 historical evidence, not substitutes in the v2 primary comparison. No further
 v1 attempt or hidden replacement is planned. A new v2 first-window operator is
-prepared, but this declaration is not its launch or gameplay receipt. The full
-Year-Two/cross-model goal and keyboard128 website replay remain incomplete.
+prepared before launch; the later startup and progress receipts above establish
+actual ongoing play. The full Year-Two/cross-model goal remains incomplete.
 
 The subsequent [pair-one shortcuts attempt](../experiments/evidence/selected_workshop_p1_shortcuts_failure_20260912.json)
 loaded the native seed but failed before completing decision one. This is a
@@ -72,7 +91,7 @@ CI was in progress when this repair receipt was captured. The frozen study
 checkout is unchanged. Further v1 attempts are halted pending a declared
 corrected-runtime revision; the failed identity will not be reused or hidden.
 This is an implementation step under the active goal, not a new approval gate.
-The keyboard replay below still awaits website catalog publication.
+The earlier keyboard replay below has now been published as recorded above.
 
 The [first keyboard controls-study attempt](../experiments/evidence/selected_workshop_p1_keyboard_128_20260912.json)
 has now completed and passed the two-window native audit at decision 128. Its

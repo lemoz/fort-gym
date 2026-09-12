@@ -1,0 +1,89 @@
+{
+  "schema_version": "fortgym.selected-workshop-progress/v1",
+  "captured_at_unix": 1789220993,
+  "campaign_id": "selected-workshop-v2-p1-shortcuts",
+  "status": "running",
+  "source_revision": "5ddf1e6718dab2e8351e8dc24a2afe5071cd2592",
+  "image": "sha256:dcbc9b042538401a146159fcf5f6456b21dc900c4649369c008f7a77f661fed3",
+  "observed_completed_decision": 20,
+  "elapsed_ticks": 8400,
+  "metrics": {
+    "population": 7,
+    "food_stock": 50,
+    "drink_stock": 60,
+    "wood_stock": null,
+    "stone_stock": null,
+    "functional_rooms": null,
+    "completed_workshops": 2,
+    "completed_beds": 0,
+    "completed_farms": 0,
+    "recorded_dead_citizens": 0
+  },
+  "usage_at_completed_boundary": {
+    "total_tokens": 549985,
+    "returned_responses": 20,
+    "accounted_responses": 20,
+    "dispatched_requests": 20,
+    "total_cost_usd": null,
+    "cost_basis": "codex_subscription_charge_unreported/v1"
+  },
+  "action_routes": {
+    "KEYSTROKE": 16,
+    "WORKSHOP_JOB": 4
+  },
+  "trace_record_sha256": "909ce86f4d1fa118e1963014038c23c25ba17d9a5ec04c09328caf50eb86c3fa",
+  "bounded_clock_waits": [
+    {
+      "decision": 11,
+      "action_type": "WORKSHOP_JOB",
+      "item": "barrel",
+      "quantity": 2,
+      "accepted": true,
+      "requested_ticks": 2000,
+      "actual_ticks": 0,
+      "timeout": true,
+      "elapsed_ms": 400094,
+      "native_focus": "dwarfmode/QueryBuilding/Some/Workshop/Job",
+      "native_boundary_unchanged": true,
+      "trace_record_sha256": "8042f4f1bf254ff1b792f7fc92adb1ce1a7c1847e411a0279a930fc6f8bc78a9",
+      "following_model_decision": 12,
+      "following_keys": [
+        "SYM:0:ESC",
+        " "
+      ],
+      "following_actual_ticks": 2000,
+      "following_record_sha256": "fb69dcbe9c09893340697bc7af3e52629068508fe37da4f0876438e0a7b967f9"
+    },
+    {
+      "decision": 17,
+      "action_type": "WORKSHOP_JOB",
+      "item": "brew",
+      "quantity": 5,
+      "accepted": true,
+      "requested_ticks": 2000,
+      "actual_ticks": 0,
+      "timeout": true,
+      "elapsed_ms": 400143,
+      "native_focus": "dwarfmode/QueryBuilding/Some/Workshop/Job",
+      "native_boundary_unchanged": true,
+      "trace_record_sha256": "4fc7bc3b5f8c432fbb8a23017ac52205b153a1b898a2a863eddb248202e39a63",
+      "following_model_decision": 18,
+      "following_keys": [
+        "SYM:0:ESC"
+      ],
+      "following_actual_ticks": 2000,
+      "following_record_sha256": "f1a49056e06c85023b6c7775b729488f695213e220ebfca090d869961cab4dd7"
+    }
+  ],
+  "diagnosis": "Workshop Job focus is not in the frozen pre-dispatch menu-deferral set; the native clock reaches its bounded timeout with zero elapsed game ticks. The model exits the menu itself on its next decision.",
+  "experiment_modified": false,
+  "operator_gameplay_inputs": 0,
+  "human_gameplay_rescue": false,
+  "no_manual_restart": true,
+  "terminal_result": false,
+  "checkpoint_verified": false,
+  "owner_mandatory_teardown_active": true,
+  "actual_subscription_charge_usd": null,
+  "paired_comparison_complete": false,
+  "full_goal_complete": false
+}
