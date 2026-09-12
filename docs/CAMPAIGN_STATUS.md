@@ -12,7 +12,27 @@ and [reload verification](#later-checkpoint-1057-verification-and-website-delive
 Do not confuse that achieved duration with the younger, independent matched
 cohort below. Long-term self-sufficiency and the full delivery goal remain open.
 
-## Current experiment: selected-workshop v2, pair one
+## Current experiment summary
+
+The [current delivery audit](YEAR_TWO_DELIVERY_AUDIT.md#current-controls-study-and-delivery-checkpoint)
+supersedes the historical capture-time statements below. Five of six frozen
+selected-workshop v2 attempts have completed native decision-128 audits; the
+sixth keyboard attempt is continuing from its own verified decision-64 save.
+At its [completed running decision 93](../experiments/evidence/selected_workshop_v2_p3_keyboard_progress_93_20260912.json),
+all seven dwarves remain alive with seven installed beds, two workshops and
+one farm. That observation is not its final saved result.
+
+The separate Astra Medium standard-input endurance candidate is pushed with
+passing exact-head CI. Its initial save-window operator is
+[prepared and offline-tested](../experiments/evidence/astra_keyboard_endurance_fresh_preparation_20260912.json),
+but the new image and native save/continuation have not yet run. Finish the
+frozen sixth attempt, then exercise the longer campaign's real save and
+checkpoint-bound budget extension before continuing the same fortress.
+The latest verified public release includes all five completed v2 replays.
+The full goal remains active; inventories and checkpoint recovery do not by
+themselves establish sustained fortress management.
+
+## Earlier capture: selected-workshop v2, pair one
 
 The [complete v1 keyboard replay](https://fortgym.live/?recording=controls-p1-keyboard-1-128#watch-root)
 is now published on the homepage, Results and Runs surfaces. The

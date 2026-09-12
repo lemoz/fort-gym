@@ -1,0 +1,37 @@
+{
+  "schema_version": "fortgym.scored-study-running-boundary/v1",
+  "date_utc": "2026-09-12",
+  "campaign_id": "selected-workshop-v2-p3-keyboard",
+  "source_revision": "5ddf1e6718dab2e8351e8dc24a2afe5071cd2592",
+  "decision": 93,
+  "elapsed_ticks": 18400,
+  "metrics": {
+    "population": 7,
+    "food_stock": 45,
+    "drink_stock": 85,
+    "wood_stock": null,
+    "stone_stock": null,
+    "functional_rooms": null,
+    "completed_workshops": 2,
+    "completed_beds": 7,
+    "completed_farms": 1,
+    "recorded_dead_citizens": 0
+  },
+  "usage": {
+    "accounted_responses": 93,
+    "dispatched_requests": 93,
+    "returned_responses": 93,
+    "total_tokens": 2387497,
+    "total_cost_usd": null,
+    "cost_basis": "codex_subscription_charge_unreported/v1"
+  },
+  "trace_record_sha256": "94869477e1e54c41151e11c52b0ea0daccc8cc528085846cdc4e995752c3c494",
+  "usage_record_sha256": "c2c8acdc69c2b73d7236dfd8aaa5801aeb0e014a01069e20350634b2c09b9361",
+  "complete_trace_and_settled_usage_pair": true,
+  "verified_checkpoint": false,
+  "terminal_result": false,
+  "native_or_model_called_by_observer": false,
+  "original_evidence_modified": false,
+  "private_memory_or_transcripts_included": false,
+  "note": "This is a complete running decision observation, not a saved checkpoint or terminal native audit. Seven installed beds now appear after zero at checkpoint64. Positive stocks do not prove sustained production. The unchanged owner is bounded at decision128 with mandatory teardown."
+}

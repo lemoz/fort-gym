@@ -107,6 +107,11 @@ verified before replacing it. The continuation is within the original
 The source, image, model, seed and original budgets are unchanged. No new
 cloud VM, paid API fallback, human gameplay input or future terminal result
 is included. The final keyboard result and its replay delivery remain.
+A later [complete running decision-93 observation](../experiments/evidence/selected_workshop_v2_p3_keyboard_progress_93_20260912.json)
+retains 18,400 elapsed ticks, all seven living dwarves, no recorded deaths,
+seven installed beds, two workshops, one farm, 45 food and 85 drinks. It accounts
+for 2,387,497 returned tokens. This is actual development since checkpoint64,
+not a new saved checkpoint, terminal result or sustained-production proof.
 An [immutable decision-54 navigation observation](../experiments/evidence/selected_workshop_v2_p3_keyboard_navigation_20260912.json)
 captures a menu loop and autonomous adaptation. Decisions 40–54 requested and
 advanced zero ticks at year 30, tick 22,801. Repeated Down arrows changed the
@@ -180,6 +185,18 @@ start/build/poweroff/stop failures. The operator will emit a launch runtime only
 after an actual verified image build and teardown. It has not run, contacted
 Docker, created a VM or called a model. The active sixth controls attempt remains
 unchanged; the candidate image and native continuation are still unproven.
+
+The [initial endurance save-window operator](../experiments/evidence/astra_keyboard_endurance_fresh_preparation_20260912.json)
+is now prepared and unexecuted. Its 36 new offline tests and the 26 unchanged
+image-builder tests pass together, with scoped Ruff clean. The actual original
+native seed and four-response declaration also pass the candidate's local-file
+input checks, without any Docker or model contact. The operator requires the
+completed cohort and actual image-build receipt, preserves runtime resources,
+refuses used identities, and attempts teardown after failed startup/execution.
+Fallback container stopping requires the exact image and owner nonce. Owner
+completion alone never sets native-audit acceptance. The original build
+preparation and README remain unchanged. The real image build, first save,
+continuation VM wrapper, actual budget append/reload and longer gameplay remain.
 
 The [latest verified website delivery](../experiments/evidence/selected_workshop_v2_p3_shortcuts_website_20260912.json)
 is revision `286e000e36cb21b23bd7dc66ed54494e259eceeb`: twenty-two recording
