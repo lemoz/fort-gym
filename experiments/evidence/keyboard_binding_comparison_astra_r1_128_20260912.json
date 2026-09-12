@@ -1,0 +1,65 @@
+{
+  "schema_version": "fortgym.public-displayed-key-result/v1",
+  "cohort_id": "bindings-comparison-20260911",
+  "campaign_id": "bindings-comparison-20260911-astra-r1",
+  "model": "gpt-6-astra",
+  "replicate": 1,
+  "reasoning_effort": "medium",
+  "source_revision": "d22f28d99f4fd103188979e964e148139d3f3efd",
+  "image_id": "sha256:32bd022138a4772ed0c0d3a14f94feab8ad4a4cd183a20a8cd098745aedbd10d",
+  "seed_receipt_sha256": "eaf5fa5a40014719e6c313f33497740e536a8faa1c90a84c4e09dcc380ac0595",
+  "condition_file_sha256": "7bf8ebf8656cf9c993764b6f1d02bb22dcd75d2a68aa2d4d1f868e49b5f4e1ab",
+  "trial_file_sha256": "3925997ef8a992a6da24e760543750e9d256d54d3ca832732e371983789dc0c8",
+  "response_limit": 128,
+  "status": "saved",
+  "responses": 128,
+  "returned_tokens": 4123021,
+  "reported_charge_usd": null,
+  "human_gameplay_rescue": false,
+  "native_teardown_verified": true,
+  "vm_teardown_verified": true,
+  "terminal_audit_sha256": "fcb09958a87e5c56c707790fc439375410dd7afb5ba18dbc9a06667deadf830e",
+  "checkpoint": {
+    "next_step": 128,
+    "sha256": "ec1dcf452bc24ed744e982a02bccfac13851557f2e0f6ec7ddf65b1e1cb8f2ee",
+    "saved_elapsed_ticks": 55700,
+    "metrics": {
+      "population": 7,
+      "recorded_dead_citizens": 0,
+      "food_stock": 61,
+      "drink_stock": 83,
+      "completed_beds": 8,
+      "completed_workshops": 3,
+      "completed_farms": 2,
+      "functional_rooms": null,
+      "wood_stock": null,
+      "stone_stock": null
+    }
+  },
+  "evidence_details": {
+    "source_result_sha256": "ff9959cc90fe2dc63fd8e282c5229c5f52af49773dd57f327d136ae6a69e5e9c",
+    "source_checkpoint_sha256": "e718b389f37cfe11fab4121f3b3fec3e1da72e3f62e04d9f45658dde556eba63",
+    "source_checkpoint_fresh_load_verified": true,
+    "fresh_final_checkpoint_reload_verified": false,
+    "new_responses": 64,
+    "new_tokens": 2451530,
+    "new_saved_elapsed_ticks": 32700,
+    "confirmed_key_presses": 575,
+    "clock_outcomes": {
+      "blocking_native_menu": 1,
+      "no_error": 63
+    }
+  },
+  "assessment": {
+    "strong_model_ranking_supported": false,
+    "gameplay_success_assessment": "not_inferred_by_export",
+    "production_rates": null,
+    "consumption_rates": null,
+    "limits": [
+      "A verified saved window is not a successful fortress or a model ranking.",
+      "Stocks and sampled jobs do not establish production or consumption rates.",
+      "Reported subscription and hardware charges remain unreported, not zero.",
+      "The parent save was loaded; the new final save has not had a separate fresh reload."
+    ]
+  }
+}
