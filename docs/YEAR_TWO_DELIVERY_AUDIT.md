@@ -7,19 +7,32 @@ Requirements come from [the approved goal](YEAR_TWO_CAMPAIGNS.md),
 [the standard-input phase](ASTRA_STANDARD_INPUT_EXPERIMENTS.md), and the
 [frozen displayed-key cohort](../experiments/keyboard_binding_comparison_20260911/cohort.json).
 
-The [first scored controls-study launch](../experiments/evidence/selected_workshop_p1_keyboard_startup_20260912.json)
-is running as `selected-workshop-v1-p1-keyboard` on the declared source/image.
-Exact-source hosted CI passed. At the retained decision-20 boundary, Astra has
-advanced 4,400 ticks, with seven citizens, zero recorded deaths, one completed
-workshop, one pending workshop, and one bed item. This is not a checkpoint or
-terminal outcome. All 20 responses account for 536,272 returned tokens; actual
-subscription charges are unreported. The first window remains bounded to64.
-The portable observer now has real live-follow acceptance: public HTTPS frames
-14 and16 match their original screen/action receipts, and the homepage visibly
-renders the live native screen, stated intent and keys. Only the sanitized
-expiring feed changed; the existing website and recordings were not redeployed.
-The runtime owner still controls mandatory teardown. Do not restart a live
-owner because an observation or tool wait expires.
+The [first keyboard controls-study window](../experiments/evidence/selected_workshop_p1_keyboard_64_20260912.json)
+is audited through decision 64 and its own-save continuation is running toward
+128 as `selected-workshop-v1-p1-keyboard`. The first save contains 18,600 elapsed
+ticks, seven living citizens, zero recorded deaths, four installed beds, two
+workshops, one farm, an edible-food stock of 40 and 110 drinks. All 64 responses
+reconcile to 1,778,230 returned tokens; subscription dollar charges remain
+unreported. Native/container cleanup, both stopped project VMs, closed disks,
+unchanged resources and preserved prior inventory were independently verified
+before restarting the same existing VM for the continuation. The redundant
+stop command returned one after successful guest poweroff; that receipt is
+retained, not silently counted as a successful command.
+
+The continuation's initial clock and measured fortress state match the exact
+saved checkpoint. Agent state, memory, usage, loss history and original trace
+prefixes are preserved, without prompt changes, budget extension or gameplay
+intervention. The first 64-frame replay is exported but not yet added to the
+website's recording catalog. The first owner's public feed correctly stopped;
+the resumed public frame at decision 69 matches its original screen/action
+receipts, and the homepage visibly shows the resumed run at decision 73. A
+publishing check was resolved by verifying the same existing destination and
+screen/action-only payload. Only the sanitized expiring feed changed; no site
+deployment or service restart occurred. The earlier
+[startup receipt](../experiments/evidence/selected_workshop_p1_keyboard_startup_20260912.json)
+remains unchanged. Decision 128, terminal continuation cleanup and the other
+five study attempts remain unproven. Do not restart the live owner because an
+observation or tool wait expires; its bounded supervisor owns mandatory teardown.
 
 The separate [selected-workshop controls study](../experiments/evidence/selected_workshop_wiring_native_20260912.json)
 is now pushed at `422c915d23bf828371be481d3079a23bbb3e9e94` in draft
@@ -27,8 +40,9 @@ is now pushed at `422c915d23bf828371be481d3079a23bbb3e9e94` in draft
 integration candidate. The exact new image passed a provider-free native check:
 keyboard workshop selection, valid and invalid job dispatch, workers using real
 materials, one completed bed and 25 drink units after 2,000 ticks. The original
-checkpoint and prior runtime inventory remain intact; game and both VMs are
-stopped. This was scripted acceptance, not a model result. A missing v5 prompt
+checkpoint and prior runtime inventory remained intact, with game and both VMs
+stopped at that check's conclusion. This was scripted acceptance, not a model
+result. A missing v5 prompt
 forwarding path was reproduced and fixed; local tests pass 5,690 with ten skips
 and eight warnings, including fresh and continued worker wiring. The paired
 study's [source/image/resources are declared](../experiments/evidence/selected_workshop_runtime_declaration_20260912.json)
