@@ -37,7 +37,7 @@ with the actual reviewed image ID and the commit contained in that image; the
 host checkout must be at that same clean commit.
 
     {
-      "schema_version": "fortgym.keyboard-docker-runtime/v1",
+      "schema_version": "fortgym.keyboard-docker-runtime/v2",
       "image": "sha256:<64 hexadecimal characters>",
       "source_revision": "<40 hexadecimal characters>",
       "project_directory": "/workspace/fort-gym",
@@ -46,12 +46,51 @@ host checkout must be at that same clean commit.
       "cpus": 2,
       "memory_mib": 4096,
       "pids_limit": 512,
-      "minimum_host_free_bytes": 1610612736
+      "minimum_host_free_bytes": 1610612736,
+      "seccomp_profile": "/absolute/host/path/reviewed-dfhack-seccomp.json",
+      "seccomp_sha256": "<64 hexadecimal characters>"
     }
 
 Paths inside the image are explicit settings. The model, prompt, display,
 controls and usage ceilings come from the separate versioned condition file.
 A model change is a new study condition, not a mid-campaign rewrite of history.
+
+### Native launcher compatibility
+
+The DFHack launcher used by the retained native trials calls
+`personality(262144)` (`PER_LINUX | ADDR_NO_RANDOMIZE`). Docker's default policy
+rejected this during the earlier native compatibility attempt. Runtime schema
+v2 therefore explicitly selects a reviewed client-side seccomp JSON file and
+its SHA256. The owner preserves its exact bytes, records its digest, and passes
+the retained file to Docker. It never uses `seccomp=unconfined` or privileged
+execution. Docker reads the profile on the client host; it is not a game mount.
+See [Docker's profile documentation](https://docs.docker.com/engine/security/seccomp/).
+
+Use a versioned policy appropriate for the selected engine, with default action
+`SCMP_ACT_ERRNO` and the following narrowly scoped rule added to `syscalls`:
+
+    {
+      "names": ["personality"],
+      "action": "SCMP_ACT_ALLOW",
+      "args": [{"index": 0, "value": 262144, "op": "SCMP_CMP_EQ"}]
+    }
+
+Keep every other rule unchanged and review the base policy separately. The
+owner checks default-deny behavior, a specific launcher allowance and absence
+of unconstrained personality allowances. It does not audit every syscall or
+assert that a supplied profile is current. In particular, the retained historical
+Moby 27 profile is evidence for that frozen environment, not a recommendation
+to apply a 2024 policy to a newer engine. This command does not download or
+change the host's policy. Its `check` mode also verifies the supplied bytes.
+
+Schema v1 remains readable for older declarations and uses Docker's default
+policy. It does not gain a compatibility override silently and is not suitable
+for the known launcher on engines whose default denies this call. If a trial
+pins `seccomp_sha256`, a different or absent selected profile is rejected.
+
+New owner containers use Docker's init process for child reaping and set the
+combined memory/swap limit equal to the declared memory limit. They do not
+inherit an undeclared additional swap allowance.
 
 The minimum_host_free_bytes field checks the host output filesystem before an
 attempt. It is not a reservation, a guest-disk measurement, a future-growth

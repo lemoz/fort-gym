@@ -171,3 +171,30 @@ with imports followed silently pass. This is implementer review and offline
 regression evidence, not native container acceptance or a main-merge decision.
 See [the setup and execution contract](KEYBOARD_DOCKER_OWNER.md) for outstanding
 image construction, native wire compatibility and live-observer integration.
+
+## Native launcher compatibility and cleanup review
+
+Runtime schema v2 selects a versioned, checksum-bound client-side seccomp file
+with the DFHack launcher's narrowly scoped `personality(262144)` allowance.
+The previous portable launch plan used Docker's default policy even though the
+historical native attempt had demonstrated that launcher's incompatibility.
+The owner now retains the exact selected policy, checks it again after admission,
+and records its digest. It also enables child reaping and bounds combined
+memory/swap to the declared memory amount. Existing v1 inputs keep their default
+policy rather than receiving an undeclared override.
+
+Source review also found a loop variable overwriting the predeclared container
+name before uncertain-create cleanup. An exact-name Docker double reproduced
+the failure; renaming the input-filename variable repairs reconciliation. The
+earlier permissive Docker double had missed this. The new regression verifies
+that the owner finds the actual named container and verifies it stopped without
+retrying creation.
+
+All 94 focused policy, owner and courier tests pass. The policy reader also
+accepts the exact historical 16,158-byte profile with SHA256
+`5ae96ce3d0a9c746765df7d4c5948312f3847b08e917174368797d788461657a`, unchanged.
+These are offline checks, not native container acceptance. No game, VM, model
+call, runtime build or website change occurred during this review. A reviewed
+policy appropriate for a future engine, compatible image construction and an
+actual end-to-end run remain necessary. The known guest-space shortage and
+frozen cohort declarations are unchanged.

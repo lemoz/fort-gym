@@ -15,8 +15,10 @@ from .campaign_loop import reconciled_usage
 from .keyboard_config import load_window, positive
 from .keyboard_trial_config import load_trial
 from .keyboard_window_courier import container_path, window_bounds
+from .keyboard_seccomp import read_profile
 
 SCHEMA = "fortgym.keyboard-docker-runtime/v1"
+SECCOMP_SCHEMA = "fortgym.keyboard-docker-runtime/v2"
 NATIVE_OUTPUT = "/fortgym-evidence/native"
 LABEL = "org.fortgym.owner"
 
@@ -34,7 +36,9 @@ def validate_runtime(value: dict) -> dict:
         "pids_limit",
         "minimum_host_free_bytes",
     }
-    if set(value) != required or value["schema_version"] != SCHEMA:
+    if value.get("schema_version") == SECCOMP_SCHEMA:
+        required |= {"seccomp_profile", "seccomp_sha256"}
+    if set(value) != required or value["schema_version"] not in (SCHEMA, SECCOMP_SCHEMA):
         raise ValueError("Docker runtime configuration fields differ")
     if (
         not isinstance(value["image"], str)
@@ -60,6 +64,12 @@ def validate_runtime(value: dict) -> dict:
         or value["minimum_host_free_bytes"] < 1073741824
     ):
         raise ValueError("Runtime free-space floor must be at least 1 GiB")
+    if value["schema_version"] == SECCOMP_SCHEMA:
+        if not isinstance(value["seccomp_profile"], str) or not isinstance(
+            value["seccomp_sha256"], str
+        ):
+            raise ValueError("Seccomp profile and SHA256 must be strings")
+        read_profile(value["seccomp_profile"], value["seccomp_sha256"])
     return value
 
 
@@ -170,9 +180,13 @@ def create_arguments(
     runtime: dict, inputs: dict, output: Path, origin: Path, name: str, nonce: str, port: int
 ) -> list[str]:
     validate_runtime(runtime)
-    lineage = {"source_native_revision": "source_revision", "source_image_id": "image"}
+    lineage = {
+        "source_native_revision": "source_revision",
+        "source_image_id": "image",
+        "seccomp_sha256": "seccomp_sha256",
+    }
     if any(
-        key in inputs["declaration"] and inputs["declaration"][key] != runtime[target]
+        key in inputs["declaration"] and inputs["declaration"][key] != runtime.get(target)
         for key, target in lineage.items()
     ):
         raise ValueError("Declared native source or image requires its original runtime owner")
@@ -199,6 +213,7 @@ def create_arguments(
         "never",
         "--name",
         name,
+        "--init",
         "--label",
         LABEL + "=" + nonce,
         "--network",
@@ -214,6 +229,8 @@ def create_arguments(
         str(runtime["cpus"]),
         "--memory",
         str(runtime["memory_mib"]) + "m",
+        "--memory-swap",
+        str(runtime["memory_mib"]) + "m",
         "--pids-limit",
         str(runtime["pids_limit"]),
         "--tmpfs",
@@ -227,6 +244,10 @@ def create_arguments(
         "--env",
         "PYTHONDONTWRITEBYTECODE=1",
     ]
+    if runtime["schema_version"] == SECCOMP_SCHEMA:
+        # The owner retains verified bytes here before Docker reads this profile.
+        # Docker reads it on the client; it is never a mount into the game.
+        command += ["--security-opt", "seccomp=" + str(output / "seccomp.json")]
     for source, target, readonly in mounts:
         command += [
             "--mount",

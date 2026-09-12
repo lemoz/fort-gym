@@ -16,6 +16,7 @@ from tests.test_campaign_load_smoke import sources as sources
 from tests.test_keyboard_trial_launcher import prepared as prepared
 from tests.test_keyboard_runtime import CONDITION, saved as saved
 from tests.test_keyboard_window_courier import FakeExchange
+from tests.test_keyboard_seccomp import profile, retained
 
 RUNTIME = {
     "schema_version": plan.SCHEMA,
@@ -88,6 +89,71 @@ def test_fresh_plan_selects_real_condition_and_only_narrow_mounts(arguments):
     assert command[command.index("--source") + 1] == "/opt/df"
     assert command[command.index("--output") + 1] == plan.NATIVE_OUTPUT
     assert "fixture-new-fort" in command
+    assert "--init" in command
+    assert command[command.index("--memory") + 1] == command[command.index("--memory-swap") + 1]
+
+
+def selected_profile(arguments):
+    path, sha, raw = retained(arguments.runtime.parent, profile())
+    runtime = {
+        **RUNTIME,
+        "schema_version": plan.SECCOMP_SCHEMA,
+        "seccomp_profile": str(path),
+        "seccomp_sha256": sha,
+    }
+    # publish() is intentionally write-once; this is a distinct input condition.
+    arguments.runtime = arguments.runtime.parent / "runtime-v2.json"
+    publish(arguments.runtime, runtime)
+    return runtime, raw
+
+
+def test_v2_keeps_profile_on_host_and_retains_exact_client_input(arguments):
+    runtime, raw = selected_profile(arguments)
+    result, client = execute(arguments)
+    assert result["status"] == "execution_finished"
+    assert result["seccomp_sha256"] == runtime["seccomp_sha256"]
+    assert (arguments.output / "seccomp.json").read_bytes() == raw
+    create = next(call for call in client.calls if call[0] == "create")
+    security = [create[i + 1] for i, item in enumerate(create) if item == "--security-opt"]
+    assert security == ["no-new-privileges", "seccomp=" + str(arguments.output / "seccomp.json")]
+    mounts = [create[i + 1] for i, item in enumerate(create) if item == "--mount"]
+    assert len(mounts) == 3 and all("seccomp" not in mount for mount in mounts)
+    assert read(arguments.output / "owner-plan.json")["seccomp_sha256"] == runtime["seccomp_sha256"]
+
+
+def test_changed_profile_stops_before_output_creation_and_docker(arguments):
+    runtime, _ = selected_profile(arguments)
+    Path(runtime["seccomp_profile"]).write_text("{}")
+    with pytest.raises(ValueError, match="SHA256"):
+        execute(arguments)
+    assert not arguments.output.exists()
+
+
+def test_changed_retained_profile_during_admission_prevents_container_creation(arguments):
+    selected_profile(arguments)
+    clients = []
+
+    def factory(*args):
+        client = FakeDocker(*args)
+        clients.append(client)
+        return client
+
+    def allowance(*args, **kwargs):
+        (arguments.output / "seccomp.json").write_text("{}")
+        return {"allowed": True}
+
+    result = owner.run_owner(arguments, client_factory=factory, allowance_check=allowance)
+    assert result["status"] == "failed" and not result["container_create_attempted"]
+    assert not clients[0].calls and not result["model_responses"]
+
+
+def test_frozen_declared_profile_cannot_silently_use_default_policy(arguments):
+    data = owner.source_inputs(arguments)
+    data["declaration"]["seccomp_sha256"] = "c" * 64
+    with pytest.raises(ValueError, match="original runtime owner"):
+        plan.create_arguments(
+            RUNTIME, data, arguments.output, arguments.origin, "fortgym-" + "1" * 32, "2" * 32, 5540
+        )
 
 
 @pytest.mark.parametrize(
@@ -301,6 +367,29 @@ def test_failure_retains_attempt_and_never_retries_or_stops_foreign_container(ar
         assert result["container_stopped_verified"] is False
     if failure == "create":
         assert result["container_id"] == "c" * 64 and result["container_stopped_verified"]
+
+
+def test_unknown_create_result_reconciles_the_actual_predeclared_container_name(arguments):
+    class ExactNameDocker(FakeDocker):
+        def call(self, *parts):
+            if parts[0] == "create":
+                self.created_name = parts[parts.index("--name") + 1]
+                self.fail_create = True
+            return super().call(*parts)
+
+        def inspect(self, identity):
+            if identity not in (self.identity, self.created_name):
+                raise ValueError("No such container: " + identity)
+            return super().inspect(identity)
+
+    result = owner.run_owner(
+        arguments,
+        client_factory=ExactNameDocker,
+        allowance_check=lambda *args, **kwargs: {"allowed": True},
+    )
+    assert result["status"] == "failed"  # Uncertain create is never retried.
+    assert result["container_stopped_verified"] is True
+    assert result["container_id"] == "c" * 64
 
 
 def test_admission_pause_does_not_create_a_container_or_make_model_calls(arguments):

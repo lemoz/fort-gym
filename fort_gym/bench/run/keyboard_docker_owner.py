@@ -15,11 +15,13 @@ from ..agent.codex_allowance import read_allowance
 from .keyboard_docker_plan import (
     LABEL,
     NATIVE_OUTPUT,
+    SECCOMP_SCHEMA,
     absolute_path,
     create_arguments,
     prepare_inputs,
     validate_runtime,
 )
+from .keyboard_seccomp import read_profile
 from .keyboard_window_courier import DockerExchange, serve_fresh, serve_window
 
 
@@ -136,17 +138,24 @@ def run_owner(
         raise ValueError("Output filesystem is below the declared capacity floor")
     name, nonce = "fortgym-" + uuid.uuid4().hex, uuid.uuid4().hex
     command = create_arguments(runtime, inputs, output, args.origin, name, nonce, args.port)
+    seccomp = (
+        read_profile(runtime["seccomp_profile"], runtime["seccomp_sha256"])
+        if runtime["schema_version"] == SECCOMP_SCHEMA else None
+    )
     output.mkdir(mode=0o700)
+    if seccomp is not None:
+        with (output / "seccomp.json").open("xb") as stream:
+            stream.write(seccomp)
     (output / "inputs").mkdir(mode=0o700)
     (output / "game").mkdir(mode=0o700)
-    for path, key, name in (
+    for path, key, filename_key in (
         (args.condition, "condition", "condition_name"),
         (args.declaration, "declaration", "declaration_name"),
     ):
         raw = path.read_bytes()
         if len(raw) > MAX_BYTES or json.loads(raw) != inputs[key]:
             raise ValueError("Declared input changed before its read-only copy")
-        with (output / "inputs" / inputs[name]).open("xb") as stream:
+        with (output / "inputs" / inputs[filename_key]).open("xb") as stream:
             stream.write(raw)
     publish(
         output / "owner-plan.json",
@@ -165,6 +174,7 @@ def run_owner(
             "courier_timeout_seconds": inputs["seconds"],
             "vm_provisioning": False,
             "image_pull": False,
+            "seccomp_sha256": runtime.get("seccomp_sha256"),
         },
     )
     result = {
@@ -173,6 +183,7 @@ def run_owner(
         "mode": args.mode,
         "source_revision": runtime["source_revision"],
         "image": runtime["image"],
+        "seccomp_sha256": runtime.get("seccomp_sha256"),
         "status": "failed",
         "container_create_attempted": False,
         "container_id": None,
@@ -197,6 +208,10 @@ def run_owner(
         if allowance.get("allowed") is not True:
             result["status"] = "budget_limited_pause"
             return result
+        if seccomp is not None:
+            # Admission can take time. Recheck the retained client-side policy
+            # immediately before Docker reads it, without another model call.
+            read_profile(str(output / "seccomp.json"), runtime["seccomp_sha256"])
         result["container_create_attempted"] = True
         created = client.call(*command)
         if not re.fullmatch(r"[a-f0-9]{64}", created):
