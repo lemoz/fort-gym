@@ -27,9 +27,9 @@ def owner_identity(pid: int) -> str | None:
         text=True,
         timeout=5,
     )
-    if result.returncode == 1 and not result.stdout.strip():
+    if result.returncode == 1 and not result.stdout.strip() and not result.stderr.strip():
         return None
-    if result.returncode != 0:
+    if result.returncode != 0 or not result.stdout.strip():
         raise RuntimeError("Could not inspect the declared owner")
     return result.stdout.strip()
 
