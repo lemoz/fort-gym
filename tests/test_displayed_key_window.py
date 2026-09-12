@@ -175,3 +175,16 @@ def test_actual_sol_checkpoint_preparation_has_no_vm_or_model_side_effect():
     assert hashlib.sha256(declared.read_bytes()).hexdigest() == (
         "2ee16e7609bd55134aa6c229e2c42ed4c1ec817d08405a0a29b819ee0a4c4263"
     )
+
+
+@pytest.mark.parametrize("slot", ["sol-r1", "terra-r1", "astra-r1", "terra-r2", "sol-r2"])
+def test_each_prepared_window_is_exactly_derived_from_its_own_recorded_result(slot):
+    identity = "bindings-comparison-20260911-" + slot
+    path = ROOT / "experiments/keyboard_binding_comparison_continuations_20260911"
+    path /= slot + "-window-64-128.json"
+    expected = windows.prepare_window(ROOT, INDEX, identity)
+    assert json.loads(path.read_text()) == expected
+    assert expected["accounted_responses_before_window"] == 64
+    assert expected["window_end_decision"] == 128
+    assert expected["reset_memory"] is expected["reset_usage"] is False
+    assert expected["strategy_intervention"] is False

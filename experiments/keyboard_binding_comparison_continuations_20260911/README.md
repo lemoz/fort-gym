@@ -116,3 +116,20 @@ memory chain and 1,186,821 tokens reconcile; confirmed key presses remain 80.
 Original checkpoint and audit hashes stayed unchanged. This offline regression
 does not launch a continuation or fix the separate live/replay projection path.
 The updated focused suite passed 274 tests; selected Ruff and mypy also passed.
+
+## Prepared saved attempts
+
+The exact public-result-derived windows now cover Sol r1, Terra r1, Astra r1,
+Terra r2 and Sol r2. Each is bound to its own verified 64-response checkpoint,
+saved memory and usage. The three newly added origin checks retained 1,671,491
+tokens and 23,000 ticks for Astra r1; 1,186,821 tokens and zero ticks for Terra r2;
+and 1,221,506 tokens and 10,400 ticks for Sol r2. Terra's lack of elapsed time is
+preserved, not repaired or replaced with a successful peer's save.
+
+Astra r2 is still running under the unchanged fresh-start declaration. Its
+continuation configuration will be derived only after its own terminal result
+settles. No native continuation launches until all six fresh outcomes are
+recorded. Run the next stage in the same declared order: Sol r1, Terra r1,
+Astra r1, Terra r2, Sol r2, Astra r2, one VM/game at a time. Original prompt,
+controls, limits and model memory remain unchanged. A new native load still has
+to pass before the first continuation model call; offline checks do not prove it.
