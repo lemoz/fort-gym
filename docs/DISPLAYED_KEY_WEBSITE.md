@@ -156,3 +156,36 @@ type check passed. The first sandboxed full run blocked one local socket test;
 the complete unrestricted rerun above passed without source changes. Browser
 visual QA was not performed. Public delivery remains a separate exact-revision
 check, not a consequence of these local tests.
+
+## Terra own-save continuation
+
+The next static release starts at `c763742f6e45d96c9b82df10a9776ee5bbbcb8fc`.
+It adds Terra r1 decisions65-128 as a separate recording, not a fresh replicate.
+The terminal audit is `df238f47bfb4171329986f39b82da959cb485f8601e0ac3b6990becf8c8617c0`;
+the replay digest is `259ef96059fee1d2ef35e51779fcd27747c7b9c68784579152fbccf848441146`.
+The public checkpoint result is bound to commit
+`deb53296492a33cf163ca40b8f067bee11ce6308`.
+
+This window adds 116,000 saved ticks to the original 4,200, giving 120,200 total.
+Population grows from seven to fifteen with zero recorded deaths and one workshop.
+There are still no completed beds or farms, with 36 food and 26 drinks at the end.
+Returned tokens total 3,717,561; subscription dollar charges remain unreported.
+The parent native reload, original checkpoint preservation and final teardown
+are verified. The final checkpoint has not had a separate fresh reload.
+
+The 128-budget comparison retains Sol's infrastructure failure alongside Terra's
+saved result. The new Replay link points to the actual 65-128 recording. No outcome
+is fabricated for the other four slots. The homepage, results recordings and
+Worlds gallery share the twelve-window catalog with 928 captured frames.
+
+The exporter now accepts the separately versioned own-save audit, preserving
+original decision offsets and counting only the new window's elapsed time.
+It still binds every screen, response and action to the reviewed trace and pinned
+observer. A fresh Astra r2 re-export is byte-identical, and all eleven existing
+recordings remain unchanged. Native runtime behavior, active observers and
+historical benchmark definitions are not changed by this website update.
+
+Validation for this release: 1,269 Python tests passed with five environment skips,
+and all 49 Node viewer contracts passed, including continuation scrubbing through
+decision128. Selected Ruff and exporter typing checks pass. These checks are not
+browser visual QA or public delivery; publication is verified separately.

@@ -68,12 +68,14 @@ test('128 budget shows an infrastructure failure at its original 64-response sav
     assert.equal(url,'/static/displayed-key-comparison-128.json');
     return {ok:true,json:async()=>continued};
   },128);
-  assert.equal(doc.nodes['matched-summary'].textContent,'1 of 6 reviewed results published · 128-decision budget');
+  assert.equal(doc.nodes['matched-summary'].textContent,'2 of 6 reviewed results published · 128-decision budget');
   assert.equal(doc.nodes['matched-download'].href,'/static/displayed-key-comparison-128.json');
   const rows=doc.nodes['matched-table'].children[0].children[0].children[2].children;
   assert.match(text(rows[0]),/Sol · 1 Infrastructure failure 64 2,900 7 \/ 0/);
   assert.doesNotMatch(text(rows[0]),/Saved 128|Replay/);
-  for(const row of rows.slice(1)) {
+  assert.match(text(rows[1]),/Terra · 1 Saved 128 120,200 15 \/ 0/);
+  assert.ok(rows[1].children.at(-1).children.some(link=>link.href==='/?recording=terra-matched-r1-65-128#watch-root'));
+  for(const row of rows.slice(2)) {
     assert.match(text(row),/No published result/);
     assert.equal(row.children[2].textContent,'—');
   }
@@ -121,7 +123,7 @@ for(const oldFails of [false,true]) test('a stale budget request cannot replace 
   if(oldFails) rejectOld(Error('old request failed'));
   else resolveOld({ok:true,json:async()=>source});
   await older;
-  assert.match(doc.nodes['matched-summary'].textContent,/1 of 6.*128-decision budget/);
+  assert.match(doc.nodes['matched-summary'].textContent,/2 of 6.*128-decision budget/);
   assert.equal(doc.nodes['matched-download'].href,'/static/displayed-key-comparison-128.json');
   assert.equal(doc.nodes['matched-table'].attributes['aria-busy'],'false');
 });
