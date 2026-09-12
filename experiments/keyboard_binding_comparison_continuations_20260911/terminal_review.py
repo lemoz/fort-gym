@@ -25,6 +25,7 @@ from continuation_state import (
 from local_lifecycle import verify_container
 from local_owner import specification
 from rejection_review import review_rejection
+from storage_amendment import verify_binding
 
 
 def module(name: str, path: Path, expected: str) -> Any:
@@ -387,6 +388,8 @@ def audit_window(native: Any, origin: dict, spec: dict) -> dict:
         "rejection_review_source_sha256": sha(BASE / "rejection_review.py"),
         "sources": {str(path.relative_to(ROOT)): sha(path) for path in sources},
     }
+    if "storage_amendment" in spec["binding"]:
+        report["storage_amendment"] = verify_binding(spec["binding"]["storage_amendment"], identity)
     owner.publish(out / "terminal-review.json", report)
     return report
 
@@ -395,12 +398,15 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--window", type=Path, required=True)
     parser.add_argument("--declaration-revision", required=True)
+    parser.add_argument("--storage-amendment", type=Path)
     args = parser.parse_args()
     native = load_native()
     window_path = args.window.resolve(strict=True)
     require(window_path.parent == BASE.resolve(), "Select a declared matched window")
     origin = inspect_origin(ROOT, window_path, native)
-    spec = specification(native, origin, window_path, args.declaration_revision)
+    spec = specification(
+        native, origin, window_path, args.declaration_revision, args.storage_amendment
+    )
     report = audit_window(native, origin, spec)
     print(
         json.dumps(

@@ -12,6 +12,31 @@ and [reload verification](#later-checkpoint-1057-verification-and-website-delive
 Do not confuse that achieved duration with the younger, independent matched
 cohort below. Long-term self-sufficiency and the full delivery goal remain open.
 
+## Current comparison work: storage repaired; final Astra window prepared
+
+The [explicit storage amendment](../experiments/keyboard_comparison_storage_amendment_20260912.json)
+expanded only the existing fg-v2 data disk from 32 to 40 GiB. The operation
+retained all container, evidence-volume and image identities and verified
+9,463,500 KiB free, with both project VMs stopped and their data disks closed.
+CPU, RAM, native image/source, model, prompt, controls and the 1,572,864 KiB
+admission floor are unchanged. No evidence was deleted, game or model called,
+cloud VM created, or previous result rewritten. Disk growth cannot be reversed
+by shrinking. The earlier Sol r2 capacity failure remains a failure.
+
+Owner revision `10e849e508933ec79c1e9d68ab974fe647ecd840` is pushed in
+[draft PR175](https://github.com/lemoz/fort-gym/pull/175). Its explicit
+`--storage-amendment` option applies only to the unused Astra r2 own-save
+64-to-128 window, binds the recorded operation and updated VM configuration,
+preserves teardown, and discloses the storage difference in the public result.
+The 159 focused tests, scoped Ruff and eight-file mypy passed. An offline
+specification check passed against the actual parent checkpoint and operation
+receipt without starting a VM or model. Exact-head CI `34685958481` is pending.
+Astra r2 has not launched at this record. This is operational progress, not a
+new saved game outcome. Earlier capacity-blocked status below is historical.
+
+The reviewed integration PR176 remains draft and unmerged; its separate
+main-branch authorization boundary has not been bypassed.
+
 ## Latest delivery milestone: public-owner fresh/save/continuation passed
 
 The [portable-owner acceptance](../experiments/evidence/keyboard_portable_owner_acceptance_20260912.json)
