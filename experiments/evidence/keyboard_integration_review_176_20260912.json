@@ -1,0 +1,69 @@
+{
+  "schema_version": "fortgym.keyboard-integration-review-progress/v1",
+  "observed_at": "2026-09-12 02:20:58 UTC",
+  "pull_request": 176,
+  "url": "https://github.com/lemoz/fort-gym/pull/176",
+  "head": "5cedb5e91e0405e3b2ae0065c9a230a7ff02db88",
+  "review_kind": "partial_implementer_review_not_independent_approval",
+  "prior_review": {
+    "path": "experiments/evidence/keyboard_harness_review_137_20260911.json",
+    "head": "3ab9fc4c9f553171206d3d7122402ec4493ef2e6",
+    "unchanged_previously_reviewed_files": 57
+  },
+  "delta_file_sha256": {
+    "fort_gym/bench/agent/keyboard_decision.py": "dda24a3bf50a276a36695ee3092b408ed8f8677e90683aa391827712c72af55e",
+    "fort_gym/bench/agent/keyboard_courier.py": "37cc727a3f8744f37b4b48ea0da2d395d001ce9c066581f2d688514ca14ff48a",
+    "fort_gym/bench/agent/keyboard_exchange.py": "c3fddd865aaa84a908b5a2455b2ded5f8da969bf7cddd1fe04e7004ef7958bfb",
+    "fort_gym/bench/agent/campaign_keyboard.py": "9c2cb3bbed52c2da6c3d817cfccd1fa1d2eba98626c27c42e8eab12b95bcdfcb",
+    "fort_gym/bench/env/campaign_keyboard.py": "8aedf129dc55cc4df9eae15e67ac6de6d655afb7952b9ad5d4f7bad1574396fa",
+    "fort_gym/bench/run/keyboard_config.py": "dd9fef730d5e7867bc18d2f340702b25f3a63f1c0cd354c03f7b90082622576b",
+    "fort_gym/bench/run/campaign_loop.py": "9f650fe70b4d7d31359721c7d2e3da82bee8e4404764e0b938b0c28b73aee2ca",
+    "fort_gym/bench/run/campaign_environment.py": "fb6915c8ff4126e5b723cb57962247e1dac5f034639a7140f6fd50734f75a900",
+    "scripts/campaign_keyboard_native.py": "c31ddf05d63d2c5482d5fc4816082eb14481d5cbd6d8a00d102a2c65bc594999"
+  },
+  "additional_source_sha256": {
+    "fort_gym/bench/env/display_key_catalog.py": "82b496ab1bf109757c67e81aa56c1efca723840d17a090c3d6dfe0d4b8cca170",
+    "fort_gym/bench/env/campaign_binding_keys.py": "684f26d0865c6ef2a16228af38f5219370498561cb86e7f16355e6fc50786556",
+    "fort_gym/bench/env/keyboard_bindings.py": "3e0ec9b6fd95db1a014abf2b173c03ff096224be9dcb3fdf86eff2e184579456",
+    "hook/campaign_binding_set_v1.lua": "01bbb10711a8a87cea310e6d6e388bfeb63c23563db7e386c32440bda09659c7"
+  },
+  "contracts_reviewed": [
+    "Displayed-key v4 conditions and exchange requests require the pinned binding hash, explicit model/effort and binding prompt; historical request versions reject changed input semantics.",
+    "The campaign loop requires matching agent and environment control profiles. Receipt validation and rejection parsing use that selected profile.",
+    "The bounded binding parser resolves each physical-key label to the whole native event set without menu or strategy selection. The native helper dispatches that set once, preserving exact save/calendar identity and paused simulation.",
+    "Native key confirmation, partial mutation and uncertain dispatch stay distinct. The clock probe uses an empty read-only native-event batch; no menu repair or automatic gameplay rescue is introduced."
+  ],
+  "focused_tests": {
+    "passed": 198,
+    "skipped": 0,
+    "files": [
+      "tests/test_keyboard_binding_profile.py",
+      "tests/test_campaign_binding_keys.py",
+      "tests/test_keyboard_bindings_parser.py",
+      "tests/test_keyboard_exchange.py",
+      "tests/test_keyboard_decision.py",
+      "tests/test_keyboard_model_selection.py",
+      "tests/test_campaign_codex_keyboard.py",
+      "tests/test_campaign_environment.py",
+      "tests/test_campaign_loop.py"
+    ]
+  },
+  "exact_head_ci": {
+    "run_id": 34666311317,
+    "conclusion": "success"
+  },
+  "carried_limitations": [
+    "Historical receipts do not bind the Codex wrapper executable/version. This does not prove a mid-run upgrade; future studies need separately versioned provenance.",
+    "Pinned file parsing and native set dispatch do not prove physical keyboard-device equivalence or an immutable in-memory key map."
+  ],
+  "remaining_review": [
+    "Other runtime/recovery dependencies and acceptance evidence not covered by the explicit prior/current review indexes.",
+    "Outcome metrics, API/viewer implementation, publication manifests and remaining integration files.",
+    "Portable setup acceptance and integration of outcomes published after this candidate snapshot."
+  ],
+  "ready_to_merge": false,
+  "merged": false,
+  "active_source_changed": false,
+  "review_model_calls": 0,
+  "review_game_launches": 0
+}

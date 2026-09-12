@@ -17,7 +17,7 @@ by the ongoing matched cohort and not a claim of deployment or main merge.
   Read the result index for settled 128-response outcomes; absence of a result
   does not report live status. Sol's first continuation is an infrastructure
   startup failure, with its original checkpoint preserved.
-- A homepage player, eleven immutable recording windows, the Worlds gallery,
+- A homepage player, twelve immutable recording windows, the Worlds gallery,
   comparison tables, and an optional read-only live observer.
 
 These short matched starts are not the earlier exploratory Astra Year-Two run.
