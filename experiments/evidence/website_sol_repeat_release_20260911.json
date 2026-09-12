@@ -1,0 +1,81 @@
+{
+  "schema_version": "fortgym.website-sol-repeat-release/v1",
+  "release_revision": "6452fc2345c2eb99beab6485d367a203007a34e0",
+  "assets": {
+    "/results": {
+      "sha256": "dc98f80988b32b21d9f6d00a722619ce3e8ec21900f2f55d62a13289e3cd17cf",
+      "mime": "text/html"
+    },
+    "/static/displayed-key-comparison.json": {
+      "sha256": "fa7657045238bf7232567f2e293b518fcaed2d9c6bc47989812e3fe519419217",
+      "mime": "application/json"
+    },
+    "/static/displayed-key-comparison.mjs": {
+      "sha256": "7b857bdbbca8190bdbef07f8d7c9eefd5d3a30900bce12aa407a99fec37dd5cf",
+      "mime": "text/javascript"
+    },
+    "/static/recordings/catalog.json": {
+      "sha256": "96b20176bda241fad629412c7ca736377b67ec1c27f5ac4d2bb78d716000e083",
+      "mime": "application/json"
+    },
+    "/static/recordings/previews.json": {
+      "sha256": "d4bc60e6bf67a15de28e9a0d1657d6456b84a7df795744f5e75f3f3ef53c91c4",
+      "mime": "application/json"
+    },
+    "/static/recordings/sol-matched-r2-1-64.json": {
+      "sha256": "30b1aeced4a62c8882aa77004784d3057f84768c8b778c147b0adcc25f517152",
+      "mime": "application/json"
+    },
+    "/worlds": {
+      "sha256": "1593c7a42149bdc6ae579fddc42c890b007f714a49b6ca4d65816b59d5c7db72",
+      "mime": "text/html"
+    }
+  },
+  "recordings": 10,
+  "captured_frames": 800,
+  "matched_rows": 6,
+  "published_results": 5,
+  "historical_recordings_unchanged": true,
+  "immutable_source_links_resolve": true,
+  "relay_snapshot": {
+    "run_id": "bindings-comparison-20260911-astra-r2",
+    "model": "gpt-6-astra",
+    "status": "running",
+    "observed_at_unix": 1789173400
+  },
+  "passed": true,
+  "website_url": "https://fortgym.live/results#matched-comparison",
+  "replay_url": "https://fortgym.live/?recording=sol-matched-r2-1-64#watch-root",
+  "source_report_revision": "4f4c5a33024b7c3fc2b487dd4d8197c46a477ef2",
+  "observer_revision": "7cd3b96763998abfd99ed623630d658320a27918",
+  "public_acceptance_sha256": "1b049a50d7a8a54a6facd45405495939af99b058f1331d2d87a85d384502af0e",
+  "remote_acceptance_sha256": "a8e7aa1c1e1ec3124c7469677abf4f104175ca1b7ac253740c422d56eef34865",
+  "build_receipt_sha256": "ac58e4d7e5d1679e8f9f0edef339fe5351815f218e0f8cfbf56a7efd05f6b123",
+  "ci": {
+    "run_id": 34661963857,
+    "head_sha": "6452fc2345c2eb99beab6485d367a203007a34e0",
+    "status": "completed",
+    "conclusion": "success"
+  },
+  "validation": {
+    "full_local_tests_passed": 1246,
+    "skipped": 5,
+    "warnings": 7,
+    "node_playback_publication_tests_passed": 37,
+    "selected_ruff_passed": true,
+    "selected_mypy_passed": true,
+    "browser_visual_qa_performed": false,
+    "restricted_socket_failure_resolved_by_permitted_full_rerun": true
+  },
+  "native_and_api_service_identities_unchanged": true,
+  "database_counts_unchanged": true,
+  "untracked_files_preserved": true,
+  "service_restarts": 0,
+  "new_hosts": 0,
+  "main_merge": false,
+  "new_model_calls_by_website_tools": 0,
+  "new_gameplay_inputs_by_website_tools": 0,
+  "active_astra_relay_unchanged": true,
+  "strong_model_ranking_supported": false,
+  "full_goal_complete": false
+}
