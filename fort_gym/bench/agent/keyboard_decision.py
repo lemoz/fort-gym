@@ -15,6 +15,11 @@ from pathlib import Path
 from ..env.screen_observation import TEXT_PROFILE, encode_screen
 from ..env.native_key_catalog import NATIVE_PROFILE, catalog_instructions
 from ..env.display_key_catalog import BINDING_PROFILE
+from ..env.workshop_job_profile import (
+    CONTROL_PROFILE as WORKSHOP_PROFILE,
+    PROMPT_PROFILE as WORKSHOP_PROMPT,
+    INSTRUCTIONS as WORKSHOP_INSTRUCTIONS,
+)
 from .codex_transport import CodexTransportError, request_decision
 from .codex_selection import MODEL, REASONING_EFFORT
 from .keyboard_prompt import BASE_PROMPT, BINDING_PROMPT, MEMORY_PROMPT, MEMORY_CONTRACT, validate_prompt_profile
@@ -80,6 +85,8 @@ def request_keyboard_decision(
     validate_prompt_profile(prompt_profile)
     if (control_profile == BINDING_PROFILE) != (prompt_profile == BINDING_PROMPT):
         raise ValueError("Displayed-key controls require their declared binding instructions")
+    if (control_profile == WORKSHOP_PROFILE) != (prompt_profile == WORKSHOP_PROMPT):
+        raise ValueError("Workshop shortcuts require their declared instructions")
     if not isinstance(memory, str):
         raise ValueError("Agent memory must be text")
     observation = encode_screen(screen, observation_profile)
@@ -103,7 +110,15 @@ def request_keyboard_decision(
             "Your controls are displayed keyboard keys through the pinned game bindings.",
         )
         instructions += "\n" + BINDING_INSTRUCTIONS + "\n"
-    if prompt_profile in (MEMORY_PROMPT, BINDING_PROMPT):
+    if control_profile == WORKSHOP_PROFILE:
+        start = instructions.index("Your controls are native")
+        end = instructions.index("\n\nThe captured screen", start)
+        instructions = instructions[:start] + WORKSHOP_INSTRUCTIONS + instructions[end:]
+        instructions = instructions.replace(
+            "Return one KEYSTROKE response", "Return one KEYSTROKE or WORKSHOP_JOB response"
+        )
+        instructions += "\n" + BINDING_INSTRUCTIONS + "\n"
+    if prompt_profile in (MEMORY_PROMPT, BINDING_PROMPT, WORKSHOP_PROMPT):
         instructions += "\n" + MEMORY_CONTRACT + "\n"
     prompt = (
         instructions

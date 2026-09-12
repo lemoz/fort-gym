@@ -6,12 +6,17 @@ from copy import deepcopy
 
 from ..env.native_key_catalog import LEGACY_PROFILE, keys_for_profile
 from ..env.screen_observation import RAW_PROFILE, raw_screen
+from ..env.workshop_job_profile import CONTROL_PROFILE as WORKSHOP_PROFILE
 
 CONTROL_PROFILE = LEGACY_PROFILE
 OBSERVATION_PROFILE = RAW_PROFILE
 
 
 def response_schema(*, max_advance_ticks: int, control_profile: str = CONTROL_PROFILE) -> dict:
+    if control_profile == WORKSHOP_PROFILE:
+        from .workshop_input import response_schema as workshop_schema
+
+        return workshop_schema(max_advance_ticks=max_advance_ticks)
     if type(max_advance_ticks) is not int or not 0 <= max_advance_ticks <= 2500:
         raise ValueError("Invalid keyboard simulation bound")
     allowed_keys = keys_for_profile(control_profile)
@@ -50,6 +55,10 @@ def parse_envelope(
     payload: object, *, max_advance_ticks: int, control_profile: str = CONTROL_PROFILE
 ) -> dict:
     """Validate the response shape and limits without authorizing its key names."""
+    if control_profile == WORKSHOP_PROFILE:
+        from .workshop_input import parse_envelope as workshop_envelope
+
+        return workshop_envelope(payload, max_advance_ticks=max_advance_ticks)
     schema = response_schema(max_advance_ticks=max_advance_ticks, control_profile=control_profile)
     if not isinstance(payload, dict) or set(payload) != set(schema["required"]):
         raise ValueError("Keyboard response fields differ from the declared contract")
@@ -76,6 +85,10 @@ def parse_response(
     payload: object, *, max_advance_ticks: int, control_profile: str = CONTROL_PROFILE
 ) -> dict:
     """Validate without coercing keys, inventing WAIT, or choosing a game action."""
+    if control_profile == WORKSHOP_PROFILE:
+        from .workshop_input import parse_response as workshop_response
+
+        return workshop_response(payload, max_advance_ticks=max_advance_ticks)
     action = parse_envelope(
         payload, max_advance_ticks=max_advance_ticks, control_profile=control_profile
     )

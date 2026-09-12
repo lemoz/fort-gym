@@ -128,7 +128,8 @@ def worker(args) -> dict:
                 ),
                 **({"prompt_profile": condition["prompt_profile"]}
                    if condition["schema_version"] in ("fortgym.codex-keyboard-condition/v3",
-                                                      "fortgym.codex-keyboard-condition/v4") else {}),
+                                                      "fortgym.codex-keyboard-condition/v4",
+                                                      "fortgym.codex-keyboard-condition/v5") else {}),
                 control_profile=condition["control_profile"],
             ),
             max_dispatches=condition["max_dispatches"],

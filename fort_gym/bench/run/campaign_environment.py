@@ -21,6 +21,8 @@ from ..env.campaign_keyboard import (
 )
 from ..env.native_key_catalog import CAMPAIGN_KEYBOARD_PROFILES, KEYBOARD_PROFILES, NATIVE_PROFILE
 from ..env.display_key_catalog import BINDING_PROFILE
+from ..env.workshop_job_profile import CONTROL_PROFILE as WORKSHOP_PROFILE, ACTION_TYPE
+from ..env.campaign_workshop_jobs import execute_workshop_job
 from ..env.campaign_binding_keys import read_binding_index
 from ..env.dfhack_client import DFHackClient
 from ..env.executor import Executor
@@ -72,7 +74,7 @@ class NativeCampaignEnvironment:
     ) -> None:
         if type(max_advance_ticks) is not int or not 1 <= max_advance_ticks <= 2500:
             raise ValueError("Invalid campaign tick limit")
-        if control_profile not in (HELPER_CONTROL_PROFILE, *KEYBOARD_PROFILES):
+        if control_profile not in (HELPER_CONTROL_PROFILE, WORKSHOP_PROFILE, *KEYBOARD_PROFILES):
             raise ValueError("Invalid campaign control profile")
         self.control_profile = control_profile
         self.private_measurement_profile = validate_profile(private_measurement_profile)
@@ -80,7 +82,7 @@ class NativeCampaignEnvironment:
         self.max_advance_ticks = max_advance_ticks
         self.workshop_placement_policy = validate_policy(workshop_placement_policy)
         self.expected_dfroot = expected_dfroot.resolve()
-        if control_profile == BINDING_PROFILE:
+        if control_profile in (BINDING_PROFILE, WORKSHOP_PROFILE):
             read_binding_index(self.expected_dfroot)
         self._verify_runtime()
         settings = get_settings()
@@ -195,9 +197,15 @@ class NativeCampaignEnvironment:
 
     def apply(self, action: dict[str, Any], state: dict[str, Any]) -> dict[str, Any]:
         self._verify_runtime()
-        if getattr(self, "control_profile", None) == BINDING_PROFILE:
+        profile = getattr(self, "control_profile", HELPER_CONTROL_PROFILE)
+        if profile in (BINDING_PROFILE, WORKSHOP_PROFILE):
             read_binding_index(self.expected_dfroot)
-        if getattr(self, "control_profile", HELPER_CONTROL_PROFILE) in KEYBOARD_PROFILES:
+        if profile == WORKSHOP_PROFILE and action.get("type") == ACTION_TYPE:
+            return execute_workshop_job(
+                action.get("params"), expected_dfroot=self.expected_dfroot,
+                year=state.get("year"), year_tick=state.get("year_tick"),
+            )
+        if profile in (*KEYBOARD_PROFILES, WORKSHOP_PROFILE):
             if action.get("type") != "KEYSTROKE":
                 return {
                     "accepted": False,
@@ -205,13 +213,16 @@ class NativeCampaignEnvironment:
                     "command_mutation": "not_attempted",
                 }
             params = action.get("params")
-            return execute_campaign_keys(
+            execution = execute_campaign_keys(
                 params.get("keys") if isinstance(params, dict) else None,
                 expected_dfroot=self.expected_dfroot,
                 year=state.get("year"),
                 year_tick=state.get("year_tick"),
-                control_profile=self.control_profile,
+                control_profile=BINDING_PROFILE if profile == WORKSHOP_PROFILE else profile,
             )
+            if profile == WORKSHOP_PROFILE:
+                execution["result"]["action_route"] = "displayed_keyboard"
+            return execution
         viewscreen = state.get("viewscreen_type")
         if (
             state.get("pause_state") is True

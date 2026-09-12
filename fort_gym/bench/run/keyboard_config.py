@@ -11,6 +11,9 @@ from ..agent.codex_selection import validate_selection
 from ..agent.keyboard_exchange import read
 from ..agent.keyboard_prompt import BASE_PROMPT, BINDING_PROMPT, validate_prompt_profile
 from ..env.display_key_catalog import BINDING_PROFILE, BINDINGS_SHA256
+from ..env.workshop_job_profile import (
+    CONTROL_PROFILE as WORKSHOP_PROFILE, PROMPT_PROFILE as WORKSHOP_PROMPT,
+)
 from ..env.native_key_catalog import NATIVE_PROFILE
 from ..env.screen_observation import TEXT_PROFILE
 from .keyboard_save import LEGACY_SAVE_PROFILE, SAVE_PROFILES
@@ -30,23 +33,27 @@ def validate_condition(config: dict) -> dict:
         if config.get("model") != MODEL or config.get("reasoning_effort") != REASONING_EFFORT:
             raise ValueError("Keyboard condition identity differs")
     elif version in ("fortgym.codex-keyboard-condition/v2", "fortgym.codex-keyboard-condition/v3",
-                     "fortgym.codex-keyboard-condition/v4"):
+                     "fortgym.codex-keyboard-condition/v4", "fortgym.codex-keyboard-condition/v5"):
         validate_selection(config.get("model"), config.get("reasoning_effort"))
     else:
         raise ValueError("Keyboard condition identity differs")
-    binding = version == "fortgym.codex-keyboard-condition/v4"
-    if version in ("fortgym.codex-keyboard-condition/v3", "fortgym.codex-keyboard-condition/v4"):
+    workshop = version == "fortgym.codex-keyboard-condition/v5"
+    binding = version == "fortgym.codex-keyboard-condition/v4" or workshop
+    if version in ("fortgym.codex-keyboard-condition/v3", "fortgym.codex-keyboard-condition/v4",
+                   "fortgym.codex-keyboard-condition/v5"):
         validate_prompt_profile(config.get("prompt_profile"))
     elif "prompt_profile" in config:
         raise ValueError("Historical keyboard conditions cannot change prompt profiles")
     if binding:
-        if config.get("bindings_sha256") != BINDINGS_SHA256 or config.get("prompt_profile") != BINDING_PROMPT:
+        if config.get("bindings_sha256") != BINDINGS_SHA256 or config.get("prompt_profile") != (
+            WORKSHOP_PROMPT if workshop else BINDING_PROMPT
+        ):
             raise ValueError("Displayed-key condition requires its pinned bindings and prompt")
-    elif "bindings_sha256" in config or config.get("prompt_profile") == BINDING_PROMPT:
+    elif "bindings_sha256" in config or config.get("prompt_profile") in (BINDING_PROMPT, WORKSHOP_PROMPT):
         raise ValueError("Historical keyboard conditions cannot change input semantics")
     identities = {
         "transport": TRANSPORT,
-        "control_profile": BINDING_PROFILE if binding else NATIVE_PROFILE,
+        "control_profile": WORKSHOP_PROFILE if workshop else BINDING_PROFILE if binding else NATIVE_PROFILE,
         "observation_profile": TEXT_PROFILE,
         "advance_policy": "model_requested/v1",
         "account_admission": "fresh_read_before_each_model_invocation",

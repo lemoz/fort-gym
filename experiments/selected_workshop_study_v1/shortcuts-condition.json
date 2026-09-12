@@ -1,0 +1,27 @@
+{
+  "schema_version": "fortgym.codex-keyboard-condition/v5",
+  "condition_id": "selected-workshop-study-astra-medium-shortcuts",
+  "model": "gpt-6-astra",
+  "reasoning_effort": "medium",
+  "transport": "codex-exec-chatgpt/v1",
+  "observation_profile": "native_screen_text/v1",
+  "advance_policy": "model_requested/v1",
+  "screen_size": [
+    120,
+    40
+  ],
+  "max_dispatches": 128,
+  "max_total_tokens": 8000000,
+  "max_advance_ticks": 2000,
+  "model_timeout_seconds": 180,
+  "exchange_timeout_seconds": 240,
+  "maximum_included_usage_percent": 98,
+  "account_admission": "fresh_read_before_each_model_invocation",
+  "actual_charge_usd": null,
+  "api_fallback": false,
+  "automatic_credit_purchase": false,
+  "automatic_reset_consumption": false,
+  "bindings_sha256": "8176d2bd7a8d96f6bb12feb654519a8361a6f262363b84ec48963be832cb7efd",
+  "control_profile": "native_keyboard_selected_workshop_jobs/v1",
+  "prompt_profile": "native_keyboard_selected_workshop_jobs_prompt/v1"
+}

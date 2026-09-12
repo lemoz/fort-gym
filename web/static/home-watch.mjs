@@ -1,4 +1,4 @@
-import {decodeScreen, frameIndex, liveState, validateRecording, renderCapturedScreen, initialRecording, recoverySummary, readLiveStatus, campaignSummary, campaignHistory} from './home-watch-model.mjs?v=20260911-year-two';
+import {decodeScreen, frameIndex, liveState, validateRecording, renderCapturedScreen, initialRecording, recoverySummary, readLiveStatus, campaignSummary, campaignHistory, shortcutLabel, actionExecutionLabel} from './home-watch-model.mjs?v=20260912-workshop';
 const $ = id => document.getElementById('watch-' + id);
 const root = $('root');
 if (root) {
@@ -47,15 +47,12 @@ if (root) {
     text('intent', frame.action?.intent || 'Waiting for a completed model response.');
     text('intent-label', 'Model’s stated intent');
     $('keys').replaceChildren();
-    for (const key of frame.action?.keys || []) {
+    const shortcut = shortcutLabel(frame.action);
+    for (const key of shortcut ? [shortcut] : frame.action?.keys || []) {
       const chip = document.createElement('code'); chip.textContent = key === ' ' ? 'SPACE' : key;
       $('keys').append(chip);
     }
-    text('execution', live ? frame.action_status === 'rejected'
-      ? 'Model command rejected. No keys were sent to the game.'
-      : 'Chosen keys. This feed does not yet verify their execution.'
-      : frame.accepted ? 'Key command accepted by the harness. Acceptance does not prove the intended outcome.'
-      : 'Key command was not accepted.');
+    text('execution', actionExecutionLabel(frame, live));
     text('population', live ? '—' : String(frame.after.population));
     text('advance', live ? '—' : frame.after.ticks_advanced.toLocaleString());
     text('clock', live ? 'Screen captured ' + new Date(frame.captured_at_unix * 1000).toLocaleTimeString()

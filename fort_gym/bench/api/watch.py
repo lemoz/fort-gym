@@ -79,6 +79,21 @@ def validate_screen(value: dict) -> dict:
 def action_projection(value: dict | None) -> dict | None:
     if value is None:
         return None
+    if value.get("type") == "WORKSHOP_JOB":
+        from ..env.workshop_job_profile import ITEMS, MAX_QUANTITY
+
+        params = value.get("params")
+        if (not isinstance(params, dict) or set(params) != {"item", "quantity"}
+                or params["item"] not in ITEMS):
+            raise ValueError("Unsupported spectator shortcut")
+        return {
+            "intent": label(value["intent"], 2000), "keys": [],
+            "advance_ticks": integer(value["advance_ticks"], 0, 100000),
+            "shortcut": {
+                "type": "WORKSHOP_JOB", "item": params["item"],
+                "quantity": integer(params["quantity"], 1, MAX_QUANTITY),
+            },
+        }
     keys = value["params"]["keys"]
     if (
         value.get("type") != "KEYSTROKE"
@@ -139,14 +154,23 @@ def project_live(value: dict, *, now: int) -> dict:
         action = frame.get("action")
         if (action is None) != (status == "awaiting_response"):
             raise ValueError("Live action status differs from its payload")
+        shortcut = action.get("shortcut") if isinstance(action, dict) else None
+        if isinstance(action, dict) and "shortcut" in action and (
+            not isinstance(shortcut, dict) or set(shortcut) != {"type", "item", "quantity"}
+            or shortcut["type"] != "WORKSHOP_JOB" or action.get("keys") != []
+        ):
+            raise ValueError("Invalid live shortcut")
         public_action = (
             None
             if action is None
             else action_projection(
                 {
-                    "type": "KEYSTROKE",
+                    "type": "WORKSHOP_JOB" if shortcut is not None else "KEYSTROKE",
                     "intent": action["intent"],
-                    "params": {"keys": action["keys"]},
+                    "params": (
+                        {"item": shortcut["item"], "quantity": shortcut["quantity"]}
+                        if shortcut is not None else {"keys": action["keys"]}
+                    ),
                     "advance_ticks": action["advance_ticks"],
                 }
             )

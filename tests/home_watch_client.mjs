@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import {glyph, decodeScreen, frameIndex, liveState, validateRecording, initialRecording, recoverySummary, readLiveStatus, campaignSummary, campaignHistory} from '../web/static/home-watch-model.mjs';
+import {glyph, decodeScreen, frameIndex, liveState, validateRecording, initialRecording, recoverySummary, readLiveStatus, campaignSummary, campaignHistory, shortcutLabel, actionExecutionLabel} from '../web/static/home-watch-model.mjs';
 
 const yearTwo = () => JSON.parse(fs.readFileSync('web/static/recordings/astra-year-two-257-416.json'));
 
@@ -34,6 +34,24 @@ const recovered = () => ({...record('b'),saved_through_decision:98,recovery:{
   schema_version:'fortgym.watch-recovery/v1',restored_checkpoint:96,lost_decisions:32,lost_ticks:422,
   total_responses:130,source_recording_id:'a',source_checkpoint_sha256:'a'.repeat(64),
   uninterrupted_campaign:false,actions_replayed:false}});
+
+test('selected-workshop shortcut is explicit and never claims finished products', () => {
+  const data = record('shortcut');
+  const action = {intent:'Make beds',keys:[],advance_ticks:100,
+    shortcut:{type:'WORKSHOP_JOB',item:'bed',quantity:2}};
+  data.frames[0].action = action;
+  assert.equal(validateRecording(data).frames[0].action,action);
+  assert.equal(shortcutLabel(action),'Workshop shortcut: queue 2 × bed');
+  assert.match(actionExecutionLabel(data.frames[0],false),/jobs queued.*products are not yet proved/);
+  assert.match(actionExecutionLabel(data.frames[0],true),/does not yet verify execution/);
+  assert.match(actionExecutionLabel({...data.frames[0],accepted:false},false),/not accepted/);
+  for (const quantity of [true,0,6,1.5,'2']) {
+    assert.throws(()=>shortcutLabel({...action,shortcut:{...action.shortcut,quantity}}));
+  }
+  assert.throws(()=>shortcutLabel({...action,keys:['q']}));
+  assert.throws(()=>shortcutLabel({...action,shortcut:{...action.shortcut,workshop_id:99}}));
+  assert.equal(shortcutLabel({keys:['q']}),null);
+});
 
 test('recovery metadata preserves the lost window and cannot claim uninterrupted play', () => {
   assert.equal(validateRecording(recovered()).saved_through_decision,98);

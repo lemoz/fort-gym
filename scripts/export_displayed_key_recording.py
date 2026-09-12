@@ -48,7 +48,18 @@ def recorded_action(watch: Any, request: dict, result: dict, row: dict) -> dict:
         ):
             raise ValueError("Rejected choice lacks a zero-dispatch native record")
     elif row["execute"]["accepted"] is not True:
-        raise ValueError("Accepted model choice lacks an accepted native record")
+        # The new explicit shortcut may be a valid choice at an unavailable
+        # selected workshop. Keep that failed action in the record, not a rerun.
+        native = row["execute"].get("result", {})
+        if not (
+            request.get("control_profile") == "native_keyboard_selected_workshop_jobs/v1"
+            and action.get("type") == "WORKSHOP_JOB"
+            and row["execute"]["accepted"] is False
+            and native.get("action_route") == "selected_workshop_job"
+            and native.get("command_mutation") == "not_attempted"
+            and type(native.get("jobs_queued")) is int and native["jobs_queued"] == 0
+        ):
+            raise ValueError("Accepted model choice lacks an accepted native record")
     return action
 
 

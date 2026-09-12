@@ -10,6 +10,7 @@ from typing import Any
 
 from ..env.native_key_catalog import CAMPAIGN_KEYBOARD_PROFILES, NATIVE_PROFILE
 from ..env.display_key_catalog import BINDING_PROFILE, BINDINGS_SHA256
+from ..env.workshop_job_profile import CONTROL_PROFILE as WORKSHOP_PROFILE
 from ..env.screen_observation import TEXT_PROFILE, encode_screen, raw_screen
 from .base import Agent
 from .campaign_budget import BUDGET_KEYS, effective_budget
@@ -88,7 +89,7 @@ class CodexKeyboardAgent(Agent):
             max_advance_ticks=max_advance_ticks,
         )
         self.decision = decision
-        if control_profile == BINDING_PROFILE:
+        if control_profile in (BINDING_PROFILE, WORKSHOP_PROFILE):
             self.configuration["bindings_sha256"] = BINDINGS_SHA256
         self.campaign_id: str | None = None
         self.memory = ""

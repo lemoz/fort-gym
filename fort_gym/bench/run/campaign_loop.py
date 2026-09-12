@@ -377,6 +377,10 @@ class CampaignLoop:
                     "keys_confirmed": native.get("keys_confirmed"),
                     "command_mutation": native.get("command_mutation"),
                 }
+                if native.get("action_route") in ("displayed_keyboard", "selected_workshop_job"):
+                    feedback["action_route"] = native["action_route"]
+                    if native["action_route"] == "selected_workshop_job":
+                        feedback["jobs_queued"] = native.get("jobs_queued")
                 if "tick_feedback" in self.last_result:
                     feedback["simulation"] = deepcopy(self.last_result["tick_feedback"])
                 if "restart" in self.last_result:
@@ -567,7 +571,7 @@ class CampaignLoop:
             "WAIT",
             "INTERACT",
             *(["VIEW"] if allow_view else []),
-            *(["KEYSTROKE"] if keyboard else []),
+            *(["KEYSTROKE", "WORKSHOP_JOB"] if keyboard else []),
         }:
             raise ValueError("Campaign action is outside the declared governed interface")
         ticks = action.get("advance_ticks")
