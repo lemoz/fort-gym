@@ -5,10 +5,10 @@
   "plan_url": "https://github.com/lemoz/fort-gym/blob/61fcca7177d8b66ddd7e12e4be0ab53bda5ffd5b/experiments/keyboard_binding_comparison_20260911/cohort.json",
   "plan_sha256": "da38987cb71b1bafde853d10e476e0c9539a950c9d90580ff1c2b1ba7cb839b0",
   "declared_attempts": 6,
-  "recorded_attempts": 2,
+  "recorded_attempts": 3,
   "outcome_counts": {
     "infrastructure_failure": 1,
-    "saved": 1
+    "saved": 2
   },
   "all_attempts_reported": false,
   "all_saved_boundaries_reached": false,
@@ -90,10 +90,36 @@
       "model": "gpt-6-astra",
       "replicate": 1,
       "reasoning_effort": "medium",
-      "publication_state": "no_published_result",
-      "result": null,
-      "evidence_url": null,
-      "evidence_sha256": null
+      "publication_state": "recorded",
+      "result": {
+        "status": "saved",
+        "response_limit": 128,
+        "responses": 128,
+        "returned_tokens": 4123021,
+        "reported_charge_usd": null,
+        "checkpoint": {
+          "next_step": 128,
+          "sha256": "ec1dcf452bc24ed744e982a02bccfac13851557f2e0f6ec7ddf65b1e1cb8f2ee",
+          "saved_elapsed_ticks": 55700,
+          "metrics": {
+            "population": 7,
+            "recorded_dead_citizens": 0,
+            "food_stock": 61,
+            "drink_stock": 83,
+            "completed_beds": 8,
+            "completed_workshops": 3,
+            "completed_farms": 2,
+            "functional_rooms": null,
+            "stone_stock": null,
+            "wood_stock": null
+          }
+        },
+        "terminal_audit_sha256": "fcb09958a87e5c56c707790fc439375410dd7afb5ba18dbc9a06667deadf830e",
+        "native_teardown_verified": true,
+        "vm_teardown_verified": true
+      },
+      "evidence_url": "https://github.com/lemoz/fort-gym/blob/4b3617128f773b1a04120a405809731a66570a8c/experiments/evidence/keyboard_binding_comparison_astra_r1_128_20260912.json",
+      "evidence_sha256": "f272d4193c0eb66adaaba39c92623ac09a1ec54eb52457316e4dc34e9c2ae7a6"
     },
     {
       "campaign_id": "bindings-comparison-20260911-terra-r2",

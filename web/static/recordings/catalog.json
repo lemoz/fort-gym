@@ -3,6 +3,21 @@
   "recordings": [
     {
       "schema_version": "fortgym.watch-recording/v1",
+      "id": "astra-matched-r1-65-128",
+      "title": "gpt-6-astra · matched trial 1",
+      "model": "gpt-6-astra",
+      "control_profile": "native_keyboard_bindings/v1",
+      "first_decision": 65,
+      "last_decision": 128,
+      "saved_through_decision": 128,
+      "audit_sha256": "fcb09958a87e5c56c707790fc439375410dd7afb5ba18dbc9a06667deadf830e",
+      "recording_status": "saved",
+      "window": "65–128",
+      "frame_count": 64,
+      "sha256": "0f32a0439dafeef5d39dc70702bfbda902bd0e95006fe974744f00fc291a0489"
+    },
+    {
+      "schema_version": "fortgym.watch-recording/v1",
       "id": "terra-matched-r1-65-128",
       "title": "gpt-5.6-terra · matched trial 1",
       "model": "gpt-5.6-terra",
