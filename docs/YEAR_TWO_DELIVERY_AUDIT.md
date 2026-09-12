@@ -9,6 +9,18 @@ Requirements come from [the approved goal](YEAR_TWO_CAMPAIGNS.md),
 
 ## Evidence and remaining work
 
+Latest update: [public-owner acceptance](../experiments/evidence/keyboard_portable_owner_acceptance_20260912.json)
+passed at integration source `40b106b95f483b534a738622e75c4147a1270a96`.
+The CLI performed a real two-decision Astra fresh window, saved checkpoint2,
+then reloaded its own save and retained checkpoint4 after two more decisions.
+The audit reconciles 95,786 tokens, memory, history, native load and owned
+teardown. This closes the public-owner end-to-end acceptance gap in the older
+snapshot below. Two startup failures and their fixes remain explicitly retained.
+Full local tests: 5,530 passed / 10 skipped. Exact-head hosted CI: 5,386 passed /
+154 skipped. No new growth is claimed: the game stayed paused during these four
+navigation/designation decisions. Portable observer wiring, source review,
+main merge and the remaining gameplay/comparison goals are still open.
+
 | Requirement | Current evidence | Remaining work or limit |
 | --- | --- | --- |
 | Autonomous functioning fortress after a full elapsed year, continuing past its anniversary | The [displayed-key Astra result](../experiments/evidence/keyboard_binding_astra_r1_continuation_256_416_20260911.json) retains 429,845 ticks, 13 living citizens, zero recorded deaths, 12 beds, three workshops and one farm, without human gameplay rescue. Twenty-three post-anniversary samples support a qualitative operating-at-endpoint assessment. | This achieved milestone is one exploratory campaign, not a matched replicate or proof of indefinite self-sufficiency. Preserve its disclosed earlier save loss. Continue the longer-play investigation; do not rerun baseline acceptance to replace gameplay. |

@@ -12,7 +12,33 @@ and [reload verification](#later-checkpoint-1057-verification-and-website-delive
 Do not confuse that achieved duration with the younger, independent matched
 cohort below. Long-term self-sufficiency and the full delivery goal remain open.
 
-## Current state: three saved continuations; native capacity floor reached
+## Latest delivery milestone: public-owner fresh/save/continuation passed
+
+The [portable-owner acceptance](../experiments/evidence/keyboard_portable_owner_acceptance_20260912.json)
+now passes on source `40b106b95f483b534a738622e75c4147a1270a96` and its
+exact local image. Astra Medium made two real decisions from the native seed,
+created checkpoint2, then reloaded that exact save and made two more decisions.
+The independent audit verifies saved memory, trace/usage prefixes, all four
+request/response handoffs, 95,786 returned tokens, original inputs and teardown.
+Both project VMs are stopped, their data disks are closed, and configurations
+and the global Docker context are unchanged. Dollar charges remain unreported;
+there was no cloud VM, paid API fallback, reset or credit purchase.
+
+Two earlier [startup failures](../experiments/evidence/keyboard_portable_owner_startup_failures_20260912.json)
+were retained with zero model calls. They exposed Docker warnings mixed into
+machine output and a legacy hard-coded exchange directory. Both fixes are
+pushed and regression-tested. Exact-head local tests passed 5,530 with 10
+skips; hosted CI `34678988228` passed 5,386 with 154 skips. The scopes differ.
+
+All four actions were menu/navigation or designation work while paused, so
+this acceptance adds zero elapsed game ticks. It proves the public entry
+point's action/save/own-save-continuation loop, not fortress development or
+sustainability. The frozen cohort is unchanged. Portable-layout observer and
+replay wiring, full integration review and main merge remain open. The final
+checkpoint4 has not had a separate reload; checkpoint2 was reloaded during
+the successful continuation. No website publication occurred in this run.
+
+## Matched cohort: three saved continuations; original runtime capacity floor reached
 
 All six displayed-key fresh attempts have completed and passed their terminal
 audits at 64 responses. The [source-linked index](../experiments/evidence/keyboard_binding_comparison_20260911_index.json)

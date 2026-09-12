@@ -1,0 +1,151 @@
+{
+  "schema_version": "fortgym.portable-owner-acceptance-result/v1",
+  "status": "passed",
+  "scope": "Real public Docker owner, two fresh decisions, native own-checkpoint reload, two continuation decisions. Not a model-performance replicate.",
+  "campaign_id": "portable-owner-20260912-astra-r3",
+  "source_revision": "40b106b95f483b534a738622e75c4147a1270a96",
+  "source_tree": "977d487f36a3391723bb100c57035c04eb72e76c",
+  "image": "sha256:faf9f72350ad7eee950aad8141db44f28cea2eee8f7c6f03155f161bf6f69dfa",
+  "image_tag": "fortgym-portable:40b106b95-owner-v7",
+  "context_receipt_sha256": "b0124a9cecb4e45c37fa92c63086979f4bc4c1f55e227dc96f029b3d44a91ace",
+  "condition": "keyboard_portable_owner_acceptance_20260912_v3/astra-condition.json",
+  "declarations": [
+    "keyboard_portable_owner_acceptance_20260912_v3/fresh-trial.json",
+    "keyboard_portable_owner_acceptance_20260912_v3/continuation-2-4.json"
+  ],
+  "auditor_sha256": "ccfd41971ce6ada5bd1f5e53420b5a2424a5a26e39f3d34a5d76a12d742f133c",
+  "audit_file_sha256": "a9a193fc539fe7541b48625cde1a00782cb29017f32b9fb92b6d5a059b3e47df",
+  "windows": [
+    {
+      "mode": "fresh",
+      "next_step": 2,
+      "new_model_responses": 2,
+      "window_returned_tokens": 42140,
+      "cumulative_returned_tokens": 42140,
+      "checkpoint_manifest_sha256": "18b83329e212f07ecda8530c034f6eafd02d96f0f187fa9886994ff0bc8258a9",
+      "checkpoint_file_sha256": "5f4d9921c765b5a99fdfd5aaff95ffa5603149aff6ec0576b319a77162074131",
+      "parent_manifest_sha256": null,
+      "saved_year": 30,
+      "saved_year_tick": 16801,
+      "saved_paused": true,
+      "checkpoint_verified": true,
+      "memory_usage_and_history_preserved": true,
+      "original_inputs_unchanged": true,
+      "native_cleanup_verified": true,
+      "container_stopped_verified": true,
+      "both_vms_stopped": true,
+      "both_vm_disks_closed": true,
+      "owner_result_sha256": "ddf3652db3b62d87ba80df39eb8c9df2fc715885300b892955d97499c463749b",
+      "native_result_sha256": "a307937481b325c94e3c9010253a59b9118108b7fe5bfc167398eec6abe09120",
+      "operation_sha256": "2f7a274f75def74635723276396da22aaab153cb67228e9863346cd317c2ffc0",
+      "container_inspection_sha256": "466c7090d4c6752bcdbdc198e68318681e249933ea5736830fcc876136907c2f",
+      "native_status": "completed",
+      "reported_charge_usd": null
+    },
+    {
+      "mode": "continue",
+      "next_step": 4,
+      "new_model_responses": 2,
+      "window_returned_tokens": 53646,
+      "cumulative_returned_tokens": 95786,
+      "checkpoint_manifest_sha256": "ef2d5f815bd496b82ffade244af327a86434f362fa44081d7aa7309183408eea",
+      "checkpoint_file_sha256": "27435796d13f5d7a312d86de05bf44fba75000b4083614a4ec5c1a0f940a78fc",
+      "parent_manifest_sha256": "18b83329e212f07ecda8530c034f6eafd02d96f0f187fa9886994ff0bc8258a9",
+      "saved_year": 30,
+      "saved_year_tick": 16801,
+      "saved_paused": true,
+      "checkpoint_verified": true,
+      "memory_usage_and_history_preserved": true,
+      "original_inputs_unchanged": true,
+      "native_cleanup_verified": true,
+      "container_stopped_verified": true,
+      "both_vms_stopped": true,
+      "both_vm_disks_closed": true,
+      "owner_result_sha256": "4eab4a3424f13ec52b009e832158d2a7f6d1f60526a58e5a6c2383412d1fdc12",
+      "native_result_sha256": "a8a03e770a798690338fd9dd48dad1b3989626e8bdb811c0fe14eedee1330cf6",
+      "operation_sha256": "1ee9625c6ac8cf70d7391dfcc4582902193477c03fac9ff231516c2bbee4fe31",
+      "container_inspection_sha256": "2c296087f1c6ae9b50260cd6cfe2e756975fe6b33f1147f3b2c82cdd28ab72d5",
+      "native_status": "completed",
+      "reported_charge_usd": null
+    }
+  ],
+  "native_loads": [
+    {
+      "mode": "fresh",
+      "runtime_receipt_sha256": "17f36512dca001ab239db16defd53e695356675c5be0aa364228327581d36c2f",
+      "native_load_verified": true,
+      "loaded_year": 30,
+      "loaded_year_tick": 16801,
+      "listener_closed": true,
+      "remaining_live_processes": []
+    },
+    {
+      "mode": "continue",
+      "runtime_receipt_sha256": "d13b0ad29ea536cbf345e641bcb8b90ce1fae612212e96f8bee8dcd27d700edd",
+      "native_load_verified": true,
+      "loaded_year": 30,
+      "loaded_year_tick": 16801,
+      "listener_closed": true,
+      "remaining_live_processes": []
+    }
+  ],
+  "model": "gpt-6-astra",
+  "reasoning_effort": "medium",
+  "transport": "codex-exec-chatgpt/v1",
+  "screen_size": [
+    120,
+    40
+  ],
+  "new_model_responses": 4,
+  "known_returned_tokens": 95786,
+  "responses_with_unknown_tokens": 0,
+  "actual_model_charge_usd": null,
+  "cloud_spend_usd": 0,
+  "local_energy_and_subscription_cost_usd": null,
+  "api_fallback": false,
+  "credit_purchase": false,
+  "reset_consumption": false,
+  "elapsed_game_ticks": 0,
+  "elapsed_tick_note": "All four decisions navigated or designated while paused. This proves public-owner action/save/continuation wiring, not fortress growth or sustainability.",
+  "all_original_inputs_preserved": true,
+  "original_checkpoint_reloaded_before_continuation": true,
+  "agent_memory_and_usage_preserved": true,
+  "trace_and_usage_prefixes_preserved": true,
+  "game_listener_and_process_cleanup_verified": true,
+  "containers_stopped_verified": true,
+  "both_vms_stopped": true,
+  "both_vm_disks_closed": true,
+  "vm_configs_and_global_docker_context_unchanged": true,
+  "previous_failures": "evidence/keyboard_portable_owner_startup_failures_20260912.json",
+  "tests": {
+    "focused": {
+      "passed": 131,
+      "warnings": 2
+    },
+    "full_local": {
+      "passed": 5530,
+      "skipped": 10,
+      "warnings": 7,
+      "seconds": 256.55
+    },
+    "ci": {
+      "run_id": 34678988228,
+      "conclusion": "success",
+      "head": "40b106b95f483b534a738622e75c4147a1270a96",
+      "passed": 5386,
+      "skipped": 154,
+      "warnings": 7,
+      "seconds": 316.53
+    },
+    "ruff": "passed for changed source and tests"
+  },
+  "website_published": false,
+  "main_merged": false,
+  "goal_complete": false,
+  "remaining": [
+    "Final checkpoint4 has not had a separate native reload; checkpoint2 was reloaded as part of the successful continuation.",
+    "Portable-layout live observer and replay publication remain unverified.",
+    "Full integration source review and main merge remain.",
+    "This short acceptance does not add endurance or sustainability evidence and does not alter the frozen model comparison."
+  ]
+}
