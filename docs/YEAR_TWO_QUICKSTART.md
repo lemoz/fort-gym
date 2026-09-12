@@ -69,10 +69,24 @@ The same fresh environment passed 659 focused tests. The local server was
 stopped afterward. See the [setup and review record](../experiments/evidence/keyboard_integration_setup_review_176_20260912.json)
 for the resolved dependency versions and exact source boundary.
 
-This verifies the Python tools and bundled viewer, not a fresh game installation,
-generated DFHack protocol bindings, browser visual behavior or a portable native
-owner. Those checks made no model calls and launched no game or VM. Installing
-the optional provider dependencies does not authorize disabled providers.
+That first check verified the Python tools and bundled viewer, not a fresh game
+installation, generated DFHack bindings, browser visual behavior or a portable
+native owner. A [separate protocol setup check](../experiments/evidence/keyboard_integration_protocol_setup_176_20260912.json)
+then generated all eight bindings for the official `52.04-r1` schema and loaded
+them in the same isolated environment, including partial empty-message round trips
+for 131 declared message types. The earlier setup receipt and tracked source are
+unchanged. The explicit generation command for that tested schema is:
+
+```sh
+.venv/bin/python -m fort_gym.bench.env.remote_proto.fetch_proto --version 52.04-r1
+```
+
+This proves generation/import, not compatibility with any chosen running game.
+Use the schema declared for the target runtime; do not replace an existing
+experiment's frozen bindings. These checks made no model calls and launched no
+game or VM. Fresh-machine game provisioning and portable native-owner acceptance
+remain open. Installing optional provider dependencies does not authorize
+disabled providers.
 
 ## Running a new native experiment
 

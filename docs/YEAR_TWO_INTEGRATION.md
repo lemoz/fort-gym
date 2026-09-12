@@ -132,3 +132,18 @@ An additional focused pass covers 126 comparison, publication, observer and
 exporter tests. Both source reports exactly match the bundled JSON tables;
 selected changed-file Ruff checks pass. These are not native setup acceptance,
 independent source approval, browser visual QA or a main merge.
+
+## Protocol setup follow-up
+
+The [separate protocol check](../experiments/evidence/keyboard_integration_protocol_setup_176_20260912.json)
+extends isolated setup at `bce580ae30782b258453889283c10f1ccba06a7b`, using its
+new Python environment and official `52.04-r1` schemas. All eight generated
+modules load; 131 declared message types pass partial empty-message round trips.
+The generator and loader digests match this candidate. Earlier acceptance
+records and tracked source are unchanged; generated files remain isolated.
+
+No game connection, game/VM launch or model call was made. This closes the
+generation/import part of setup, not native wire compatibility, fresh-machine
+game provisioning or portable owner acceptance. The frozen cohort's bindings
+are not regenerated. The [repeat website release record](../experiments/evidence/website_repeat_outcomes_release_20260912.json)
+separately verifies public delivery at `674a12c7c3ba499739e28959bd6c864386c14e33`.
