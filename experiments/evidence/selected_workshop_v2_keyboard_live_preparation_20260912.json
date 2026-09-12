@@ -1,0 +1,49 @@
+{
+  "schema_version": "fortgym.selected-workshop-keyboard-live-preparation/v1",
+  "date_utc": "2026-09-12",
+  "study_id": "selected-workshop-v2",
+  "campaign_id": "selected-workshop-v2-p1-keyboard",
+  "status": "prepared_not_launched",
+  "source_revision": "5ddf1e6718dab2e8351e8dc24a2afe5071cd2592",
+  "previous_preparation": "selected_workshop_v2_terminal_next_preparation_20260912.json",
+  "previous_preparation_sha256": "c346b0429fcf4642058e593207bd0399733fd75cb4d660f56a40c69035c1ecc0",
+  "helpers_sha256": {
+    "relay_v2_p1_keyboard.py": "0d12974b0ac8836f182709738ae2b37f658d7e456e96233225c25026f6c6cc17",
+    "verify_v2_p1_keyboard_public.py": "6ad3903ed534cc29c5ae6920532b498839eef92e67c1bdbb1efe58f59781d5fa",
+    "test_v2_keyboard_live.py": "bc42201a5459ba6aafbc3f8e890757b0621e05e79ea620598c8f8a206433cac3",
+    "v2-keyboard-live-README.md": "cf7bf43e39c85f83027feee7bade900cef67732e62ca93c7a18e28c4f959218b"
+  },
+  "validation": {
+    "passed": 53,
+    "failed": 0,
+    "warnings": 2,
+    "warning_kind": "existing Pydantic class-based config deprecation",
+    "junit_sha256": "bab127dcea62aca542a97b6f121b0e557d60498d1d86355640d5f7c0df3de361",
+    "ruff": "passed"
+  },
+  "relay": {
+    "requires_fresh_cursor_zero": true,
+    "requires_exact_keyboard_profile": true,
+    "requires_live_owner_identity": true,
+    "requires_actual_frame": true,
+    "existing_receiver": true,
+    "bounded_lifetime": true,
+    "publishes_terminal_state_before_exit": true
+  },
+  "verifier": {
+    "original_request_response_frame_action_binding": true,
+    "public_https": true,
+    "owner_identity": true,
+    "write_once_per_decision": true,
+    "private_memory_excluded": true
+  },
+  "actual_keyboard_launch": false,
+  "actual_keyboard_public_frame_verified": false,
+  "current_shortcuts_run_modified": false,
+  "website_release": false,
+  "main_merge": false,
+  "preparation_model_calls": 0,
+  "preparation_gameplay_inputs": 0,
+  "full_goal_complete": false,
+  "note": "Offline preparation only. The current shortcuts owner and both observers must finish before the next launch and relay. No synthetic test frame was published."
+}

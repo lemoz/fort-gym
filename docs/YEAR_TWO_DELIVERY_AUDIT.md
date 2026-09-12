@@ -33,6 +33,12 @@ check verifies the existing continuation's original frame/action at decision88;
 the current owner remains active. No runtime-source change, website release,
 new VM, main merge or completed paired comparison is claimed by this preparation.
 
+The [next keyboard live-feed handoff](../experiments/evidence/selected_workshop_v2_keyboard_live_preparation_20260912.json)
+is also prepared: 53 combined offline checks passed with two existing Pydantic
+deprecation warnings. It binds the actual fresh keyboard owner and original
+screen/action to the existing receiver, and exits after its verified stopped
+feed. No keyboard attempt or synthetic public frame has been launched.
+
 Earlier [v2 running progress](../experiments/evidence/selected_workshop_v2_p1_shortcuts_progress_20260912.json):
 20 completed responses, 549,985 returned tokens, 8,400 elapsed ticks, seven living
 dwarves and two completed workshops. Two accepted workshop actions encountered
