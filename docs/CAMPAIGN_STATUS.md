@@ -47,6 +47,14 @@ unfinished-owner rejection, teardown requirements and continuation-only relay.
 It remains unlaunched: the current first-window save and native audit are still
 required. Preparation neither resets the live run nor establishes checkpoint64.
 
+A [read-only action summary](../scripts/summarize_selected_workshop_actions.py)
+now separates keyboard presses, requested/acknowledged workshop jobs, real ticks,
+clock timeouts and menu deferrals. Its [validation receipt](../experiments/evidence/selected_workshop_action_summary_validation_20260912.json)
+records 22 passing tests and exact agreement with the completed v1 keyboard
+result. A bounded read of the first 39 completed v2 decisions acknowledges 14
+queued jobs, not 14 finished products, and 15,000 actual ticks. This reporting
+tool does not change the frozen runtime or replace the terminal native audit.
+
 ## Historical comparison work: Astra r2 continuation
 
 The [explicit storage amendment](../experiments/keyboard_comparison_storage_amendment_20260912.json)

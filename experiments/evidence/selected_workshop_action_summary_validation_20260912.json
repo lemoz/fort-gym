@@ -1,0 +1,56 @@
+{
+  "schema_version": "fortgym.selected-workshop-summary-validation/v1",
+  "date_utc": "2026-09-12",
+  "analysis_script": "scripts/summarize_selected_workshop_actions.py",
+  "analysis_script_sha256": "85095b5a3733ec3a6e2fbb01f156e3cf878c67b3051590f1ce09c0b50020665a",
+  "tests_passed": 22,
+  "tests_sha256": "f4ed9847472605c9a15d02ae8be0dacda1969c1d104fd670fbf9dc0515cb55ee",
+  "junit_sha256": "9aa8a321aee8ba828961b9dd99526b37af9605a52b1f044fb24eff67925676a1",
+  "ruff_passed": true,
+  "historical_validation": {
+    "campaign_id": "selected-workshop-v1-p1-keyboard",
+    "complete_decisions": 128,
+    "original_result_sha256": "0f82b56e62779b7cb6202b41c8e634126b9fff9f3a50adff931314f7677c3eae",
+    "source_records_sha256": "c01ce980dc6af4f1c9697ec07dee3ff3986d35cabaee3f22051eca6d48b61779",
+    "requested_keys": 637,
+    "known_keys_sent": 637,
+    "requested_ticks": 87000,
+    "actual_ticks": 83800,
+    "deferrals": 2,
+    "clock_timeouts": 0,
+    "existing_result_counts_match": true,
+    "original_result_unchanged": true
+  },
+  "provisional_validation": {
+    "campaign_id": "selected-workshop-v2-p1-shortcuts",
+    "complete_decisions": 39,
+    "source_records_sha256": "cee9a4d5a56af0015943ebc43a77674caaa25d87efc695bf69d28251bc10fc10",
+    "keyboard_actions": 35,
+    "workshop_actions": 4,
+    "requested_keys": 193,
+    "known_keys_sent": 193,
+    "requested_jobs": {
+      "bed": 7,
+      "barrel": 2,
+      "brew": 5
+    },
+    "acknowledged_jobs_queued": {
+      "bed": 7,
+      "barrel": 2,
+      "brew": 5
+    },
+    "completed_products_measured": false,
+    "requested_ticks": 22200,
+    "actual_ticks": 15000,
+    "zero_tick_clock_timeouts": 3,
+    "deferrals": 1,
+    "terminal_result": false,
+    "checkpoint_verified": false
+  },
+  "native_audit_performed": false,
+  "original_inputs_modified": false,
+  "frozen_runtime_modified": false,
+  "gameplay_inputs": 0,
+  "model_calls": 0,
+  "note": "Read-only summaries are not save/receipt-chain audits. Missing native counters remain unknown; queue acknowledgements do not prove finished products. The earlier v1 result is a historical validation case, not a substitute or ranking against the incomplete v2 sample."
+}
