@@ -1,0 +1,91 @@
+{
+  "schema_version": "fortgym.workshop-job-clock-feedback-preparation/v1",
+  "date_utc": "2026-09-12",
+  "status": "implemented_tested_draft_review_native_acceptance_pending",
+  "baseline_revision": "5ddf1e6718dab2e8351e8dc24a2afe5071cd2592",
+  "source_revision": "af922cb4c3e0cf33bfe62cf6ba702bdf83363e1a",
+  "branch": "codex/workshop-job-clock-feedback",
+  "pull_request": "https://github.com/lemoz/fort-gym/pull/179",
+  "review_state": {
+    "draft": true,
+    "merged": false,
+    "exact_head_ci_run": 34714726586,
+    "ci_observed_status": "in_progress",
+    "ci_passed": false
+  },
+  "files_sha256": {
+    "fort_gym/bench/run/keyboard_clock.py": "401fe43c4e27dcbebe359f2e4229bf8a125879e063da5d33d14adf1527a20a51",
+    "tests/test_keyboard_clock_timeout.py": "3e3cddceb5e6ac35bca92b30c5dc04592f3f4cb08d3a2b102318419b0749feae",
+    "docs/WORKSHOP_JOB_CLOCK_FEEDBACK.md": "4acd55b61b7cc5472bc36232f30f7727332fc5140c1e607a4b55eb034f0d0701"
+  },
+  "observed_failure": {
+    "campaign_id": "selected-workshop-v2-p2-shortcuts",
+    "decision": 11,
+    "requested_ticks": 2000,
+    "actual_ticks": 0,
+    "timeout": true,
+    "focus": "dwarfmode/QueryBuilding/Some/Workshop/Job",
+    "both_native_probes_paused": true,
+    "native_year": 30,
+    "native_year_tick": 20001,
+    "subsequent_model_decision": 12,
+    "subsequent_model_selected_keys": [
+      "SYM:0:ESC",
+      " "
+    ],
+    "subsequent_actual_ticks": 2000,
+    "original_checkpoint64_manifest_sha256": "9491bdfd3e069ad6a451c4afe757d0e4f0ecb8f7155d12a4adc71c054b11e17d",
+    "first64_native_audit_sha256": "61603d2a5a3cfe6b076f96e80cf4fbbdcd1e7c6de6598078198d37a988a212f2",
+    "original_timeout_preserved": true,
+    "human_gameplay_rescue": false
+  },
+  "change": {
+    "exact_focus_added": true,
+    "uses_existing_two_read_only_probe_deferral": true,
+    "no_automatic_recovery_keys": true,
+    "no_simulation_ticks_reported_as_advanced": true,
+    "unknown_focuses_use_existing_clock": true,
+    "historical_control_profiles_unchanged": true
+  },
+  "validation": {
+    "full_local_suite": {
+      "passed": 5707,
+      "skipped": 10,
+      "warnings": 7,
+      "junit_sha256": "30be4dbe9228574d8442b5641d4a71d5a03ba41d428d77c00d2ea670b40e437d",
+      "scope": "Complete suite after production change, before replacing the equivalent imported focus constant with its literal string in the regression parametrization."
+    },
+    "final_focused_suite": {
+      "passed": 128,
+      "warnings": 2,
+      "junit_sha256": "a152861c95c385057ca25a9f0ad74c99c11acbf7a2fe446c88646344fc65c7b3",
+      "scope": "Clock, modal, boundary, checkpoint and historical-timeout tests on final committed source; literal regression catches a production-focus typo."
+    },
+    "changed_file_ruff_passed": true,
+    "repository_ruff": {
+      "candidateErrors": 10,
+      "baselineErrors": 10,
+      "identicalDiagnostics": true
+    },
+    "repository_mypy": {
+      "candidateErrors": 465,
+      "baselineErrors": 465,
+      "identicalSortedDiagnostics": true,
+      "diagnosticsSHA256": "cae31859aea3e842842b37b83e5bd11253bbab94d2607a6af623eadc498de8f5"
+    },
+    "diff_check_passed": true
+  },
+  "delivery": {
+    "source_pushed": true,
+    "active_cohort_revision_unchanged": "5ddf1e6718dab2e8351e8dc24a2afe5071cd2592",
+    "active_image_unchanged": true,
+    "new_image_built": false,
+    "native_acceptance_performed": false,
+    "gameplay_calls_by_this_preparation": 0,
+    "new_vm_created": false,
+    "website_deployed": false,
+    "main_merged": false,
+    "full_goal_complete": false
+  },
+  "note": "This corrects a reproduced harness feedback gap for a separately declared post-cohort runtime. It does not alter the frozen six-attempt study or retrospectively turn recorded timeouts into successful simulation. Native acceptance and review remain required."
+}

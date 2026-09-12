@@ -30,13 +30,24 @@ exact time or which model action caused it. Its final guest-poweroff command
 returned one with `exit status 255`; the later VM stop and independent stopped
 state/closed-disk checks passed. The original exit codes remain in the result.
 
-The fourth attempt, [pair-two shortcuts](../experiments/evidence/selected_workshop_v2_p2_shortcuts_startup_20260912.json),
-started from the original seed and empty memory. Its current state belongs to
-the live owner/feed, not this startup snapshot. [Own-save continuation](../experiments/evidence/selected_workshop_v2_p2_shortcuts_continuation_preparation_20260912.json)
-and [reload/terminal audit tools](../experiments/evidence/selected_workshop_v2_p2_shortcuts_terminal_preparation_20260912.json)
-are prepared, not executed. Their 99 combined offline tests do not establish
-a future checkpoint or final outcome. Pair-three shortcuts and keyboard follow
-in the original declared order; no remaining attempt is silently replaced.
+The fourth attempt, [pair-two shortcuts](../experiments/evidence/selected_workshop_v2_p2_shortcuts_64_20260912.json),
+has saved and freshly reloaded its own decision-64 checkpoint. The native audit
+retains 18,800 elapsed ticks, seven living dwarves, no recorded deaths, five beds,
+two workshops, one farm, 45 food, 85 drinks and 1,877,163 returned tokens. Both
+VMs and disks stopped/closed cleanly at that boundary. The actual continuation
+restored its original native clock/metrics and exact memory, usage and history;
+public HTTPS frame 69 matches its captured request and chosen action. It is
+continuing toward decision 128, not a terminal result. [Terminal tools](../experiments/evidence/selected_workshop_v2_p2_shortcuts_terminal_preparation_20260912.json)
+remain prepared, not consumed. [Pair-three fresh-window operators](../experiments/evidence/selected_workshop_v2_p3_fresh_preparation_20260912.json)
+passed 26 offline tests but have not started. They follow in the original
+declared order; no remaining attempt is silently replaced.
+
+A [separate workshop job-screen feedback correction](../experiments/evidence/workshop_job_clock_feedback_preparation_20260912.json)
+is pushed for draft review as PR179. It recognizes the exact paused `Workshop/Job`
+focus without inserting keys, dismissing menus or relabeling historical timeouts.
+The active study source/image are unchanged. Local verification passed 5,707
+tests with ten skips and 128 final focused checks. Broad lint/type failures match
+the unchanged baseline; native acceptance of this correction is still pending.
 
 The [latest verified website delivery](../experiments/evidence/selected_workshop_v2_p2_keyboard_website_20260912.json)
 is revision `553528797ec140f2f2d50b623897cb3b3cf33811`: twenty original recording
