@@ -40,7 +40,7 @@ two-assertion test commit; no native or website behavior was changed.
 The adapters' scoped Ruff and new-module mypy checks pass, while the existing
 whole-repository 10 Ruff findings and 465 mypy errors remain qualified.
 
-Latest harness review: [the runtime/continuation review record](../experiments/evidence/keyboard_integration_runtime_review_176_20260912.json)
+Earlier harness review: [the runtime/continuation review record](../experiments/evidence/keyboard_integration_runtime_review_176_20260912.json)
 binds integration head `79813a5ae179893b3b7a7dcc5a038a1054e5ff97`.
 A reproduced Docker cleanup-reporting defect is fixed: an uncertain stop reply
 now retains its failure and is followed by one read-only inspection of the
@@ -54,11 +54,32 @@ warnings. Hosted/local test scopes differ; both are retained in the record.
 The new record adds source hashes for 34 reviewed production files; 55 other
 current files match prior full/delta review indexes. Forty-five changed
 production files remain explicitly listed for review. This is implementer
-review, not independent approval or main merge. A confirmed portability gap
-also remains: the replay exporter still requires the historical two-VM audit
-schema. Add a reusable versioned run audit without inventing VM stop assertions,
-stopping a shared engine or changing historical acceptance evidence. No game,
-VM, model call or website deployment occurred during this review.
+review, not independent approval or main merge. That review also identified the
+two-VM-specific replay audit dependency, closed by the following change. No
+game, VM, model call or website deployment occurred during that review.
+
+Latest harness change: [the reusable portable-run audit](../experiments/evidence/keyboard_portable_run_audit_delivery_20260912.json)
+is pushed at integration head `e10977c8b6728b7731d4d4e3a709a1ccd5cdfaba`.
+It audits ordinary settled fresh/own-save windows, including multi-segment
+continuations and positive-frame budget pauses, from retained native saves and
+container/model receipts. It makes no current-engine or VM-teardown assertion.
+The exporter rechecks the evidence bindings; historical v1 requirements remain.
+
+Read-only acceptance against the real four-decision capture reconciles all
+95,786 tokens, reproduces every original replay frame and keeps the legacy
+recording byte-for-byte identical. This is auditor acceptance, not another
+native run or new gameplay progress. All 70 audit/spectator cases, 121 combined
+exporter/home-player cases and 52 Node contracts pass, along with scoped Ruff
+and mypy. Full exact-head validation passes: 5,606 local tests with ten skips
+and seven warnings; hosted CI `34683683928` passes 5,462 tests with 154 skips
+and seven warnings. The local environment includes native bindings unavailable
+in hosted CI; the linked record keeps those scopes separate.
+
+Two adjacent exporter modules were also fully read and retain their exact prior
+hashes. Forty-three changed production files remain in the explicit review
+inventory. The new audit closes the portability finding, not full review, main
+merge, portable live-follow acceptance or the gameplay/comparison goal. No
+model call, Docker operation, VM control or website deployment occurred.
 
 | Requirement | Current evidence | Remaining work or limit |
 | --- | --- | --- |
@@ -69,7 +90,7 @@ VM, model call or website deployment occurred during this review.
 | Inspectable development, adaptation and sustainability | Saved native metrics, job samples, elapsed time, chosen controls and rejected actions are retained and replayable. The Astra endpoint review explicitly qualifies its observations. | Stocks and sampled jobs are not production/consumption rates, accessible reserves or completed job counts. Keep unmeasured fields unknown; use longer gameplay and separately versioned measurement improvements for stronger sustainability claims. |
 | Honest cost and resource reporting | Returned model tokens and known lost responses remain accounted. Results identify subscription transport and leave dollar charges null. | Subscription dollar charges, hardware energy and app cost are unreported, not zero. Do not create a fabricated actual cost or silently substitute API-price estimates. |
 | Live and recorded website delivery | [The portable replay release](../experiments/evidence/website_portable_replay_release_20260912.json) serves fifteen replay windows and 1,060 captured frames. The six fresh results, 64/128 budget selector, continuation outcomes, immutable evidence links, all fourteen earlier recordings and stopped Terra relay are unchanged. | The added four paused frames prove harness continuity, not model growth. Portable live follow still needs acceptance during an otherwise-needed game. Astra r2 remains unlaunched at its known native capacity shortage; no replay is invented for Sol's zero-call failure. |
-| Reviewed and merged remote implementation, tests, setup and manifests | Native code, website code and result manifests are pushed, with source-bound native/public evidence. Main remains `f1aa05f429c189b67891cf2629e8e00329222aca`. PR176's combined candidate is `79813a5ae179893b3b7a7dcc5a038a1054e5ff97`. | Full source review and main merge remain, with the explicit remaining-file inventory and reusable recording-audit gap above. Actual public-owner fresh/save/resume acceptance passed at exact native source `40b106b95f483b534a738622e75c4147a1270a96`; newer spectator/cleanup changes are not a new native acceptance. Repository-wide lint/type baselines remain qualified. Public deployment is not merged harness delivery. |
+| Reviewed and merged remote implementation, tests, setup and manifests | Native code, website code and result manifests are pushed, with source-bound native/public evidence. Main remains `f1aa05f429c189b67891cf2629e8e00329222aca`. PR176's combined candidate is `e10977c8b6728b7731d4d4e3a709a1ccd5cdfaba`. | Full source review and main merge remain, with 43 production files explicitly listed. The reusable recording audit is now implemented and accepted offline. Actual public-owner fresh/save/resume acceptance passed at exact native source `40b106b95f483b534a738622e75c4147a1270a96`; newer spectator/cleanup/audit changes are not a new native acceptance. Repository-wide lint/type baselines remain qualified. Public deployment is not merged harness delivery. |
 | Reusable setup rather than one machine's retained experiment assets | The candidate installs in a fresh Python environment, selects three model configurations and reproduces the reports. A separate clean local VM built the source-bound image. The public owner completed a real two-decision fresh run and two-decision own-save continuation, preserving memory, usage, history and originals. Its audited replay exports through the standard website format. | The native acceptance covers that source/image on this host, not every observation/action path or fresh-machine platform. Portable live follow has synthetic and stopped-capture proof only. Preserve frozen cohort runtimes and do not redistribute restricted images or private model data. |
 
 ## Integration history (earlier checkpoints)

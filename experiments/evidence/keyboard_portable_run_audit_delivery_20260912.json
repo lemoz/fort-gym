@@ -1,0 +1,314 @@
+{
+  "schema_version": "fortgym.portable-run-audit-delivery/v1",
+  "observed_at": "2026-09-12 08:43:12 UTC",
+  "head": "e10977c8b6728b7731d4d4e3a709a1ccd5cdfaba",
+  "source_url": "https://github.com/lemoz/fort-gym/commit/e10977c8b6728b7731d4d4e3a709a1ccd5cdfaba",
+  "pull_request": 176,
+  "base": "f1aa05f429c189b67891cf2629e8e00329222aca",
+  "finding_resolved": "portable-replay-audit-is-two-vm-specific",
+  "finding_prior_record": "experiments/evidence/keyboard_integration_runtime_review_176_20260912.json",
+  "summary": "Add a read-only versioned audit for ordinary portable-owner fresh/own-save windows, independent of VM topology; retain the historical v1 acceptance contract and recording bytes.",
+  "audit_schema": "fortgym.portable-owner-continuity-audit/v2",
+  "supported_scope": {
+    "native_save_profile": "native_menu_preserving_save/v4",
+    "modes": [
+      "fresh",
+      "unchanged_own_save_continuation"
+    ],
+    "terminal_statuses": [
+      "completed",
+      "budget_limited_pause_with_new_saved_decisions"
+    ],
+    "owner_windows": {
+      "minimum": 1,
+      "maximum": 16
+    },
+    "multiple_native_segments": true,
+    "standalone_continuation": true,
+    "original_inputs_read_only": true,
+    "retained_metadata_rehashed_at_export": true,
+    "vm_teardown_claimed": false,
+    "current_engine_state_claimed": false,
+    "full_syscall_policy_audited": false,
+    "private_model_memory_published": false,
+    "failed_and_zero_call_outcomes": "Retain original owner outcome; do not synthesize replay frames."
+  },
+  "offline_native_capture_acceptance": {
+    "schema_version": "fortgym.portable-run-audit-offline-acceptance/v1",
+    "observed_at": "2026-09-12T08:35:38.887Z",
+    "passed": true,
+    "capture_source_revision": "40b106b95f483b534a738622e75c4147a1270a96",
+    "capture_image": "sha256:faf9f72350ad7eee950aad8141db44f28cea2eee8f7c6f03155f161bf6f69dfa",
+    "audit_sha256": "9b73d84e221f6172d4ab79efb6d177d9dd056d3bddd944c653a35c55f6860a52",
+    "recording_sha256": "3ce43d30d58724b7e880deae3187e62e81680b280023ad9ec35bcd954a0b2400",
+    "original_recording_sha256": "4737508d32fd1a6e27c2c78e1636ec7fb8de91eaca622cd38f8a7d3ab398ddf1",
+    "legacy_export_sha256": "4737508d32fd1a6e27c2c78e1636ec7fb8de91eaca622cd38f8a7d3ab398ddf1",
+    "frame_count": 4,
+    "all_frames_equal": true,
+    "legacy_export_byte_identical": true,
+    "known_returned_tokens": 95786,
+    "cumulative_returned_tokens": 95786,
+    "reported_charge_usd": null,
+    "saved_elapsed_ticks": 0,
+    "final_checkpoint_fresh_reload_verified": false,
+    "auditor_source_sha256": {
+      "keyboard_docker_audit.py": "a2bf33a20d3cf17b1633d9db97bc2539b8fbcce6b4252977145aae5c7d316e6e",
+      "keyboard_docker_native_audit.py": "51bf549900dd38113e82142b7993c02dadb57426f14245f1864c91913dbe330c",
+      "keyboard_docker_audit_contract.py": "4c37f929edb56a83b925203cd4a6ac3b9cfa43cfdc8b078701f33d556ac1e169"
+    },
+    "model_calls": 0,
+    "docker_calls": 0,
+    "native_runs": 0,
+    "vm_operations": 0,
+    "website_published": false,
+    "long_term_gameplay_proved": false
+  },
+  "changed_source_sha256": {
+    "docs/KEYBOARD_DOCKER_OWNER.md": "4ee139a03c3adcda865daaf0da7f8b9d42afc379bb76fa59dd511a9d5b44dff8",
+    "docs/YEAR_TWO_INTEGRATION.md": "c035abd5d9a42fa88fb9eba7d8ec5e4a1ea775694c96095218bacd5185be0025",
+    "docs/YEAR_TWO_QUICKSTART.md": "a147cd067172109a773d3a07af0fa3a042fada5234e374677ad6c9bf12364b10",
+    "fort_gym/bench/run/keyboard_docker_audit.py": "a2bf33a20d3cf17b1633d9db97bc2539b8fbcce6b4252977145aae5c7d316e6e",
+    "fort_gym/bench/run/keyboard_docker_audit_contract.py": "4c37f929edb56a83b925203cd4a6ac3b9cfa43cfdc8b078701f33d556ac1e169",
+    "fort_gym/bench/run/keyboard_docker_native_audit.py": "51bf549900dd38113e82142b7993c02dadb57426f14245f1864c91913dbe330c",
+    "fort_gym/bench/run/keyboard_docker_recording.py": "de4cb09d36c9345725a55123542bd0b0773afbc493b305677cb71d88247180ed",
+    "scripts/campaign_keyboard_docker_audit.py": "7d0f71d3a7ea24cadeeaa0e708606cae9745a300ddb030d86ae2e932fa427991",
+    "tests/test_keyboard_docker_audit.py": "2bbe0e754dd750887f6e6088b51a1885214569943646fce3b57f5e5fe0b90de2"
+  },
+  "additional_reviewed_dependencies": {
+    "scripts/export_displayed_key_recording.py": "0c6d16a3f08a18957bde475440b0b9442408309588fd4765963383b21765085b",
+    "scripts/export_home_recording.py": "ce9a4d3e3982142372a6b4aae96b3bbd8758bb7342a8fa62a00f81108e98a5f7"
+  },
+  "review_kind": "implementer_source_review_not_independent_approval",
+  "current_changed_production_file_count": 138,
+  "remaining_changed_production_file_count": 43,
+  "remaining_changed_production_files": [
+    {
+      "path": "fort_gym/bench/api/campaign_keyboard_checkpoints.py",
+      "sha256": "8ac68d8cf3b840c798cb933fe922380818b87ddbd935650e5be7dd418c629e41"
+    },
+    {
+      "path": "fort_gym/bench/api/campaign_keyboard_modal_trials.py",
+      "sha256": "d3e7fb26e2a97dc47489b35dea88b7111fbbc9631a2c46ccf2556e96d241225f"
+    },
+    {
+      "path": "fort_gym/bench/api/campaign_keyboard_oom.py",
+      "sha256": "62ac37567ad51f164f2d0b671a2c718fcfca4ff21dccf16fb033bd74d76bcf01"
+    },
+    {
+      "path": "fort_gym/bench/api/campaign_keyboard_partial.py",
+      "sha256": "ed3ca894228798fcf89994aa6fe597a4498c3f4348c91ca0455ac7c48cf2d97a"
+    },
+    {
+      "path": "fort_gym/bench/api/campaign_keyboard_paused.py",
+      "sha256": "d497a58f5ad839d062e392412148e9195a5d30ca5b575a97745cdfd47fd9257a"
+    },
+    {
+      "path": "fort_gym/bench/api/campaign_keyboard_presave.py",
+      "sha256": "4bb81e475a726f151c658add65f498c7f4bc7487aaf9ea93e74793cf41c99916"
+    },
+    {
+      "path": "fort_gym/bench/api/campaign_keyboard_reloads.py",
+      "sha256": "388592c3b7654e512c467d46a3f6d706fddf1e8df921e748dc630b22fd0db6c3"
+    },
+    {
+      "path": "fort_gym/bench/api/campaign_keyboard_restarts.py",
+      "sha256": "09633bb35790c65d2fe69ae6dbacf1e964796cb99aa1539e4c741f78b0d88f87"
+    },
+    {
+      "path": "fort_gym/bench/api/campaign_keyboard_saved_segments.py",
+      "sha256": "9cf58d55b7a9949d6c9bf6a49eb5abd03b0fb80a9b60467a03c71252028542a9"
+    },
+    {
+      "path": "fort_gym/bench/api/campaign_keyboard_tails.py",
+      "sha256": "e680b32201fe94a771216506cd63ab92195c05a91a029083e4f40796917296ff"
+    },
+    {
+      "path": "fort_gym/bench/api/campaign_keyboard_trials.py",
+      "sha256": "3a150e0b412a45db80a981d38bb1ed5e3beda220fc74d576a0b3367b5111597f"
+    },
+    {
+      "path": "fort_gym/bench/api/campaign_keyboard_window_sequence.py",
+      "sha256": "699eedded3dfb4db6b51915481f54714b16324eee15c5220947afd67f8e7ad29"
+    },
+    {
+      "path": "fort_gym/bench/api/campaign_keyboard_windows.py",
+      "sha256": "c6bceb99df105a4719ce0442f5e4be811868bf9b79804e6f300b5b6853cdabef"
+    },
+    {
+      "path": "fort_gym/bench/api/keyboard_admission.py",
+      "sha256": "58f2859620f24115bc80e5332cbb6e2313f5d60a769dcd3c63a308b8dadcaf31"
+    },
+    {
+      "path": "fort_gym/bench/api/keyboard_cohort.py",
+      "sha256": "d922736f3b54ccb207725253b6068c3a114085d6f0082188cb5b3d15144a7f42"
+    },
+    {
+      "path": "fort_gym/bench/api/keyboard_cohort_live.py",
+      "sha256": "7c766de2eb19bd3fbef83285f2a2bd65e0329afd946b664e01bfb4827cffe0d5"
+    },
+    {
+      "path": "fort_gym/bench/api/keyboard_continuation_live.py",
+      "sha256": "94e50af1a9ae55664a3312c8aa75cea8525e698172d715bc2d71d0f7a58cc5fc"
+    },
+    {
+      "path": "fort_gym/bench/api/keyboard_continuations.py",
+      "sha256": "488a2606ed32c946a11e7c34b635b6ffa66c9123e22a93f878e96cd19092cccd"
+    },
+    {
+      "path": "fort_gym/bench/api/keyboard_endurance_live.py",
+      "sha256": "f70c31b9b4e8b05469606d6521d6883b701456575bc46ca626bf9e7a57d00bf0"
+    },
+    {
+      "path": "fort_gym/bench/api/keyboard_endurance_records.py",
+      "sha256": "083334fe0a3fee25c9f5175098da3867925621e09b16cc7787c45f8e3169a631"
+    },
+    {
+      "path": "fort_gym/bench/api/keyboard_live.py",
+      "sha256": "1e54a6629a27be4c19bc1939d3eff74b17a0b19bb617498ddbeeb2828039089e"
+    },
+    {
+      "path": "scripts/campaign_continuation_observe.py",
+      "sha256": "d6e5d197fae790162690de88d2ecff962a3f3f62a28acdaacab35cbb3fbe7824"
+    },
+    {
+      "path": "scripts/campaign_endurance_observe.py",
+      "sha256": "3d3399a76f0308ecd921c8fa97adeb30332e5d96c8b4d035a348d43e3b1f0445"
+    },
+    {
+      "path": "scripts/campaign_keyboard_boundaries.py",
+      "sha256": "8c444ac61debdab62b4f9ddde9087de372c6d8ec6df9ba1d93d4e8bdfa77a71d"
+    },
+    {
+      "path": "scripts/campaign_keyboard_observe.py",
+      "sha256": "6afe566bf741feb4bca2af649fd512e8e73b8f6727c2353d74162de9470b1d9b"
+    },
+    {
+      "path": "scripts/campaign_matched_observe.py",
+      "sha256": "a153e23d025798ae422368f26a6c01d19eccf041786d33f635ffbf4d3311fa28"
+    },
+    {
+      "path": "scripts/campaign_rpc_probe.py",
+      "sha256": "6401ae60ab08891f5431f6b5054c7c46a5675fc02b9e0382395d295b9cafd399"
+    },
+    {
+      "path": "scripts/campaign_trace_summary.py",
+      "sha256": "5492a8c7e80ff3cf2af1a816b7836eeefa89395354b6e407e004f6a2459ec3cc"
+    },
+    {
+      "path": "scripts/relay_watch.py",
+      "sha256": "bd1e3e4b3c7e5a7fbb874b4edfc69a05dc296e07901c373a3d62ae367093ee21"
+    },
+    {
+      "path": "web/static/campaign-continuation-live.js",
+      "sha256": "887cbd3da3f7e4ea492b1bc6b6287edacc35d23f8fe5b74e2bfc6700f1568777"
+    },
+    {
+      "path": "web/static/campaign-continuation-records.js",
+      "sha256": "de4debdc1420c1cebdb9e4aefb91198736b983e8160ee0ebbf684738f19ec978"
+    },
+    {
+      "path": "web/static/campaign-endurance-live.js",
+      "sha256": "7bd6fb2622e522609ec21b1625a5cf20e7607c8386a0d6ed533d46586d14f334"
+    },
+    {
+      "path": "web/static/campaign-endurance-records.js",
+      "sha256": "303f47cddd686d9c45e9afd42b3f9f23165c104da7805fd9fd46661def82056c"
+    },
+    {
+      "path": "web/static/campaign-keyboard-admission.js",
+      "sha256": "f69a72f4099a0f0695141211de151c0c3d4f74f9a98a0dfafdd703ec02d77eae"
+    },
+    {
+      "path": "web/static/campaign-keyboard-live.js",
+      "sha256": "6f47f086a46c84ac98156b1ecf6f81d8f5c739e6943861c1e1afc372bd9959b5"
+    },
+    {
+      "path": "web/static/campaign-keyboard.js",
+      "sha256": "a07776adc9f014b575c623d5e7a643abf99bb12b4b77440cb57520ef2475085b"
+    },
+    {
+      "path": "web/static/campaign-matched-live.js",
+      "sha256": "2661a1e848234386dfa1e4f6eb22438e3aec0a081dd930ff4d7d84a658040359"
+    },
+    {
+      "path": "web/static/campaign-matched.js",
+      "sha256": "bc5348624d53ab208bcff5d750f711acb07de1e5f604e32199280e800048e4f0"
+    },
+    {
+      "path": "web/static/displayed-key-comparison.mjs",
+      "sha256": "9d91360c41731ead6d42048ce93bca4550db9c62ae6eef9659e8fb7c055c8984"
+    },
+    {
+      "path": "web/static/home-watch-model.mjs",
+      "sha256": "e5ec01d4eae854af5093f734ee97e8b06b47c4d6ec603ee93e3aa4423ac2e88c"
+    },
+    {
+      "path": "web/static/home-watch.mjs",
+      "sha256": "c2dd096f2f0fb68b2a8746f7594552135151e5ba0f2115d2060a051b4f756b66"
+    },
+    {
+      "path": "web/static/published-recordings.mjs",
+      "sha256": "b1f5ad7f7aad82e1fc23cb98170969d4a28c7adafff572be461d71520583e043"
+    },
+    {
+      "path": "web/static/worlds-recordings.mjs",
+      "sha256": "1af5dbeeeffba48a65c75d1280d8edbb1d43ecb476cc21fd7223442ddaf3e284"
+    }
+  ],
+  "validation": {
+    "focused_audit_and_legacy_spectator": {
+      "passed": 70,
+      "warnings": 2
+    },
+    "focused_exporter_and_home_watch": {
+      "passed": 121,
+      "warnings": 3
+    },
+    "node_contracts": {
+      "passed": 52
+    },
+    "scoped_ruff": "passed",
+    "new_file_format_check": "passed; Ruff formatter at 100 columns used because Black is not installed",
+    "scoped_mypy": {
+      "passed": true,
+      "files": 5,
+      "follow_imports": "silent"
+    },
+    "repository_wide_static_analysis": "Earlier pre-existing Ruff/mypy debt remains; these are scoped checks, not a clean repository-wide result.",
+    "local_full": {
+      "passed": 5606,
+      "skipped": 10,
+      "warnings": 7,
+      "head": "e10977c8b6728b7731d4d4e3a709a1ccd5cdfaba",
+      "command": "python -m pytest -q",
+      "scope": "Existing local Python environment with native bindings; no game or model calls."
+    },
+    "local_hosted_scope_note": "The local environment includes native bindings; hosted and local pass/skip counts are intentionally reported separately."
+  },
+  "native_acceptance_repeated": false,
+  "active_runtime_source_changed": false,
+  "website_deployed": false,
+  "model_calls": 0,
+  "game_launches": 0,
+  "vm_operations": 0,
+  "historical_recordings_changed": false,
+  "ready_to_merge": false,
+  "merged": false,
+  "full_goal_complete": false,
+  "next_steps": [
+    "Finish the 43 explicitly listed production-file reviews and decide integration promotion.",
+    "Verify portable live follow during the next otherwise-needed gameplay run; no repeated baseline-only acceptance required.",
+    "Continue longer gameplay and declared comparisons; preserve frozen cohort conditions and unresolved capacity outcome."
+  ],
+  "exact_head_ci": {
+    "id": 34683683928,
+    "url": "https://github.com/lemoz/fort-gym/actions/runs/34683683928",
+    "head": "e10977c8b6728b7731d4d4e3a709a1ccd5cdfaba",
+    "status": "completed",
+    "conclusion": "success",
+    "passed": 5462,
+    "skipped": 154,
+    "warnings": 7,
+    "scope": "Hosted Ubuntu CI; native-binding-dependent tests unavailable here remain skipped."
+  }
+}
