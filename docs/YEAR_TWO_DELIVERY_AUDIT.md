@@ -7,6 +7,24 @@ Requirements come from [the approved goal](YEAR_TWO_CAMPAIGNS.md),
 [the standard-input phase](ASTRA_STANDARD_INPUT_EXPERIMENTS.md), and the
 [frozen displayed-key cohort](../experiments/keyboard_binding_comparison_20260911/cohort.json).
 
+The subsequent [pair-one shortcuts attempt](../experiments/evidence/selected_workshop_p1_shortcuts_failure_20260912.json)
+loaded the native seed but failed before completing decision one. This is a
+harness infrastructure failure, not a gameplay outcome. The frozen host courier
+omitted the v5 prompt profile when calling its decision builder. The resulting
+validation error occurs before the model transport in the reproduced source
+path; original unknown dispatch/token fields remain unchanged. No live shortcut
+frame was published. Both project VMs and data disks are stopped/closed, with
+native cleanup, original saves, declared resources and prior inventory verified.
+The guest poweroff command returned one; the subsequent VM stop returned zero.
+
+A separate `codex/selected-workshop-courier-v5` branch contains the one-line
+forwarding correction and four real-courier offline regressions, all reproduced
+as failures before the fix. Its focused suite passes 217 tests. The frozen
+study checkout is unchanged. Further v1 attempts are halted pending a declared
+corrected-runtime revision; the failed identity will not be reused or hidden.
+This is an implementation step under the active goal, not a new approval gate.
+The keyboard replay below still awaits website catalog publication.
+
 The [first keyboard controls-study attempt](../experiments/evidence/selected_workshop_p1_keyboard_128_20260912.json)
 has now completed and passed the two-window native audit at decision 128. Its
 saved endpoint contains 83,800 elapsed ticks, seven living citizens, zero
