@@ -139,8 +139,15 @@ def run_owner(
     output.mkdir(mode=0o700)
     (output / "inputs").mkdir(mode=0o700)
     (output / "game").mkdir(mode=0o700)
-    publish(output / "inputs" / inputs["condition_name"], inputs["condition"])
-    publish(output / "inputs" / inputs["declaration_name"], inputs["declaration"])
+    for path, key, name in (
+        (args.condition, "condition", "condition_name"),
+        (args.declaration, "declaration", "declaration_name"),
+    ):
+        raw = path.read_bytes()
+        if len(raw) > MAX_BYTES or json.loads(raw) != inputs[key]:
+            raise ValueError("Declared input changed before its read-only copy")
+        with (output / "inputs" / inputs[name]).open("xb") as stream:
+            stream.write(raw)
     publish(
         output / "owner-plan.json",
         {

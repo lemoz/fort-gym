@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import hashlib
 from pathlib import Path
 import re
 
@@ -134,6 +135,23 @@ def prepare_inputs(
         )
         agent.restore_campaign_state(state, campaign_id=campaign_id)
         memory = agent.memory
+    if (
+        declaration.get("expected_campaign_id", campaign_id) != campaign_id
+        or declaration.get(
+            "source_condition_sha256", hashlib.sha256(condition_path.read_bytes()).hexdigest()
+        )
+        != hashlib.sha256(condition_path.read_bytes()).hexdigest()
+    ):
+        raise ValueError("Declaration campaign or original condition binding differs")
+    if mode == "continue":
+        expected = {
+            "source_native_revision": original["payload"]["code_revision"],
+            "window_end_decision": original["payload"]["next_step"] + limit,
+            "accounted_responses_before_window": state["usage"]["accounted_responses"],
+            "returned_tokens_before_window": state["usage"]["total_tokens"],
+        }
+        if any(key in declaration and declaration[key] != value for key, value in expected.items()):
+            raise ValueError("Declaration source or original usage binding differs")
     return {
         "mode": mode,
         "campaign_id": campaign_id,
@@ -152,6 +170,12 @@ def create_arguments(
     runtime: dict, inputs: dict, output: Path, origin: Path, name: str, nonce: str, port: int
 ) -> list[str]:
     validate_runtime(runtime)
+    lineage = {"source_native_revision": "source_revision", "source_image_id": "image"}
+    if any(
+        key in inputs["declaration"] and inputs["declaration"][key] != runtime[target]
+        for key, target in lineage.items()
+    ):
+        raise ValueError("Declared native source or image requires its original runtime owner")
     absolute_path(output)
     absolute_path(origin)
     segments = inputs["declaration"].get("max_segments", 1)

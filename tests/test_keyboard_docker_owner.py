@@ -90,6 +90,54 @@ def test_fresh_plan_selects_real_condition_and_only_narrow_mounts(arguments):
     assert "fixture-new-fort" in command
 
 
+@pytest.mark.parametrize(
+    "field,value",
+    [
+        ("source_native_revision", "e" * 40),
+        ("source_image_id", "sha256:" + "d" * 64),
+    ],
+)
+def test_declared_source_and_image_cannot_silently_switch_owners(arguments, field, value):
+    data = owner.source_inputs(arguments)
+    data["declaration"][field] = value
+    with pytest.raises(ValueError, match="original runtime owner"):
+        plan.create_arguments(
+            RUNTIME, data, arguments.output, arguments.origin, "fortgym-" + "1" * 32, "2" * 32, 5540
+        )
+
+
+@pytest.mark.parametrize(
+    "field,value",
+    [
+        ("expected_campaign_id", "another-fort"),
+        ("source_condition_sha256", "d" * 64),
+    ],
+)
+def test_continuation_declaration_bindings_are_checked_before_execution(
+    tmp_path, saved, field, value
+):
+    checkpoint, _, _ = saved
+    condition, declaration = tmp_path / "condition.json", tmp_path / "window.json"
+    publish(condition, CONDITION)
+    publish(
+        declaration,
+        {
+            "schema_version": "fortgym.codex-keyboard-window/v1",
+            "condition_id": "fixture",
+            "original_condition": condition.name,
+            "continuation_from_next_step": 1,
+            "steps_per_segment": 2,
+            "max_segments": 1,
+            "reset_memory": False,
+            "reset_usage": False,
+            "strategy_intervention": False,
+            field: value,
+        },
+    )
+    with pytest.raises(ValueError, match="binding differs"):
+        plan.prepare_inputs(condition, declaration, checkpoint, "runtime-test", mode="continue")
+
+
 @pytest.mark.parametrize("path", ["/tmp/bad,name", "/tmp/../other", "/tmp/bad\nname"])
 def test_ambiguous_host_mount_paths_are_rejected(path):
     with pytest.raises(ValueError):
@@ -230,6 +278,12 @@ def test_public_owner_composes_real_fresh_memory_exchange_and_retains_usage(argu
     assert result == read(arguments.output / "owner-result.json")
     assert not any(call[0] in {"rm", "pull", "volume", "system"} for call in client.calls)
     assert len(list((arguments.output / "model").glob("*/claim.json"))) == 3
+    assert (
+        arguments.output / "inputs" / arguments.condition.name
+    ).read_bytes() == arguments.condition.read_bytes()
+    assert (
+        arguments.output / "inputs" / arguments.declaration.name
+    ).read_bytes() == arguments.declaration.read_bytes()
     with pytest.raises(ValueError, match="new output"):
         execute(arguments)
 

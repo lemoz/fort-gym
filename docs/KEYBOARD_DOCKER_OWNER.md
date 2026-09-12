@@ -10,6 +10,10 @@ acceptance. Keep existing frozen trials on their original owner and source.
 Do not move the unfinished matched Astra attempt to this entry point to bypass
 the known capacity gate.
 
+When a declaration pins its original source/image, campaign, condition digest
+or prior usage, those bindings are checked. A different runtime cannot silently
+reuse a frozen declaration. Condition and declaration files are copied byte-for-byte.
+
 ## Required inputs
 
 Use an unprivileged host account and a local Unix-socket Docker context. The
