@@ -1,0 +1,196 @@
+{
+  "schema_version": "fortgym.portable-native-load-acceptance/v1",
+  "source_revision": "7acb4f72b254f9e9d41f7b0a3751f00b99d402cc",
+  "source_tree": "cb31c148850f67b10388326409eaaefd4ec0c43a",
+  "pull_request": 176,
+  "pull_request_draft": true,
+  "main_merged": false,
+  "source_fixes": [
+    {
+      "revision": "16984f399ffae864095919a7e4eb14af5809d73a",
+      "change": "Check readable, owner-executable source launchers for the native copy, with specific prerequisite errors; do not require in-place execution under a different UID.",
+      "regression_reproduced_before_fix": true
+    },
+    {
+      "revision": "7acb4f72b254f9e9d41f7b0a3751f00b99d402cc",
+      "change": "Copy native runtime assets from the exact base into a derived image layer owned by the configured UID/GID, preserving permission bits and the immutable base.",
+      "native_failure_before_fix": "PermissionError reading the base runtime raw directory as UID 501; the isolated-copy preflight stopped before a game process."
+    }
+  ],
+  "source_sha256": {
+    "fort_gym/bench/run/keyboard_image_context.py": "638439364faec084cdb216d4cd6b0a27adc98365506a6eeff2c460f2075ec12f",
+    "tests/test_keyboard_image_context.py": "11f360820a05a4b88c5cefd5b2f064e533317cebe39d9d31b3ac54417938f58b"
+  },
+  "context": {
+    "files": 952,
+    "bytes": 31162468,
+    "receipt_sha256": "3821bd7b174113ea0b2d2869ce68112eead7eb790cc6e07544bd54de62bd2c0d",
+    "dockerfile_sha256": "e29862b307c7f462c2b4e9ae2d391b5238e1c5373a556a6672c95fa2a676d606",
+    "all_three_historical_contexts_verified_unchanged_using_their_own_exported_code": true
+  },
+  "image": {
+    "id": "sha256:9bd47dc58da41bc5001d77c2bd67e6162ab7108e1f431e455b7e304338d0421d",
+    "tag": "fortgym-portable:7acb4f72b-native-v5",
+    "base_id": "sha256:32bd022138a4772ed0c0d3a14f94feab8ad4a4cd183a20a8cd098745aedbd10d",
+    "base_import_verified": true,
+    "base_identity_unchanged": true,
+    "build_verified": true,
+    "source_git_revision_and_clean_checkout_verified_inside_image": true,
+    "configured_source_label_verified": true,
+    "configured_user": "501:20",
+    "platform": "linux/amd64",
+    "engine_version": "29.5.2",
+    "reported_size_bytes": 402748553,
+    "rootfs_layers": 41,
+    "original_base_layer_prefix_verified": true,
+    "base_files_not_modified": true,
+    "published": false
+  },
+  "native_checks": [
+    {
+      "kind": "native_snapshot",
+      "source_receipt_sha256": "eaf5fa5a40014719e6c313f33497740e536a8faa1c90a84c4e09dcc380ac0595",
+      "map_loaded": true,
+      "paused": true,
+      "year": 30,
+      "year_tick": 16801,
+      "exact_saved_calendar_verified": true,
+      "original_save_unchanged": true,
+      "owned_game_cleanup_verified": true,
+      "listener_closed": true,
+      "remaining_live_game_processes": 0
+    },
+    {
+      "kind": "campaign_checkpoint",
+      "campaign_id": "bindings-comparison-20260911-astra-r1",
+      "checkpoint_file_sha256": "6fd70146993ad318a680b212db327b38cae5e833342de41297e251573ae76197",
+      "saved_cursor": 64,
+      "map_loaded": true,
+      "paused": true,
+      "year": 30,
+      "year_tick": 39801,
+      "exact_saved_calendar_verified": true,
+      "original_save_unchanged": true,
+      "owned_game_cleanup_verified": true,
+      "listener_closed": true,
+      "remaining_live_game_processes": 0
+    }
+  ],
+  "runtime": {
+    "new_local_vms_created": 1,
+    "maximum_concurrent_vms": 1,
+    "maximum_concurrent_games": 1,
+    "vm_cpus": 2,
+    "vm_memory_mib": 3072,
+    "vm_root_disk_gib": 8,
+    "vm_data_disk_gib": 10,
+    "game_memory_mib": 1536,
+    "game_memory_and_swap_mib": 1536,
+    "game_pids_limit": 256,
+    "game_network": "none",
+    "game_read_only_root": true,
+    "game_privileged": false,
+    "game_capabilities": [],
+    "game_no_new_privileges": true,
+    "game_init": true,
+    "game_mounts": "One writable project evidence directory and two exact read-only save inputs; no host home, credentials or Docker socket.",
+    "seccomp_sha256": "5ae96ce3d0a9c746765df7d4c5948312f3847b08e917174368797d788461657a",
+    "clean_vm_config_sha256": "4f51024d697db2de13a03405073743a32d0a0b26cdabc1fdf282d2391237193d",
+    "original_vm_config_unchanged": true,
+    "original_vm_disk_not_resized_or_deleted": true,
+    "clean_vm_config_unchanged_during_final_acceptance": true,
+    "global_docker_context_unchanged": true,
+    "final_container_exit_code": 0,
+    "final_container_oom_killed": false,
+    "final_container_stopped": true,
+    "both_project_vms_stopped": true,
+    "both_data_disks_closed": true,
+    "guest_poweroff_returncode": 0,
+    "vm_stop_returncode": 1,
+    "vm_stop_note": "Colima reported that the guest was already Stopped after successful guest poweroff. Subsequent authoritative profile state and both data-disk closure checks passed; no forced retry or deletion."
+  },
+  "retained_setup_history": [
+    {
+      "identity": "initial-read-only-preflight",
+      "result": "No VM or output was created; selecting a nonexistent profile for discovery failed. Discovery then used the existing stopped profile."
+    },
+    {
+      "identity": "v1",
+      "result": "New VM created, then stopped before import because literal mount comparison rejected equivalent trailing-slash paths. Exact mount count, resolved directories and writable flags remain enforced."
+    },
+    {
+      "identity": "v2",
+      "result": "Restart normalized the generated hostname and installation-image setting; no import or game. Reconstructing only those two original fields exactly matches the earlier config hash. Limits and mounts unchanged."
+    },
+    {
+      "identity": "v3",
+      "result": "Exact base imported. Source image build rejected the original-UID launcher execute bit. VM stopped; no game or model."
+    },
+    {
+      "identity": "v4",
+      "result": "Source image built. Native copy preflight rejected an inaccessible original-UID asset directory. Failed stopped container and image retained; no game process or model."
+    },
+    {
+      "identity": "v5",
+      "result": "Owned-asset image built; both provider-free paused native loads and teardown passed. All prior identities and artifacts retained."
+    }
+  ],
+  "validation": {
+    "focused_tests_passed": 128,
+    "focused_tests_skipped": 1,
+    "packaging_tests_included": 29,
+    "full_local": {
+      "passed": 5511,
+      "skipped": 10,
+      "warnings": 7,
+      "seconds": 261.25,
+      "temporary_loopback_socket_access_enabled": true
+    },
+    "scoped_source_ruff_passed": true,
+    "scoped_mypy": {
+      "passed": true,
+      "files": 2,
+      "follow_imports": "silent"
+    },
+    "setup_regression_tests_passed": 11,
+    "private_audit_lint": "Two E402 import-placement findings retained in the path-bound private auditor; public source Ruff checks passed."
+  },
+  "exact_head_ci": {
+    "run_id": 34677562979,
+    "head_sha": "7acb4f72b254f9e9d41f7b0a3751f00b99d402cc",
+    "status": "completed",
+    "conclusion": "success",
+    "passed": 5367,
+    "skipped": 154,
+    "warnings": 7,
+    "seconds": 319.61,
+    "note": "Hosted and local executed coverage differs, as shown by the skip counts."
+  },
+  "receipts": {
+    "native_operator_sha256": "dc523a9f8a69dc55348dd3d65ea2327af76e50c96b8b633ceacd5afb71c5ac1e",
+    "operation_sha256": "1559be849cbb4733b77c266ae51e0ff51cd2540b63464124224f838286c2b2ea",
+    "container_inspection_sha256": "31ea0b05908f0360943fe74394693904ebfffd55aa4376b9ebc6760a27496be4",
+    "auditor_sha256": "393121aaca2f9288d6ef5bc8588e70f600ccd841f2c77a2fd5f32e8400986c57",
+    "audit_sha256": "a39c8964958cb7ca88b8db87025f07fc07a1a33c89f040cfc72eaee8e44a2154",
+    "post_teardown_audit_passed": true
+  },
+  "model_calls": 0,
+  "requested_gameplay_ticks": 0,
+  "new_checkpoint_created": false,
+  "portable_owner_model_courier_end_to_end_verified": false,
+  "cloud_spend_usd": 0,
+  "local_energy_and_app_cost_usd": null,
+  "website_changed": false,
+  "frozen_comparison_attempt_reused": false,
+  "evidence_deleted": false,
+  "full_goal_complete": false,
+  "limits": [
+    "Native image construction and paused game loads are now verified; a model-selected fresh run, new checkpoint creation and own-save continuation through the public Docker owner remain unverified.",
+    "These loads use the native load helper and do not independently exercise every Python protobuf observation/action path, the subscription courier, or portable-layout live-observer wiring.",
+    "The original full VM remains below the unchanged frozen game admission floor. This setup does not authorize relabeling Astra r2 or either Sol failure.",
+    "The game image and raw artifacts remain private. Inherited historical OCI metadata describes the base; exact combined source identity is established by the org.fortgym.source label and actual Git checks.",
+    "The seccomp policy is the retained compatibility policy used for this bounded environment, not a generic current-policy recommendation.",
+    "Remaining source review, main-branch merge, model comparisons, longer-play investigation and public integrated delivery are still open."
+  ],
+  "next": "Use this exact verified image/source for a new short Astra Medium fresh attempt through the public portable owner, then continue its own new checkpoint. Declare its model bounds and host evidence mounts, keep one game/VM at a time, retain actual usage and mandatory teardown; do not substitute it into the frozen cohort."
+}

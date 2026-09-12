@@ -1,7 +1,7 @@
 # Year-Two delivery audit
 
 Snapshot: September 12, 2026 UTC, goal branch
-`4f14c3480ee5edd6aa896e71784174fd3d1d9eba` before this documentation update.
+`aa51f6478` before this documentation update.
 This is a progress audit, not a completion certificate or a replacement goal.
 Requirements come from [the approved goal](YEAR_TWO_CAMPAIGNS.md),
 [the standard-input phase](ASTRA_STANDARD_INPUT_EXPERIMENTS.md), and the
@@ -18,8 +18,8 @@ Requirements come from [the approved goal](YEAR_TWO_CAMPAIGNS.md),
 | Inspectable development, adaptation and sustainability | Saved native metrics, job samples, elapsed time, chosen controls and rejected actions are retained and replayable. The Astra endpoint review explicitly qualifies its observations. | Stocks and sampled jobs are not production/consumption rates, accessible reserves or completed job counts. Keep unmeasured fields unknown; use longer gameplay and separately versioned measurement improvements for stronger sustainability claims. |
 | Honest cost and resource reporting | Returned model tokens and known lost responses remain accounted. Results identify subscription transport and leave dollar charges null. | Subscription dollar charges, hardware energy and app cost are unreported, not zero. Do not create a fabricated actual cost or silently substitute API-price estimates. |
 | Live and recorded website delivery | [The verified repeat-outcome release](../experiments/evidence/website_repeat_outcomes_release_20260912.json) serves all six fresh results, fourteen replay windows, 1,056 captured frames, a 64/128 budget selector and immutable evidence links. Terra r2's continuation and both latest table outcomes are live. All thirteen older recordings and the stopped observer are unchanged. | Astra r2 is unlaunched because of the known native capacity shortage. No replay is invented for Sol's zero-call capacity failure. This release is not another game acceptance or independent trial. |
-| Reviewed and merged remote implementation, tests, setup and manifests | Native code, website code and result manifests are pushed, with exact-revision tests and native/public evidence. Main is `f1aa05f429c189b67891cf2629e8e00329222aca`. | PR176's updated candidate `bf438208f464195c18ef29cfd75ba9e86f58289b` includes the five-outcome128 source, fourteen replays, a configured portable Docker owner and standalone image-context packaging. It passed 5,508 full local Python tests, 51 Node contracts and 26 new packaging tests. Exact-head CI `34674815431` passed with 5,364 tests and 154 skips, a different executed scope from local. The previous [compatibility review](../experiments/evidence/keyboard_portable_owner_compatibility_review_20260912.json) and all earlier review/setup records are retained. Full source review and portable native setup acceptance remain. Public deployment is not merged harness delivery. |
-| Reusable setup rather than one machine's retained experiment assets | The isolated candidate installs in a fresh Python environment, loads all three declared model conditions, reproduces the reports and serves twelve byte-verified recordings. The local server was stopped after acceptance. | The [later protocol check](../experiments/evidence/keyboard_integration_protocol_setup_176_20260912.json) generated and imported all eight official 52.04-r1 bindings in that isolated environment, without a game connection. The [public portable owner](../experiments/evidence/keyboard_portable_owner_implementation_20260912.json) now supports fresh and unchanged continuation runs without the private operator. Its input reader restored all six real saved model states offline and rejected changing their frozen runtime. Actual container execution, image construction, native wire compatibility and live-observer wiring for this layout remain unverified. Python/viewer, binding-generation and offline state restoration are not complete native setup acceptance. Do not publish restricted game files, account data or private model payloads. |
+| Reviewed and merged remote implementation, tests, setup and manifests | Native code, website code and result manifests are pushed, with exact-revision tests and native/public evidence. Main is `f1aa05f429c189b67891cf2629e8e00329222aca`. | PR176 candidate `7acb4f72b254f9e9d41f7b0a3751f00b99d402cc` includes the comparison/viewer, portable owner and source image packager. Its two native ownership fixes passed 5,511 local tests, including 29 packaging tests; exact-head CI `34677562979` passed 5,367 tests with 154 skips. Hosted/local scopes differ. The unchanged viewer retains its earlier 51 Node contracts. [Native image/load acceptance](../experiments/evidence/keyboard_portable_native_load_acceptance_20260912.json) now passes, but full source review, actual owner/courier fresh-save-continuation and main merge remain. Public deployment is not merged harness delivery. |
+| Reusable setup rather than one machine's retained experiment assets | The candidate installs in a fresh Python environment, loads three model configurations and reproduces the reports. Its base was imported into a separate clean local VM; the source-bound image then loaded a real seed and checkpoint under the configured unprivileged user. Original saves and contexts are unchanged. | The public owner supports fresh and unchanged continuation without a dated private owner, and reads all six original model checkpoints offline. The new image's two paused native loads verify startup and load compatibility, not a model-selected fresh run, creation/resume of its own new checkpoint, every Python protobuf observation/action path or portable-layout observer wiring. Verify those next with a short declared real-model acceptance. Do not redistribute restricted runtime images or private model data. |
 
 ## Integration started without changing active gameplay
 
@@ -47,6 +47,22 @@ The standalone source context remains unchanged and passes its digest check.
 Next import into a separately declared clean local runtime, build the source-bound
 image and verify native fresh/continuation behavior. This export does not itself
 prove import, source-image execution, native setup or gameplay acceptance.
+
+The [following native setup acceptance](../experiments/evidence/keyboard_portable_native_load_acceptance_20260912.json)
+now proves import into the separate clean VM, construction of the updated
+source image and two paused native loads. The seed loads at year30/tick16801;
+Astra r1's checkpoint64 loads at year30/tick39801. Both calendars, original
+save inventories, configured container restrictions and native cleanup pass
+the post-teardown audit. Both VMs are stopped and their data disks are closed.
+The successful image contains exact source `7acb4f72b254f9e9d41f7b0a3751f00b99d402cc`
+and is bound by ID `sha256:9bd47dc58da41bc5001d77c2bd67e6162ab7108e1f431e455b7e304338d0421d`.
+It fixes two ownership assumptions exposed by actual builds/native copying,
+retaining all failed setup identities and unchanged earlier source contexts.
+No model call, requested game tick or new checkpoint occurred. Native-load
+compatibility is now evidenced; the next proof is the portable owner's actual
+model/courier fresh run followed by continuation from its own new save, with
+resource bounds, token accounting, observer delivery and teardown. Do not
+substitute repeated provider-free loads for that remaining end-to-end check.
 
 The isolated `codex/year-two-integration` worktree starts at current remote main.
 Merge `72f732546f1b6fa48a8074c582b8562f2592b92c` joins main's ancestry to frozen
@@ -86,7 +102,8 @@ records its precise coverage. The local server was stopped; no game, model or VM
 was launched for these checks. Generated bindings and fresh-machine native
 provisioning remain unverified.
 
-Next finish portable native setup and review the remaining combined source, and
+Next verify a short real Astra fresh/own-save run through the portable owner and
+review the remaining combined source, and
 merge only after that evidence exists. Preserve current main's work, all historical protocols and
 results, and private-data exclusions. Never merge the whole conflicting
 work-in-progress branch merely because its latest focused tests pass.

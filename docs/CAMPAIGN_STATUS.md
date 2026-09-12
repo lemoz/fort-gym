@@ -104,13 +104,14 @@ remains unresolved. The full goal stays active.
 
 The isolated integration candidate is pushed as
 [draft PR176](https://github.com/lemoz/fort-gym/pull/176), head
-`bf438208f464195c18ef29cfd75ba9e86f58289b`. It retains the Terra r2/Sol r2
+`7acb4f72b254f9e9d41f7b0a3751f00b99d402cc`. It retains the Terra r2/Sol r2
 results, five-outcome128 index and fourteen-recording viewer, and adds the
 [configured portable Docker owner](../experiments/evidence/keyboard_portable_owner_implementation_20260912.json)
-for fresh and unchanged own-save attempts. The current full local suite passes 5,508
-Python tests with ten skips and seven warnings, plus all 51 Node contracts.
-The 26 new packaging tests, selected Ruff checks and two-file mypy checks pass.
-Exact-head CI `34674815431` passed with 5,364 tests and 154 skips; hosted and local
+for fresh and unchanged own-save attempts. The current full local suite passes 5,511
+Python tests with ten skips and seven warnings. The unchanged viewer retains
+its earlier 51 passing Node contracts.
+The 29 packaging tests, selected Ruff checks and two-file mypy checks pass.
+Exact-head CI `34677562979` passed with 5,367 tests and 154 skips; hosted and local
 coverage are not identical. The previous 94-test [compatibility review](../experiments/evidence/keyboard_portable_owner_compatibility_review_20260912.json)
 adds a checksum-bound narrow DFHack syscall policy and fixes the input-copy
 loop overwriting the container name used for uncertain-create cleanup. A new
@@ -143,14 +144,34 @@ import into a separate clean local runtime and construct the new source-bound
 image before native fresh/continuation acceptance. Export is not import or
 gameplay proof, and the archive remains private.
 
+The subsequent [clean-runtime native acceptance](../experiments/evidence/keyboard_portable_native_load_acceptance_20260912.json)
+now verifies importing that base, constructing the committed source image and
+loading both the original seed and Astra r1's checkpoint64 in isolated native
+game processes. Their paused dates match exactly: year30/tick16801 and
+year30/tick39801. Both originals and all three source contexts remain unchanged.
+The new image is `sha256:9bd47dc58da41bc5001d77c2bd67e6162ab7108e1f431e455b7e304338d0421d`,
+containing source `7acb4f72b254f9e9d41f7b0a3751f00b99d402cc` as UID/GID501:20.
+Real setup exposed and fixed launcher/asset ownership assumptions: the derived
+image now contains a configured-user asset copy without changing its base.
+Earlier setup failures are retained, not relabeled as successes. The final game
+container exited0, both game listeners closed, both VMs are stopped and both
+data disks are closed. Colima's stop command reported an already-stopped guest
+after successful guest poweroff; subsequent state checks verified teardown.
+No model call or requested game tick occurred, and no new checkpoint was created.
+This verifies image/native-load compatibility, not the public Docker owner's
+complete model/courier save-and-continue path. Next run that short, separately
+declared Astra acceptance on this exact source/image, then continue its own new
+save. Do not repeat the completed paused-load checks as a substitute for it.
+
 The [additional setup and source review](../experiments/evidence/keyboard_integration_setup_review_176_20260912.json)
 verifies an isolated Python/viewer install and 659 focused tests on its exact
 prior head. A [separate protocol setup check](../experiments/evidence/keyboard_integration_protocol_setup_176_20260912.json)
 now generates and imports all eight official 52.04-r1 binding modules in that
 isolated environment, with partial round trips for 131 message types. It leaves
 the original acceptance and frozen experiment bindings unchanged. No game or
-model was contacted; actual wire compatibility, fresh-machine native provisioning
-and actual portable container acceptance remain unverified. The new public owner
+model was contacted in those offline checks. The later image and native-load
+acceptance above adds real runtime evidence; full portable owner/courier execution
+and live-observer wiring remain unverified. The new public owner
 has also [read all six real model checkpoints](../experiments/evidence/keyboard_portable_owner_real_inputs_20260912.json),
 restoring each original memory and reconciling its usage without a game or model.
 It rejects executing their frozen declarations under its new source. No existing
