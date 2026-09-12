@@ -41,9 +41,9 @@ def test_v1_keyboard_replay_is_complete_and_audit_bound():
 
 def test_v1_publication_labels_do_not_claim_a_corrected_comparison():
     catalog = json.loads((RECORDINGS / "catalog.json").read_text())["recordings"]
-    assert catalog[0]["id"] == "controls-p1-keyboard-1-128"
-    assert catalog[0]["title"].endswith("(v1)")
-    assert "campaign" not in catalog[0]
+    row = next(row for row in catalog if row["id"] == "controls-p1-keyboard-1-128")
+    assert row["title"].endswith("(v1)")
+    assert "campaign" not in row
     page = (ROOT / "web/worlds.html").read_text()
     assert "separate from the corrected v2 controls study" in page
     assert "final save has not had a separate fresh-reload check" in page
@@ -70,5 +70,5 @@ def test_each_gallery_preview_has_the_status_target_used_by_the_client():
 
     gallery = Gallery()
     gallery.feed((ROOT / "web/worlds.html").read_text())
-    assert len(gallery.statuses) == 17
+    assert len(gallery.statuses) == 18
     assert set(gallery.statuses.values()) == {1}

@@ -100,7 +100,7 @@ def test_public_endpoint_no_connection_no_cache_and_no_private_errors(
 def test_recordings_match_the_reviewed_export_and_contain_no_private_fields():
     root = ROOT / "web/static/recordings"
     catalog = json.loads((root / "catalog.json").read_text())
-    assert len(catalog["recordings"]) == 17
+    assert len(catalog["recordings"]) == 18
     total = 0
     for row in catalog["recordings"]:
         path = root / (row["id"] + ".json")
@@ -116,9 +116,19 @@ def test_recordings_match_the_reviewed_export_and_contain_no_private_fields():
                 "before",
                 "after",
             }
-            assert set(frame["action"]) == {"intent", "keys", "advance_ticks"}
+            fields = {"intent", "keys", "advance_ticks"}
+            if "shortcut" in frame["action"]:
+                assert row["control_profile"] == "native_keyboard_selected_workshop_jobs/v1"
+                fields.add("shortcut")
+                shortcut = frame["action"]["shortcut"]
+                assert set(shortcut) == {"type", "item", "quantity"}
+                assert shortcut["type"] == "WORKSHOP_JOB"
+                assert shortcut["item"] in {"bed", "door", "table", "chair", "barrel", "bin", "brew"}
+                assert type(shortcut["quantity"]) is int and 1 <= shortcut["quantity"] <= 5
+                assert frame["action"]["keys"] == []
+            assert set(frame["action"]) == fields
         total += len(recording["frames"])
-    assert total == 1252
+    assert total == 1380
     astra = json.loads((root / "astra-97-256.json").read_text())
     assert astra["saved_through_decision"] == 224 and astra["last_decision"] == 256
 
@@ -126,7 +136,7 @@ def test_recordings_match_the_reviewed_export_and_contain_no_private_fields():
 def test_portable_acceptance_is_not_a_comparison_or_default_recording():
     root = ROOT / "web/static/recordings"
     catalog = json.loads((root / "catalog.json").read_text())["recordings"]
-    assert catalog[0]["id"] == "controls-p1-keyboard-1-128"
+    assert catalog[0]["id"] == "controls-v2-p1-shortcuts-1-128"
     row = catalog[-1]
     assert row["id"] == "astra-portable-acceptance-1-4"
     assert "harness save-and-resume check" in row["title"]
@@ -223,7 +233,7 @@ def test_worlds_recordings_and_previews_match_the_published_catalog():
     assert page.recordings == [row["id"] for row in catalog]
     assert page.recordings == [row["id"] for row in previews["recordings"]]
     assert html.index('id="recent-recordings"') < html.index('id="filters-form"')
-    assert "1,252 captured decisions" in html
+    assert "1,380 captured decisions" in html
     assert "observed, unsaved tail" in html
     for item, preview in zip(catalog, previews["recordings"], strict=True):
         recording = client.get("/static/recordings/" + item["id"] + ".json").json()
