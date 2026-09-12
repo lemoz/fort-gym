@@ -47,21 +47,36 @@ The terminal audit digest is
 replay export digest is
 `4890518b7d6c550a49e25a6c134945141a16c136dc9f50721d605ab0f89db1cd`.
 The terminal tools are consumed. The fifth declared attempt,
-[pair-three shortcuts](../experiments/evidence/selected_workshop_v2_p3_shortcuts_startup_20260912.json),
-has started from the same original fresh seed with empty memory and zero initial
-usage. Its first nine completed responses reconcile to 234,700 returned tokens,
-eight keyboard actions and one workshop shortcut. Public HTTPS frame 8 matches
-its original screen/action capture. Its single existing local VM is running under
-the original bounded owner's mandatory teardown; no checkpoint-64 result is claimed.
+[pair-three shortcuts](../experiments/evidence/selected_workshop_v2_p3_shortcuts_64_20260912.json),
+has now saved and passed its first-64 native audit, retaining 19,200 elapsed
+ticks, seven living dwarves, zero recorded deaths, two beds, two workshops,
+one farm, 45 food and 85 drinks. Its 64 responses account for 1,711,699 returned
+tokens. All actions were accepted: 56 keyboard actions sent 410 keys, and eight
+shortcuts queued 29 workshop jobs. Two zero-tick timeouts and two deferrals
+remain recorded; queued jobs are not completed products. Both VMs stopped,
+their disks closed and their configurations/inventory remained unchanged;
+owner, guest-poweroff and VM-stop return codes were zero.
+
+The same-save continuation is now running within the original 128-response,
+eight-million-token ceiling. Its actual native load matched the saved clock
+and metrics; exact agent memory/usage/history and trace prefixes were preserved.
+Its first continuation response returned 25,316 tokens. Public HTTPS frame 66
+matches the original screen and chosen action, with no private transcript
+publication. The stopped first-64 public frame was retained before switching
+the feed. The new owner retains mandatory teardown. No decision-128 save or
+terminal result is claimed, and subscription charges remain unreported.
+The [earlier fresh-start snapshot](../experiments/evidence/selected_workshop_v2_p3_shortcuts_startup_20260912.json)
+remains unchanged as historical evidence of the original seed and empty memory.
 The [fresh-window operators](../experiments/evidence/selected_workshop_v2_p3_fresh_preparation_20260912.json)
 passed 26 offline tests. The final keyboard attempt has not started. Their
 [own-save continuation operators](../experiments/evidence/selected_workshop_v2_p3_continuation_preparation_20260912.json)
-are also prepared, with 78 combined fresh/continuation tests passed. None of
-those operators or relays has run, and no future checkpoint is assumed. Their
+are also prepared, with 78 combined fresh/continuation tests passed. The shortcut
+continuation operator and relay are now running; the final keyboard operators
+remain unused, and no future checkpoint is assumed. Their
 [live/reload/terminal evidence helpers](../experiments/evidence/selected_workshop_v2_p3_evidence_preparation_20260912.json)
-passed 198 combined offline tests. The shortcut fresh relay and startup capture
-are now consumed/running as appropriate; its own-save reload and terminal
-evidence, the final keyboard run and both public replay deliveries remain.
+passed 198 combined offline tests. The shortcut fresh operator/relay and its
+actual reload capture are now consumed. Its terminal evidence, the final
+keyboard run and both public replay deliveries remain.
 The [fifth-attempt replay importer](../experiments/evidence/selected_workshop_v2_p3_shortcuts_website_preparation_20260912.json)
 is prepared with 35 passing in-memory checks, including its exact result-file
 binding and preservation of all 21 existing recordings/previews. It has not

@@ -1,0 +1,142 @@
+{
+  "schema_version": "fortgym.selected-workshop-first64-and-continuation/v2",
+  "date_utc": "2026-09-12",
+  "campaign_id": "selected-workshop-v2-p3-shortcuts",
+  "source_revision": "5ddf1e6718dab2e8351e8dc24a2afe5071cd2592",
+  "image": "sha256:dcbc9b042538401a146159fcf5f6456b21dc900c4649369c008f7a77f661fed3",
+  "study_declaration_sha256": "e325f69f40978a9a0b2ed962a505c893aa7ea397b569e3300455972d7b94ebc8",
+  "first_window": {
+    "first_decision": 1,
+    "last_decision": 64,
+    "checkpoint_verified": true,
+    "checkpoint_manifest_sha256": "1e69ff79526e94bfd43c64ac5c2b0761ac990914ac6322cb7098230037adf92b",
+    "checkpoint_file_sha256": "3fe4ce7cfacdbde8c2468e0cf903cfae46f2def457507b93eb03d588ab46304b",
+    "audit_sha256": "6bddcc114e747e9bbf3e1c9c8fdb0ba0395eca5094a610ac9728b4048f8ad2e1",
+    "owner_result_sha256": "5af6605727cfe968e161552620974b80b122b10e1b96bd3db0b29d1ccbfb9903",
+    "operation_sha256": "73be61ed73a4bbdf79c67b49598515ef6d3c54d350b4bec57dba4da78d3b9fee",
+    "saved_elapsed_ticks": 19200,
+    "saved_metrics": {
+      "population": 7,
+      "food_stock": 45,
+      "drink_stock": 85,
+      "wood_stock": null,
+      "stone_stock": null,
+      "functional_rooms": null,
+      "completed_workshops": 2,
+      "completed_beds": 2,
+      "completed_farms": 1,
+      "recorded_dead_citizens": 0
+    },
+    "returned_responses": 64,
+    "returned_tokens": 1711699,
+    "actual_charge_usd": null,
+    "cost_basis": "codex_subscription_charge_unreported/v1",
+    "memory_usage_and_history_preserved": true,
+    "original_inputs_unchanged": true,
+    "native_cleanup_verified": true,
+    "container_stopped_verified": true,
+    "action_summary": {
+      "schema_version": "fortgym.selected-workshop-action-summary/v1",
+      "decisions": 64,
+      "action_routes": {
+        "KEYSTROKE": 56,
+        "WORKSHOP_JOB": 8
+      },
+      "accepted_actions": 64,
+      "rejected_actions": 0,
+      "keyboard": {
+        "decisions": 56,
+        "requested_key_presses": 410,
+        "known_keys_sent": 410,
+        "records_without_key_count": 0
+      },
+      "workshop": {
+        "decisions": 8,
+        "requested_jobs_by_item": {
+          "bed": 7,
+          "barrel": 6,
+          "brew": 10,
+          "table": 3,
+          "chair": 3
+        },
+        "known_jobs_queued_by_item": {
+          "bed": 7,
+          "barrel": 6,
+          "brew": 10,
+          "table": 3,
+          "chair": 3
+        },
+        "records_without_queue_count": 0,
+        "completed_products_measured": false
+      },
+      "clock": {
+        "requested_ticks": 25600,
+        "advanced_ticks": 19200,
+        "timeout_requests": 2,
+        "zero_tick_timeout_requests": 2,
+        "deferred_requests": 2
+      },
+      "native_audit_performed": false,
+      "source_records_sha256": "b1d2c3561805ad2790fcf21d08ea04e7ce7203f384ba4943a0a5d3c9edc5c9e8"
+    },
+    "summary_script_sha256": "85095b5a3733ec3a6e2fbb01f156e3cf878c67b3051590f1ce09c0b50020665a",
+    "teardown": {
+      "both_vms_stopped_at_window_end": true,
+      "both_disks_closed_at_window_end": true,
+      "prior_inventory_preserved": true,
+      "configs_unchanged": true,
+      "guest_poweroff_returncode": 0,
+      "vm_stop_returncode": 0
+    },
+    "public_terminal_feed": {
+      "stopped_verified": true,
+      "proof_sha256": "c6a12e534abb4ac902995e9a5bd109a908ddfca4444f45a1d3b13254ed270e0e",
+      "projected_status_at_later_check": "stale"
+    }
+  },
+  "continuation": {
+    "status": "running",
+    "first_decision": 65,
+    "window_end_decision": 128,
+    "window_sha256": "201b588b383e0162a20e875c0a63b91067556aec93856af837e4272e37baee3d",
+    "owner_plan_sha256": "d6d4c8c16c8c68609d17064dcd57ebdd9b1eb39d047a01cbce66f2cbc05bcbe7",
+    "operator_sha256": "44ddfcb1e236611339c8966ef1284c41b01be57a0401782d725bb42cb9250275",
+    "launch_sha256": "bc771c4ee2798adb4fe959e00e1bd4add165b8dcc92ed1c228e36876ff8189b2",
+    "origin_checkpoint_manifest_sha256": "1e69ff79526e94bfd43c64ac5c2b0761ac990914ac6322cb7098230037adf92b",
+    "initial_clock_and_metrics_match_own_save": true,
+    "exact_agent_memory_usage_and_history_restored": true,
+    "original_trace_and_usage_prefixes_retained": true,
+    "initial_native_state_sha256": "05e74b4b7087830c1d65fd38790f64b522153bd2efcd2ec340c2640cbb938dd0",
+    "initial_agent_sha256": "e6b7b43135f3e592ce7fa3ee94fb7dec9472b2bfd63a3df3db6a899de3601196",
+    "first_response_returned_tokens": 25316,
+    "first_response_sha256": "aa10fdd9e7849563ee4305430485c144aa33d0b2dd0e3d84a189a17888cae303",
+    "first_actual_response_valid": true,
+    "model": "gpt-6-astra",
+    "reasoning_effort": "medium",
+    "reset_memory": false,
+    "reset_usage": false,
+    "prompt_change": false,
+    "budget_extension": false,
+    "strategy_intervention": false,
+    "terminal_result": false,
+    "checkpoint128_verified": false,
+    "mandatory_teardown_owner_active": true,
+    "public_live": {
+      "url": "https://fortgym.live/",
+      "decision_verified": 66,
+      "original_screen_action_match": true,
+      "proof_sha256": "7dd20346d15b46b3f68dee6f905bf797548a6c5ba5627f94c1151666d760d4dc",
+      "same_existing_receiver": true,
+      "new_site_deployment": false,
+      "service_restart": false,
+      "private_transcripts_memory_or_credentials_published": false
+    }
+  },
+  "human_gameplay_rescue": false,
+  "cloud_vm_created": false,
+  "cloud_spend_usd": 0,
+  "main_merged": false,
+  "paired_comparison_complete": false,
+  "full_goal_complete": false,
+  "note": "The first save and actual continuation load are verified. Continuation is still running; checkpoint128 and paired comparison are not complete. Stock endpoints and queued jobs do not prove sustained production. Subscription charges remain unreported."
+}
