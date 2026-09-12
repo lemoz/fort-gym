@@ -205,6 +205,41 @@ def test_image_recipe_has_no_downloads_game_launch_or_private_operator_import(in
     )
 
 
+def execute_recipe_probe(inputs, tmp_path, monkeypatch, *, launcher_mode=0o744):
+    """Model source launchers owned by another UID but readable for owned copies."""
+    import os
+    from fort_gym.bench.env import remote_proto
+
+    _, config, _ = inputs
+    runtime = tmp_path / "native-assets"
+    runtime.mkdir()
+    for name in ("df", "dfhack", "dfhack-run"):
+        path = runtime / name
+        path.write_text("# Synthetic launcher; not executed\n")
+        path.chmod(launcher_mode)
+    recipe = image.dockerfile({**config, "runtime_directory": str(runtime)})
+    probe = [json.loads(row[4:])[2] for row in recipe.splitlines() if row.startswith("RUN ")][1]
+    monkeypatch.setattr(
+        image.subprocess, "check_output",
+        lambda command, **kwargs: config["source_revision"] + "\n" if command[1] == "rev-parse" else b"",
+    )
+    monkeypatch.setattr(image.shutil, "which", lambda name: "/usr/bin/script")
+    monkeypatch.setattr(remote_proto, "ensure_proto_modules", lambda: {"core": object(), "fortress": object()})
+    # The selected UID cannot execute these source files in place. prepare_runtime
+    # reads them and copy2 creates owner-executable files owned by that selected UID.
+    monkeypatch.setattr(os, "access", lambda path, mode: mode == os.R_OK and Path(path).is_file())
+    exec(compile(probe, "<image-build-probe>", "exec"), {})
+
+
+def test_image_probe_accepts_readable_owner_executable_source(inputs, tmp_path, monkeypatch):
+    execute_recipe_probe(inputs, tmp_path, monkeypatch)
+
+
+def test_image_probe_rejects_launcher_without_owner_execute(inputs, tmp_path, monkeypatch):
+    with pytest.raises(AssertionError, match="owner-executable"):
+        execute_recipe_probe(inputs, tmp_path, monkeypatch, launcher_mode=0o644)
+
+
 def test_cli_exercises_prepare_and_digest_bound_standalone_check(inputs, monkeypatch, capsys):
     from scripts.campaign_keyboard_image import main
 

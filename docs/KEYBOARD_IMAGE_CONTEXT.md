@@ -124,7 +124,13 @@ docker --context "$EXISTING_DOCKER_CONTEXT" build \
 ```
 
 The recipe's exec-form Python checks verify the source commit, clean checkout,
-readable/executable game launchers, `script`, binding imports and harness imports.
+readable, owner-executable source game launchers, `script`, binding imports and harness imports.
+The launchers need not be executable in place by the selected UID: native
+isolation reads them and creates private copies owned by that UID while retaining
+their permission bits. For example, a readable `0744` launcher owned by a different
+base-image user is valid; a launcher without its owner-execute bit is not. The
+recipe neither changes the base files' permissions nor launches the original game.
+Each failed prerequisite has a specific error message.
 They never invoke a game launcher or run a campaign. The recipe has no download
 or package-install commands. `--network=none` applies to build steps, not all
 BuildKit metadata resolution; `--pull=false` does not guarantee an offline build.

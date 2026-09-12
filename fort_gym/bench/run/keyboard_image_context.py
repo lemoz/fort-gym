@@ -136,13 +136,18 @@ def dockerfile(config: dict) -> str:
     owner = f"{config['uid']}:{config['gid']}"
     # Exec-form RUN does not run the game or import host provider credentials.
     probe = (
-        "import os,shutil,subprocess; from pathlib import Path; "
-        f"assert subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip()=={config['source_revision']!r}; "
-        "assert not subprocess.check_output(['git','status','--porcelain','--untracked-files=all']); "
-        f"assert all(os.access(str(Path({config['runtime_directory']!r})/name),os.X_OK) for name in ('df','dfhack','dfhack-run')); "
-        "assert shutil.which('script'); "
+        "import os,shutil,stat,subprocess; from pathlib import Path; "
+        f"assert subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip()=={config['source_revision']!r}, 'Source revision differs'; "
+        "assert not subprocess.check_output(['git','status','--porcelain','--untracked-files=all']), 'Source checkout is dirty'; "
+        f"launchers=[Path({config['runtime_directory']!r})/name for name in ('df','dfhack','dfhack-run')]; "
+        # Native isolation reads source assets, then copy2 creates new files owned
+        # by the selected UID. A retained source df may be mode 0744 under another
+        # UID: requiring source X_OK rejects a valid owner-executable owned copy.
+        "invalid=[str(path) for path in launchers if not path.is_file() or not os.access(path,os.R_OK) or not path.stat().st_mode & stat.S_IXUSR]; "
+        "assert not invalid, 'Runtime source launchers must be readable and owner-executable: '+','.join(invalid); "
+        "assert shutil.which('script'), 'Missing util-linux script'; "
         "from fort_gym.bench.env.remote_proto import ensure_proto_modules; "
-        "assert set(ensure_proto_modules())=={'core','fortress'}; "
+        "assert set(ensure_proto_modules())=={'core','fortress'}, 'Required protocol modules are unavailable'; "
         "from scripts.campaign_keyboard_trial import run_trial; "
         "from scripts.campaign_keyboard_native import run_window"
     )
@@ -154,7 +159,7 @@ def dockerfile(config: dict) -> str:
                 [
                     python,
                     "-c",
-                    f"from pathlib import Path; assert not Path({project!r}).exists()",
+                    f"from pathlib import Path; assert not Path({project!r}).exists(), 'Source destination already exists'",
                 ]
             ),
             # A new source location avoids overwriting a base image's retained repo.
