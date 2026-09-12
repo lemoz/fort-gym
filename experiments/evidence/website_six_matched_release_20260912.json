@@ -1,0 +1,101 @@
+{
+  "schema_version": "fortgym.website-six-matched-release/v1",
+  "release_revision": "c763742f6e45d96c9b82df10a9776ee5bbbcb8fc",
+  "assets": {
+    "/results": {
+      "sha256": "cc2f7bdb64eb8f73b86d8e3392f52e00cfe0ccd640f5eedc584387028012a3ba",
+      "mime": "text/html"
+    },
+    "/static/displayed-key-comparison-128.json": {
+      "sha256": "ba0da334733e478255e1422fb75fc915d8c7f58d9a8b795adb5220eac4f26aa1",
+      "mime": "application/json"
+    },
+    "/static/displayed-key-comparison.css": {
+      "sha256": "82c34fc3e8bc8afe3fdda569fd4afc4a3e42baa1bd0296c52250fb1e619d2959",
+      "mime": "text/css"
+    },
+    "/static/displayed-key-comparison.json": {
+      "sha256": "323eb178749f324791ff0b384c069d667af2132e81770c11ff937a656aa1398d",
+      "mime": "application/json"
+    },
+    "/static/displayed-key-comparison.mjs": {
+      "sha256": "3b4ac7c460015628fa347101ef652f3b30cdbdcf4489842745fa38b9f0a4282e",
+      "mime": "text/javascript"
+    },
+    "/static/recordings/astra-matched-r2-1-64.json": {
+      "sha256": "79ea8da55449f58aca9b9d6a98cd37db56b825d228bff10c6211961a9f2bfc30",
+      "mime": "application/json"
+    },
+    "/static/recordings/catalog.json": {
+      "sha256": "d500165905f1cbcfb5f36d989a1a3fc3ae4602a7a467aa79f3e97c781f58d2ed",
+      "mime": "application/json"
+    },
+    "/static/recordings/previews.json": {
+      "sha256": "9252924d5dc15af15d7693ca4db7fa06921ee5ae7d41b31df4b1c7a97c00007a",
+      "mime": "application/json"
+    },
+    "/worlds": {
+      "sha256": "856ce00cfbfbb9046e1105d1c771a08f79a0ab5ae132bdc13229baafce3a0744",
+      "mime": "text/html"
+    }
+  },
+  "recordings": 11,
+  "captured_frames": 864,
+  "matched_rows": 6,
+  "published_results": 6,
+  "continuation_results": 1,
+  "decision_budgets": [
+    64,
+    128
+  ],
+  "historical_recordings_unchanged": true,
+  "immutable_source_links_resolve": true,
+  "relay_snapshot": {
+    "run_id": "bindings-comparison-20260911-terra-r1",
+    "model": "gpt-5.6-terra",
+    "status": "running",
+    "observed_at_unix": 1789175947
+  },
+  "passed": true,
+  "website_url": "https://fortgym.live/results#matched-comparison",
+  "replay_url": "https://fortgym.live/?recording=astra-matched-r2-1-64#watch-root",
+  "source_report_revision": "99121512af7ab3bb9d960076fae5554795432e30",
+  "observer_revision": "7cd3b96763998abfd99ed623630d658320a27918",
+  "public_acceptance_sha256": "39ac2d90fcca98c4939cbbceef31796ed47428301561b7d8e5ff2fe1c180f750",
+  "remote_acceptance_sha256": "d7295382a554c5f5982a61547fe87d27e29285e3f5cbb6ec5c834730e01b6a22",
+  "build_receipt_sha256": "f270b24c4946a1db6af5107eee52f52efa5ecf7f3e748c0bbddb83ca9af2c5ef",
+  "ci": {
+    "run_id": 34664272965,
+    "head_sha": "c763742f6e45d96c9b82df10a9776ee5bbbcb8fc",
+    "status": "completed",
+    "conclusion": "success"
+  },
+  "validation": {
+    "full_local_tests_passed": 1248,
+    "skipped": 5,
+    "warnings": 7,
+    "node_playback_publication_tests_passed": 44,
+    "selected_ruff_passed": true,
+    "selected_mypy_passed": true,
+    "browser_visual_qa_performed": false,
+    "restricted_socket_failure_resolved_by_permitted_full_rerun": true
+  },
+  "native_and_api_service_identities_unchanged": true,
+  "database_counts_unchanged": true,
+  "untracked_files_preserved": true,
+  "service_restarts": 0,
+  "new_hosts": 0,
+  "main_merge": false,
+  "new_model_calls_by_website_tools": 0,
+  "new_gameplay_inputs_by_website_tools": 0,
+  "active_terra_relay_unchanged": true,
+  "strong_model_ranking_supported": false,
+  "full_goal_complete": false,
+  "limits": [
+    "The six published fresh trials stop at 64 model responses; they are not six Year-Two outcomes.",
+    "The 128-decision report currently contains Sol r1's infrastructure startup failure and original checkpoint, not a successful 128-response result.",
+    "Terra's live continuation remains unaudited until it terminates and a new saved result is verified.",
+    "All ten older recording files remain byte-identical. Eleven windows are not eleven independent attempts.",
+    "Subscription charges are unreported, not zero."
+  ]
+}
