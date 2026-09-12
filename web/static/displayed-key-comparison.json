@@ -5,9 +5,9 @@
   "plan_url": "https://github.com/lemoz/fort-gym/blob/61fcca7177d8b66ddd7e12e4be0ab53bda5ffd5b/experiments/keyboard_binding_comparison_20260911/cohort.json",
   "plan_sha256": "da38987cb71b1bafde853d10e476e0c9539a950c9d90580ff1c2b1ba7cb839b0",
   "declared_attempts": 6,
-  "recorded_attempts": 3,
+  "recorded_attempts": 4,
   "outcome_counts": {
-    "saved": 3
+    "saved": 4
   },
   "all_attempts_reported": false,
   "all_saved_boundaries_reached": false,
@@ -125,10 +125,36 @@
       "model": "gpt-5.6-terra",
       "replicate": 2,
       "reasoning_effort": "medium",
-      "publication_state": "no_published_result",
-      "result": null,
-      "evidence_url": null,
-      "evidence_sha256": null
+      "publication_state": "recorded",
+      "result": {
+        "status": "saved",
+        "response_limit": 64,
+        "responses": 64,
+        "returned_tokens": 1186821,
+        "reported_charge_usd": null,
+        "checkpoint": {
+          "next_step": 64,
+          "sha256": "1b44d26183b728cd9c94f54704c86a408ea983a4f279a4b07d4eee1ea9cbc417",
+          "saved_elapsed_ticks": 0,
+          "metrics": {
+            "population": 7,
+            "recorded_dead_citizens": 0,
+            "food_stock": 50,
+            "drink_stock": 60,
+            "completed_beds": 0,
+            "completed_workshops": 0,
+            "completed_farms": 0,
+            "functional_rooms": 0,
+            "stone_stock": null,
+            "wood_stock": null
+          }
+        },
+        "terminal_audit_sha256": "b9801bf5a065839da24ed03eada32676042e5feaeaec06601eef6059004a30f9",
+        "native_teardown_verified": true,
+        "vm_teardown_verified": true
+      },
+      "evidence_url": "https://github.com/lemoz/fort-gym/blob/31eeeb29e2e544ee5c5ae9f90556c7dd68b75c5b/experiments/evidence/keyboard_binding_comparison_terra_r2_64_20260911.json",
+      "evidence_sha256": "4d3c774271afe9c21802638db175d06cbd5d76cbf2196cde0115e8c68b620854"
     },
     {
       "campaign_id": "bindings-comparison-20260911-sol-r2",

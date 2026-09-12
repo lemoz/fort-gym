@@ -100,7 +100,7 @@ def test_public_endpoint_no_connection_no_cache_and_no_private_errors(
 def test_recordings_match_the_reviewed_export_and_contain_no_private_fields():
     root = ROOT / "web/static/recordings"
     catalog = json.loads((root / "catalog.json").read_text())
-    assert len(catalog["recordings"]) == 8
+    assert len(catalog["recordings"]) == 9
     total = 0
     for row in catalog["recordings"]:
         path = root / (row["id"] + ".json")
@@ -118,7 +118,7 @@ def test_recordings_match_the_reviewed_export_and_contain_no_private_fields():
             }
             assert set(frame["action"]) == {"intent", "keys", "advance_ticks"}
         total += len(recording["frames"])
-    assert total == 672
+    assert total == 736
     astra = json.loads((root / "astra-97-256.json").read_text())
     assert astra["saved_through_decision"] == 224 and astra["last_decision"] == 256
 
@@ -200,7 +200,7 @@ def test_worlds_recordings_and_previews_match_the_published_catalog():
     assert page.recordings == [row["id"] for row in catalog]
     assert page.recordings == [row["id"] for row in previews["recordings"]]
     assert html.index('id="recent-recordings"') < html.index('id="filters-form"')
-    assert "672 captured decisions" in html
+    assert "736 captured decisions" in html
     assert "observed, unsaved tail" in html
     for item, preview in zip(catalog, previews["recordings"], strict=True):
         recording = client.get("/static/recordings/" + item["id"] + ".json").json()
