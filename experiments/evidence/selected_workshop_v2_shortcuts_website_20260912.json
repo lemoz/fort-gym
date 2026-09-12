@@ -1,0 +1,69 @@
+{
+  "schema_version": "fortgym.selected-workshop-website-delivery/v2",
+  "date_utc": "2026-09-12",
+  "study_id": "selected-workshop-v2",
+  "campaign_id": "selected-workshop-v2-p1-shortcuts",
+  "result_manifest_sha256": "ea4eb4a61594ccea6852c6458dbcaa6b6b5075e80065f2436e4e882c78648e1d",
+  "native_audit_sha256": "628112a07c1181ce5fca4f94aa706c59579b60d8c867c1ae45983b3bcf179cff",
+  "public_acceptance_sha256": "c624bad15772c2d916c106b88dd10162317c7262445b0ed43586b4cdb99dc921",
+  "release": {
+    "schema_version": "fortgym.website-shortcuts-v2-replay-release/v1",
+    "passed": true,
+    "release_revision": "5887540702b9aeedb656363b4a4cc1988131a197",
+    "ci_run": 34702671609,
+    "ci": {
+      "conclusion": "success",
+      "headSha": "5887540702b9aeedb656363b4a4cc1988131a197",
+      "status": "completed"
+    },
+    "assets": {
+      "/": "722a058301e1e994cb0ac3ef0ea6d253b2154b467e2efbc2c90c1905c0b83bf9",
+      "/worlds": "2a4c394657eda3e7353582ab8550cc88e8edeb17a4aa3eba84d401657a362260",
+      "/results": "cc95ac8034dd517719cdf2d329f44690cf6c09618a04e477c609645f3d373a45",
+      "/static/recordings/catalog.json": "c038b1b15c209fd3d90772206d852218e828f99245cffa919ca3636ebdb08190",
+      "/static/recordings/previews.json": "32f42f62dde3900832cea243c6fd96fd01fc9ca2b6567b0c0626754f83cb1f8a"
+    },
+    "full_tests_passed": 1300,
+    "skipped": 5,
+    "node_contract_tests_passed": 31,
+    "recordings": 18,
+    "captured_frames": 1380,
+    "historical_recordings_unchanged": true,
+    "new_recordings_published": 1,
+    "recording_id": "controls-v2-p1-shortcuts-1-128",
+    "recording_sha256": "9063c997563bd5c00eb3726acfff77088a50877dd66aeb12a95662b46c62d17b",
+    "current_live_campaign": "selected-workshop-v2-p1-keyboard",
+    "observed_live_decision": 25,
+    "browser_visual_qa": false,
+    "service_identities_unchanged": true,
+    "database_counts_unchanged": true,
+    "untracked_files_preserved": true,
+    "website_url": "https://fortgym.live/",
+    "service_restarts": 0,
+    "main_merge": false,
+    "gameplay_inputs": 0,
+    "model_calls": 0,
+    "remote_receipt_sha256": "098da2ed5fd23430901c1bbad02130c7c1e00ef1f1c0877f0ebfafcdeba22019",
+    "junit_sha256": "ff7bd7a26e8ae3ab8ad0b8072dabfeaa655ae1f7f7e1e2989db2c7d549af1eb3"
+  },
+  "validation_notes": {
+    "initial_report_sha256": "4c2bd51dd46b6625e46cfda89863bd575b0697543e2ee620dcd9a477e67e6b6a",
+    "initial_failures": 2,
+    "initial_failure_causes": [
+      "Outdated recording-count assertion, corrected before the final full suite.",
+      "Localhost bind denied by the sandbox; the final suite passed with permission."
+    ],
+    "final_report_sha256": "ff7bd7a26e8ae3ab8ad0b8072dabfeaa655ae1f7f7e1e2989db2c7d549af1eb3",
+    "initial_report_retained": true,
+    "public_https_and_contract_acceptance": true,
+    "new_browser_visual_qa": false
+  },
+  "previous_public_revision": "c3278d47427902034622d5a330a5bfa823d7947a",
+  "public_url": "https://fortgym.live/?recording=controls-v2-p1-shortcuts-1-128#watch-root",
+  "original_game_evidence_unchanged": true,
+  "original_result_manifest_unchanged": true,
+  "sustainability_proven": false,
+  "paired_comparison_complete": false,
+  "full_goal_complete": false,
+  "note": "This is publication of one audited v2 sample, not a comparative result. The distinct paired keyboard attempt is still running. The existing viewer and all seventeen earlier recordings remain intact."
+}

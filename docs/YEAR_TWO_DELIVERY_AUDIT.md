@@ -22,8 +22,16 @@ shutdown commands. Both observers exited. Public HTTPS verifies the final
 stopped frame128 against its original capture; its aged projection is now stale.
 The stopped payload SHA256 is
 `a23584d85be6da32a67d0f532b9a3ba066afccf8075c8507ca8e6c6eb93e202c`.
-The combined 128-frame replay is exported but not yet catalog-published. The
-final checkpoint has not had a separate fresh reload. Dollar charges and
+The [combined 128-frame replay is now public](../experiments/evidence/selected_workshop_v2_shortcuts_website_20260912.json)
+at website revision `5887540702b9aeedb656363b4a4cc1988131a197`. All seventeen
+earlier recordings and previews are preserved; the catalog has eighteen windows
+and 1,380 actual frames. A fresh full suite passed 1,300 tests with five skips,
+31 Node playback/publication checks passed, and exact-head CI `34702671609`
+passed. Public HTTPS verifies the replay hash, catalog, homepage, Results and
+Runs; the active keyboard feed at decision25, service identities, database counts
+and unrelated files are preserved. No restart, new browser visual test or main
+merge occurred. The initial failed test report is retained separately.
+The final checkpoint has not had a separate fresh reload. Dollar charges and
 sustained production remain unreported/unproven; no paired result is claimed.
 The [paired keyboard attempt has now started](../experiments/evidence/selected_workshop_v2_p1_keyboard_startup_20260912.json)
 from the same original seed with empty memory and zero initial usage. Its first
