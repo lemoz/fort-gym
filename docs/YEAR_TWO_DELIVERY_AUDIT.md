@@ -81,8 +81,9 @@ The [fresh-window operators](../experiments/evidence/selected_workshop_v2_p3_fre
 passed 26 offline tests. The final keyboard attempt is now running. Their
 [own-save continuation operators](../experiments/evidence/selected_workshop_v2_p3_continuation_preparation_20260912.json)
 are also prepared, with 78 combined fresh/continuation tests passed. The shortcut
-operators and relays are consumed; the final keyboard fresh operator and relay
-are active. No future keyboard checkpoint is assumed. Their
+operators and relays are consumed; the final keyboard fresh operator/relay are
+also consumed and its same-save continuation operator/relay are active.
+No future keyboard checkpoint is assumed. Their
 [live/reload/terminal evidence helpers](../experiments/evidence/selected_workshop_v2_p3_evidence_preparation_20260912.json)
 passed 198 combined offline tests. A further scoped rerun passed all 99 keyboard
 helper checks after explicitly loading the frozen runtime package; earlier
@@ -90,7 +91,19 @@ invocations loaded the unrelated root package and failed imports, not gameplay.
 The sixth attempt's [startup receipt](../experiments/evidence/selected_workshop_v2_p3_keyboard_startup_20260912.json)
 verifies the original seed, empty initial memory and four actual keyboard
 responses using 96,053 returned tokens. Its public frame 4 matches the original
-screen/action, and the single existing local VM retains mandatory teardown.
+screen/action. That first window has now finished and its
+[decision-64 save and actual continuation](../experiments/evidence/selected_workshop_v2_p3_keyboard_64_20260912.json)
+are verified: 9,200 elapsed ticks, seven living dwarves, zero recorded deaths,
+two workshops, one farm, zero installed beds, 50 food and 60 drinks, using
+1,508,583 returned tokens. Guest poweroff returned zero. The redundant VM stop
+returned one because the VM was already stopped; that original log/return code
+is retained, and independent VM-state and closed-disk checks passed.
+The native continuation loaded the exact saved clock and metrics, with unchanged
+agent memory, usage, discontinuity history and original trace prefixes. Its first
+actual response returned 30,440 tokens. Public frame 67 matched its original
+captured screen and chosen keyboard action. The stopped first-64 feed was
+verified before replacing it. The continuation is within the original
+128-response/eight-million-token ceiling, and retains mandatory teardown.
 The source, image, model, seed and original budgets are unchanged. No new
 cloud VM, paid API fallback, human gameplay input or future terminal result
 is included. The final keyboard result and its replay delivery remain.
