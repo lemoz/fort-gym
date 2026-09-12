@@ -342,3 +342,33 @@ Retain the stopped pair-two shortcut feed without presenting it as a live game.
 Full website/player tests, exact-head hosted CI and public HTTPS verification
 are required for delivery. No API/game restart, database change, new infrastructure
 or additional model call is part of this static release.
+
+## Pair-three shortcut controls replay (September 12, 2026)
+
+Start from public revision `94425be289a28b3683bf2ce11d83634009839d36`.
+Add the original `controls-v2-p3-shortcuts-1-128` recording with SHA-256
+`02b139ad1021de3e560d20a2404944121cfc896b5477180c8c3e3a0dde71226a`,
+bound to audit `432b19374f5e5c1260adcbd390679feb2e8cf83775e10e1ae56fec875396f106`
+and frozen native source `5ddf1e6718dab2e8351e8dc24a2afe5071cd2592`.
+The terminal result digest is
+`79886cf295d51cdda4cca16702a108c3b8743060e9f055a199393eb7d55f69f4`.
+
+The final save retains 58,200 elapsed ticks, seven living dwarves, no recorded
+deaths, seven beds, two workshops, one farm, 56 food and 161 drinks. All 128
+actions were accepted: 116 keyboard actions sent 741 keys and twelve workshop
+shortcuts queued 49 jobs. Queued jobs are not completed products. Three zero-tick
+timeouts and two deferrals remain recorded; requested time is not gameplay.
+The attempt freshly reloaded its own decision-64 checkpoint, but the final
+save has no separate fresh-reload check. Returned tokens total 3,621,402;
+subscription dollar charges remain unreported. Both windows ended with zero
+owner/poweroff/VM-stop return codes, stopped VMs and closed disks.
+
+Preserve all twenty-one earlier recordings, catalog rows and previews.
+The total becomes twenty-two recording windows and 1,892 captured frames,
+not independent campaigns. Five of six controls attempts now have terminal
+results; the final keyboard run remains. No control ranking, sustainability
+or full-year success is claimed. Homepage and Results share the catalog;
+Runs has the new captured card. Keep the sixth attempt's public live feed
+unchanged during this release. Full website/player tests, exact-head CI and
+public HTTPS checks remain required. No service restart, database mutation,
+new infrastructure, main merge, gameplay input or model call is included.

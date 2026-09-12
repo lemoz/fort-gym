@@ -44,11 +44,12 @@ def test_v2_shortcuts_replay_is_exactly_the_audited_two_window_export():
 
 def test_latest_replay_is_v2_and_does_not_claim_a_completed_comparison():
     catalog = json.loads((RECORDINGS / "catalog.json").read_text())["recordings"]
-    assert catalog[0]["id"] == "controls-v2-p2-shortcuts-1-128"
-    assert catalog[1]["id"] == "controls-v2-p2-keyboard-1-128"
-    assert catalog[2]["id"] == "controls-v2-p1-keyboard-1-128"
-    assert catalog[3]["id"] == IDENTITY
-    assert catalog[4]["id"] == "controls-p1-keyboard-1-128"
+    assert catalog[0]["id"] == "controls-v2-p3-shortcuts-1-128"
+    assert catalog[1]["id"] == "controls-v2-p2-shortcuts-1-128"
+    assert catalog[2]["id"] == "controls-v2-p2-keyboard-1-128"
+    assert catalog[3]["id"] == "controls-v2-p1-keyboard-1-128"
+    assert catalog[4]["id"] == IDENTITY
+    assert catalog[5]["id"] == "controls-p1-keyboard-1-128"
     assert "campaign" not in catalog[0]
     html = (ROOT / "web/worlds.html").read_text()
     assert "68,200 game ticks" in html and "queued jobs are not completed products" in html
@@ -62,6 +63,29 @@ def test_latest_replay_is_v2_and_does_not_claim_a_completed_comparison():
     assert "second pair's shortcuts run is still pending" not in html
     assert "49,600 game ticks" in html and "40 food and 136 drinks" in html
     assert "4,014,250 returned tokens" in html and "subscription dollar charges were not reported" in html
+    assert "58,200 game ticks" in html and "56 food and 161 drinks" in html
+    assert "3,621,402 returned tokens" in html and "final keyboard result remains" in html
+
+
+def test_v2_pair3_shortcuts_preserves_its_original_audited_export():
+    raw = (RECORDINGS / "controls-v2-p3-shortcuts-1-128.json").read_bytes()
+    assert hashlib.sha256(raw).hexdigest() == (
+        "02b139ad1021de3e560d20a2404944121cfc896b5477180c8c3e3a0dde71226a"
+    )
+    data = json.loads(raw)
+    assert data["source_revision"] == "5ddf1e6718dab2e8351e8dc24a2afe5071cd2592"
+    assert data["audit_sha256"] == "432b19374f5e5c1260adcbd390679feb2e8cf83775e10e1ae56fec875396f106"
+    assert data["control_profile"] == "native_keyboard_selected_workshop_jobs/v1"
+    assert data["saved_through_decision"] == 128
+    assert [frame["decision"] for frame in data["frames"]] == list(range(1, 129))
+    assert sum(frame["after"]["ticks_advanced"] for frame in data["frames"]) == 58200
+    assert data["frames"][63]["after"]["tick"] == data["frames"][64]["before"]["tick"]
+    assert data["frames"][-1]["after"]["population"] == 7
+    shortcuts = [frame for frame in data["frames"] if "shortcut" in frame["action"]]
+    assert len(shortcuts) == 12
+    assert sum(frame["action"]["shortcut"]["quantity"] for frame in shortcuts) == 49
+    assert sum(len(frame["action"]["keys"]) for frame in data["frames"]) == 741
+    assert all(frame["accepted"] for frame in data["frames"])
 
 
 def test_v2_keyboard_replay_is_the_audited_128_decision_own_save_export():
