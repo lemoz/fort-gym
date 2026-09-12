@@ -67,6 +67,11 @@ recordings/previews and service/database/untracked state were preserved. The
 public catalog totals were read back again during this audit update. The live
 feed now follows pair-two shortcuts through the same existing viewer. No browser
 visual QA or new site deployment was performed for this documentation update.
+The [next shortcut replay importer](../experiments/evidence/selected_workshop_v2_p2_shortcuts_website_preparation_20260912.json)
+is prepared and passed 34 in-memory fixture tests. Its actual CLI refused the
+missing terminal result before changing any website file. A read-only public
+catalog check still shows twenty recordings and 1,636 frames. Actual settlement,
+the visible replay card, full site checks and public release remain pending.
 
 ## Next work toward the full goal
 

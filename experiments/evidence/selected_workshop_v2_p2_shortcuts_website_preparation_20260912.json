@@ -1,0 +1,58 @@
+{
+  "schema_version": "fortgym.selected-workshop-replay-publication-preparation/v1",
+  "date_utc": "2026-09-12",
+  "campaign_id": "selected-workshop-v2-p2-shortcuts",
+  "status": "prepared_not_consumed",
+  "artifact_directory": "fort_gym/artifacts/selected-workshop-study-20260912/website-v2-p2-shortcuts-replay",
+  "artifact_sha256": {
+    "prepare.mjs": "374e1e743fe14f3e7785d087aebebcd0fb776b34f1c15455115c7aa05b9110ef",
+    "prepare.test.mjs": "ec639fe18686630f0e65832b232e29bdcdd0d7b986aa40b8de586c5387082677",
+    "preparation-tests.xml": "577e1615be4d4b9509e196675c5bcbb45ed735f123b16ceefdb8bc48e68021fd",
+    "README.md": "f73e2b81dd9e1e7dcab113323df61cac97fea1332a4dc668f2cce0deab8de6ce"
+  },
+  "site_baseline_revision": "553528797ec140f2f2d50b623897cb3b3cf33811",
+  "site_architecture_and_host_preserved": true,
+  "native_source_revision": "5ddf1e6718dab2e8351e8dc24a2afe5071cd2592",
+  "expected_recording_id": "controls-v2-p2-shortcuts-1-128",
+  "validation": {
+    "node_syntax_passed": true,
+    "offline_tests_passed": 34,
+    "failures": 0,
+    "skipped": 0,
+    "fixture_scope": "In-memory fixtures derived from an existing original replay; never written as game results or public artifacts.",
+    "actual_cli_missing_terminal_guard_checked": true,
+    "guard_exit_code": 1,
+    "guard_error": "ENOENT for the absent actual 128-decision terminal result",
+    "site_worktree_clean_after_guard": true,
+    "site_head_unchanged": true,
+    "new_recording_absent": true
+  },
+  "public_catalog_observed": {
+    "recordings": 20,
+    "frames": 1636,
+    "latest_recording": "controls-v2-p2-keyboard-1-128",
+    "readonly_https_check": true
+  },
+  "required_publication_evidence": [
+    "Actual terminal result digest, native two-window audit and unaltered replay bytes",
+    "Exact original study, source/image, model/effort, pair and shortcut condition",
+    "Own-save reload, memory/usage/history preservation and mandatory teardown",
+    "Final native metrics and cumulative usage agree with the terminal result",
+    "All twenty prior recording files, catalog rows and previews preserved",
+    "Visible card and regression assertions updated from the actual result",
+    "Complete site/player tests and exact-head CI before existing-host publication",
+    "Public HTTPS byte checks and preserved services, database and live feed after release"
+  ],
+  "actual_terminal_result_exists": false,
+  "recording_exported": false,
+  "site_files_modified": false,
+  "website_published": false,
+  "browser_preview_opened": false,
+  "browser_visual_qa": false,
+  "new_hosting_resource_created": false,
+  "main_merged": false,
+  "gameplay_inputs_by_preparation": 0,
+  "model_calls_by_preparation": 0,
+  "full_goal_complete": false,
+  "note": "The existing public viewer is unchanged. The prepared importer cannot publish a running snapshot as a finished run. The runtime is still active; actual native settlement, product edits, release checks and public delivery remain required. Existing consumed publishers from earlier runs must not be rerun."
+}
