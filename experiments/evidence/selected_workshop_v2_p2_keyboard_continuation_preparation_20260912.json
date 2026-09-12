@@ -1,0 +1,65 @@
+{
+  "schema_version": "fortgym.selected-workshop-continuation-preparation/v1",
+  "campaign_id": "selected-workshop-v2-p2-keyboard",
+  "date": "2026-09-12",
+  "state": "prepared_not_executed",
+  "source_revision": "5ddf1e6718dab2e8351e8dc24a2afe5071cd2592",
+  "source_clean_verified": true,
+  "study_declaration_sha256": "e325f69f40978a9a0b2ed962a505c893aa7ea397b569e3300455972d7b94ebc8",
+  "fresh_operator_sha256": "4f4dc8e58656760ed3b4b2501621b398cc55717c72d6d641757b0f5780f40f79",
+  "fresh_startup_receipt": {
+    "file": "selected_workshop_v2_p2_keyboard_startup_20260912.json",
+    "sha256": "b70aa7e26a93e9fa99567c04e96791d1a87655ff880758aa2b2e27e27214e1bd"
+  },
+  "planned_window": {
+    "first_step": 64,
+    "end_decision": 128,
+    "maximum_new_responses": 64,
+    "attempt_response_ceiling": 128,
+    "attempt_returned_token_ceiling": 8000000,
+    "own_save_only": true,
+    "reset_memory": false,
+    "reset_usage": false,
+    "strategy_intervention": false,
+    "mandatory_teardown": true
+  },
+  "local_artifact_directory": "fort_gym/artifacts/selected-workshop-study-20260912",
+  "file_sha256": {
+    "prepare_v2_p2_keyboard_continuation.py": "f6497c981b146da7ca7f3b36418b39e79b465cecade1c03172b947785cda23f7",
+    "run_v2_p2_keyboard_continue.py": "bb1d81f58afbc1a90042e207d1f38b65e77a63af74fac01c6adc4e48e6d62560",
+    "relay_v2_p2_keyboard_continue.py": "0e0f24eab577eb1227f4dcfdeeece2ae088eb56a886617493ca35d5a76f915b0",
+    "test_v2_p2_keyboard_continuation_preparation.py": "5e8726578ba23450da294a58e2d6d8f4f5ea9e089e686d51f8d1cf9152119088",
+    "v2-p2-keyboard-continuation-isolated-tests.xml": "ec74d57c234eac68fdf3487683a8c965dd5d267cea0e68466abd60224e5748f6",
+    "v2-p2-keyboard-continuation-README.md": "596550edb7bd54ddb62c0909a9511af4fee8f09d2c8df092db9ed327f42cc2cb"
+  },
+  "tests": {
+    "passed": 26,
+    "failed": 0,
+    "warnings": 2,
+    "ruff": "passed",
+    "scope": "Offline operator identity, unsettled-terminal boundaries and relay binding checks. No VM, game or model calls.",
+    "pytest_configuration": "Frozen source as working directory and --rootdir; artifact directory as --confcutdir.",
+    "earlier_invocations": [
+      {
+        "report": "v2-p2-keyboard-continuation-preparation-tests.xml",
+        "passed": 22,
+        "failed": 4
+      },
+      {
+        "report": "v2-p2-keyboard-continuation-source-tests.xml",
+        "passed": 22,
+        "failed": 4
+      }
+    ],
+    "earlier_failure_cause": "Ancestor pytest configuration imported the older integration package. Both original reports retained."
+  },
+  "boundaries": {
+    "fresh_window_audited": false,
+    "continuation_launched": false,
+    "game_source_modified": false,
+    "active_game_intervened": false,
+    "website_changed": false,
+    "goal_completed": false,
+    "actual_subscription_charge_usd": null
+  }
+}
