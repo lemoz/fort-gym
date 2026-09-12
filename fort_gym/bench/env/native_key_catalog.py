@@ -12,11 +12,12 @@ The legacy catalog remains unchanged so old experiment conditions stay explicit.
 
 from .keystroke_exec import VALID_KEYS
 from .display_key_catalog import BINDING_PROFILE, DISPLAY_KEYS
+from .workshop_job_profile import CONTROL_PROFILE as WORKSHOP_PROFILE
 
 LEGACY_PROFILE = "native_keyboard/v1"
 NATIVE_PROFILE = "native_keyboard/v2"
 KEYBOARD_PROFILES = (LEGACY_PROFILE, NATIVE_PROFILE, BINDING_PROFILE)
-CAMPAIGN_KEYBOARD_PROFILES = (NATIVE_PROFILE, BINDING_PROFILE)
+CAMPAIGN_KEYBOARD_PROFILES = (NATIVE_PROFILE, BINDING_PROFILE, WORKSHOP_PROFILE)
 CATALOG_REVISION = "afe7e908e9e7e863412e8983f9feb2b999fae498"
 
 NATIVE_KEYS = frozenset(
@@ -373,7 +374,7 @@ def keys_for_profile(profile: str) -> frozenset[str]:
         return frozenset(VALID_KEYS)
     if profile == NATIVE_PROFILE:
         return NATIVE_KEYS
-    if profile == BINDING_PROFILE:
+    if profile in (BINDING_PROFILE, WORKSHOP_PROFILE):
         return DISPLAY_KEYS
     raise ValueError("Unknown native keyboard control profile")
 

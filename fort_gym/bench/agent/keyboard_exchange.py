@@ -17,6 +17,9 @@ from pathlib import Path
 
 from ..env.native_key_catalog import NATIVE_PROFILE
 from ..env.display_key_catalog import BINDING_PROFILE, BINDINGS_SHA256
+from ..env.workshop_job_profile import (
+    CONTROL_PROFILE as WORKSHOP_PROFILE, PROMPT_PROFILE as WORKSHOP_PROMPT,
+)
 from ..env.screen_observation import TEXT_PROFILE, raw_screen
 from .codex_selection import MODEL, REASONING_EFFORT, validate_selection
 from .keyboard_prompt import BINDING_PROMPT, validate_prompt_profile
@@ -65,26 +68,32 @@ def validate_request(request: dict) -> None:
         "observation_profile",
         "max_advance_ticks",
     }
-    binding = version == "fortgym.keyboard-exchange-request/v4"
+    workshop = version == "fortgym.keyboard-exchange-request/v5"
+    binding = version == "fortgym.keyboard-exchange-request/v4" or workshop
     if version in ("fortgym.keyboard-exchange-request/v2", "fortgym.keyboard-exchange-request/v3",
-                   "fortgym.keyboard-exchange-request/v4"):
+                   "fortgym.keyboard-exchange-request/v4", "fortgym.keyboard-exchange-request/v5"):
         fields |= {"model", "reasoning_effort"}
         validate_selection(request.get("model"), request.get("reasoning_effort"))
-        if version in ("fortgym.keyboard-exchange-request/v3", "fortgym.keyboard-exchange-request/v4"):
+        if version in ("fortgym.keyboard-exchange-request/v3", "fortgym.keyboard-exchange-request/v4",
+                       "fortgym.keyboard-exchange-request/v5"):
             fields.add("prompt_profile")
             validate_prompt_profile(request.get("prompt_profile"))
         if binding:
             fields.add("bindings_sha256")
-            if request.get("bindings_sha256") != BINDINGS_SHA256 or request.get("prompt_profile") != BINDING_PROMPT:
+            if request.get("bindings_sha256") != BINDINGS_SHA256 or request.get("prompt_profile") != (
+                WORKSHOP_PROMPT if workshop else BINDING_PROMPT
+            ):
                 raise ValueError("Displayed-key exchange bindings or prompt differ")
     elif version != "fortgym.keyboard-exchange-request/v1":
         raise ValueError("Keyboard exchange condition is invalid")
-    if not binding and request.get("prompt_profile") == BINDING_PROMPT:
+    if not binding and request.get("prompt_profile") in (BINDING_PROMPT, WORKSHOP_PROMPT):
         raise ValueError("Historical keyboard requests cannot change input semantics")
     if set(request) != fields:
         raise ValueError("Keyboard exchange request fields differ")
     if (
-        request["control_profile"] != (BINDING_PROFILE if binding else NATIVE_PROFILE)
+        request["control_profile"] != (
+            WORKSHOP_PROFILE if workshop else BINDING_PROFILE if binding else NATIVE_PROFILE
+        )
         or request["observation_profile"] != TEXT_PROFILE
         or not isinstance(request["memory"], str)
         or (request["feedback"] is not None and not isinstance(request["feedback"], dict))
@@ -145,6 +154,11 @@ def exchange_decision(
         if model is None or reasoning_effort is None or prompt_profile != BINDING_PROMPT:
             raise ValueError("Displayed-key exchange requires explicit model and binding prompt")
         request.update(schema_version="fortgym.keyboard-exchange-request/v4",
+                       bindings_sha256=BINDINGS_SHA256)
+    if control_profile == WORKSHOP_PROFILE:
+        if model is None or reasoning_effort is None or prompt_profile != WORKSHOP_PROMPT:
+            raise ValueError("Workshop exchange requires explicit model and shortcut prompt")
+        request.update(schema_version="fortgym.keyboard-exchange-request/v5",
                        bindings_sha256=BINDINGS_SHA256)
     validate_request(request)
     directory = root / identifier

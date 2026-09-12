@@ -2,6 +2,7 @@
 
 from copy import deepcopy
 import re
+from ..env.workshop_job_profile import PROMPT_PROFILE as WORKSHOP_PROMPT
 
 BASE_PROMPT = "native_keyboard_prompt/v1"
 MEMORY_PROMPT = "native_keyboard_memory_replacement/v1"
@@ -16,7 +17,7 @@ receipt are supplied separately on every decision."""
 
 
 def validate_prompt_profile(value: object) -> str:
-    if not isinstance(value, str) or value not in (BASE_PROMPT, MEMORY_PROMPT, BINDING_PROMPT):
+    if not isinstance(value, str) or value not in (BASE_PROMPT, MEMORY_PROMPT, BINDING_PROMPT, WORKSHOP_PROMPT):
         raise ValueError("Unsupported keyboard prompt profile")
     return value
 

@@ -1,0 +1,14 @@
+{
+  "schema_version": "fortgym.keyboard-fresh-trial/v1",
+  "original_condition": "shortcuts-condition.json",
+  "source_snapshot_receipt_sha256": "eaf5fa5a40014719e6c313f33497740e536a8faa1c90a84c4e09dcc380ac0595",
+  "steps_per_segment": 64,
+  "initial_memory": "empty",
+  "strategy_intervention": false,
+  "snapshot_profile": "native_menu_preserving_save/v4",
+  "runtime_rpc_transport": "native-rpc",
+  "private_measurement_profile": "fortgym.campaign-food-measurement/v1",
+  "private_measurement_timeout_seconds": 15,
+  "resource_observation_profile": "fortgym.native-resource-observations/v1",
+  "hypothesis": "Test selected-workshop job-entry shorthand versus displayed keyboard only, with Astra Medium and identical fresh start, screen observation, empty initial memory and budgets. Queue acceptance is not completed production. Preserve all failures and pauses."
+}
