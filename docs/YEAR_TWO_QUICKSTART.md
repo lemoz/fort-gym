@@ -15,9 +15,11 @@ by the ongoing matched cohort and not a claim of deployment or main merge.
   the same control bindings and budgets, and two attempts per model.
 - Six audited fresh 64-response results and their own-save continuation windows.
   Read the result index for settled 128-response outcomes; absence of a result
-  does not report live status. Sol's first continuation is an infrastructure
-  startup failure, with its original checkpoint preserved.
-- A homepage player, thirteen immutable recording windows, the Worlds gallery,
+  does not report live status. Three continuations are saved, while both Sol
+  starts failed infrastructure gates with their original checkpoints preserved.
+  Astra r2 has no 128-response result; the latest known guest capacity shortage
+  prevents its launch without changing storage conditions.
+- A homepage player, fourteen immutable recording windows, the Worlds gallery,
   comparison tables, and an optional read-only live observer.
 
 These short matched starts are not the earlier exploratory Astra Year-Two run.

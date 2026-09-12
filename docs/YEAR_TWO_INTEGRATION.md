@@ -23,10 +23,10 @@ and has not been used to replace a running cohort's frozen source or image.
 The broad website and goal branches include unrelated historical calibration,
 provider and environment-layer work. Those branches were not merged wholesale.
 Existing main campaign navigation is retained alongside the homepage spectator.
-All thirteen recording payloads are unchanged from the validated viewer source.
+All fourteen recording payloads are unchanged from the validated viewer source.
 The integrated API reads its live-feed directory through the same settings
 object as the other campaign endpoints. Observer tests follow the current split
-between player and data-loading helper and the thirteen-window catalog.
+between player and data-loading helper and the fourteen-window catalog.
 
 The matched source snapshot contains six first-boundary outcomes and five
 128-budget outcomes: three saved continuations and two infrastructure failures.
@@ -110,3 +110,25 @@ update does not change frozen native code, active gameplay or main-merge status.
 The updated integration passes 136 focused Python tests (three existing
 warnings) and all 50 Node viewer contracts. Both bundled reports reproduce the
 source reader's JSON exactly.
+
+## Repeat continuation outcomes
+
+Terra r2's saved continuation and Sol r2's zero-call capacity failure are now
+included with original-result provenance. The viewer update at
+`674a12c7c3ba499739e28959bd6c864386c14e33` adds Terra's actual decisions65-128
+and preserves all thirteen older recordings. The catalog has fourteen windows
+and 1,056 captured frames. Sol's failed start has an evidence link, not a replay;
+Astra r2's 128-response outcome remains absent. Its unlaunched identity must not
+be consumed against the same known guest-capacity shortage.
+
+The frozen native owner, image and observer remain unchanged. The earlier
+isolated setup acceptance still applies only to its exact source revision.
+Public delivery, full source review, portable native setup and main merge are
+separate proof steps; this result update does not complete them.
+
+The updated candidate passes 5,426 full-suite Python tests with ten skips and
+seven dependency/deprecation warnings, plus all 51 Node viewer contracts.
+An additional focused pass covers 126 comparison, publication, observer and
+exporter tests. Both source reports exactly match the bundled JSON tables;
+selected changed-file Ruff checks pass. These are not native setup acceptance,
+independent source approval, browser visual QA or a main merge.

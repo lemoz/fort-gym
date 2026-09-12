@@ -250,7 +250,7 @@ def test_observer_uses_completed_matching_receipts_without_game_calls(tmp_path, 
 def test_published_recordings_are_bounded_hashed_allowlisted_and_consecutive():
     root = ROOT / "web/static/recordings"
     catalog = json.loads((root / "catalog.json").read_text())
-    assert len(catalog["recordings"]) == 13
+    assert len(catalog["recordings"]) == 14
     total = 0
     for row in catalog["recordings"]:
         path = root / (row["id"] + ".json")
@@ -274,7 +274,7 @@ def test_published_recordings_are_bounded_hashed_allowlisted_and_consecutive():
             assert len(frame["action"]["intent"]) <= 2000
             assert set(frame["screen"]) == {"width", "height", "tile_order", "runs"}
         total += len(frames)
-    assert total == 992
+    assert total == 1056
     astra = json.loads((root / "astra-97-256.json").read_text())
     assert astra["saved_through_decision"] == 224 and astra["last_decision"] == 256
     terra = json.loads((root / "terra-65-128.json").read_text())
