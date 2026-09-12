@@ -21,12 +21,12 @@ ROOT = Path(__file__).resolve().parents[1]
 def test_public_report_and_replay_bindings(name, replay_sha, ticks):
     path = ROOT / "web/static/displayed-key-comparison.json"
     assert hashlib.sha256(path.read_bytes()).hexdigest() == (
-        "d5d0a334e02017288595bafa825ba0ebcd2e2e669ac4864150ba79610de47baf"
+        "fa7657045238bf7232567f2e293b518fcaed2d9c6bc47989812e3fe519419217"
     )
     report = json.loads(path.read_text())
     identity = "bindings-comparison-20260911-" + name + "-r1"
     result = next(row for row in report["trials"] if row["campaign_id"] == identity)
-    assert report["recorded_attempts"] == 4 and report["strong_ranking_supported"] is False
+    assert report["recorded_attempts"] == 5 and report["strong_ranking_supported"] is False
     replay_path = ROOT / ("web/static/recordings/" + name + "-matched-r1-1-64.json")
     assert hashlib.sha256(replay_path.read_bytes()).hexdigest() == replay_sha
     replay = json.loads(replay_path.read_text())
@@ -89,6 +89,29 @@ def test_terra_repeat_keeps_every_rejected_choice_and_actual_zero_time():
     assert result["returned_tokens"] == 1186821
     assert result["checkpoint"]["saved_elapsed_ticks"] == 0
     assert result["reported_charge_usd"] is None
+
+
+def test_sol_repeat_replay_matches_its_own_saved_result():
+    path = ROOT / "web/static/recordings/sol-matched-r2-1-64.json"
+    assert hashlib.sha256(path.read_bytes()).hexdigest() == (
+        "30b1aeced4a62c8882aa77004784d3057f84768c8b778c147b0adcc25f517152"
+    )
+    recording = json.loads(path.read_text())
+    frames = recording["frames"]
+    assert [frame["decision"] for frame in frames] == list(range(1, 65))
+    assert all(frame["accepted"] is True for frame in frames)
+    assert sum(frame["after"]["ticks_advanced"] for frame in frames) == 10400
+    assert sum(frame["action"]["advance_ticks"] == 0 for frame in frames) == 40
+    assert sum(frame["after"]["ticks_advanced"] == 0 for frame in frames) == 49
+    assert frames[-1]["after"]["population"] == 7
+    report = json.loads((ROOT / "web/static/displayed-key-comparison.json").read_text())
+    result = report["trials"][4]["result"]
+    assert result["terminal_audit_sha256"] == recording["audit_sha256"]
+    assert result["returned_tokens"] == 1221506
+    assert result["checkpoint"]["saved_elapsed_ticks"] == 10400
+    assert result["checkpoint"]["metrics"]["completed_beds"] == 0
+    assert result["reported_charge_usd"] is None
+    assert report["trials"][5]["result"] is None
 
 
 def test_current_comparison_is_not_the_legacy_benchmark():

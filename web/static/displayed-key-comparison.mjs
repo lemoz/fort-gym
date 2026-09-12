@@ -6,6 +6,7 @@ const REPLAYS = {
   'bindings-comparison-20260911-terra-r1': 'terra-matched-r1-1-64',
   'bindings-comparison-20260911-astra-r1': 'astra-matched-r1-1-64',
   'bindings-comparison-20260911-terra-r2': 'terra-matched-r2-1-64',
+  'bindings-comparison-20260911-sol-r2': 'sol-matched-r2-1-64',
 };
 const evidenceUrl = value => typeof value === 'string' && /^https:\/\/github\.com\/lemoz\/fort-gym\/blob\/[a-f0-9]{40}\/experiments\/[a-zA-Z0-9_./-]+\.json$/.test(value);
 const number = value => value === null || (Number.isSafeInteger(value) && value >= 0);

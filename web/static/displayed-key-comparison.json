@@ -5,9 +5,9 @@
   "plan_url": "https://github.com/lemoz/fort-gym/blob/61fcca7177d8b66ddd7e12e4be0ab53bda5ffd5b/experiments/keyboard_binding_comparison_20260911/cohort.json",
   "plan_sha256": "da38987cb71b1bafde853d10e476e0c9539a950c9d90580ff1c2b1ba7cb839b0",
   "declared_attempts": 6,
-  "recorded_attempts": 4,
+  "recorded_attempts": 5,
   "outcome_counts": {
-    "saved": 4
+    "saved": 5
   },
   "all_attempts_reported": false,
   "all_saved_boundaries_reached": false,
@@ -161,10 +161,36 @@
       "model": "gpt-5.6-sol",
       "replicate": 2,
       "reasoning_effort": "medium",
-      "publication_state": "no_published_result",
-      "result": null,
-      "evidence_url": null,
-      "evidence_sha256": null
+      "publication_state": "recorded",
+      "result": {
+        "status": "saved",
+        "response_limit": 64,
+        "responses": 64,
+        "returned_tokens": 1221506,
+        "reported_charge_usd": null,
+        "checkpoint": {
+          "next_step": 64,
+          "sha256": "e082332f969bef80a5ff4049206fa2a6a4580ab26c0b4ddad6e8bb3a74fd4f59",
+          "saved_elapsed_ticks": 10400,
+          "metrics": {
+            "population": 7,
+            "recorded_dead_citizens": 0,
+            "food_stock": 50,
+            "drink_stock": 60,
+            "completed_beds": 0,
+            "completed_workshops": 0,
+            "completed_farms": 0,
+            "functional_rooms": 0,
+            "stone_stock": null,
+            "wood_stock": null
+          }
+        },
+        "terminal_audit_sha256": "c75b838d06e69b63145023851d3bfb419c68620e620bcca25dc46860a55a102a",
+        "native_teardown_verified": true,
+        "vm_teardown_verified": true
+      },
+      "evidence_url": "https://github.com/lemoz/fort-gym/blob/efe5f51c11182fb446b1cd24112acf2b1f8234d4/experiments/evidence/keyboard_binding_comparison_sol_r2_64_20260911.json",
+      "evidence_sha256": "be4253d4a09e4e572c03ac8a27f999937d48d473a7ec946d09216e9e221fc798"
     },
     {
       "campaign_id": "bindings-comparison-20260911-astra-r2",

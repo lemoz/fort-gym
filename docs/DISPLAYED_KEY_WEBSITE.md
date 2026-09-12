@@ -94,3 +94,26 @@ is available from the homepage and its comparison row. Original recordings stay
 unchanged; re-exporting all three first attempts with this parser reproduced
 their existing bytes exactly. Updating the exporter does not switch the active
 Sol r2 relay, restart services or change any game protocol.
+
+## Sol second-attempt update
+
+This publication extends `d4a3745b70ecf7fc78835c435aca73d4e4aaaa25`.
+The report at `4f4c5a33024b7c3fc2b487dd4d8197c46a477ef2` includes five
+reviewed results in the same six declared slots. Astra r2 has no published final
+result yet; the comparison snapshot does not infer its live state.
+
+The added `sol-matched-r2-1-64` replay contains 64 original frames with digest
+`30b1aeced4a62c8882aa77004784d3057f84768c8b778c147b0adcc25f517152`.
+Its own terminal audit is
+`c75b838d06e69b63145023851d3bfb419c68620e620bcca25dc46860a55a102a`.
+Sol retained 10,400 actual game ticks, 1,221,506 tokens and seven living citizens,
+with no completed beds, workshops or farms. Food and drink stocks remained 50
+and 60. Nine clock timeouts remain in immutable source evidence; the replay
+shows actual elapsed time, not the larger requested total. These short runs do
+not establish a sustainable fortress or a model ranking.
+
+All nine older recordings remain byte-identical. The gallery has ten windows
+and 800 captured decisions, not ten independent trials. Homepage live priority,
+manual replay selection, service identities and the active Astra r2 relay remain
+unchanged. A source update is not public delivery until the exact release passes
+existing-host and external HTTPS checks.
