@@ -203,3 +203,25 @@ the homepage uses the existing static relay. Preserve the active relay's run
 identity and non-regressing decisions, all recordings, database counts, service
 identities and untracked files. Do not inject synthetic shortcut frames into the
 public feed. No new host, dependency change or main-branch merge is included.
+
+## Earlier keyboard controls replay (September 12, 2026)
+
+Publish the audited `controls-p1-keyboard-1-128` recording unchanged, from frozen
+v1 source `422c915d23bf828371be481d3079a23bbb3e9e94`. Its SHA-256 is
+`db74af4eb5a3c13297c363aecb9cfc0dad028f708edfdb9db9d7cd353a81e6b8`, bound to
+audit `9202a9fd406b8d5835fd59a0757478a73ab73faf4e0323b7c3c9885314e009cc`.
+The catalog adds a `(v1)` display annotation without changing the recording's
+original title or bytes. This is not a corrected-v2 sample or a model ranking.
+
+The 128 captured decisions cover 83,800 elapsed game ticks and a verified
+own-save continuation at decision 64. The final save exists but has not had a
+separate fresh-reload check. Endpoint measurements are seven dwarves, no recorded
+deaths, four installed beds, three workshops, one farm, 58 food and 111 drinks.
+Stocks alone do not establish sustainability or a full elapsed year.
+
+Add the replay to the shared catalog, exact captured preview, and Runs gallery.
+The homepage and Results consume that catalog without new client code. Preserve
+all sixteen earlier recordings and the current v2 live feed. The total becomes
+17 recording windows and 1,252 frames. Publish only the exact tested static
+assets, tests and documentation; no model/game change, service restart, database
+mutation, dependency change, new host or main merge.
