@@ -71,7 +71,7 @@ def answer_request(
             observation_profile=condition["observation_profile"],
             model=model,
             reasoning_effort=reasoning_effort,
-            **({"prompt_profile": condition["prompt_profile"]} if version in ("v3", "v4") else {}),
+            **({"prompt_profile": condition["prompt_profile"]} if version in ("v3", "v4", "v5") else {}),
         )
     except CodexTransportError as error:
         result = error.receipt
