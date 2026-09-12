@@ -9,6 +9,26 @@ Requirements come from [the approved goal](YEAR_TWO_CAMPAIGNS.md),
 
 ## Evidence and remaining work
 
+Current integration review: [the final source review](../experiments/evidence/keyboard_integration_final_review_176_20260912.json)
+binds candidate `0547261450262c8d0b59486b566a2404e02895f9`. All 138 changed
+production files now have exact-hash review coverage: 43 fully read in the final
+pass and 95 matching earlier reviews. The final pass fixes a reproduced observer
+bug: denied inspection and empty successful process output no longer imply that
+the owner stopped. No gameplay controls changed. This is implementer review,
+not independent approval; supporting experimental operators, configuration and
+historical evidence retain their prior native/contract-test provenance.
+
+The final candidate passes 5,611 local Python tests (ten skips, seven warnings),
+198 focused observer/viewer tests, 52 Node contracts and scoped Ruff/mypy. Hosted
+CI `34684501253` passes 5,467 tests (154 skips, seven warnings). All 13 selected
+local HTTP endpoints pass. Browser acceptance covers actual game previews,
+next-decision movement, Year-Two scrubbing to decision 416, the 15-recording
+Worlds gallery and the 64/128 comparison selector with failures and missing
+results retained. The isolated server and temporary tab are closed. No new
+native, model, Docker, VM or production website operation occurred. The candidate
+is approved for normal merge; actual merge and remaining gameplay goals are
+not claimed by the pre-merge review record. Earlier review counts below are history.
+
 Latest update: [public-owner acceptance](../experiments/evidence/keyboard_portable_owner_acceptance_20260912.json)
 passed at integration source `40b106b95f483b534a738622e75c4147a1270a96`.
 The CLI performed a real two-decision Astra fresh window, saved checkpoint2,
