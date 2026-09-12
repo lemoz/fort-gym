@@ -7,7 +7,23 @@ Requirements come from [the approved goal](YEAR_TWO_CAMPAIGNS.md),
 [the standard-input phase](ASTRA_STANDARD_INPUT_EXPERIMENTS.md), and the
 [frozen displayed-key cohort](../experiments/keyboard_binding_comparison_20260911/cohort.json).
 
-Latest [v2 running progress](../experiments/evidence/selected_workshop_v2_p1_shortcuts_progress_20260912.json):
+The [v2 shortcuts checkpoint64 and actual continuation](../experiments/evidence/selected_workshop_v2_p1_shortcuts_64_20260912.json)
+now pass the retained native/owner audit and initial reload checks. The save
+contains 27,000 elapsed ticks, seven living dwarves, two beds, two workshops,
+one farm, 45 food and 78 drinks; 64 responses total 2,041,871 returned tokens.
+Original inputs, memory, usage, history and native cleanup were verified. Both
+VMs stopped and disks closed, with both shutdown commands returning zero and
+prior inventory/configurations preserved, before the continuation started.
+
+The resumed native clock/metrics, complete initial agent state and history match
+checkpoint64; original trace and usage prefixes are retained. The first new v5
+response used 26,155 tokens. Public HTTPS frame68 matches its original capture
+and action. This is real save/resume evidence, not a completed 128-response
+result or paired comparison. The bounded continuation owner still owns teardown.
+A 64-frame replay (ten shortcut actions) was exported and validated but has not
+been added to the public catalog. Source/image and model conditions are unchanged.
+
+Earlier [v2 running progress](../experiments/evidence/selected_workshop_v2_p1_shortcuts_progress_20260912.json):
 20 completed responses, 549,985 returned tokens, 8,400 elapsed ticks, seven living
 dwarves and two completed workshops. Two accepted workshop actions encountered
 bounded zero-tick clock waits at `dwarfmode/QueryBuilding/Some/Workshop/Job`.
@@ -26,14 +42,14 @@ service identities, database counts and untracked files were verified; no
 restart, synthetic frame, private context or main merge was involved. This was
 HTTP/contract acceptance, not a new browser visual test.
 
-The [first v2 shortcuts window](../experiments/evidence/selected_workshop_v2_p1_shortcuts_startup_20260912.json)
-is now running as `selected-workshop-v2-p1-shortcuts`. Its loaded clock and
+The [first v2 shortcuts startup](../experiments/evidence/selected_workshop_v2_p1_shortcuts_startup_20260912.json)
+was recorded as `selected-workshop-v2-p1-shortcuts`. Its loaded clock and
 measured initial state match the original fresh seed, with empty agent memory
 and no borrowed usage. The actual first provider response is valid and retains
 the required v5 prompt profile. At the captured decision-ten boundary, ten
 responses reconcile to 261,241 returned tokens, with eight keyboard actions and
-two workshop shortcuts. This is provisional ongoing play, not a verified save
-or paired comparison result. The bounded owner retains mandatory VM teardown.
+two workshop shortcuts. That startup record is a provisional observation;
+the later checkpoint and continuation evidence above supersedes its running state.
 
 The existing public live feed matches the original screen/action at decision
 two and, separately, the actual decision-eleven shortcut for two barrels. The

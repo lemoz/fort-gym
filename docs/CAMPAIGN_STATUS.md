@@ -22,30 +22,43 @@ The existing v2 live feed, services and database counts were preserved. Website
 source `c3278d47427902034622d5a330a5bfa823d7947a` is pushed, locally tested
 (1,298 passed, five skipped), and exact-head remote CI passed. Main is unmerged.
 
-The corrected shortcuts condition is running under the existing bounded owner,
-with mandatory VM teardown. The [retained progress snapshot](../experiments/evidence/selected_workshop_v2_p1_shortcuts_progress_20260912.json)
-covers 20 completed model decisions, 549,985 returned tokens, and 8,400 elapsed
-game ticks. Seven dwarves are alive, with two completed workshops, no installed
-beds or farm yet, 50 food and 60 drinks. These are provisional observations, not
-a saved endpoint or a claim that the paired study is complete.
+The [first shortcuts save and actual continuation](../experiments/evidence/selected_workshop_v2_p1_shortcuts_64_20260912.json)
+are now verified. Checkpoint64 retains 27,000 elapsed game ticks, seven living
+dwarves, no recorded deaths, two installed beds, two completed workshops, one
+farm, 45 food and 78 drinks. All 64 responses reconcile to 2,041,871 returned
+tokens. Both project VMs stopped and their disks closed before continuation;
+guest poweroff and VM stop each returned zero, with prior inventory preserved.
 
-Two workshop shortcuts queued successfully but their requested time advance
+The new native load matches that exact save's clock, measured state, complete
+agent memory/usage and history, and the original trace/usage prefixes. The first
+new Astra Medium response used 26,155 tokens with the correct v5 instructions.
+The current continuation is bounded at decision128 and retains mandatory
+teardown. Its live public frame68 matches the original captured screen/action.
+No website redeploy, model change, memory reset or gameplay rescue was made.
+
+The early progress snapshot showed two workshop shortcuts whose requested time advance
 timed out at the native Workshop Job screen with zero game ticks. On each next
 decision Astra pressed Escape itself and advanced 2,000 ticks. No operator keys,
 restart or gameplay rescue occurred. The frozen menu-deferral code recognizes
 AddJob, not this Job focus; retain the observed waits in this cohort rather than
 silently changing its runtime. Revisit the deferral coverage in a later revision.
 
-Next: finish the first 64-response window, audit its saved native boundary and
-teardown, then continue from that same save to response 128. All six declared v2
+The saved first window contains 54 keyboard actions and ten workshop shortcuts,
+293 confirmed key presses and 30 acknowledged queued jobs. Those queue counts
+are not finished-product counts. Five clock requests timed out with zero ticks;
+one other request was deferred by a menu. A 64-frame replay was exported and
+validated, but is not yet added to the website catalog.
+
+Next: finish this own-save continuation to 128, audit its native outcome and
+teardown, then proceed to the declared fresh keyboard pair. All six declared v2
 attempts keep the same source, image, conditions and resources. Earlier v1 results
 are not pooled into the corrected comparison. The broader goal remains active.
 
 The [v2 own-save continuation preparation](../experiments/evidence/selected_workshop_v2_p1_shortcuts_continuation_preparation_20260912.json)
 now has 26 passing offline checks for its exact source/condition bindings,
 unfinished-owner rejection, teardown requirements and continuation-only relay.
-It remains unlaunched: the current first-window save and native audit are still
-required. Preparation neither resets the live run nor establishes checkpoint64.
+That preparation has now been consumed against the actual saved checkpoint;
+the live continuation evidence above supersedes its earlier unlaunched status.
 
 A [read-only action summary](../scripts/summarize_selected_workshop_actions.py)
 now separates keyboard presses, requested/acknowledged workshop jobs, real ticks,
