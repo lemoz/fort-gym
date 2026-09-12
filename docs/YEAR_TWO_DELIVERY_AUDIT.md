@@ -7,6 +7,81 @@ Requirements come from [the approved goal](YEAR_TWO_CAMPAIGNS.md),
 [the standard-input phase](ASTRA_STANDARD_INPUT_EXPERIMENTS.md), and the
 [frozen displayed-key cohort](../experiments/keyboard_binding_comparison_20260911/cohort.json).
 
+## Current controls-study and delivery checkpoint
+
+This summary supersedes the capture-time running/preparation statements in the
+historical sections below. Original result manifests and earlier evidence are
+unchanged. The full Year-Two/cross-model goal is still active.
+
+Three of the six declared v2 attempts have terminal native audits at decision
+128. All three freshly reloaded their own decision-64 save; none of these final
+128 saves has had a separate fresh-reload check. The source/image, original
+seed, Astra Medium model and per-attempt ceilings match the v2 declaration.
+
+| Audited attempt | Elapsed ticks | Living / recorded dead | Beds / workshops / farms | Food / drinks | Returned tokens |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| [Pair 1 shortcuts](../experiments/evidence/selected_workshop_v2_p1_shortcuts_128_20260912.json) | 68,200 | 7 / 0 | 7 / 2 / 1 | 39 / 115 | 3,772,495 |
+| [Pair 1 keyboard](../experiments/evidence/selected_workshop_v2_p1_keyboard_128_20260912.json) | 70,900 | 7 / 0 | 7 / 2 / 1 | 43 / 135 | 3,879,799 |
+| [Pair 2 keyboard](../experiments/evidence/selected_workshop_v2_p2_keyboard_128_20260912.json) | 51,900 | 6 / 1 | 7 / 5 / 1 | 61 / 122 | 3,954,012 |
+
+The pair-two keyboard death is a [native-recorded drowning](../experiments/evidence/selected_workshop_v2_p2_keyboard_drowning_20260912.json),
+first observed at decision 86. The observation boundary does not establish its
+exact time or which model action caused it. Its final guest-poweroff command
+returned one with `exit status 255`; the later VM stop and independent stopped
+state/closed-disk checks passed. The original exit codes remain in the result.
+
+The fourth attempt, [pair-two shortcuts](../experiments/evidence/selected_workshop_v2_p2_shortcuts_startup_20260912.json),
+started from the original seed and empty memory. Its current state belongs to
+the live owner/feed, not this startup snapshot. [Own-save continuation](../experiments/evidence/selected_workshop_v2_p2_shortcuts_continuation_preparation_20260912.json)
+and [reload/terminal audit tools](../experiments/evidence/selected_workshop_v2_p2_shortcuts_terminal_preparation_20260912.json)
+are prepared, not executed. Their 99 combined offline tests do not establish
+a future checkpoint or final outcome. Pair-three shortcuts and keyboard follow
+in the original declared order; no remaining attempt is silently replaced.
+
+The [latest verified website delivery](../experiments/evidence/selected_workshop_v2_p2_keyboard_website_20260912.json)
+is revision `553528797ec140f2f2d50b623897cb3b3cf33811`: twenty original recording
+windows and 1,636 frames, including all three v2 terminal replays. Local testing
+passed 1,302 Python tests with five skips and 31 Node tests; exact-head CI
+`34711790058` and public HTTPS asset/recording checks passed. Nineteen earlier
+recordings/previews and service/database/untracked state were preserved. The
+public catalog totals were read back again during this audit update. The live
+feed now follows pair-two shortcuts through the same existing viewer. No browser
+visual QA or new site deployment was performed for this documentation update.
+
+## Next work toward the full goal
+
+1. Finish the declared six-attempt controls cohort, auditing each own-save chain
+   and publishing its actual replay. Compare all three pairs descriptively;
+   do not choose a control winner from the first pair or hide the drowning.
+2. Return to longer play with an explicit endurance declaration. The controls
+   limit of 128 decisions at at most 2,000 ticks each cannot cover the 403,200
+   ticks in a full elapsed year. Do not alter these frozen attempts to disguise
+   that limit or count a new window as an independent model trial.
+3. Close the portable-owner endurance-budget gap before extending a controls
+   checkpoint beyond its original ceiling. At source
+   `5ddf1e6718dab2e8351e8dc24a2afe5071cd2592`, the underlying native runner and
+   agent support recorded, checkpoint-bound budget extensions, but the portable
+   window courier and window auditor deliberately reject `budget_extension`.
+   Merely increasing a JSON limit would not establish a valid portable
+   continuation. Extend the owner/courier/native/audit path together in an
+   isolated revision, retain the unchanged parent save and cumulative usage,
+   and verify an actual continuation before claiming this capability. A new
+   fresh campaign with a larger initial declared budget is a different experiment,
+   not recovery of these saves. Do not change the active cohort's source/image.
+4. Strengthen long-play evaluation with separately versioned measurements of
+   completed production, consumption, trade and losses. The current private
+   food reader measures inventory at paused native boundaries, not those flows
+   or accessibility. Retain unknowns and keep private evaluation data out of a
+   screen-only model condition. The earlier exploratory Year-Two milestone
+   remains valid with its disclosed save loss; it is not indefinite
+   self-sufficiency or a matched control/model ranking.
+5. Deliver model/configuration comparisons and evidence links on the website,
+   with actual returned usage and unreported dollar charges distinguished.
+   Main integration remains a separate promotion decision; no rejected merge
+   is retried or bypassed by this documentation or experiment work.
+
+## Earlier September 12 evidence snapshots
+
 The [first v2 shortcuts attempt is now saved and audited through decision128](../experiments/evidence/selected_workshop_v2_p1_shortcuts_128_20260912.json).
 Its endpoint retains 68,200 elapsed ticks, seven living dwarves, zero recorded
 deaths, seven beds, two workshops, one farm, 39 food and 115 drinks. All 128
