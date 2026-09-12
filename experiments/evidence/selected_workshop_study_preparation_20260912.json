@@ -1,0 +1,92 @@
+{
+  "schema_version": "fortgym.selected-workshop-study-preparation/v1",
+  "status": "implementation_prepared_native_unverified",
+  "source": {
+    "revision": "8622618c899a9c526df7efd5557e12f267ec72fa",
+    "branch": "codex/selected-workshop-shortcuts",
+    "url": "https://github.com/lemoz/fort-gym/pull/177",
+    "draft": true,
+    "base_revision": "0547261450262c8d0b59486b566a2404e02895f9",
+    "base_branch": "codex/year-two-integration",
+    "pushed": true,
+    "main_merged": false
+  },
+  "control_profile": "native_keyboard_selected_workshop_jobs/v1",
+  "observation_profile": "native_screen_text/v1",
+  "study": {
+    "model": "gpt-6-astra",
+    "reasoning_effort": "medium",
+    "pairs": 3,
+    "attempts": 6,
+    "one_seed": true,
+    "boundaries": [
+      64,
+      128
+    ],
+    "max_dispatches_per_attempt": 128,
+    "max_returned_tokens_per_attempt": 8000000,
+    "screen_size": [
+      120,
+      40
+    ],
+    "source_snapshot_receipt_sha256": "eaf5fa5a40014719e6c313f33497740e536a8faa1c90a84c4e09dcc380ac0595",
+    "configuration_path": "experiments/selected_workshop_study_v1",
+    "runtime_and_resource_binding": "not_yet_declared_for_scored_runs"
+  },
+  "validation": {
+    "source_revision": "8622618c899a9c526df7efd5557e12f267ec72fa",
+    "full_pytest": {
+      "passed": 5681,
+      "skipped": 10,
+      "warnings": 7,
+      "exit_code": 0,
+      "junit_sha256": "cfaf5fd4fb0450358f98dd13c9c0889d761d75672b93f4711fb2cbe797c089dc"
+    },
+    "new_focused_python_lua_tests": 70,
+    "focused_spectator_regression_tests": 65,
+    "node_player_tests": 19,
+    "changed_file_ruff": "passed",
+    "repository_ruff_findings": 10,
+    "ruff_findings_in_unchanged_files": true,
+    "repository_mypy": {
+      "candidate_errors": 465,
+      "base_errors": 465,
+      "candidate_files_with_errors": 27,
+      "base_files_with_errors": 27,
+      "new_modules_with_errors": 0
+    },
+    "hosted_ci": {
+      "id": 34690166945,
+      "url": "https://github.com/lemoz/fort-gym/actions/runs/34690166945",
+      "status_at_preparation": "in_progress",
+      "conclusion_at_preparation": null
+    },
+    "review_basis": "Implementer review and regression tests, not independent approval"
+  },
+  "image_context": {
+    "source_revision": "8622618c899a9c526df7efd5557e12f267ec72fa",
+    "receipt_sha256": "5839fe7ded2a1c049990a0364583fd94530c475be78952904eb762f73058e47e",
+    "files": 979,
+    "bytes": 31468209,
+    "prepared": true,
+    "independently_rechecked": true,
+    "base_image_identity_live_rechecked": false,
+    "image_built": false,
+    "docker_contacted": false
+  },
+  "proof_boundaries": {
+    "native_job_execution_verified": false,
+    "paired_model_runs_started": 0,
+    "model_calls": 0,
+    "game_or_vm_started": false,
+    "website_deployed": false,
+    "prior_recordings_changed": false,
+    "private_memory_published": false,
+    "full_goal_completed": false
+  },
+  "next": [
+    "Verify native selected-workshop queuing and actual worker/material behavior on an isolated copy.",
+    "Bind one exact image and resource condition, then execute the declared three paired repetitions.",
+    "Verify portable live follow, audit own-save outcomes and teardown, and publish real results on the existing website."
+  ]
+}

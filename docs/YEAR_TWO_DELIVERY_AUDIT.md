@@ -7,6 +7,19 @@ Requirements come from [the approved goal](YEAR_TWO_CAMPAIGNS.md),
 [the standard-input phase](ASTRA_STANDARD_INPUT_EXPERIMENTS.md), and the
 [frozen displayed-key cohort](../experiments/keyboard_binding_comparison_20260911/cohort.json).
 
+The separate [selected-workshop controls preparation](../experiments/evidence/selected_workshop_study_preparation_20260912.json)
+is pushed at `8622618c899a9c526df7efd5557e12f267ec72fa`, in draft
+[PR177](https://github.com/lemoz/fort-gym/pull/177) stacked on the unchanged
+integration candidate. It adds an explicitly versioned keyboard-plus-job-entry
+condition, preserves screen-only observation and normal worker/material/time
+requirements, labels shortcuts in the viewer, and prepares three paired Astra
+repetitions at common 64/128-decision budgets. Exact-head local tests pass
+5,681 with ten skips and seven warnings; 70 new focused Python/Lua and 19 Node
+player tests pass. The standalone source/image context is prepared and checked,
+but no image was built, game/VM or model call started, or site deployed for this
+new study. Actual native job execution and the paired comparisons remain next.
+This preparation does not reinterpret the earlier model cohort or merge PR176.
+
 The [Astra r2 terminal result](../experiments/evidence/keyboard_binding_comparison_astra_r2_128_20260912.json)
 now closes the declared 128-decision comparison: all six outcomes are recorded,
 four saved continuations and two preserved Sol infrastructure failures.
