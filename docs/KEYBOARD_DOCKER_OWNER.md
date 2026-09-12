@@ -159,6 +159,10 @@ models or publish website feeds. Storage retirement is a separate scoped action.
 Each attempt separates game/ evidence from private host model/ receipts. It
 retains the source/configuration plan, command logs, admission observation,
 request/claim/response records, container inspections and owner-result.json.
+Docker command stdout is retained in .log and stderr in .stderr.log. Only
+stdout is parsed as an ID or JSON; stderr warnings remain inspectable and do
+not contaminate the machine result. Nonzero exit codes still fail without a
+retry, and the exact container ID and ownership checks remain unchanged.
 Publish only existing allowlisted observer and audited result/recording
 derivatives, never private model data.
 

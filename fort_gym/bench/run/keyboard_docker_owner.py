@@ -44,13 +44,17 @@ class DockerClient:
         self.sequence += 1
         stem = self.output / f"docker-{self.sequence:04d}-{label}"
         publish(stem.with_suffix(".command.json"), {"arguments": command, "timeout": timeout})
-        with stem.with_suffix(".log").open("xb") as stream:
+        stdout_path, stderr_path = stem.with_suffix(".log"), stem.with_suffix(".stderr.log")
+        # Docker can emit a harmless platform warning on stderr while returning
+        # a valid ID or JSON on stdout. Preserve diagnostics without mixing them
+        # into machine-readable output or weakening exact identity validation.
+        with stdout_path.open("xb") as stream, stderr_path.open("xb") as errors:
             completed = subprocess.run(
-                command, stdout=stream, stderr=subprocess.STDOUT, timeout=timeout
+                command, stdout=stream, stderr=errors, timeout=timeout
             )
-        if stem.with_suffix(".log").stat().st_size > MAX_BYTES:
+        if any(path.stat().st_size > MAX_BYTES for path in (stdout_path, stderr_path)):
             raise ValueError("Docker command output exceeds its bounded reader")
-        value = stem.with_suffix(".log").read_text()
+        value = stdout_path.read_text()
         if completed.returncode != 0:
             raise subprocess.CalledProcessError(completed.returncode, command)
         return value.strip()

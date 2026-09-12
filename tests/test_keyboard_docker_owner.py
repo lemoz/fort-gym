@@ -467,6 +467,40 @@ def test_runtime_preflight_requires_local_engine_exact_image_and_no_implicit_vol
         client.preflight(RUNTIME)
 
 
+def test_docker_machine_output_keeps_stderr_warning_separate(tmp_path):
+    client = owner.DockerClient(Path(sys.executable), "fixture", tmp_path)
+    identity = "a" * 64
+    command = [sys.executable, "-c",
+               "import sys; print('WARNING: image platform differs', file=sys.stderr); "
+               + f"print({identity!r})"]
+    assert client.run(command, "create") == identity
+    assert (tmp_path / "docker-0001-create.log").read_text() == identity + "\n"
+    assert (tmp_path / "docker-0001-create.stderr.log").read_text() == (
+        "WARNING: image platform differs\n"
+    )
+
+
+def test_docker_failed_command_retains_both_streams_without_retry(tmp_path):
+    client = owner.DockerClient(Path(sys.executable), "fixture", tmp_path)
+    command = [sys.executable, "-c", "import sys; print('partial'); "
+               "print('daemon error', file=sys.stderr); sys.exit(7)"]
+    with pytest.raises(owner.subprocess.CalledProcessError) as error:
+        client.run(command, "failure")
+    assert error.value.returncode == 7 and client.sequence == 1
+    assert (tmp_path / "docker-0001-failure.log").read_text() == "partial\n"
+    assert (tmp_path / "docker-0001-failure.stderr.log").read_text() == "daemon error\n"
+
+
+@pytest.mark.parametrize("stream", ["stdout", "stderr"])
+def test_docker_bounds_each_retained_stream(tmp_path, monkeypatch, stream):
+    client = owner.DockerClient(Path(sys.executable), "fixture", tmp_path)
+    monkeypatch.setattr(owner, "MAX_BYTES", 20)
+    command = [sys.executable, "-c", f"import sys; sys.{stream}.write('x' * 21)"]
+    with pytest.raises(ValueError, match="bounded reader"):
+        client.run(command, "oversized")
+    assert client.sequence == 1
+
+
 def test_owner_routes_unchanged_continuation_with_its_original_memory(arguments, saved):
     checkpoint, _, _ = saved
     arguments.mode, arguments.origin, arguments.campaign_id = "continue", checkpoint, "runtime-test"
