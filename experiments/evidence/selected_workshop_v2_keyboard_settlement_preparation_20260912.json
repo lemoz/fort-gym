@@ -1,0 +1,52 @@
+{
+  "schema_version": "fortgym.selected-workshop-keyboard-settlement-preparation/v1",
+  "date_utc": "2026-09-12",
+  "study_id": "selected-workshop-v2",
+  "campaign_id": "selected-workshop-v2-p1-keyboard",
+  "status": "prepared_not_executed",
+  "source_revision": "5ddf1e6718dab2e8351e8dc24a2afe5071cd2592",
+  "image": "sha256:dcbc9b042538401a146159fcf5f6456b21dc900c4649369c008f7a77f661fed3",
+  "study_declaration_sha256": "e325f69f40978a9a0b2ed962a505c893aa7ea397b569e3300455972d7b94ebc8",
+  "helpers_sha256": {
+    "settle_v2_p1_keyboard.py": "1b87724b0817133ec0e6a20c55253d964c30c0af2d47836af01ba32ebf790135",
+    "test_v2_keyboard_settlement.py": "44d823a08a5805e8e0f9021e6033c3c170bd26b610b565f9f4b2c9167a07a0eb",
+    "capture_v2_p1_keyboard_continuation.py": "12f8a11b5c6ed781535fa4ba364d0f6846012c3c0d6c0f71a653eb752b6b138f"
+  },
+  "validation": {
+    "passed": 58,
+    "failed": 0,
+    "warnings": 2,
+    "warning_kind": "existing Pydantic class-based config deprecation",
+    "report_sha256": "d484fbdc03a5bb1573d99e35a6dfeb69719c4fc472a2958214ea08ab18936b42",
+    "ruff": "passed",
+    "includes": "Terminal settlement and own-save continuation preparation guards; no game, provider, VM or website calls."
+  },
+  "actual_continuation": {
+    "receipt": "selected_workshop_v2_p1_keyboard_64_20260912.json",
+    "sha256": "2ad394e3e10b58e302b173713404955a39ba5291735e266726fa86cdb2511b2f",
+    "own_checkpoint64_native_reload_verified": true,
+    "memory_usage_and_history_restored": true,
+    "public_frame_verified": 67,
+    "terminal_result": false
+  },
+  "terminal_export": {
+    "requires_both_actual_window_results": true,
+    "requires_128_response_native_audit": true,
+    "requires_own_checkpoint64_reload": true,
+    "requires_stopped_vms_and_closed_disks": true,
+    "requires_frozen_conditions_source_and_image": true,
+    "original_attempt_token_ceiling": 8000000,
+    "outputs_write_once": true,
+    "recording_id": "controls-v2-p1-keyboard-1-128",
+    "recording_frames": 128,
+    "excludes_private_memory_and_transcripts": true,
+    "export_executed": false,
+    "website_published": false
+  },
+  "runtime_modified": false,
+  "preparation_model_calls": 0,
+  "preparation_gameplay_inputs": 0,
+  "main_merge": false,
+  "full_goal_complete": false,
+  "note": "The actual keyboard continuation remains active under its existing owner and mandatory teardown. These checks prepare terminal audit and replay export only. They do not establish checkpoint128, comparative superiority or sustainability."
+}
