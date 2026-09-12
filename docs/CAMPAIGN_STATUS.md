@@ -104,14 +104,19 @@ remains unresolved. The full goal stays active.
 
 The isolated integration candidate is pushed as
 [draft PR176](https://github.com/lemoz/fort-gym/pull/176), head
-`df2d35ea323ac4b1cb15675e40f12f514210b24c`. It retains the Terra r2/Sol r2
+`3c3885a04f08b5f04fb00ea718ad094f9e6215a9`. It retains the Terra r2/Sol r2
 results, five-outcome128 index and fourteen-recording viewer, and adds the
 [configured portable Docker owner](../experiments/evidence/keyboard_portable_owner_implementation_20260912.json)
-for fresh and unchanged own-save attempts. The current full suite passes 5,459
+for fresh and unchanged own-save attempts. The current full local suite passes 5,482
 Python tests with ten skips and seven warnings, plus all 51 Node contracts.
-All 71 focused owner/courier tests, selected Ruff checks and four-file mypy
-checks pass. Exact-head CI `34672652444` passed; prior integration CI
-`34671288581` passed as well.
+All 94 focused policy/owner/courier tests, selected Ruff checks and three-file
+mypy checks pass. Exact-head CI `34673752532` passed with 5,338 tests and 154
+skips; hosted and local coverage are not identical. The [compatibility review](../experiments/evidence/keyboard_portable_owner_compatibility_review_20260912.json)
+adds a checksum-bound narrow DFHack syscall policy and fixes the input-copy
+loop overwriting the container name used for uncertain-create cleanup. A new
+exact-name test reproduced that cleanup failure before the fix. The historical
+policy's original bytes pass the new reader; no actual container was run.
+Prior integration CI `34672652444` and `34671288581` passed as well.
 The [additional setup and source review](../experiments/evidence/keyboard_integration_setup_review_176_20260912.json)
 verifies an isolated Python/viewer install and 659 focused tests on its exact
 prior head. A [separate protocol setup check](../experiments/evidence/keyboard_integration_protocol_setup_176_20260912.json)

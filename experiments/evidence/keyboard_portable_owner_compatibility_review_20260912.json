@@ -1,0 +1,82 @@
+{
+  "schema_version": "fortgym.portable-keyboard-owner-compatibility-review/v1",
+  "source_revision": "3c3885a04f08b5f04fb00ea718ad094f9e6215a9",
+  "previous_source_revision": "df2d35ea323ac4b1cb15675e40f12f514210b24c",
+  "pull_request": 176,
+  "findings": [
+    {
+      "issue": "The portable plan used Docker default seccomp, while the retained native compatibility result records a rejected DFHack personality(262144) launch.",
+      "fix": "Runtime v2 accepts a reviewed SHA256-bound host profile, requires default-deny and a narrow launcher allowance, retains original bytes and rechecks them before create. Older v1 configurations retain their default policy."
+    },
+    {
+      "issue": "The input-copy loop overwrote the predeclared container name used to reconcile an uncertain Docker create result.",
+      "reproduced": "A new exact-name Docker double failed before the variable rename and passed afterward; no real container was created.",
+      "fix": "Keep the container name separate from the input filename key; reconcile that exact named container without retrying create."
+    }
+  ],
+  "additional_changes": [
+    "Enable Docker init for child-process reaping.",
+    "Set combined memory/swap equal to declared memory."
+  ],
+  "source_sha256": {
+    "fort_gym/bench/run/keyboard_seccomp.py": "afdd5e93ba38ddb1be67fa7b45309958d6a37c6f27157309594b349f3d90a619",
+    "fort_gym/bench/run/keyboard_docker_plan.py": "9fbf4e3658f6cd2a06c41d1676f036e07a7bcd58a309338fd1c2a4c55c84b360",
+    "fort_gym/bench/run/keyboard_docker_owner.py": "5fe127d4b99672dc84f59d60c85533eee98fd31051207cdae3d3e80135b50369",
+    "tests/test_keyboard_seccomp.py": "53026310185439c9a89da4a0d39f33526fc6348098ef95531a0b4e173a5f2f3e",
+    "tests/test_keyboard_docker_owner.py": "81e14bc3f676a8f39939e5091fdf189d7392fe81c912ecf51c1442c6ac356617"
+  },
+  "validation": {
+    "focused_tests_passed": 94,
+    "node_viewer_tests_passed": 51,
+    "scoped_ruff_passed": true,
+    "scoped_mypy": {
+      "passed": true,
+      "source_files": 3,
+      "follow_imports": "silent"
+    },
+    "full_local_suite": {
+      "passed": 5482,
+      "skipped": 10,
+      "warnings": 7,
+      "seconds": 247.7,
+      "localhost_socket_access": true,
+      "source_clean": true
+    },
+    "initial_sandbox_run": {
+      "passed": 5480,
+      "skipped": 10,
+      "failed": 1,
+      "reason": "Localhost bind denied by sandbox in test_available_port_skips_bound_port; this run preceded the cleanup regression and final variable rename.",
+      "superseded_by_full_local_suite": true
+    }
+  },
+  "retained_profile": {
+    "sha256": "5ae96ce3d0a9c746765df7d4c5948312f3847b08e917174368797d788461657a",
+    "bytes": 16158,
+    "read_and_validated": true,
+    "rewritten": false,
+    "kernel_execution": false,
+    "recommendation_for_newer_engines": false
+  },
+  "proof_limits": [
+    "Partial implementer source review, not independent full integration approval.",
+    "The configured policy receives structural checks, not a complete syscall-policy security audit.",
+    "No compatible image was built and no actual container, game, VM or experiment model call was started.",
+    "The known guest free-space shortage remains; no original cohort is moved onto this new runtime or retried.",
+    "Native image construction, actual wire/container acceptance, live observer wiring, remaining source review and main merge remain open."
+  ],
+  "main_merged": false,
+  "website_changed": false,
+  "full_goal_complete": false,
+  "exact_head_ci": {
+    "run_id": 34673752532,
+    "head_sha": "3c3885a04f08b5f04fb00ea718ad094f9e6215a9",
+    "status": "completed",
+    "conclusion": "success",
+    "passed": 5338,
+    "skipped": 154,
+    "warnings": 7,
+    "seconds": 268.19,
+    "note": "Hosted and local environments have different skip counts; success is not identical executed coverage."
+  }
+}
