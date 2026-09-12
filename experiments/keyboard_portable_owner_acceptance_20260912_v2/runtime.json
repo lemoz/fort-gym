@@ -1,0 +1,14 @@
+{
+  "schema_version": "fortgym.keyboard-docker-runtime/v2",
+  "image": "sha256:08be1b113760e9afb722c829a6f6ea2ea0e694d1510e08852db1db079a97cc02",
+  "source_revision": "d4a54b7ebe6753c80b19cc454f9bfbe365173e1b",
+  "project_directory": "/workspace/fort-gym",
+  "python_executable": "/opt/python/bin/python3.11",
+  "runtime_directory": "/opt/dwarf-fortress",
+  "cpus": 2,
+  "memory_mib": 1536,
+  "pids_limit": 256,
+  "minimum_host_free_bytes": 1610612736,
+  "seccomp_profile": "/Users/cdossman/Documents/Open Source Projects/fort-gym-environment-layer/fort_gym/artifacts/native-local-20260906/seccomp-moby27-dfhack.json",
+  "seccomp_sha256": "5ae96ce3d0a9c746765df7d4c5948312f3847b08e917174368797d788461657a"
+}
