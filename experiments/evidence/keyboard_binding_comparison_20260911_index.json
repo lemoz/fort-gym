@@ -43,6 +43,11 @@
       }
     },
     "bindings-comparison-20260911-terra-r1": {
+      "128": {
+        "path": "experiments/evidence/keyboard_binding_comparison_terra_r1_128_20260912.json",
+        "sha256": "0283bbcb92d4c79123c2a1f1175cc03ba06a5f93857fcf2bb4f811b08a6cf5e1",
+        "revision": "deb53296492a33cf163ca40b8f067bee11ce6308"
+      },
       "64": {
         "path": "experiments/evidence/keyboard_binding_comparison_terra_r1_64_20260911.json",
         "sha256": "b4ea68600315b7788c38e53848a47ba27513fa3bcca418b878f31a51f564b7bf",
