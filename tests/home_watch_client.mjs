@@ -260,8 +260,8 @@ test('Year-Two replay displays its endpoint and hides it for other recordings', 
   } finally { Object.assign(globalThis,originals); }
 });
 
-for (const [model, repeat, first=1] of [['astra',1], ['terra',1], ['terra',2], ['sol',2], ['astra',2], ['terra',1,65], ['astra',1,65], ['terra',2,65]]) test(model+' matched run '+repeat+' from '+first+' scrubs audited frames', async () => {
-  const last=first+63, id=model+'-matched-r'+repeat+'-'+first+'-'+last;
+for (const [model, repeat, first=1, size=64] of [['astra',1], ['terra',1], ['terra',2], ['sol',2], ['astra',2], ['terra',1,65], ['astra',1,65], ['terra',2,65], ['astra','portable',1,4]]) test(model+' '+repeat+' from '+first+' scrubs audited frames', async () => {
+  const last=first+size-1, id=repeat==='portable'?'astra-portable-acceptance-1-4':model+'-matched-r'+repeat+'-'+first+'-'+last;
   const recording=JSON.parse(fs.readFileSync('web/static/recordings/'+id+'.json'));
   const originals=Object.fromEntries(['document','fetch','location','setInterval','clearInterval'].map(key=>[key,globalThis[key]]));
   const elements=new Map();
@@ -280,7 +280,7 @@ for (const [model, repeat, first=1] of [['astra',1], ['terra',1], ['terra',2], [
     assert.equal(get('title').textContent,recording.title);
     assert.equal(get('decision').textContent,'Decision '+first+' / '+last);
     assert.equal(get('outcome').hidden,true);
-    for(const index of (model==='terra' && repeat===2 ? [2,3,7,22,24,45,50,61,62,63] : [5,15,31,54,63])) {
+    for(const index of (size===4 ? [0,1,2,3] : model==='terra' && repeat===2 ? [2,3,7,22,24,45,50,61,62,63] : [5,15,31,54,63])) {
       get('range').value=String(index);await get('range').emit('input');
       assert.equal(get('decision').textContent,'Decision '+(index+first)+' / '+last);
       assert.equal(get('intent').textContent,recording.frames[index].action.intent);
