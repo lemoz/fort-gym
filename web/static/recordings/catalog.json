@@ -3,6 +3,22 @@
   "recordings": [
     {
       "schema_version": "fortgym.watch-recording/v1",
+      "id": "controls-v2-p1-keyboard-1-128",
+      "title": "Astra · controls study v2 pair 1 · keyboard · 1–128",
+      "model": "gpt-6-astra",
+      "control_profile": "native_keyboard_bindings/v1",
+      "first_decision": 1,
+      "last_decision": 128,
+      "saved_through_decision": 128,
+      "audit_sha256": "3302c95c7e3855f5621e60033b1d97b6bd0803f3609cced273233535039a3a5b",
+      "source_revision": "5ddf1e6718dab2e8351e8dc24a2afe5071cd2592",
+      "recording_status": "saved",
+      "window": "1–128",
+      "frame_count": 128,
+      "sha256": "280e6193242088f0743a000cc84ace5cefa23b82d4c9877f73abf46597c533f5"
+    },
+    {
+      "schema_version": "fortgym.watch-recording/v1",
       "id": "controls-v2-p1-shortcuts-1-128",
       "title": "Astra · controls study v2 pair 1 · shortcuts · 1–128",
       "model": "gpt-6-astra",

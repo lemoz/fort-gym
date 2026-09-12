@@ -1,4 +1,4 @@
-"""The first corrected shortcuts replay preserves native outcomes and both routes."""
+"""Corrected controls replays preserve actual outcomes and their distinct routes."""
 import hashlib
 import json
 from pathlib import Path
@@ -44,10 +44,33 @@ def test_v2_shortcuts_replay_is_exactly_the_audited_two_window_export():
 
 def test_latest_replay_is_v2_and_does_not_claim_a_completed_comparison():
     catalog = json.loads((RECORDINGS / "catalog.json").read_text())["recordings"]
-    assert catalog[0]["id"] == IDENTITY
-    assert catalog[1]["id"] == "controls-p1-keyboard-1-128"
+    assert catalog[0]["id"] == "controls-v2-p1-keyboard-1-128"
+    assert catalog[1]["id"] == IDENTITY
+    assert catalog[2]["id"] == "controls-p1-keyboard-1-128"
     assert "campaign" not in catalog[0]
     html = (ROOT / "web/worlds.html").read_text()
     assert "68,200 game ticks" in html and "queued jobs are not completed products" in html
-    assert "paired keyboard run is still pending a final result" in html
+    assert "first matched pair uses the same seed and 128-decision limit" in html
+    assert "two pairs remain" in html
+    assert "70,900 game ticks" in html and "43 food and 135 drinks" in html
+    assert "paired keyboard run is still pending a final result" not in html
     assert "do not establish sustainability" in html
+
+
+def test_v2_keyboard_replay_is_the_audited_128_decision_own_save_export():
+    raw = (RECORDINGS / "controls-v2-p1-keyboard-1-128.json").read_bytes()
+    assert hashlib.sha256(raw).hexdigest() == (
+        "280e6193242088f0743a000cc84ace5cefa23b82d4c9877f73abf46597c533f5"
+    )
+    data = json.loads(raw)
+    assert data["source_revision"] == "5ddf1e6718dab2e8351e8dc24a2afe5071cd2592"
+    assert data["audit_sha256"] == "3302c95c7e3855f5621e60033b1d97b6bd0803f3609cced273233535039a3a5b"
+    assert data["control_profile"] == "native_keyboard_bindings/v1"
+    assert data["saved_through_decision"] == 128
+    assert [frame["decision"] for frame in data["frames"]] == list(range(1, 129))
+    assert sum(frame["after"]["ticks_advanced"] for frame in data["frames"]) == 70900
+    assert data["frames"][63]["after"]["tick"] == data["frames"][64]["before"]["tick"]
+    assert data["frames"][-1]["after"]["population"] == 7
+    assert all("shortcut" not in frame["action"] for frame in data["frames"])
+    assert sum(len(frame["action"]["keys"]) for frame in data["frames"]) == 669
+    assert all(frame["accepted"] for frame in data["frames"])

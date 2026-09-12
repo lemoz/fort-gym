@@ -250,3 +250,32 @@ the Runs gallery gets the matching captured preview and qualified result text.
 The live feed belongs to the new `selected-workshop-v2-p1-keyboard` attempt and
 must continue unchanged through this static release. No new viewer, synthetic
 frame, dependency, service restart, database mutation, host or main merge.
+
+## Corrected keyboard controls replay (September 12, 2026)
+
+Start from public revision `5887540702b9aeedb656363b4a4cc1988131a197`.
+Add `controls-v2-p1-keyboard-1-128` without rewriting its audited bytes. Its
+SHA-256 is `280e6193242088f0743a000cc84ace5cefa23b82d4c9877f73abf46597c533f5`,
+bound to audit `3302c95c7e3855f5621e60033b1d97b6bd0803f3609cced273233535039a3a5b`
+and frozen native source `5ddf1e6718dab2e8351e8dc24a2afe5071cd2592`.
+
+All 128 decisions used the keyboard route, with 669 confirmed key presses.
+The final save retains 70,900 elapsed ticks, seven living dwarves, zero recorded
+deaths, seven beds, two workshops, one farm, 43 food and 135 drinks. Its own
+64-decision save was freshly reloaded; the final save has no separate reload.
+The run returned 3,879,799 tokens. Subscription dollar charges are unreported.
+Native and VM teardown passed. The redundant VM-stop command returned one
+because guest poweroff had already stopped the VM; stopped state and closed
+disks were independently rechecked. Original receipts retain that exit code.
+
+This completes the first of three planned matched control pairs on one seed.
+Show both individual outcomes, not a ranking or sustainability claim. Preserve
+the earlier v1 replay separately. All eighteen older recordings and captured
+previews remain unchanged; the catalog now contains nineteen windows and 1,508
+captured frames. These windows are not nineteen independent campaigns.
+
+Only the new recording, shared catalog/preview list, Runs gallery, tests and
+this document change. The homepage and Results use the same catalog and viewer.
+Preserve the latest live-feed identity, API/game services, database counts and
+untracked files. No service restart, new host, game command, model call or main
+merge is part of this static release.
