@@ -1,0 +1,51 @@
+{
+  "schema_version": "fortgym.selected-workshop-attempt-preparation/v2",
+  "date_utc": "2026-09-12",
+  "campaign_id": "selected-workshop-v2-p2-shortcuts",
+  "declared_order_index": 3,
+  "state": "prepared_not_launched",
+  "source_revision": "5ddf1e6718dab2e8351e8dc24a2afe5071cd2592",
+  "study_declaration_sha256": "e325f69f40978a9a0b2ed962a505c893aa7ea397b569e3300455972d7b94ebc8",
+  "previous_attempt_result_sha256": "f900ac3897314401ceba995e81bc3017cd501c7d0e85ebdfef7fbc1447e0c2a5",
+  "original_seed_and_empty_memory_required": true,
+  "helpers": {
+    "run_v2_p2_shortcuts_fresh.py": "d1b2686d2355bafcd86753865123fc5a7f9a80f8fd5ae027358111cfcb52ca41",
+    "relay_v2_p2_shortcuts.py": "07aa0a7c3940e4e7250ff9f4525f287c7b770058b2c9ac2338be110dd8c6b985",
+    "capture_v2_p2_shortcuts_start.py": "157e22c3a3a2fcdb9ae22ffa8bff83883d65a01b6ec21997d1061d15faba6975",
+    "verify_v2_p2_shortcuts_public.py": "081f839bfc837591142d591d7b03e8420b88c5dce3d2b3c2da3af81c35c3cd5f",
+    "test_v2_p2_shortcuts_preparation.py": "def3969088ba1b65c951f425bdb6070fdd5bce45c8d76b13bd93323bb0a8dc1d",
+    "test_v2_p2_shortcuts_live.py": "c64b4b19094fb184a5d31f2d497adbb52fa805ff269a1ac7ea7775892227d1ad"
+  },
+  "tests": {
+    "passed": 21,
+    "warnings": 2,
+    "ruff": "passed",
+    "report_sha256": "4d612b91f019b244e88066749260b2c427ac367ece3b7dcf4bb5324f88a90f8a",
+    "scope": "Offline attempt identity, predecessor rejection and public relay ownership/shutdown. No native gameplay proof."
+  },
+  "read_only_preflight": {
+    "preceding_keyboard_audit_verified": true,
+    "both_project_vms_stopped": true,
+    "source_clean": true,
+    "configurations_and_mounts_unchanged": true,
+    "evidence_volume_identity_verified": true,
+    "next_attempt_identity_unused": true
+  },
+  "allowance_snapshot": {
+    "captured_at_unix": 1789238786.1184871,
+    "auth_mode": "chatgpt",
+    "allowed": true,
+    "used_percent": 30,
+    "window_minutes": 10080,
+    "maximum_used_percent": 98,
+    "atomic_reservation": false,
+    "launch_and_every_model_call_recheck_required": true
+  },
+  "native_game_started": false,
+  "model_calls": 0,
+  "api_fallback": false,
+  "cloud_launch": false,
+  "reset_or_credit_purchase": false,
+  "reported_subscription_charge_usd": null,
+  "full_goal_complete": false
+}
