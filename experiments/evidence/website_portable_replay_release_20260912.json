@@ -1,0 +1,57 @@
+{
+  "schema_version": "fortgym.portable-spectator-website-release/v1",
+  "release_revision": "6a14c641edbc31b112fe921fd9d90e81d675b4ae",
+  "ci_run": 34680626249,
+  "assets": {
+    "/static/recordings/astra-portable-acceptance-1-4.json": "4737508d32fd1a6e27c2c78e1636ec7fb8de91eaca622cd38f8a7d3ab398ddf1",
+    "/static/recordings/catalog.json": "0c181a28a995d24f0db37e58ded8cfb6c0b42f60a4aa9a11086244b273930a8d",
+    "/static/recordings/previews.json": "103400695e111d16b8f6fa87a92153a7a63839d1d6750683e0c88f71a6eed7de",
+    "/worlds": "0c60c3a1b43b089c574b59062e3a2e27139e9c1ab850420d72a5c6b40c646e38"
+  },
+  "recordings": 15,
+  "captured_frames": 1060,
+  "historical_recordings_unchanged": true,
+  "comparison_reports_unchanged": true,
+  "live_relay_unchanged": true,
+  "default_recording": "terra-matched-r2-65-128",
+  "model_calls": 0,
+  "gameplay_inputs": 0,
+  "browser_visual_qa": false,
+  "passed": true,
+  "website_url": "https://fortgym.live/worlds",
+  "replay_url": "https://fortgym.live/?recording=astra-portable-acceptance-1-4#watch-root",
+  "native_acceptance_result": "evidence/keyboard_portable_owner_acceptance_20260912.json",
+  "native_source_revision": "40b106b95f483b534a738622e75c4147a1270a96",
+  "native_audit_sha256": "a9a193fc539fe7541b48625cde1a00782cb29017f32b9fb92b6d5a059b3e47df",
+  "private_receipt_sha256": {
+    "build.mjs": "cd81789df76a6b5059f296670beaa94e27af25ef0f839f2a1ee97cd331cff9b7",
+    "build-receipt.json": "89108152ca8d80061e77053dc1bbf968bcd4b3963c62ef609e0d909f4e66acd9",
+    "deploy_remote.py": "b861d62814d4cd808189bea5b98d522968f3b53aa2ff5d0e1116b886bb4d3067",
+    "publish.py": "d6c89c0c9fb38d48a69da3d8ffd5606e8067fc831da3410c148202f986c6b46f",
+    "remote-acceptance.jsonl": "3aeb580b5314b350c0f1d7d27a4babe13e858e5f8054809bd5d4815aeda4d06b",
+    "public-acceptance.json": "1b2b7b376a984ec665fe1534b4e533bdfd88617d7c2f5805e05eec88aef296ca"
+  },
+  "validation": {
+    "full_local_tests_passed": 1273,
+    "skipped": 5,
+    "warnings": 7,
+    "node_contracts_passed": 52,
+    "selected_ruff_passed": true,
+    "hosted_tests_passed": 1273,
+    "hosted_skipped": 5,
+    "hosted_warnings": 7
+  },
+  "native_and_api_service_identities_unchanged": true,
+  "database_counts_unchanged": true,
+  "untracked_files_preserved": true,
+  "service_restarts": 0,
+  "new_hosts": 0,
+  "main_merge": false,
+  "full_goal_complete": false,
+  "limits": [
+    "The four new recorded decisions are a paused save-and-resume acceptance, with zero elapsed game ticks, not fortress growth or a model-ranking update.",
+    "All fourteen original recordings and both comparison reports remain byte-identical. The homepage default remains Terra matched repeat continuation.",
+    "The portable live observer has stopped-capture and synthetic process-lifecycle coverage; actual live-follow acceptance remains unverified.",
+    "No new model calls, game inputs, or VM starts were required for this publication. Subscription dollar charges remain unreported, not zero."
+  ]
+}

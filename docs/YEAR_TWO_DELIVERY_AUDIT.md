@@ -18,8 +18,18 @@ teardown. This closes the public-owner end-to-end acceptance gap in the older
 snapshot below. Two startup failures and their fixes remain explicitly retained.
 Full local tests: 5,530 passed / 10 skipped. Exact-head hosted CI: 5,386 passed /
 154 skipped. No new growth is claimed: the game stayed paused during these four
-navigation/designation decisions. Portable observer wiring, source review,
-main merge and the remaining gameplay/comparison goals are still open.
+navigation/designation decisions.
+
+Latest delivery: [the portable replay release](../experiments/evidence/website_portable_replay_release_20260912.json)
+is verified publicly at website source `6a14c641edbc31b112fe921fd9d90e81d675b4ae`.
+It appends the four paused decisions to the existing player and gallery:
+fifteen windows, 1,060 frames, all earlier recordings and comparison reports
+unchanged. The portable exporter and observer are pushed at
+`8e1b57ab6bc4c9194d86389bdcc1705e97a064f9`; the combined candidate is
+`c0f6dd458adaa6aaa437b2d71e17a13664454f4c`. Audited export and stopped-feed
+acceptance are covered without another VM, model call or game input.
+Actual portable live follow, full source review, main merge and the remaining
+gameplay/comparison goals remain open. This is not another growth experiment.
 
 | Requirement | Current evidence | Remaining work or limit |
 | --- | --- | --- |
@@ -29,11 +39,11 @@ main merge and the remaining gameplay/comparison goals are still open.
 | Standard input versus optional shortcuts | This cohort explicitly uses displayed native keyboard controls and excludes shortcuts. The standard-input phase preserves a separate three-pair comparison with explicit shortcuts. | That paired comparison is not proved by these six model trials. Declare and run it separately with matching starts and budgets; do not alter the current cohort or silently introduce helpers. |
 | Inspectable development, adaptation and sustainability | Saved native metrics, job samples, elapsed time, chosen controls and rejected actions are retained and replayable. The Astra endpoint review explicitly qualifies its observations. | Stocks and sampled jobs are not production/consumption rates, accessible reserves or completed job counts. Keep unmeasured fields unknown; use longer gameplay and separately versioned measurement improvements for stronger sustainability claims. |
 | Honest cost and resource reporting | Returned model tokens and known lost responses remain accounted. Results identify subscription transport and leave dollar charges null. | Subscription dollar charges, hardware energy and app cost are unreported, not zero. Do not create a fabricated actual cost or silently substitute API-price estimates. |
-| Live and recorded website delivery | [The verified repeat-outcome release](../experiments/evidence/website_repeat_outcomes_release_20260912.json) serves all six fresh results, fourteen replay windows, 1,056 captured frames, a 64/128 budget selector and immutable evidence links. Terra r2's continuation and both latest table outcomes are live. All thirteen older recordings and the stopped observer are unchanged. | Astra r2 is unlaunched because of the known native capacity shortage. No replay is invented for Sol's zero-call capacity failure. This release is not another game acceptance or independent trial. |
-| Reviewed and merged remote implementation, tests, setup and manifests | Native code, website code and result manifests are pushed, with exact-revision tests and native/public evidence. Main is `f1aa05f429c189b67891cf2629e8e00329222aca`. | PR176 candidate `7acb4f72b254f9e9d41f7b0a3751f00b99d402cc` includes the comparison/viewer, portable owner and source image packager. Its two native ownership fixes passed 5,511 local tests, including 29 packaging tests; exact-head CI `34677562979` passed 5,367 tests with 154 skips. Hosted/local scopes differ. The unchanged viewer retains its earlier 51 Node contracts. [Native image/load acceptance](../experiments/evidence/keyboard_portable_native_load_acceptance_20260912.json) now passes, but full source review, actual owner/courier fresh-save-continuation and main merge remain. Public deployment is not merged harness delivery. |
-| Reusable setup rather than one machine's retained experiment assets | The candidate installs in a fresh Python environment, loads three model configurations and reproduces the reports. Its base was imported into a separate clean local VM; the source-bound image then loaded a real seed and checkpoint under the configured unprivileged user. Original saves and contexts are unchanged. | The public owner supports fresh and unchanged continuation without a dated private owner, and reads all six original model checkpoints offline. The new image's two paused native loads verify startup and load compatibility, not a model-selected fresh run, creation/resume of its own new checkpoint, every Python protobuf observation/action path or portable-layout observer wiring. Verify those next with a short declared real-model acceptance. Do not redistribute restricted runtime images or private model data. |
+| Live and recorded website delivery | [The portable replay release](../experiments/evidence/website_portable_replay_release_20260912.json) serves fifteen replay windows and 1,060 captured frames. The six fresh results, 64/128 budget selector, continuation outcomes, immutable evidence links, all fourteen earlier recordings and stopped Terra relay are unchanged. | The added four paused frames prove harness continuity, not model growth. Portable live follow still needs acceptance during an otherwise-needed game. Astra r2 remains unlaunched at its known native capacity shortage; no replay is invented for Sol's zero-call failure. |
+| Reviewed and merged remote implementation, tests, setup and manifests | Native code, website code and result manifests are pushed, with source-bound native/public evidence. Main remains `f1aa05f429c189b67891cf2629e8e00329222aca`. PR176's combined candidate is `c0f6dd458adaa6aaa437b2d71e17a13664454f4c`. | Full source review and main merge remain. Actual public-owner fresh/save/resume acceptance passed at exact native source `40b106b95f483b534a738622e75c4147a1270a96`; newer spectator metadata is not a new native acceptance. Repository-wide lint/type baselines remain qualified. Public deployment is not merged harness delivery. |
+| Reusable setup rather than one machine's retained experiment assets | The candidate installs in a fresh Python environment, selects three model configurations and reproduces the reports. A separate clean local VM built the source-bound image. The public owner completed a real two-decision fresh run and two-decision own-save continuation, preserving memory, usage, history and originals. Its audited replay exports through the standard website format. | The native acceptance covers that source/image on this host, not every observation/action path or fresh-machine platform. Portable live follow has synthetic and stopped-capture proof only. Preserve frozen cohort runtimes and do not redistribute restricted images or private model data. |
 
-## Integration started without changing active gameplay
+## Integration history (earlier checkpoints)
 
 The [new packaging result](../experiments/evidence/keyboard_portable_image_context_20260912.json)
 verifies a real standalone source/binding context at that exact candidate:
@@ -114,9 +124,9 @@ records its precise coverage. The local server was stopped; no game, model or VM
 was launched for these checks. Generated bindings and fresh-machine native
 provisioning remain unverified.
 
-Next verify a short real Astra fresh/own-save run through the portable owner and
-review the remaining combined source, and
-merge only after that evidence exists. Preserve current main's work, all historical protocols and
+At that checkpoint, the next step was a short real Astra fresh/own-save run
+through the portable owner. That acceptance is now recorded above. Remaining
+combined source review still precedes merge. Preserve current main's work, all historical protocols and
 results, and private-data exclusions. Never merge the whole conflicting
 work-in-progress branch merely because its latest focused tests pass.
 
