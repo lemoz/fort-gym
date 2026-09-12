@@ -93,12 +93,12 @@ responses using 96,053 returned tokens. Its public frame 4 matches the original
 screen/action, and the single existing local VM retains mandatory teardown.
 The source, image, model, seed and original budgets are unchanged. No new
 cloud VM, paid API fallback, human gameplay input or future terminal result
-is included. The final keyboard result and both replay deliveries remain.
+is included. The final keyboard result and its replay delivery remain.
 The [fifth-attempt replay importer](../experiments/evidence/selected_workshop_v2_p3_shortcuts_website_preparation_20260912.json)
 passed 35 in-memory checks, including its exact result-file binding and
 preservation of all 21 existing recordings/previews. It has now imported the
-actual terminal replay into the isolated website branch. Local website tests,
-exact-head CI and public release remain separate from native completion.
+actual terminal replay into the isolated website branch. Website tests,
+exact-head CI and the public release subsequently passed as recorded below.
 
 A [separate workshop job-screen feedback correction](../experiments/evidence/workshop_job_clock_feedback_preparation_20260912.json)
 is pushed for draft review as PR179. It recognizes the exact paused `Workshop/Job`
@@ -143,19 +143,22 @@ preparation snapshot remains unchanged. A real candidate image,
 same-save budget-extension acceptance and endurance gameplay remain unproven.
 No old-source migration, active-cohort change, extra VM or model call was made.
 
-The [latest verified website delivery](../experiments/evidence/selected_workshop_v2_p2_shortcuts_website_20260912.json)
-is revision `94425be289a28b3683bf2ce11d83634009839d36`: twenty-one recording
-windows and 1,764 frames, including all four v2 terminal replays. Local testing
-passed 1,303 Python tests with five skips and 31 Node tests; exact-head CI
-`34717475643` and public HTTPS asset/recording checks passed. All twenty earlier
-recordings/previews and service/database/untracked state were preserved. The
-stopped pair-two feed was retained and verified during release, then the live
-feed switched to pair-three shortcuts through the same viewer. No browser visual
-QA, service restart, database mutation, main merge or new hosting resource occurred.
-The [shortcut replay importer preparation](../experiments/evidence/selected_workshop_v2_p2_shortcuts_website_preparation_20260912.json)
-remains unchanged as historical evidence; its importer was consumed only after
-the actual terminal result existed. Publication is independently recorded and
-does not rewrite the native result's original unpublished state.
+The [latest verified website delivery](../experiments/evidence/selected_workshop_v2_p3_shortcuts_website_20260912.json)
+is revision `286e000e36cb21b23bd7dc66ed54494e259eceeb`: twenty-two recording
+windows and 1,892 frames, including all five v2 terminal replays. The complete
+permitted local rerun passed 1,304 Python tests with five skips and seven warnings;
+all 66 Node tests passed. The earlier sandbox run's one local-port-bind failure
+and 1,303 passes remain recorded separately. Exact-head CI `34722420312`
+also passed 1,304 tests with five skips and seven warnings. Public HTTPS routes,
+catalog, previews and every recording matched the reviewed bytes. All twenty-one
+earlier recordings/previews and service/database/untracked state were preserved.
+The sixth keyboard attempt's live feed remained active during release, observed
+at decision 18 in final public verification. No browser visual QA, service
+restart, database mutation, main merge or new hosting resource occurred.
+The earlier [pair-two delivery](../experiments/evidence/selected_workshop_v2_p2_shortcuts_website_20260912.json)
+and [pair-three importer preparation](../experiments/evidence/selected_workshop_v2_p3_shortcuts_website_preparation_20260912.json)
+remain unchanged. Publication is independently recorded and does not rewrite
+the native result's original unpublished state.
 
 ## Next work toward the full goal
 
