@@ -7,6 +7,20 @@ Requirements come from [the approved goal](YEAR_TWO_CAMPAIGNS.md),
 [the standard-input phase](ASTRA_STANDARD_INPUT_EXPERIMENTS.md), and the
 [frozen displayed-key cohort](../experiments/keyboard_binding_comparison_20260911/cohort.json).
 
+The [first scored controls-study launch](../experiments/evidence/selected_workshop_p1_keyboard_startup_20260912.json)
+is running as `selected-workshop-v1-p1-keyboard` on the declared source/image.
+Exact-source hosted CI passed. At the retained decision-20 boundary, Astra has
+advanced 4,400 ticks, with seven citizens, zero recorded deaths, one completed
+workshop, one pending workshop, and one bed item. This is not a checkpoint or
+terminal outcome. All 20 responses account for 536,272 returned tokens; actual
+subscription charges are unreported. The first window remains bounded to64.
+The portable observer now has real live-follow acceptance: public HTTPS frames
+14 and16 match their original screen/action receipts, and the homepage visibly
+renders the live native screen, stated intent and keys. Only the sanitized
+expiring feed changed; the existing website and recordings were not redeployed.
+The runtime owner still controls mandatory teardown. Do not restart a live
+owner because an observation or tool wait expires.
+
 The separate [selected-workshop controls study](../experiments/evidence/selected_workshop_wiring_native_20260912.json)
 is now pushed at `422c915d23bf828371be481d3079a23bbb3e9e94` in draft
 [PR177](https://github.com/lemoz/fort-gym/pull/177), stacked on the unchanged
@@ -18,8 +32,8 @@ stopped. This was scripted acceptance, not a model result. A missing v5 prompt
 forwarding path was reproduced and fixed; local tests pass 5,690 with ten skips
 and eight warnings, including fresh and continued worker wiring. The paired
 study's [source/image/resources are declared](../experiments/evidence/selected_workshop_runtime_declaration_20260912.json)
-before any scored calls. Three Astra pairs and portable live-follow validation
-remain next. No new website release or main merge is claimed. The earlier
+before any scored calls. Three paired outcomes and terminal live/recorded
+handoff validation remain. No new website release or main merge is claimed. The earlier
 [preparation receipt](../experiments/evidence/selected_workshop_study_preparation_20260912.json)
 is retained unchanged.
 

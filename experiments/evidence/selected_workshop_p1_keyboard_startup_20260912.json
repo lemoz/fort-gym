@@ -1,0 +1,104 @@
+{
+  "schema_version": "fortgym.selected-workshop-first-scored-startup/v1",
+  "date_utc": "2026-09-12",
+  "campaign_id": "selected-workshop-v1-p1-keyboard",
+  "source_revision": "422c915d23bf828371be481d3079a23bbb3e9e94",
+  "image": "sha256:540dcf422a3bf40999b0e34f463e73936f14e3365fa7dcca5f2b41cf532c9364",
+  "study_declaration_sha256": "5c2dec772a38dab96ef3c0f6a2e7172fc32ec69cdffae64dd902ffbd91c53bf3",
+  "launch_receipt_sha256": "207cc1d20f40018042319fe443f5a54eb85478472e5b731b04657e5ff729a6ac",
+  "owner_plan_sha256": "7452f5fd2a45821466564273ea16485366cfdb1ff2056d5d7b18915d74a438bc",
+  "ci": {
+    "run_id": 34691379067,
+    "head_sha": "422c915d23bf828371be481d3079a23bbb3e9e94",
+    "status": "completed",
+    "conclusion": "success"
+  },
+  "launch": {
+    "mode": "fresh",
+    "model": "gpt-6-astra",
+    "reasoning_effort": "medium",
+    "control_profile": "native_keyboard_bindings/v1",
+    "initial_memory": "empty",
+    "source_snapshot_receipt_sha256": "eaf5fa5a40014719e6c313f33497740e536a8faa1c90a84c4e09dcc380ac0595",
+    "current_allowance_admitted": true,
+    "response_limit_this_window": 64,
+    "per_attempt_limit": 128,
+    "per_attempt_token_limit": 8000000,
+    "scripted_gameplay": false,
+    "no_human_gameplay_rescue": true,
+    "existing_local_vm": "fg-portable",
+    "new_vm_created": false,
+    "no_cloud_launch": true,
+    "mandatory_teardown_owner_active": true
+  },
+  "running_boundary": {
+    "schema_version": "fortgym.scored-study-running-boundary/v1",
+    "campaign_id": "selected-workshop-v1-p1-keyboard",
+    "decision": 20,
+    "source_revision": "422c915d23bf828371be481d3079a23bbb3e9e94",
+    "year": 30,
+    "year_tick": 21201,
+    "elapsed_ticks": 4400,
+    "population": 7,
+    "recorded_deaths": 0,
+    "stock_food": 45,
+    "stock_drinks": 60,
+    "completed_workshops": 1,
+    "pending_workshops": 1,
+    "goods_bed_items": 1,
+    "usage": {
+      "total_tokens": 536272,
+      "returned_responses": 20,
+      "accounted_responses": 20,
+      "dispatched_requests": 20,
+      "total_cost_usd": null,
+      "cost_basis": "codex_subscription_charge_unreported/v1"
+    },
+    "trace_record_sha256": "80c1ac76507d7d043b1252cd8b7eb1dd948b7198ca05f5ff70aeb034e505b2cf",
+    "usage_record_sha256": "d6fb0d0e7eae0f358128717d28392734afcfacb13887a15d51cd51579985a704",
+    "verified_checkpoint": false,
+    "terminal_result": false,
+    "original_evidence_modified": false
+  },
+  "public_live": {
+    "homepage": "https://fortgym.live/",
+    "existing_site_revision": "e8e3fb9ae284dd562089d434e0b8e88dc2c8b683",
+    "new_deployment": false,
+    "service_restart_performed": false,
+    "portable_observer_follow_verified": true,
+    "owner_process_identity_verified": true,
+    "screen_and_action_original_receipt_verified": true,
+    "screen_size": [
+      120,
+      40
+    ],
+    "action_status": "chosen_not_execution_verified",
+    "public_frame_proofs": [
+      {
+        "decision": 14,
+        "proof_sha256": "fc5ed8bed7aade1f0db574d5bf74b6a7943f7684027c61ec4078469c6b8c6870",
+        "payload_sha256": "0c19d9cdcf867616397675d19ad6de89ce5bc5f4c3b47fc1b5c0c6f2babf04f8"
+      },
+      {
+        "decision": 16,
+        "proof_sha256": "96a8f3628ba90aa051a138a331b2cfc749d9568a3b52430831ac3eefb028469f",
+        "payload_sha256": "9f29f51935327e58c0f06a427341560551fa6907b88432b08184888eceafa3d2"
+      }
+    ],
+    "browser_visual_qa": {
+      "verified": true,
+      "decision": 12,
+      "live_label": true,
+      "native_screen_rendered": true,
+      "model_intent_and_keys_visible": true,
+      "provisional_and_unverified_execution_labels_visible": true
+    },
+    "private_transcripts_or_memory_published": false
+  },
+  "terminal_result": false,
+  "new_checkpoint_verified": false,
+  "teardown_verified": false,
+  "reason_teardown_not_yet_verified": "This receipt captures a running bounded owner. Its mandatory terminal cleanup is not yet due or claimed.",
+  "no_main_merge": true,
+  "remaining": "Finish and audit the declared 64-decision window, verify its checkpoint, continue only from its own save toward128, then execute the remaining paired attempts. Audit terminal cleanup and publish settled recordings/results."
+}
