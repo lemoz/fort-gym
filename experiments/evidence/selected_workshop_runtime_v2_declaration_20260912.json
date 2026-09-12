@@ -1,0 +1,98 @@
+{
+  "schema_version": "fortgym.selected-workshop-study-runtime-declaration/v2",
+  "date_utc": "2026-09-12",
+  "status": "declared_before_scored_calls",
+  "source_revision": "5ddf1e6718dab2e8351e8dc24a2afe5071cd2592",
+  "image": "sha256:dcbc9b042538401a146159fcf5f6456b21dc900c4649369c008f7a77f661fed3",
+  "runtime_file_sha256": "bb59d6990c8e7b532f0f2bfae3112c122f06b9ba7f53e989bbd961959467ee88",
+  "context_receipt_sha256": "3d4241d4650db7386df5080a28221a283ed6159725c0c90b4d3d24e007191a8e",
+  "source_snapshot_receipt_sha256": "eaf5fa5a40014719e6c313f33497740e536a8faa1c90a84c4e09dcc380ac0595",
+  "source_condition_directory": "experiments/selected_workshop_study_v1",
+  "condition_file_sha256": {
+    "keyboard-condition.json": "f09dc18e7e0f08647759a9c4bcca86f9894a5be1f1767b737a0ed3fac0c94cd9",
+    "keyboard-trial.json": "9f31feb94ced50b5cf40f28643f7f2735a7d0d43f74a6a0afdefb82ec6db1950",
+    "shortcuts-condition.json": "bb7d63df0ff86bfad5e89275f252c292cf06991608f7084ad71239234f6b309a",
+    "shortcuts-trial.json": "9ab32d821b669e11a1a2495cd57e184d3387b180bdb09042095e12df16ada059"
+  },
+  "model": "gpt-6-astra",
+  "reasoning_effort": "medium",
+  "transport": "codex-exec-chatgpt/v1",
+  "vm": {
+    "profile": "fg-portable",
+    "existing_vm": true,
+    "new_provisioning": false,
+    "configuration_sha256": "4f51024d697db2de13a03405073743a32d0a0b26cdabc1fdf282d2391237193d",
+    "cpus": 2,
+    "memory_bytes": 3221225472,
+    "data_disk_bytes": 10737418240,
+    "root_disk_gib": 8,
+    "architecture": "aarch64",
+    "translation": "vz-rosetta",
+    "mount_change": false
+  },
+  "container": {
+    "cpus": 2,
+    "memory_mib": 1536,
+    "swap_additional_mib": 0,
+    "pids_limit": 256,
+    "network": "none",
+    "read_only_root": true,
+    "user": "501:20",
+    "seccomp_sha256": "5ae96ce3d0a9c746765df7d4c5948312f3847b08e917174368797d788461657a"
+  },
+  "storage": {
+    "evidence_volume_uuid": "244B2B81-3EB5-45DC-BBAC-90E0C65EE766",
+    "within_existing_writable_mount": true,
+    "minimum_host_free_bytes": 1610612736,
+    "minimum_guest_free_kib": 1572864,
+    "no_deletion_or_growth": true
+  },
+  "order": [
+    "selected-workshop-v2-p1-shortcuts",
+    "selected-workshop-v2-p1-keyboard",
+    "selected-workshop-v2-p2-keyboard",
+    "selected-workshop-v2-p2-shortcuts",
+    "selected-workshop-v2-p3-shortcuts",
+    "selected-workshop-v2-p3-keyboard"
+  ],
+  "bounds": {
+    "max_dispatches_per_attempt": 128,
+    "checkpoint_decisions": [
+      64,
+      128
+    ],
+    "max_returned_tokens_per_attempt": 8000000,
+    "max_advance_ticks_per_decision": 2000,
+    "screen_size": [
+      120,
+      40
+    ],
+    "one_game_at_a_time": true,
+    "mandatory_teardown": true,
+    "initial_memory": "empty",
+    "own_save_continuation_only": true,
+    "retain_failures": true,
+    "api_fallback": false,
+    "cloud_launch": false,
+    "automatic_reset_or_credit_purchase": false
+  },
+  "native_verification_receipt": "selected_workshop_courier_native_20260912.json",
+  "scored_calls_at_declaration": 0,
+  "actual_charge_usd": null,
+  "notes": [
+    "New cohort identities start from the same original seed with empty memory; no v1 outcome substitutes for a v2 attempt.",
+    "Start with shortcuts to exercise the repaired path, then alternate order over three pairs. This order is declared before any v2 scored call.",
+    "Only the courier implementation/source image changed; condition/trial bytes, model, controls, observations, budgets and resources are unchanged.",
+    "Native acceptance used scripted provider fixtures and private navigation, not autonomous model gameplay.",
+    "The 128-decision comparison cannot cover a full elapsed year at the declared tick bound. Endurance remains a separately declared next phase.",
+    "All failures and unknown usage fields remain retained. No API fallback, GCE, automatic reset, purchase, cleanup or capacity expansion is authorized by this declaration."
+  ],
+  "study_id": "selected-workshop-v2",
+  "native_verification_sha256": "ebd811897b5626dfa48b4bc9810aa32891b03f076a24fa26ff174c611d5afed3",
+  "previous_study_declaration_sha256": "5c2dec772a38dab96ef3c0f6a2e7172fc32ec69cdffae64dd902ffbd91c53bf3",
+  "revision_reason": "Correct v5 prompt forwarding in the host courier after a retained infrastructure failure.",
+  "original_v1_outcomes_preserved": true,
+  "original_v1_ids_will_not_be_reused": true,
+  "original_v1_results_pooled_in_v2_primary_comparison": false,
+  "condition_files_byte_identical_to_v1": true
+}

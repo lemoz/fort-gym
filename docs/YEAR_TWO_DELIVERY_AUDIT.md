@@ -7,6 +7,29 @@ Requirements come from [the approved goal](YEAR_TWO_CAMPAIGNS.md),
 [the standard-input phase](ASTRA_STANDARD_INPUT_EXPERIMENTS.md), and the
 [frozen displayed-key cohort](../experiments/keyboard_binding_comparison_20260911/cohort.json).
 
+The corrected courier's exact-head hosted CI now passes, and its
+[new native acceptance](../experiments/evidence/selected_workshop_courier_native_20260912.json)
+binds source `5ddf1e6718dab2e8351e8dc24a2afe5071cd2592` to image
+`sha256:dcbc9b042538401a146159fcf5f6456b21dc900c4649369c008f7a77f661fed3`.
+Fourteen captured-screen courier calls used scripted provider responses, then
+dispatched both native action routes. Real workers/materials completed one bed
+and 25 drink units after 2,000 ticks. This is provider-free acceptance, not scored
+model play. Native cleanup, preserved original save/inventory/resources, stopped
+VMs and closed disks are verified. Both shutdown commands returned nonzero as
+the guest connection closed and the redundant stop found an already stopped VM;
+their original logs remain retained, separately from verified final state.
+
+The [v2 study declaration](../experiments/evidence/selected_workshop_runtime_v2_declaration_20260912.json)
+binds the repaired source/image, same condition/trial bytes, same fresh seed,
+model, screen, budgets and resources before any v2 scored call. It starts with
+pair-one shortcuts, then keyboard; pair two reverses that order; pair three
+starts with shortcuts again. All six identities are new, with each attempt
+saving at 64 and continuing only from its own save to 128. V1 outcomes remain
+historical evidence, not substitutes in the v2 primary comparison. No further
+v1 attempt or hidden replacement is planned. A new v2 first-window operator is
+prepared, but this declaration is not its launch or gameplay receipt. The full
+Year-Two/cross-model goal and keyboard128 website replay remain incomplete.
+
 The subsequent [pair-one shortcuts attempt](../experiments/evidence/selected_workshop_p1_shortcuts_failure_20260912.json)
 loaded the native seed but failed before completing decision one. This is a
 harness infrastructure failure, not a gameplay outcome. The frozen host courier

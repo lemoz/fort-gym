@@ -1,0 +1,50 @@
+{
+  "schema_version": "fortgym.selected-workshop-courier-native-acceptance/v1",
+  "date_utc": "2026-09-12",
+  "source_revision": "5ddf1e6718dab2e8351e8dc24a2afe5071cd2592",
+  "image": "sha256:dcbc9b042538401a146159fcf5f6456b21dc900c4649369c008f7a77f661fed3",
+  "context_receipt_sha256": "3d4241d4650db7386df5080a28221a283ed6159725c0c90b4d3d24e007191a8e",
+  "operation_sha256": "79bf34401e85fe1865679efbf2dcb6c5fffd0e0f9b4ef4c507178fccfecc98af",
+  "operator_sha256": "69c974ae9df73b889f81abd751b47cc7766066cce43c952897f75a5c132b5088",
+  "probe_sha256": "ca8cef3fb6e883164ea9d464cda17fe7d2d5d92326a6d5c46fdaa220f3425dab",
+  "worker_result_sha256": "9675b18e2e05a07703b863005319a04bbea752c9f1f5984906d29e9b002601bf",
+  "image_build_verified": true,
+  "native_load_verified": true,
+  "native_check_passed": true,
+  "provider_free_courier_calls": 14,
+  "native_action_routes_verified": [
+    "KEYSTROKE",
+    "WORKSHOP_JOB"
+  ],
+  "captured_screen_and_v5_courier_exercised": true,
+  "provider_response_source": "scripted_fixture",
+  "private_position_guided_keyboard_navigation": true,
+  "model_calls": 0,
+  "scored_model_attempt": false,
+  "new_products": {
+    "DRINK": 25,
+    "BED": 1
+  },
+  "gameplay_ticks_requested": 2000,
+  "native_cleanup_verified": true,
+  "container_stopped": true,
+  "both_vms_stopped": true,
+  "both_disks_closed": true,
+  "prior_inventory_preserved": true,
+  "configs_unchanged": true,
+  "original_checkpoint_unchanged": true,
+  "cloud_vms": 0,
+  "cloud_spend_usd": 0,
+  "guest_poweroff_returncode": 1,
+  "redundant_vm_stop_returncode": 1,
+  "teardown_note": "The poweroff connection exited nonzero and the redundant stop reported already stopped. Independent current VM status and disk-holder checks verified shutdown; nonzero receipts are retained.",
+  "hosted_ci": {
+    "run": 34695820599,
+    "head": "5ddf1e6718dab2e8351e8dc24a2afe5071cd2592",
+    "status": "completed",
+    "conclusion": "success"
+  },
+  "main_merged": false,
+  "public_website_changed": false,
+  "full_goal_complete": false
+}
