@@ -119,7 +119,9 @@ The first anniversary remains 403,200 elapsed ticks and is not an automatic stop
 The complete functional suite passed 5,749 tests with ten skips; final
 post-format focused checks passed 135 tests. Three model configurations were
 exercised with fake game/model/container receipts, not native comparisons.
-Hosted CI was running at the preparation snapshot. A real candidate image,
+[Exact-head hosted CI](../experiments/evidence/astra_keyboard_endurance_plan_ci_20260912.json)
+has since passed 5,586 tests with 173 skips and seven warnings; the earlier
+preparation snapshot remains unchanged. A real candidate image,
 same-save budget-extension acceptance and endurance gameplay remain unproven.
 No old-source migration, active-cohort change, extra VM or model call was made.
 

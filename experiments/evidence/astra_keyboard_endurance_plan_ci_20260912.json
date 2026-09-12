@@ -1,0 +1,48 @@
+{
+  "schema_version": "fortgym.astra-keyboard-endurance-ci/v1",
+  "date_utc": "2026-09-12",
+  "preparation_receipt_sha256": "fe0880b3ad7322ac576f9e413f6b5591fecb03e11da22ba685553da8395ee5f2",
+  "source_revision": "4b526b5636e6f568a4cae1a1227d746d9c6922c3",
+  "pull_request": "https://github.com/lemoz/fort-gym/pull/181",
+  "exact_head_ci": {
+    "run_id": 34721042603,
+    "url": "https://github.com/lemoz/fort-gym/actions/runs/34721042603",
+    "event": "pull_request",
+    "head_sha": "4b526b5636e6f568a4cae1a1227d746d9c6922c3",
+    "status": "completed",
+    "conclusion": "success",
+    "job_id": 103626828518,
+    "completed_at": "2026-09-12T21:55:52Z",
+    "passed": 5586,
+    "skipped": 173,
+    "warnings": 7
+  },
+  "local_verification": {
+    "complete_functional_suite": {
+      "passed": 5749,
+      "skipped": 10,
+      "warnings": 7,
+      "junit_sha256": "cf9ba5738f6a57c9f1b48031a9a14f80cdd40a3e98e2e484a53c71c91cd33d2c",
+      "scope": "Began before final import sorting and formatting of three new Python files."
+    },
+    "final_post_format_focused": {
+      "passed": 135,
+      "warnings": 2,
+      "junit_sha256": "f0bbcdc43dc5fd22bcc0b1baee8bd82e768a8df6cb12898a9d108c934348674b"
+    }
+  },
+  "delivery": {
+    "source_pushed": true,
+    "draft": true,
+    "merged": false,
+    "base_branch": "codex/portable-endurance-budget",
+    "native_candidate_launched": false,
+    "native_budget_extension_acceptance": false,
+    "image_built": false,
+    "runtime_migration_enabled": false,
+    "active_cohort_changed": false,
+    "website_deployed": false,
+    "full_goal_complete": false
+  },
+  "note": "This exact-head hosted result supersedes only the preparation snapshot's CI-in-progress state. Local/hosted skip counts and final post-format tests are distinct. No native endurance outcome, sustained production or cross-model ranking is established."
+}
