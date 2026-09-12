@@ -208,7 +208,11 @@ def inspect_origin(root: Path, window_path: Path, native: Any) -> dict[str, Any]
     require(
         all(
             agent.usage[k] == 64
-            for k in ("accounted_responses", "returned_responses", "dispatched_requests")
+            for k in (
+                "accounted_responses",
+                "returned_responses",
+                "dispatched_requests",
+            )
         )
         and agent.usage["total_tokens"] == window["returned_tokens_before_window"],
         "Parent usage does not match its result",
@@ -226,7 +230,10 @@ def inspect_origin(root: Path, window_path: Path, native: Any) -> dict[str, Any]
         == window["saved_elapsed_ticks_before_window"],
         "Parent elapsed time differs",
     )
-    require(native.verify_checkpoint(checkpoint) == manifest, "Parent changed during inspection")
+    require(
+        native.verify_checkpoint(checkpoint) == manifest,
+        "Parent changed during inspection",
+    )
     return {
         "window": window,
         "condition": condition,
@@ -237,7 +244,19 @@ def inspect_origin(root: Path, window_path: Path, native: Any) -> dict[str, Any]
         "metrics": audit["saved_metrics"],
         "feedback": prior_feedback(runner),
         "prefix_sha256": {name: sha(checkpoint / name) for name in ("trace.jsonl", "usage.jsonl")},
+        "dispatch_prefix_sha256": {
+            "trace.jsonl": sha(checkpoint / "trace.jsonl"),
+            "usage.jsonl": hashlib.sha256(usage + decision_started_bytes(64)).hexdigest(),
+        },
     }
+
+
+def decision_started_bytes(next_step: int) -> bytes:
+    """Match the pinned native loop's pre-dispatch journal marker exactly."""
+    require(type(next_step) is int and next_step == 64, "Unexpected initial dispatch cursor")
+    return (
+        json.dumps({"type": "decision_started", "step": next_step}, allow_nan=False) + "\n"
+    ).encode()
 
 
 def verify_loaded_state(
@@ -253,7 +272,10 @@ def verify_loaded_state(
     """Gate the first reply on unmodified native restore; menus may reload differently."""
     require(agent == origin["agent"], "Native load changed saved agent state")
     require(history == {"discontinuities": []}, "Native load changed saved history")
-    require(prefix_sha256 == origin["prefix_sha256"], "Native load changed trace/usage prefixes")
+    require(
+        prefix_sha256 == origin["dispatch_prefix_sha256"],
+        "Native load changed its original prefixes or exact pending-dispatch marker",
+    )
     saved = origin["manifest"]["payload"]["native_save"]
     require(
         type(before.get("year")) is int
@@ -263,7 +285,10 @@ def verify_loaded_state(
         and before.get("pause_state") is True,
         "Native load advanced or unpaused the game",
     )
-    require(metrics(before) == origin["metrics"], "Native load changed saved fortress metrics")
+    require(
+        metrics(before) == origin["metrics"],
+        "Native load changed saved fortress metrics",
+    )
     condition = origin["condition"]
     require(
         request.get("memory") == origin["agent"]["memory"]
@@ -285,11 +310,14 @@ def verify_loaded_state(
         "First request changed the declared model or controls",
     )
     return {
-        "schema_version": "fortgym.matched-continuation-load-gate/v1",
+        "schema_version": "fortgym.matched-continuation-load-gate/v2",
         "passed": True,
         "campaign_id": origin["window"]["expected_campaign_id"],
         "checkpoint_sha256": origin["manifest"]["sha256"],
         "next_step": 64,
+        "original_prefix_sha256": origin["prefix_sha256"],
+        "first_dispatch_prefix_sha256": prefix_sha256,
+        "exact_decision_started_marker_verified": True,
         "memory_usage_feedback_and_history_preserved": True,
         "native_clock_and_metrics_preserved": True,
         "model_calls_by_gate": 0,

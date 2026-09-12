@@ -210,3 +210,36 @@ def test_public_export_rejects_mismatched_or_unsettled_result(modules, export, k
     export[0][key] = value
     with pytest.raises(ValueError):
         modules[1].project(*export)
+
+
+def test_public_export_discloses_storage_only_amendment(modules, export):
+    _, publisher = modules
+    amendment = importlib.import_module("storage_amendment")
+    report, window, digest = export
+    actual_window = json.loads((BASE / "astra-r2-window-64-128.json").read_text())
+    window.update(actual_window)
+    report.update(
+        campaign_id=window["expected_campaign_id"],
+        model="gpt-6-astra",
+        replicate=2,
+        source_checkpoint_sha256=window["continuation_checkpoint_sha256"],
+        saved_elapsed_ticks=window["saved_elapsed_ticks_before_window"]
+        + report["new_saved_elapsed_ticks"],
+        storage_amendment=dict(amendment.EXPECTED_BINDING),
+    )
+    report["usage"]["total_tokens"] = window["returned_tokens_before_window"] + report["new_tokens"]
+    value = publisher.project(report, window, digest)
+    assert value["evidence_details"]["storage_amendment"] == amendment.EXPECTED_BINDING
+    assert any("32 to 40 GiB" in limit for limit in value["assessment"]["limits"])
+    assert value["assessment"]["strong_model_ranking_supported"] is False
+    report["storage_amendment"]["private_path"] = "/private/never-export"
+    with pytest.raises(ValueError, match="Storage amendment"):
+        publisher.project(report, window, digest)
+
+
+def test_old_result_cannot_be_relabelled_with_a_later_storage_amendment(modules, export):
+    export[0]["storage_amendment"] = dict(
+        importlib.import_module("storage_amendment").EXPECTED_BINDING
+    )
+    with pytest.raises(ValueError, match="Storage amendment"):
+        modules[1].project(*export)

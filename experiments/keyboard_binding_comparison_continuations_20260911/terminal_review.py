@@ -14,6 +14,7 @@ from continuation_state import (
     BASE,
     FRESH,
     ROOT,
+    decision_started_bytes,
     inspect_origin,
     load_native,
     read,
@@ -24,6 +25,7 @@ from continuation_state import (
 from local_lifecycle import verify_container
 from local_owner import specification
 from rejection_review import review_rejection
+from storage_amendment import verify_binding
 
 
 def module(name: str, path: Path, expected: str) -> Any:
@@ -72,7 +74,8 @@ def verify_keys(
     record: dict, action: dict | None, condition: dict, index: Any, binding_event: Any
 ) -> int:
     require(
-        action is not None, "Rejected responses require their typed receipt and no-dispatch proof"
+        action is not None,
+        "Rejected responses require their typed receipt and no-dispatch proof",
     )
     require(record["action"] == action, "Trace action differs from model response")
     execution = record["execute"]
@@ -113,7 +116,12 @@ def verify_keys(
 
 
 def verify_input(
-    record: dict, action: dict | None, folder: Path, condition: dict, index: Any, binding_event: Any
+    record: dict,
+    action: dict | None,
+    folder: Path,
+    condition: dict,
+    index: Any,
+    binding_event: Any,
 ) -> int:
     """Route a retained rejection through its original receipt, never a substitute move."""
     if action is None:
@@ -127,7 +135,9 @@ def verify_input(
 
 
 def audit_window(native: Any, origin: dict, spec: dict) -> dict:
-    from fort_gym.bench.run.keyboard_window_checkpoint_audit import verify_window_checkpoints
+    from fort_gym.bench.run.keyboard_window_checkpoint_audit import (
+        verify_window_checkpoints,
+    )
     from fort_gym.bench.run.keyboard_window_receipts import verify_window_receipts
 
     owner, window, condition = native.owner, origin["window"], origin["condition"]
@@ -225,6 +235,12 @@ def audit_window(native: Any, origin: dict, spec: dict) -> dict:
         parent = (origin["checkpoint"] / filename).read_bytes()
         copied = (segment / "loop" / filename).read_bytes()
         require(copied.startswith(parent), "Native loop discarded its original prefix")
+        if filename == "usage.jsonl":
+            parent += decision_started_bytes(first)
+            require(
+                copied.startswith(parent),
+                "Native loop changed its initial dispatch marker",
+            )
         prefixes[filename] = hashlib.sha256(copied[: len(parent)]).hexdigest()
     gate = verify_loaded_state(
         origin,
@@ -235,9 +251,15 @@ def audit_window(native: Any, origin: dict, spec: dict) -> dict:
         request=read(folders[0] / "request.json"),
         metrics=native.metrics,
     )
-    require(read(out / "native-load-gate.json") == gate, "First-dispatch native-load gate differs")
+    require(
+        read(out / "native-load-gate.json") == gate,
+        "First-dispatch native-load gate differs",
+    )
     rows = [json.loads(line) for line in (checkpoint / "trace.jsonl").read_text().splitlines()]
-    require([row["step"] for row in rows] == list(range(count)), "Canonical trace cursor differs")
+    require(
+        [row["step"] for row in rows] == list(range(count)),
+        "Canonical trace cursor differs",
+    )
     index = fresh.read_binding_index(evidence / "runtime-0/runtime")
     presses, samples = 0, []
     for row, action, folder in zip(
@@ -247,13 +269,17 @@ def audit_window(native: Any, origin: dict, spec: dict) -> dict:
         presses += verify_input(row, action, folder, condition, index, fresh.binding_event)
         after = row["state_after_advance"]
         sample = fresh.validate_measurement(
-            after["private_food_measurement"], year=after["year"], year_tick=after["year_tick"]
+            after["private_food_measurement"],
+            year=after["year"],
+            year_tick=after["year_tick"],
         )
         require(sample["read_timeout_seconds"] == 15, "Private measurement profile changed")
         samples.append(sample)
     after = read(segment / "native-after.json")
     final_food = fresh.validate_measurement(
-        after["private_food_measurement"], year=after["year"], year_tick=after["year_tick"]
+        after["private_food_measurement"],
+        year=after["year"],
+        year_tick=after["year_tick"],
     )
     original_before = read(origin["checkpoint"].parent / "native-before.json")
     profile = fresh.campaign_profile(
@@ -303,7 +329,13 @@ def audit_window(native: Any, origin: dict, spec: dict) -> dict:
     ]
     sources += [
         checkpoint / name
-        for name in ("checkpoint.json", "agent.json", "runner.json", "trace.jsonl", "usage.jsonl")
+        for name in (
+            "checkpoint.json",
+            "agent.json",
+            "runner.json",
+            "trace.jsonl",
+            "usage.jsonl",
+        )
     ]
     report = {
         "schema_version": "fortgym.private-matched-window-terminal-review/v1",
@@ -356,6 +388,8 @@ def audit_window(native: Any, origin: dict, spec: dict) -> dict:
         "rejection_review_source_sha256": sha(BASE / "rejection_review.py"),
         "sources": {str(path.relative_to(ROOT)): sha(path) for path in sources},
     }
+    if "storage_amendment" in spec["binding"]:
+        report["storage_amendment"] = verify_binding(spec["binding"]["storage_amendment"], identity)
     owner.publish(out / "terminal-review.json", report)
     return report
 
@@ -364,12 +398,15 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--window", type=Path, required=True)
     parser.add_argument("--declaration-revision", required=True)
+    parser.add_argument("--storage-amendment", type=Path)
     args = parser.parse_args()
     native = load_native()
     window_path = args.window.resolve(strict=True)
     require(window_path.parent == BASE.resolve(), "Select a declared matched window")
     origin = inspect_origin(ROOT, window_path, native)
-    spec = specification(native, origin, window_path, args.declaration_revision)
+    spec = specification(
+        native, origin, window_path, args.declaration_revision, args.storage_amendment
+    )
     report = audit_window(native, origin, spec)
     print(
         json.dumps(

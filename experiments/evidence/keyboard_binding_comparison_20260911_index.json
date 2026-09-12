@@ -14,6 +14,13 @@
     "terra-trial.json": "864efc0b37848dc3be7bb2c38a429ab14bd3d912ea1e0ff01c9d0a8ba97f7c40"
   },
   "results": {
+    "bindings-comparison-20260911-astra-r2": {
+      "64": {
+        "path": "experiments/evidence/keyboard_binding_comparison_astra_r2_64_20260911.json",
+        "sha256": "5905e6bb70fb9a3db7b0fa3038a6bf87c8230b788d2d301133c6d1d2daec868f",
+        "revision": "993c757e1e9d867f819fec77fe60a1fa177fd4a9"
+      }
+    },
     "bindings-comparison-20260911-sol-r2": {
       "64": {
         "path": "experiments/evidence/keyboard_binding_comparison_sol_r2_64_20260911.json",
@@ -43,6 +50,11 @@
       }
     },
     "bindings-comparison-20260911-sol-r1": {
+      "128": {
+        "path": "experiments/evidence/keyboard_binding_comparison_sol_r1_128_startup_failure_20260911.json",
+        "sha256": "1db3f17e4fe4d80ef190d3e80031acddad46f9df692b7c13a005e7afbd30b8d6",
+        "revision": "a085f52b1205217dfdee8ba7bf40fb8771fc7d16"
+      },
       "64": {
         "path": "experiments/evidence/keyboard_binding_comparison_sol_r1_64_20260911.json",
         "sha256": "5d0cb5ea363ef5ac4bf24d8336ea1479bbd84a1966a90f68a646d0635923af66",

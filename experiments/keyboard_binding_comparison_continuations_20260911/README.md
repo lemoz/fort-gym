@@ -133,3 +133,54 @@ recorded. Run the next stage in the same declared order: Sol r1, Terra r1,
 Astra r1, Terra r2, Sol r2, Astra r2, one VM/game at a time. Original prompt,
 controls, limits and model memory remain unchanged. A new native load still has
 to pass before the first continuation model call; offline checks do not prove it.
+
+## First native continuation and dispatch-marker correction
+
+The fresh stage is complete: all six 64-response results are audited and indexed.
+Astra r2 retained 1,549,386 tokens, 9,200 ticks and three completed workshops.
+Its own window is now prepared as well. These outcomes remain separate from the
+earlier exploratory Astra Year-Two milestone.
+
+The first Sol r1 continuation launched with owner revision
+`4f4c5a33024b7c3fc2b487dd4d8197c46a477ef2`, whose CI 34661407683 passed.
+It failed its initial prefix gate before any provider claim, model response or
+gameplay input. All cleanup commands returned zero; the VM was observed stopped
+and the original checkpoint was unchanged. Preserve the failed
+`bindings-comparison-20260911-sol-r1-64-128` directory and volume; do not rerun
+that identity or pass it through the settled-save auditor.
+
+The actual native trace is byte-identical to its parent. The original usage
+journal is also a byte-identical prefix. The frozen loop appends one exact
+`decision_started` marker for step 64 before requesting a model response, so
+comparing the entire in-flight journal to the saved journal was incorrect.
+The v2 load gate now requires the original bytes plus precisely that marker;
+the terminal auditor reconstructs and checks the same boundary. It does not
+permit arbitrary appended records, changes to saved usage, or a changed cursor.
+
+Offline reconstruction from the failed native attempt also verified unchanged
+agent memory, prompt, feedback, clock and fortress metrics. The failed native
+journal retains dispatch counter 65, while actual provider calls and new returned
+tokens are zero. Keep that distinction in failure and any future recovery
+accounting. Offline regression is not a successful rerun; no repaired native
+continuation has launched, and a new attempt must preserve this failure.
+
+## Explicit storage-only amendment, September 12
+
+The Sol r2 capacity failure remains a failed outcome. It is not rerun. The unused
+Astra r2 64-to-128 window may explicitly select
+`experiments/keyboard_comparison_storage_amendment_20260912.json` with
+`--storage-amendment` on both the owner and terminal reviewer commands.
+
+A separate recorded operation expanded only the existing fg-v2 data disk from
+32 to 40 GiB. It preserved all container, evidence-volume and image identities,
+left 9,463,500 KiB free, and stopped both project VMs. The 1,572,864 KiB admission
+floor, CPU, RAM, native image/source, model, prompt, control settings and own-save
+window are unchanged. The growth cannot be reversed by shrinking the disk.
+
+The explicit option pins the declaration and retained operation receipt, verifies
+the new configuration hash, and uses the amended capacity without rewriting VM
+configuration at startup. It cannot apply to another campaign or alter historical
+results. Without the option, the old configuration check remains in force.
+The result exporter discloses the amendment as a comparison limitation rather
+than describing the storage configurations as identical. Storage repair and
+offline tests do not count as gameplay or a completed continuation.

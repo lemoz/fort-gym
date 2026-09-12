@@ -12,6 +12,7 @@ from pathlib import Path
 import re
 
 from continuation_state import ROOT, read, require, sha
+from storage_amendment import verify_binding
 
 METRICS = (
     "population",
@@ -83,7 +84,7 @@ def project(report: dict, window: dict, audit_sha256: str) -> dict:
         and report["fresh_final_checkpoint_reload_verified"] is False,
         "Unverified teardown or human rescue",
     )
-    return {
+    result = {
         "schema_version": "fortgym.public-displayed-key-result/v1",
         "cohort_id": "bindings-comparison-20260911",
         "campaign_id": identity,
@@ -138,6 +139,16 @@ def project(report: dict, window: dict, audit_sha256: str) -> dict:
             ],
         },
     }
+    if "storage_amendment" in report:
+        result["evidence_details"]["storage_amendment"] = verify_binding(
+            report["storage_amendment"], identity
+        )
+        result["assessment"]["limits"].append(
+            "This window used a declared storage-only capacity amendment from 32 to 40 GiB; "
+            "its VM storage configuration is not identical to preceding runs. "
+            "Model, prompt, game controls, CPU and RAM are unchanged."
+        )
+    return result
 
 
 def main() -> None:

@@ -1,0 +1,106 @@
+{
+  "schema_version": "fortgym.public-displayed-key-result/v1",
+  "recorded_at_utc": "2026-09-12 00:41:09 UTC",
+  "cohort_id": "bindings-comparison-20260911",
+  "campaign_id": "bindings-comparison-20260911-astra-r2",
+  "model": "gpt-6-astra",
+  "replicate": 2,
+  "reasoning_effort": "medium",
+  "source_revision": "d22f28d99f4fd103188979e964e148139d3f3efd",
+  "image_id": "sha256:32bd022138a4772ed0c0d3a14f94feab8ad4a4cd183a20a8cd098745aedbd10d",
+  "seed_receipt_sha256": "eaf5fa5a40014719e6c313f33497740e536a8faa1c90a84c4e09dcc380ac0595",
+  "condition_file_sha256": "7bf8ebf8656cf9c993764b6f1d02bb22dcd75d2a68aa2d4d1f868e49b5f4e1ab",
+  "trial_file_sha256": "3925997ef8a992a6da24e760543750e9d256d54d3ca832732e371983789dc0c8",
+  "response_limit": 64,
+  "status": "saved",
+  "responses": 64,
+  "returned_tokens": 1549386,
+  "reported_charge_usd": null,
+  "human_gameplay_rescue": false,
+  "native_teardown_verified": true,
+  "vm_teardown_verified": true,
+  "terminal_audit_sha256": "6e255c110250f65c1daf0b94482c2e2ae53af3335991a09258178802fd89bea4",
+  "checkpoint": {
+    "next_step": 64,
+    "sha256": "cfd3f704e93715803964cc47d21647edac01b6f0d96a99d39bbff1d49b5d21ef",
+    "saved_elapsed_ticks": 9200,
+    "metrics": {
+      "completed_beds": 0,
+      "completed_farms": 0,
+      "completed_workshops": 3,
+      "drink_stock": 60,
+      "food_stock": 50,
+      "functional_rooms": null,
+      "population": 7,
+      "recorded_dead_citizens": 0,
+      "stone_stock": null,
+      "wood_stock": null
+    }
+  },
+  "evidence_details": {
+    "declaration_revision": "61fcca7177d8b66ddd7e12e4be0ab53bda5ffd5b",
+    "fresh_empty_memory_usage_history_verified": true,
+    "native_key_receipts_verified": true,
+    "confirmed_key_presses": 303,
+    "source_trace_sha256": "c8b88f8ed7574df64297ed4d8d9f7648f428b6e9ed2cfe8b4d6b1bea9b07f1d4",
+    "source_usage_sha256": "984c510f5dc25b4a45ec7ee6b1ca12a505dc28d04a301fbf541e66041bcbf540",
+    "fresh_final_checkpoint_reload_verified": false,
+    "initial_metrics": {
+      "completed_beds": 0,
+      "completed_farms": 0,
+      "completed_workshops": 0,
+      "drink_stock": 60,
+      "food_stock": 50,
+      "functional_rooms": 0,
+      "population": 7,
+      "recorded_dead_citizens": 0,
+      "stone_stock": null,
+      "wood_stock": null
+    },
+    "observed_job_type_boundaries": {
+      "ConstructBed": 46,
+      "ConstructBuilding": 2,
+      "FellTree": 16,
+      "Fish": 38,
+      "PickupEquipment": 2,
+      "no_current_job": 64
+    },
+    "single_down_level_key_replies": 0,
+    "zero_advance_replies": 59,
+    "actual_zero_tick_replies": 59,
+    "total_requested_ticks": 9200,
+    "actual_saved_ticks": 9200,
+    "cloud_vms_created": 0,
+    "vm_config_unchanged": true,
+    "reported_hardware_energy_cost_usd": null,
+    "clock_outcomes": {
+      "no_error": 64
+    },
+    "clock_timeout_zero_based_steps": [],
+    "shutdown": {
+      "guest_command_warning": true,
+      "guest_poweroff_returncode": 1,
+      "vm_observed_stopped": true,
+      "vm_stop_returncode": 0
+    },
+    "unsupported_key_replies": 0
+  },
+  "assessment": {
+    "functioning_fortress_established": false,
+    "year_two_reached": false,
+    "strong_model_ranking_supported": false,
+    "production_rates": null,
+    "consumption_rates": null,
+    "summary": "The second Astra attempt completed three workshops with seven living citizens and no recorded deaths, but no placed beds or farm plots. Its 9,200 saved game ticks provide early development evidence, not Year-Two completion or demonstrated sustainability.",
+    "limits": [
+      "Saved means checkpoint and teardown verified, not successful autonomous fortress management.",
+      "Job-type counts are sampled boundaries, not completed jobs, production totals or durations. ConstructBed activity does not prove placed beds.",
+      "All 9,200 requested ticks advanced without clock error, but 59 of 64 responses requested no time advance.",
+      "Food and drink stocks remained at 50 and 60; unchanged inventories do not establish production or consumption rates.",
+      "Functional room, wood and stone measurements remain unknown.",
+      "Subscription charges and hardware energy costs are unreported, not zero.",
+      "The guest shutdown command returned 1; the independent VM stop returned zero and verified the VM stopped. This warning is retained.",
+      "A separate fresh-load check remains pending; this saved result does not claim it."
+    ]
+  }
+}
