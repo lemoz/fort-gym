@@ -198,6 +198,27 @@ completion alone never sets native-audit acceptance. The original build
 preparation and README remain unchanged. The real image build, first save,
 continuation VM wrapper, actual budget append/reload and longer gameplay remain.
 
+The [continuation VM wrapper is now prepared](../experiments/evidence/astra_keyboard_endurance_continuation_preparation_20260912.json),
+superseding only that earlier unprepared-wrapper statement. It reads the exact
+settled prior operation, uses the committed native audit/planner to derive the
+actual save and cursor, appends the declared cumulative limits at checkpoint4
+once, and inherits them in later at-most-64-response windows. It rejects changed
+source/image/resources, memory or usage resets, occupied identities and foreign
+owner outputs. Original fresh/build operators and their receipts are unchanged.
+All 139 combined checks passed: 57 new continuation-operator tests, 62 prior
+build/fresh tests and 20 committed planner tests. Scoped Ruff passed. The planner
+fixtures use real save/audit machinery with fake game/model/container receipts;
+they are not native performance results. Neither fresh nor continuation operator
+has run. The image, real save, native budget append/reload and longer play remain.
+
+The [final keyboard replay importer](../experiments/evidence/selected_workshop_v2_p3_keyboard_website_preparation_20260912.json)
+is prepared with 36 passing in-memory checks. It requires the actual terminal
+result/audit/replay, validates the keyboard-only route, and preserves all 22
+existing recordings and previews. No final keyboard result, imported website
+asset or public release is fabricated by this preparation. The website branch
+remains unchanged at the latest verified release below until the real native
+save and export are available.
+
 The [latest verified website delivery](../experiments/evidence/selected_workshop_v2_p3_shortcuts_website_20260912.json)
 is revision `286e000e36cb21b23bd7dc66ed54494e259eceeb`: twenty-two recording
 windows and 1,892 frames, including all five v2 terminal replays. The complete
