@@ -1,0 +1,42 @@
+{
+  "schema_version": "fortgym.selected-workshop-settlement-preparation/v1",
+  "campaign_id": "selected-workshop-v2-p2-keyboard",
+  "date": "2026-09-12",
+  "state": "prepared_not_executed",
+  "source_revision": "5ddf1e6718dab2e8351e8dc24a2afe5071cd2592",
+  "study_declaration_sha256": "e325f69f40978a9a0b2ed962a505c893aa7ea397b569e3300455972d7b94ebc8",
+  "artifacts": {
+    "settle_v2_p2_keyboard.py": "4c47061c0699bc7e78dcdda28f8fb3b4bb3237bcf1b4bd029afacfb5ce924b01",
+    "test_v2_p2_keyboard_settlement.py": "c492a1a8f1ea733f8141752b2ff88a4f1a30eb3d3011213e27707ddc2b5838a0",
+    "v2-p2-keyboard-settlement-preparation-tests.xml": "da37306c9938cf5563b6079b9445f0792594120f844c5e555e247164a9326d78"
+  },
+  "tests": {
+    "passed": 58,
+    "failed": 0,
+    "warnings": 2,
+    "ruff": "passed",
+    "scope": "Offline tests for own-save continuation, immutable attempt identity, terminal-audit completeness and teardown rejection. No runtime calls."
+  },
+  "expected_replay_id": "controls-v2-p2-keyboard-1-128",
+  "replay_exported": false,
+  "website_published": false,
+  "native_terminal_audit_performed": false,
+  "continuation_launched": false,
+  "model_calls_by_preparation": 0,
+  "gameplay_inputs_by_preparation": 0,
+  "live_verification": {
+    "receipt": "public-proof-v2-p2-keyboard-fresh-running-030.json",
+    "status": "running",
+    "decision": 30,
+    "public_https_verified": true,
+    "original_frame_and_action_verified": true,
+    "private_owner_process_identity_verified": true,
+    "payload_sha256": "10ad53719f9449c48672aac8505a724d19ad8b3136058f2d6d00fdc3b9a3e5d9",
+    "original_request_sha256": "4f7cfe672eb4cf6b8daf4e5d1832e4f7728ff7a474d510fd4b27e7f17ff97193",
+    "action_status": "chosen_not_execution_verified",
+    "browser_visual_qa": false
+  },
+  "goal_completed": false,
+  "reported_subscription_charge_usd": null,
+  "note": "Preparation and live-feed verification are not proof of a completed native window. Original runtime evidence, pair-one results and frozen game source remain unchanged."
+}
