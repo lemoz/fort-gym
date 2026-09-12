@@ -260,7 +260,7 @@ test('Year-Two replay displays its endpoint and hides it for other recordings', 
   } finally { Object.assign(globalThis,originals); }
 });
 
-for (const [model, repeat] of [['astra',1], ['terra',1], ['terra',2]]) test(model+' matched run '+repeat+' scrubs audited frames', async () => {
+for (const [model, repeat] of [['astra',1], ['terra',1], ['terra',2], ['sol',2]]) test(model+' matched run '+repeat+' scrubs audited frames', async () => {
   const id=model+'-matched-r'+repeat+'-1-64';
   const recording=JSON.parse(fs.readFileSync('web/static/recordings/'+id+'.json'));
   const originals=Object.fromEntries(['document','fetch','location','setInterval','clearInterval'].map(key=>[key,globalThis[key]]));
@@ -280,7 +280,7 @@ for (const [model, repeat] of [['astra',1], ['terra',1], ['terra',2]]) test(mode
     assert.equal(get('title').textContent,recording.title);
     assert.equal(get('decision').textContent,'Decision 1 / 64');
     assert.equal(get('outcome').hidden,true);
-    for(const index of (repeat===2 ? [2,3,7,22,24,45,50,61,62,63] : [15,31,63])) {
+    for(const index of (model==='terra' && repeat===2 ? [2,3,7,22,24,45,50,61,62,63] : [5,15,31,54,63])) {
       get('range').value=String(index);await get('range').emit('input');
       assert.equal(get('decision').textContent,'Decision '+(index+1)+' / 64');
       assert.equal(get('intent').textContent,recording.frames[index].action.intent);
@@ -288,9 +288,11 @@ for (const [model, repeat] of [['astra',1], ['terra',1], ['terra',2]]) test(mode
       assert.deepEqual(get('keys').children.map(key=>key.textContent),
         recording.frames[index].action.keys.map(key=>key===' '?'SPACE':key));
       assert.match(get('boundary').textContent,/saved checkpoint 64/);
-      if(repeat===2 && index!==63) {
+      if(recording.frames[index].accepted===false) {
         assert.equal(get('execution').textContent,'Key command was not accepted.');
         assert.equal(get('advance').textContent,'0');
+      } else {
+        assert.equal(get('execution').textContent,'Key command accepted by the harness. Acceptance does not prove the intended outcome.');
       }
     }
     assert.equal(get('next').disabled,true);
