@@ -1,0 +1,70 @@
+{
+  "schema_version": "fortgym.selected-workshop-startup/v2",
+  "date_utc": "2026-09-12",
+  "study_id": "selected-workshop-v2",
+  "campaign_id": "selected-workshop-v2-p3-shortcuts",
+  "status": "running",
+  "source_revision": "5ddf1e6718dab2e8351e8dc24a2afe5071cd2592",
+  "image": "sha256:dcbc9b042538401a146159fcf5f6456b21dc900c4649369c008f7a77f661fed3",
+  "declaration_sha256": "e325f69f40978a9a0b2ed962a505c893aa7ea397b569e3300455972d7b94ebc8",
+  "owner_plan_sha256": "434126049f9564daf0013fb41e93c635629865bcfb4e22f92a8eabe940b7f4bf",
+  "launch_sha256": "fd2f9694522136c079fc510d00c9dc6d5734fd7e9f3484de90d94d0a9ced1c1b",
+  "operator_sha256": "1b9c40d470ba2eef0d9cdfad5dc88486b6ef09f05b17ff62b36b2c78a8e80fb7",
+  "initial_native_state_sha256": "b1d7097e100aefe0bd1440f2312bd1be1e18d61a33410926b8a3d95f3317605d",
+  "initial_agent_sha256": "e252955dbe826322c7526e48fbe2c45fbee5ad5abeb1ce276441de9efd85cd4a",
+  "initial_clock_and_metrics_match_original_fresh_seed": true,
+  "initial_memory_empty": true,
+  "first_response": {
+    "dispatched": true,
+    "grammar_valid": true,
+    "prompt_profile_verified": true,
+    "returned_tokens": 26771,
+    "receipt_sha256": "47c985048b81d448a20d2984250366c3caf228f379ebdf6fe61f392f099c88dd"
+  },
+  "observed_completed_decision": 9,
+  "observed_state_metrics": {
+    "population": 7,
+    "food_stock": 50,
+    "drink_stock": 60,
+    "wood_stock": null,
+    "stone_stock": null,
+    "functional_rooms": null,
+    "completed_workshops": 1,
+    "completed_beds": 0,
+    "completed_farms": 0,
+    "recorded_dead_citizens": 0
+  },
+  "observed_usage": {
+    "total_tokens": 234700,
+    "returned_responses": 9,
+    "accounted_responses": 9,
+    "dispatched_requests": 9,
+    "total_cost_usd": null,
+    "cost_basis": "codex_subscription_charge_unreported/v1"
+  },
+  "trace_record_sha256": "c68c11ad54a9f71683055105ed14f4dd05f208ad114414e1b0f7bdd72de951e4",
+  "observed_action_routes": {
+    "KEYSTROKE": 8,
+    "WORKSHOP_JOB": 1
+  },
+  "public_live": {
+    "url": "https://fortgym.live/",
+    "https_decision_verified": 8,
+    "proof_sha256": "309ba9f06a4730e2f4f318ec2bee2f31e5ebd7ea2f33aac0c81432870b010add",
+    "original_screen_action_match": true,
+    "browser_live_decision_verified": null,
+    "browser_screenshot_inspected": false,
+    "existing_viewer_preserved": true,
+    "new_site_deployment": false,
+    "service_restart": false,
+    "private_transcripts_memory_or_credentials_published": false
+  },
+  "mandatory_teardown_owner_active": true,
+  "terminal_result": false,
+  "checkpoint_verified": false,
+  "human_gameplay_rescue": false,
+  "cloud_vm_created": false,
+  "actual_subscription_charge_usd": null,
+  "paired_comparison_complete": false,
+  "full_goal_complete": false
+}

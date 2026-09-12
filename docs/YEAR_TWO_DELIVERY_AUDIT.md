@@ -46,15 +46,22 @@ The terminal audit digest is
 `29535eb68e81a633675cf983f25674a9855a620e6ab0667590ec11af7b663b8b`;
 replay export digest is
 `4890518b7d6c550a49e25a6c134945141a16c136dc9f50721d605ab0f89db1cd`.
-The terminal tools are consumed. [Pair-three fresh-window operators](../experiments/evidence/selected_workshop_v2_p3_fresh_preparation_20260912.json)
-passed 26 offline tests but have not started. They follow in the original
-declared order; no remaining attempt is silently replaced. Their
+The terminal tools are consumed. The fifth declared attempt,
+[pair-three shortcuts](../experiments/evidence/selected_workshop_v2_p3_shortcuts_startup_20260912.json),
+has started from the same original fresh seed with empty memory and zero initial
+usage. Its first nine completed responses reconcile to 234,700 returned tokens,
+eight keyboard actions and one workshop shortcut. Public HTTPS frame 8 matches
+its original screen/action capture. Its single existing local VM is running under
+the original bounded owner's mandatory teardown; no checkpoint-64 result is claimed.
+The [fresh-window operators](../experiments/evidence/selected_workshop_v2_p3_fresh_preparation_20260912.json)
+passed 26 offline tests. The final keyboard attempt has not started. Their
 [own-save continuation operators](../experiments/evidence/selected_workshop_v2_p3_continuation_preparation_20260912.json)
 are also prepared, with 78 combined fresh/continuation tests passed. None of
 those operators or relays has run, and no future checkpoint is assumed. Their
 [live/reload/terminal evidence helpers](../experiments/evidence/selected_workshop_v2_p3_evidence_preparation_20260912.json)
-are prepared as well, with 198 combined offline tests passed. The actual native
-results and public replay deliveries still have to occur.
+passed 198 combined offline tests. The shortcut fresh relay and startup capture
+are now consumed/running as appropriate; its own-save reload and terminal
+evidence, the final keyboard run and both public replay deliveries remain.
 
 A [separate workshop job-screen feedback correction](../experiments/evidence/workshop_job_clock_feedback_preparation_20260912.json)
 is pushed for draft review as PR179. It recognizes the exact paused `Workshop/Job`
@@ -66,20 +73,19 @@ the unchanged baseline; native acceptance of this correction is still pending.
 has now passed 5,544 tests with 173 skips and seven warnings. That hosted result
 does not replace the differently skipped local suite or the native-game gate.
 
-The [latest verified website delivery](../experiments/evidence/selected_workshop_v2_p2_keyboard_website_20260912.json)
-is revision `553528797ec140f2f2d50b623897cb3b3cf33811`: twenty original recording
-windows and 1,636 frames, including all three v2 terminal replays. Local testing
-passed 1,302 Python tests with five skips and 31 Node tests; exact-head CI
-`34711790058` and public HTTPS asset/recording checks passed. Nineteen earlier
+The [latest verified website delivery](../experiments/evidence/selected_workshop_v2_p2_shortcuts_website_20260912.json)
+is revision `94425be289a28b3683bf2ce11d83634009839d36`: twenty-one recording
+windows and 1,764 frames, including all four v2 terminal replays. Local testing
+passed 1,303 Python tests with five skips and 31 Node tests; exact-head CI
+`34717475643` and public HTTPS asset/recording checks passed. All twenty earlier
 recordings/previews and service/database/untracked state were preserved. The
-public catalog totals were read back again during this audit update. The live
-feed now follows pair-two shortcuts through the same existing viewer. No browser
-visual QA or new site deployment was performed for this documentation update.
-The [next shortcut replay importer](../experiments/evidence/selected_workshop_v2_p2_shortcuts_website_preparation_20260912.json)
-passed 34 in-memory fixture tests, then consumed the actual terminal result
-only after settlement. The new replay, catalog and visible card are now updated
-locally, preserving all twenty original recordings. Full site checks and the
-twenty-one-recording public release remain pending.
+stopped pair-two feed was retained and verified during release, then the live
+feed switched to pair-three shortcuts through the same viewer. No browser visual
+QA, service restart, database mutation, main merge or new hosting resource occurred.
+The [shortcut replay importer preparation](../experiments/evidence/selected_workshop_v2_p2_shortcuts_website_preparation_20260912.json)
+remains unchanged as historical evidence; its importer was consumed only after
+the actual terminal result existed. Publication is independently recorded and
+does not rewrite the native result's original unpublished state.
 
 ## Next work toward the full goal
 
