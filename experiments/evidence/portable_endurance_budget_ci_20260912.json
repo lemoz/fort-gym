@@ -1,0 +1,38 @@
+{
+  "schema_version": "fortgym.portable-endurance-budget-ci/v1",
+  "date_utc": "2026-09-12",
+  "preparation_receipt_sha256": "c97bc82fada0ddebdcd08893100a8f3e4298367b3e150280f5a6aef48408eb55",
+  "source_revision": "7594b3b2d762195627046baa64091577a7c64d69",
+  "pull_request": "https://github.com/lemoz/fort-gym/pull/180",
+  "exact_head_ci": {
+    "run_id": 34718879477,
+    "url": "https://github.com/lemoz/fort-gym/actions/runs/34718879477",
+    "event": "pull_request",
+    "head_sha": "7594b3b2d762195627046baa64091577a7c64d69",
+    "status": "completed",
+    "conclusion": "success",
+    "job_id": 103620929642,
+    "completed_at": "2026-09-12T21:09:54Z",
+    "passed": 5566,
+    "skipped": 173,
+    "warnings": 7
+  },
+  "local_suite": {
+    "passed": 5729,
+    "skipped": 10,
+    "warnings": 8,
+    "junit_sha256": "93f25d9a68f1c0858b2c2c6ee5862e68a5940128a3a408e6ff506c850b77d0ad"
+  },
+  "delivery": {
+    "source_pushed": true,
+    "draft": true,
+    "merged": false,
+    "native_acceptance": false,
+    "image_built": false,
+    "runtime_migration_supported": false,
+    "active_cohort_source_or_image_changed": false,
+    "full_goal_complete": false
+  },
+  "note": "Hosted CI supersedes only the preparation snapshot's in-progress CI state. Different local/hosted skip counts are retained. Fixture acceptance does not establish native same-save continuation on this source/image."
+}
+

@@ -81,8 +81,9 @@ the spectator and replay export. It also fixes multi-save replay lineage. The
 complete local rerun passed 5,729 tests with ten skips and eight warnings;
 all 22 new budget checks passed. Broad lint/type diagnostics match the parent.
 The integration fixtures use fake game/model/container receipts with real
-checkpoint machinery, not native gameplay. Hosted CI was still running at the
-preparation snapshot. No new image, runtime migration or native acceptance is
+checkpoint machinery, not native gameplay. [Exact-head hosted CI](../experiments/evidence/portable_endurance_budget_ci_20260912.json)
+has since passed 5,566 tests with 173 skips and seven warnings; the earlier
+preparation snapshot remains unchanged. No new image, runtime migration or native acceptance is
 claimed, and the active controls study is unchanged.
 
 The [latest verified website delivery](../experiments/evidence/selected_workshop_v2_p2_shortcuts_website_20260912.json)
