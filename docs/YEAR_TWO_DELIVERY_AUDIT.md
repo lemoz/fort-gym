@@ -26,8 +26,11 @@ next-decision movement, Year-Two scrubbing to decision 416, the 15-recording
 Worlds gallery and the 64/128 comparison selector with failures and missing
 results retained. The isolated server and temporary tab are closed. No new
 native, model, Docker, VM or production website operation occurred. The candidate
-is approved for normal merge; actual merge and remaining gameplay goals are
-not claimed by the pre-merge review record. Earlier review counts below are history.
+has passed implementer source review. The attempted main-branch promotion was
+rejected before execution because explicit owner merge authorization is required.
+PR176 remains draft and unmerged; no approval boundary was bypassed. Main remains
+`f1aa05f429c189b67891cf2629e8e00329222aca`. Remaining gameplay goals are not
+claimed by this review. Earlier review counts below are history.
 
 Latest update: [public-owner acceptance](../experiments/evidence/keyboard_portable_owner_acceptance_20260912.json)
 passed at integration source `40b106b95f483b534a738622e75c4147a1270a96`.

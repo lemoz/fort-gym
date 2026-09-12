@@ -1691,6 +1691,11 @@
   "nonblocking_followups": [
     "Legacy campaign-keyboard.js is large and some older fetch paths lack abort deadlines; no reproduced merge-blocking failure was found in this pass."
   ],
-  "main_merge": null,
+  "main_merge": {
+    "performed": false,
+    "draft_retained": true,
+    "reason": "Main-branch promotion requires explicit owner authorization; the attempted operation was rejected before execution.",
+    "approval_boundary_bypassed": false
+  },
   "goal_complete": false
 }
