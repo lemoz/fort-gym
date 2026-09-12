@@ -1,0 +1,108 @@
+{
+  "schema_version": "fortgym.portable-keyboard-image-context-result/v1",
+  "source_revision": "bf438208f464195c18ef29cfd75ba9e86f58289b",
+  "source_tree": "7c5cde64e78672a5f02939c219e4a5544979557c",
+  "pull_request": 176,
+  "implementation": {
+    "module": "fort_gym.bench.run.keyboard_image_context",
+    "cli": "python -m scripts.campaign_keyboard_image",
+    "commands": [
+      "prepare",
+      "check"
+    ],
+    "source_sha256": {
+      "fort_gym/bench/run/keyboard_image_context.py": "ff792c70c06b07f3bf473e16dd92151d0ea7f291e20862b7c0388922d5d2d0ef",
+      "scripts/campaign_keyboard_image.py": "e1b801b804d9eed2d6105c6c86c701fce5803a8f47f14e88f1250889649582ce",
+      "tests/test_keyboard_image_context.py": "7a00d8bc1c96eb3936375024b89d7f9bf2236f6574e17af828d639b808c70aaa"
+    }
+  },
+  "actual_context": {
+    "receipt_sha256": "10ebc58d59205b26f7bf514d6beee150798f3970016e379c002de3ceb35ad761",
+    "dockerfile_sha256": "26a3ced6a8b8ba8c0a0a052cf00a137919fb443eff7a54d4b515222e1e9589a3",
+    "inputs_file_sha256": "ae071813e17ce55471d41710f8a74e67be1725f30aa5b42bbbaed2dfcc841ec3",
+    "files": 952,
+    "bytes": 31155952,
+    "generated_binding_files": 9,
+    "exact_commit_and_tree_verified": true,
+    "history_commit_count": 1,
+    "remotes": 0,
+    "linked_worktree": false,
+    "alternate_object_store": false,
+    "cli_prepare_passed": true,
+    "cli_check_using_exported_code_passed": true,
+    "final_digest_bound_check_passed": true,
+    "original_inputs_unchanged": true,
+    "ignored_dotenv_absent": true,
+    "tracked_historical_artifact_files_retained": 5,
+    "tracked_artifact_note": "Five already-versioned trace/summary fixtures remain part of the exact source tree; they are not new private runtime exports."
+  },
+  "base": {
+    "image_id": "sha256:32bd022138a4772ed0c0d3a14f94feab8ad4a4cd183a20a8cd098745aedbd10d",
+    "reference": "fortgym-campaign:d22f28d-dismissed-restart-v2",
+    "historical_inspection_sha256": "1c5e6756ccdbe9338de5fc2d119979931883ea5a2209d9f3742e0b7bba3b3fb5",
+    "current_image_or_tag_verified": false,
+    "existing_local_engine_readiness": "unavailable",
+    "engine_checks": [
+      "Fort Gym local Docker endpoint unreachable, including outside the execution sandbox.",
+      "Docker Desktop endpoint unreachable, including outside the execution sandbox."
+    ]
+  },
+  "bindings_sha256": {
+    "AdventureControl_pb2.py": "3b46d82e81cbf602be0d912ab166357951a20d18eac019b904d523149f221493",
+    "BasicApi_pb2.py": "1a3723f7e51d79880510fd750a0a6f397afd696105a7e10861e472bffc5f0cd4",
+    "Basic_pb2.py": "f602c887b06a7882429a803d2f4f814e81ee8b264be84993f5eb67444baf15b1",
+    "CoreProtocol_pb2.py": "786a0a5729dc179c05022249a8d0c16c3e7d0e95f8d746ce84edf3b524d076e1",
+    "DwarfControl_pb2.py": "be47c5f539e39ca179973238b6cafb7c3b819ee12865bc0faf9050786cc33537",
+    "ItemdefInstrument_pb2.py": "57f5ec9ee19291e388abb0da98a5e4e9c705a80922c2181d802b06ff7f0bca93",
+    "RemoteFortressReader_pb2.py": "f7cd44698e3673c30c123742dc9e19a9bbef46e67168780f4d4e0ffefe87f71f",
+    "__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "ui_sidebar_mode_pb2.py": "800a52e802eb171bb5319f053c7d9d0c55f24e4749d177e39195b7a4cecf6cc1"
+  },
+  "validation": {
+    "full_local_suite": {
+      "passed": 5508,
+      "skipped": 10,
+      "warnings": 7,
+      "seconds": 250.95
+    },
+    "packaging_tests": {
+      "passed": 26
+    },
+    "node_viewer_tests": {
+      "passed": 51
+    },
+    "scoped_ruff_passed": true,
+    "scoped_mypy": {
+      "passed": true,
+      "source_files": 2,
+      "follow_imports": "silent"
+    }
+  },
+  "exact_head_ci": {
+    "run_id": 34674815431,
+    "head_sha": "bf438208f464195c18ef29cfd75ba9e86f58289b",
+    "status": "completed",
+    "conclusion": "success",
+    "passed": 5364,
+    "skipped": 154,
+    "warnings": 7,
+    "seconds": 326.36,
+    "note": "Hosted and local executed scopes differ because their skip counts differ."
+  },
+  "image_built": false,
+  "game_launched": false,
+  "vm_started": false,
+  "experiment_model_calls": 0,
+  "website_changed": false,
+  "main_merged": false,
+  "full_goal_complete": false,
+  "review_kind": "partial_implementer_review_not_independent_full_source_approval",
+  "limits": [
+    "This is real source/binding packaging and standalone context verification, not a Docker build or native-game acceptance.",
+    "The base must supply compatible game assets, Python/dependencies, libraries, Git and script; acquiring/installing that base is not implemented by this packager.",
+    "The image ID/reference in preparation inputs is a declaration until verified against a live engine. No metadata lookup, image pull or alternate build backend was attempted.",
+    "A build must retain base/new image inspections, source/UID/configuration checks and rootfs lineage; network=none only covers build steps, not all possible BuildKit metadata resolution.",
+    "The current frozen trials remain on original source/image/owner. No attempt was retried and no guest disk was grown or evidence removed.",
+    "Native container/wire acceptance, current image availability, live observer wiring, remaining full source review, main merge and unfinished declared comparisons remain open."
+  ]
+}

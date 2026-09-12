@@ -1,7 +1,7 @@
 # Year-Two delivery audit
 
 Snapshot: September 12, 2026 UTC, goal branch
-`db1917e63578f788fd826151a10e234705efd3c6` before this documentation update.
+`fecd68fd01176acdb96779845f334350df85fe48` before this documentation update.
 This is a progress audit, not a completion certificate or a replacement goal.
 Requirements come from [the approved goal](YEAR_TWO_CAMPAIGNS.md),
 [the standard-input phase](ASTRA_STANDARD_INPUT_EXPERIMENTS.md), and the
@@ -18,10 +18,20 @@ Requirements come from [the approved goal](YEAR_TWO_CAMPAIGNS.md),
 | Inspectable development, adaptation and sustainability | Saved native metrics, job samples, elapsed time, chosen controls and rejected actions are retained and replayable. The Astra endpoint review explicitly qualifies its observations. | Stocks and sampled jobs are not production/consumption rates, accessible reserves or completed job counts. Keep unmeasured fields unknown; use longer gameplay and separately versioned measurement improvements for stronger sustainability claims. |
 | Honest cost and resource reporting | Returned model tokens and known lost responses remain accounted. Results identify subscription transport and leave dollar charges null. | Subscription dollar charges, hardware energy and app cost are unreported, not zero. Do not create a fabricated actual cost or silently substitute API-price estimates. |
 | Live and recorded website delivery | [The verified repeat-outcome release](../experiments/evidence/website_repeat_outcomes_release_20260912.json) serves all six fresh results, fourteen replay windows, 1,056 captured frames, a 64/128 budget selector and immutable evidence links. Terra r2's continuation and both latest table outcomes are live. All thirteen older recordings and the stopped observer are unchanged. | Astra r2 is unlaunched because of the known native capacity shortage. No replay is invented for Sol's zero-call capacity failure. This release is not another game acceptance or independent trial. |
-| Reviewed and merged remote implementation, tests, setup and manifests | Native code, website code and result manifests are pushed, with exact-revision tests and native/public evidence. Main is `f1aa05f429c189b67891cf2629e8e00329222aca`. | PR176's updated candidate `3c3885a04f08b5f04fb00ea718ad094f9e6215a9` includes the five-outcome128 source, fourteen replays and a configured portable Docker owner. It passed 5,482 full local Python tests, 51 Node contracts and 94 focused policy/owner/courier tests. Exact-head CI `34673752532` passed with 5,338 tests and 154 skips, a different executed scope from local. The [compatibility review](../experiments/evidence/keyboard_portable_owner_compatibility_review_20260912.json) fixes narrow syscall-policy configuration and uncertain-create cleanup. The two earlier partial-review inventories and isolated setup's 659 tests are retained. Full source review and portable native setup acceptance remain. Public deployment is not merged harness delivery. |
+| Reviewed and merged remote implementation, tests, setup and manifests | Native code, website code and result manifests are pushed, with exact-revision tests and native/public evidence. Main is `f1aa05f429c189b67891cf2629e8e00329222aca`. | PR176's updated candidate `bf438208f464195c18ef29cfd75ba9e86f58289b` includes the five-outcome128 source, fourteen replays, a configured portable Docker owner and standalone image-context packaging. It passed 5,508 full local Python tests, 51 Node contracts and 26 new packaging tests. Exact-head CI `34674815431` passed with 5,364 tests and 154 skips, a different executed scope from local. The previous [compatibility review](../experiments/evidence/keyboard_portable_owner_compatibility_review_20260912.json) and all earlier review/setup records are retained. Full source review and portable native setup acceptance remain. Public deployment is not merged harness delivery. |
 | Reusable setup rather than one machine's retained experiment assets | The isolated candidate installs in a fresh Python environment, loads all three declared model conditions, reproduces the reports and serves twelve byte-verified recordings. The local server was stopped after acceptance. | The [later protocol check](../experiments/evidence/keyboard_integration_protocol_setup_176_20260912.json) generated and imported all eight official 52.04-r1 bindings in that isolated environment, without a game connection. The [public portable owner](../experiments/evidence/keyboard_portable_owner_implementation_20260912.json) now supports fresh and unchanged continuation runs without the private operator. Its input reader restored all six real saved model states offline and rejected changing their frozen runtime. Actual container execution, image construction, native wire compatibility and live-observer wiring for this layout remain unverified. Python/viewer, binding-generation and offline state restoration are not complete native setup acceptance. Do not publish restricted game files, account data or private model payloads. |
 
 ## Integration started without changing active gameplay
+
+The [new packaging result](../experiments/evidence/keyboard_portable_image_context_20260912.json)
+verifies a real standalone source/binding context at that exact candidate:
+952 files, 31,155,952 bytes, the original commit/tree, nine retained bindings and
+a repeatable digest-bound check using exported code. No linked worktree or
+alternate Git object store is needed. Ignored private inputs are excluded;
+already-versioned fixture traces remain unchanged. The base image reference
+comes from a historical inspection, not a new availability check. Both selected
+local Docker endpoints were unreachable. No image build, game, VM or model
+launch occurred. Native image construction and end-to-end acceptance remain open.
 
 The isolated `codex/year-two-integration` worktree starts at current remote main.
 Merge `72f732546f1b6fa48a8074c582b8562f2592b92c` joins main's ancestry to frozen

@@ -104,19 +104,27 @@ remains unresolved. The full goal stays active.
 
 The isolated integration candidate is pushed as
 [draft PR176](https://github.com/lemoz/fort-gym/pull/176), head
-`3c3885a04f08b5f04fb00ea718ad094f9e6215a9`. It retains the Terra r2/Sol r2
+`bf438208f464195c18ef29cfd75ba9e86f58289b`. It retains the Terra r2/Sol r2
 results, five-outcome128 index and fourteen-recording viewer, and adds the
 [configured portable Docker owner](../experiments/evidence/keyboard_portable_owner_implementation_20260912.json)
-for fresh and unchanged own-save attempts. The current full local suite passes 5,482
+for fresh and unchanged own-save attempts. The current full local suite passes 5,508
 Python tests with ten skips and seven warnings, plus all 51 Node contracts.
-All 94 focused policy/owner/courier tests, selected Ruff checks and three-file
-mypy checks pass. Exact-head CI `34673752532` passed with 5,338 tests and 154
-skips; hosted and local coverage are not identical. The [compatibility review](../experiments/evidence/keyboard_portable_owner_compatibility_review_20260912.json)
+The 26 new packaging tests, selected Ruff checks and two-file mypy checks pass.
+Exact-head CI `34674815431` passed with 5,364 tests and 154 skips; hosted and local
+coverage are not identical. The previous 94-test [compatibility review](../experiments/evidence/keyboard_portable_owner_compatibility_review_20260912.json)
 adds a checksum-bound narrow DFHack syscall policy and fixes the input-copy
 loop overwriting the container name used for uncertain-create cleanup. A new
 exact-name test reproduced that cleanup failure before the fix. The historical
 policy's original bytes pass the new reader; no actual container was run.
-Prior integration CI `34672652444` and `34671288581` passed as well.
+Prior integration CI `34673752532`, `34672652444` and `34671288581` passed as well.
+The [source-context packager](../experiments/evidence/keyboard_portable_image_context_20260912.json)
+now prepares an independent shallow checkout and nine exact generated-binding
+files without a private build operator. The actual 952-file, 31,155,952-byte
+context passed preparation and a digest-bound check using its own exported code.
+Ignored private inputs are excluded; five already-versioned historical fixture
+files remain part of the exact source. Both local Docker endpoints were unreachable,
+so no image was built and the declared base tag/image was not reverified live.
+This closes source packaging, not base-runtime installation or native acceptance.
 The [additional setup and source review](../experiments/evidence/keyboard_integration_setup_review_176_20260912.json)
 verifies an isolated Python/viewer install and 659 focused tests on its exact
 prior head. A [separate protocol setup check](../experiments/evidence/keyboard_integration_protocol_setup_176_20260912.json)
@@ -128,7 +136,7 @@ and actual portable container acceptance remain unverified. The new public owner
 has also [read all six real model checkpoints](../experiments/evidence/keyboard_portable_owner_real_inputs_20260912.json),
 restoring each original memory and reconciling its usage without a game or model.
 It rejects executing their frozen declarations under its new source. No existing
-attempt was rerun, VM started or storage changed. Source review is still partial
+attempt was rerun, VM started or VM disk resized. Source review is still partial
 rather than merge approval. The current
 source reader exactly reproduces the public five-result128 and six-result64
 tables.
