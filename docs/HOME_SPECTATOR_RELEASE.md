@@ -311,3 +311,34 @@ The homepage and Results share the catalog; Runs adds the native captured card.
 Retain the stopped pair-two keyboard feed without presenting it as a live game.
 No API/game service restart, database mutation, untracked-file change, new
 infrastructure, game input or model call is part of this website release.
+
+## Pair-two shortcut controls replay (September 12, 2026)
+
+Start from public revision `553528797ec140f2f2d50b623897cb3b3cf33811`.
+Add the original `controls-v2-p2-shortcuts-1-128` recording with SHA-256
+`4890518b7d6c550a49e25a6c134945141a16c136dc9f50721d605ab0f89db1cd`,
+bound to audit `29535eb68e81a633675cf983f25674a9855a620e6ab0667590ec11af7b663b8b`
+and frozen native source `5ddf1e6718dab2e8351e8dc24a2afe5071cd2592`.
+The terminal result digest is
+`e6541861299c7d1d39c1650284d92ece65c3e447250fc08aa8bc35aa6780a847`.
+
+The final save retains 49,600 elapsed ticks, seven living dwarves, no recorded
+deaths, ten beds, two workshops, two farms, 40 food and 136 drinks. All 128
+actions were accepted: 117 keyboard actions sent 675 keys, and eleven workshop
+shortcuts queued 43 jobs. Queued jobs are not completed products. Four zero-tick
+timeouts remain in the evidence; requested time is not counted as progress.
+The attempt freshly reloaded its own decision-64 checkpoint. Its final save
+has no separate fresh-reload check. Returned tokens total 4,014,250; subscription
+dollar charges are unreported, not zero. Both windows ended with successful
+owner, guest-poweroff and VM-stop commands, and stopped VM/closed disk checks.
+
+Preserve all twenty earlier recording files, catalog rows and previews.
+The total becomes twenty-one recording windows and 1,764 captured frames,
+not twenty-one independent campaigns. Two matched controls pairs are complete;
+one pair remains. The visible cards retain the paired keyboard drowning and
+do not claim a control ranking, sustainability or a full elapsed game year.
+Homepage and Results consume the shared catalog; Runs has the new captured card.
+Retain the stopped pair-two shortcut feed without presenting it as a live game.
+Full website/player tests, exact-head hosted CI and public HTTPS verification
+are required for delivery. No API/game restart, database change, new infrastructure
+or additional model call is part of this static release.
