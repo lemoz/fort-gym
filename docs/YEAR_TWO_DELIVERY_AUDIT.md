@@ -13,8 +13,8 @@ This summary supersedes the capture-time running/preparation statements in the
 historical sections below. Original result manifests and earlier evidence are
 unchanged. The full Year-Two/cross-model goal is still active.
 
-Three of the six declared v2 attempts have terminal native audits at decision
-128. All three freshly reloaded their own decision-64 save; none of these final
+Four of the six declared v2 attempts have terminal native audits at decision
+128. All four freshly reloaded their own decision-64 save; none of these final
 128 saves has had a separate fresh-reload check. The source/image, original
 seed, Astra Medium model and per-attempt ceilings match the v2 declaration.
 
@@ -23,6 +23,7 @@ seed, Astra Medium model and per-attempt ceilings match the v2 declaration.
 | [Pair 1 shortcuts](../experiments/evidence/selected_workshop_v2_p1_shortcuts_128_20260912.json) | 68,200 | 7 / 0 | 7 / 2 / 1 | 39 / 115 | 3,772,495 |
 | [Pair 1 keyboard](../experiments/evidence/selected_workshop_v2_p1_keyboard_128_20260912.json) | 70,900 | 7 / 0 | 7 / 2 / 1 | 43 / 135 | 3,879,799 |
 | [Pair 2 keyboard](../experiments/evidence/selected_workshop_v2_p2_keyboard_128_20260912.json) | 51,900 | 6 / 1 | 7 / 5 / 1 | 61 / 122 | 3,954,012 |
+| [Pair 2 shortcuts](../experiments/evidence/selected_workshop_v2_p2_shortcuts_128_20260912.json) | 49,600 | 7 / 0 | 10 / 2 / 2 | 40 / 136 | 4,014,250 |
 
 The pair-two keyboard death is a [native-recorded drowning](../experiments/evidence/selected_workshop_v2_p2_keyboard_drowning_20260912.json),
 first observed at decision 86. The observation boundary does not establish its
@@ -30,15 +31,22 @@ exact time or which model action caused it. Its final guest-poweroff command
 returned one with `exit status 255`; the later VM stop and independent stopped
 state/closed-disk checks passed. The original exit codes remain in the result.
 
-The fourth attempt, [pair-two shortcuts](../experiments/evidence/selected_workshop_v2_p2_shortcuts_64_20260912.json),
-has saved and freshly reloaded its own decision-64 checkpoint. The native audit
-retains 18,800 elapsed ticks, seven living dwarves, no recorded deaths, five beds,
-two workshops, one farm, 45 food, 85 drinks and 1,877,163 returned tokens. Both
-VMs and disks stopped/closed cleanly at that boundary. The actual continuation
-restored its original native clock/metrics and exact memory, usage and history;
-public HTTPS frame 69 matches its captured request and chosen action. It is
-continuing toward decision 128, not a terminal result. [Terminal tools](../experiments/evidence/selected_workshop_v2_p2_shortcuts_terminal_preparation_20260912.json)
-remain prepared, not consumed. [Pair-three fresh-window operators](../experiments/evidence/selected_workshop_v2_p3_fresh_preparation_20260912.json)
+The fourth attempt, [pair-two shortcuts](../experiments/evidence/selected_workshop_v2_p2_shortcuts_128_20260912.json),
+has now saved and passed its terminal native audit at decision 128. Its own
+decision-64 reload and complete memory, usage and history chain are verified.
+All 128 actions were accepted: 117 keyboard actions sent 675 keys, and eleven
+shortcuts queued 43 workshop jobs. Four zero-tick timeouts remain recorded;
+57,600 requested ticks yielded 49,600 actual ticks. Queued jobs are not completed
+products. Both windows ended with zero owner/poweroff/VM-stop return codes,
+stopped VMs, closed disks and unchanged configurations/inventory. The final
+public stopped frame 128 matches its original request and chosen action;
+its payload digest is
+`7a59b4a55523aa54631a614aeae29feb84ad4d673329592d9d274c8f94753880`.
+The terminal audit digest is
+`29535eb68e81a633675cf983f25674a9855a620e6ab0667590ec11af7b663b8b`;
+replay export digest is
+`4890518b7d6c550a49e25a6c134945141a16c136dc9f50721d605ab0f89db1cd`.
+The terminal tools are consumed. [Pair-three fresh-window operators](../experiments/evidence/selected_workshop_v2_p3_fresh_preparation_20260912.json)
 passed 26 offline tests but have not started. They follow in the original
 declared order; no remaining attempt is silently replaced. Their
 [own-save continuation operators](../experiments/evidence/selected_workshop_v2_p3_continuation_preparation_20260912.json)
@@ -68,10 +76,10 @@ public catalog totals were read back again during this audit update. The live
 feed now follows pair-two shortcuts through the same existing viewer. No browser
 visual QA or new site deployment was performed for this documentation update.
 The [next shortcut replay importer](../experiments/evidence/selected_workshop_v2_p2_shortcuts_website_preparation_20260912.json)
-is prepared and passed 34 in-memory fixture tests. Its actual CLI refused the
-missing terminal result before changing any website file. A read-only public
-catalog check still shows twenty recordings and 1,636 frames. Actual settlement,
-the visible replay card, full site checks and public release remain pending.
+passed 34 in-memory fixture tests, then consumed the actual terminal result
+only after settlement. The new replay, catalog and visible card are now updated
+locally, preserving all twenty original recordings. Full site checks and the
+twenty-one-recording public release remain pending.
 
 ## Next work toward the full goal
 
