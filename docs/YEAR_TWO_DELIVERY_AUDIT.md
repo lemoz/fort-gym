@@ -7,7 +7,34 @@ Requirements come from [the approved goal](YEAR_TWO_CAMPAIGNS.md),
 [the standard-input phase](ASTRA_STANDARD_INPUT_EXPERIMENTS.md), and the
 [frozen displayed-key cohort](../experiments/keyboard_binding_comparison_20260911/cohort.json).
 
-The [v2 shortcuts checkpoint64 and actual continuation](../experiments/evidence/selected_workshop_v2_p1_shortcuts_64_20260912.json)
+The [first v2 shortcuts attempt is now saved and audited through decision128](../experiments/evidence/selected_workshop_v2_p1_shortcuts_128_20260912.json).
+Its endpoint retains 68,200 elapsed ticks, seven living dwarves, zero recorded
+deaths, seven beds, two workshops, one farm, 39 food and 115 drinks. All 128
+responses reconcile to 3,772,495 returned tokens. The trace contains 116 keyboard
+actions, 574 confirmed key presses and twelve accepted shortcut actions queuing
+36 jobs. Queued jobs are not completed products. Requested 81,400 ticks yielded
+68,200 actual ticks, with six retained zero-tick timeouts and one deferral.
+
+The complete own-save chain, memory/usage/history, original inputs, final native
+save and cleanup passed audit. Both project VMs and disks were stopped/closed,
+with unchanged configuration/inventory and zero return codes for the owner and
+shutdown commands. Both observers exited. Public HTTPS verifies the final
+stopped frame128 against its original capture; its aged projection is now stale.
+The stopped payload SHA256 is
+`a23584d85be6da32a67d0f532b9a3ba066afccf8075c8507ca8e6c6eb93e202c`.
+The combined 128-frame replay is exported but not yet catalog-published. The
+final checkpoint has not had a separate fresh reload. Dollar charges and
+sustained production remain unreported/unproven; no paired result is claimed.
+The [paired keyboard attempt has now started](../experiments/evidence/selected_workshop_v2_p1_keyboard_startup_20260912.json)
+from the same original seed with empty memory and zero initial usage. Its first
+four actual responses used keyboard input only and reconcile to 104,795 returned
+tokens. Initial native clock/metrics match the paired fresh start, and the first
+response retains the declared prompt/profile. Public HTTPS frame3 matches its
+original capture/action. The single existing local VM is active under its bounded
+owner's teardown responsibility; no checkpoint64 or keyboard terminal result is
+yet claimed. Website replay publication remains separate from this live proof.
+
+Earlier, the [v2 shortcuts checkpoint64 and actual continuation](../experiments/evidence/selected_workshop_v2_p1_shortcuts_64_20260912.json)
 now pass the retained native/owner audit and initial reload checks. The save
 contains 27,000 elapsed ticks, seven living dwarves, two beds, two workshops,
 one farm, 45 food and 78 drinks; 64 responses total 2,041,871 returned tokens.
