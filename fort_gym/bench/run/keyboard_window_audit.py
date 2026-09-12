@@ -9,6 +9,7 @@ import re
 
 from .keyboard_config import positive
 from .keyboard_restart import validate_discontinuities
+from .keyboard_window_budget import WINDOW_V2, declared_limits
 
 
 @dataclass(frozen=True)
@@ -36,8 +37,12 @@ def settled_segment_spans(
         window.get("source_native_revision"),
         window.get("expected_campaign_id"),
     )
+    version = window.get("schema_version")
+    if version == WINDOW_V2:
+        if start + steps * maximum > declared_limits(window)["max_dispatches"]:
+            raise ValueError("Window exceeds the declared campaign dispatch ceiling")
     if (
-        window.get("schema_version") != "fortgym.codex-keyboard-window/v1"
+        version not in ("fortgym.codex-keyboard-window/v1", WINDOW_V2)
         or not isinstance(revision, str)
         or re.fullmatch(r"[0-9a-f]{40}", revision) is None
         or not isinstance(identity, str)
@@ -46,7 +51,8 @@ def settled_segment_spans(
             window.get(k) is not False
             for k in ("reset_memory", "reset_usage", "strategy_intervention")
         )
-        or {"restart", "prompt_change", "budget_extension"} & window.keys()
+        or {"restart", "prompt_change"} & window.keys()
+        or (version != WINDOW_V2 and {"budget_extension", "budget_before"} & window.keys())
         or type(window.get("window_end_decision")) is not int
         or window["window_end_decision"] != start + steps * maximum
     ):

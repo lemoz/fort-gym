@@ -68,7 +68,21 @@ def export_window(attempt: Path, audit: dict, proof: dict) -> tuple[list[dict], 
     segments = [native["segment"]] if owner["mode"] == "fresh" else native["segments"]
     require(bool(segments) and len(segments) <= 16, "Missing native segment")
     checkpoint = attempt / f"game/native/segment-{len(segments) - 1}/checkpoint"
-    manifest = verify_checkpoint(checkpoint)
+    saves = [
+        verify_checkpoint(attempt / f"game/native/segment-{index}/checkpoint")
+        for index in range(len(segments))
+    ]
+    for parent, child in zip(saves, saves[1:]):
+        require(
+            child["payload"]["parent_sha256"] == parent["sha256"]
+            and child["payload"]["campaign_id"] == parent["payload"]["campaign_id"]
+            == audit["campaign_id"]
+            and child["payload"]["code_revision"] == parent["payload"]["code_revision"]
+            == audit["source_revision"]
+            and child["payload"]["next_step"] >= parent["payload"]["next_step"],
+            "Recording segments are not consecutive own saves",
+        )
+    manifest = saves[-1]
     require(sha(checkpoint / "checkpoint.json") == proof["checkpoint_file_sha256"]
             and manifest["sha256"] == proof["checkpoint_manifest_sha256"]
             and manifest["payload"]["next_step"] == proof["next_step"]
@@ -144,7 +158,8 @@ def export(attempts: list[Path], audit_path: Path, expected_sha: str,
         added, selected, manifest = export_window(attempt, audit, proof)
         require(condition is None or selected == condition, "Recording changes model condition")
         if previous is not None:
-            require(manifest["payload"]["parent_sha256"] == previous["sha256"]
+            first_save = verify_checkpoint(attempt / "game/native/segment-0/checkpoint")
+            require(first_save["payload"]["parent_sha256"] == previous["sha256"]
                     and added[0]["decision"] == frames[-1]["decision"] + 1,
                     "Recording windows are not consecutive own saves")
         frames.extend(added)

@@ -20,6 +20,7 @@ from ..agent.keyboard_courier import answer_request
 from ..agent.keyboard_exchange import publish, read, validate_request
 from ..agent.keyboard_observation import observe_container_output
 from .keyboard_config import positive, validate_condition
+from .keyboard_window_budget import WINDOW_V2, declared_limits
 
 
 class Exchange(Protocol):
@@ -32,23 +33,26 @@ class Exchange(Protocol):
 
 
 def window_bounds(condition: dict, window: dict) -> tuple[int, int]:
-    """Derive response and wall-clock ceilings without extending campaign usage."""
+    """Derive finite ceilings from original or checkpoint-bound cumulative limits."""
     validate_condition(condition)
+    version = window.get("schema_version")
     if (
-        window.get("schema_version") != "fortgym.codex-keyboard-window/v1"
+        version not in ("fortgym.codex-keyboard-window/v1", WINDOW_V2)
         or any(
             window.get(k) is not False
             for k in ("reset_memory", "reset_usage", "strategy_intervention")
         )
-        or {"prompt_change", "budget_extension", "restart"} & window.keys()
+        or {"prompt_change", "restart"} & window.keys()
+        or (version != WINDOW_V2 and {"budget_extension", "budget_before"} & window.keys())
     ):
         raise ValueError("Window courier requires unchanged continuation conditions")
     cursor = positive(window.get("continuation_from_next_step"), "continuation cursor")
     steps = positive(window.get("steps_per_segment"), "segment size", maximum=64)
     segments = positive(window.get("max_segments"), "segment count", maximum=16)
     limit = steps * segments
-    if cursor + limit > condition["max_dispatches"]:
-        raise ValueError("Window exceeds the original campaign dispatch ceiling")
+    budget = declared_limits(window) if version == WINDOW_V2 else condition
+    if cursor + limit > budget["max_dispatches"]:
+        raise ValueError("Window exceeds the declared campaign dispatch ceiling")
     return limit, limit * (condition["exchange_timeout_seconds"] + 120) + segments * 300
 
 

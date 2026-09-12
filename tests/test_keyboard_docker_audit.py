@@ -8,6 +8,7 @@ import uuid
 import pytest
 
 from fort_gym.bench.agent.keyboard_exchange import digest, read
+from fort_gym.bench.agent.campaign_budget import effective_budget
 from fort_gym.bench.env.screen_observation import raw_screen
 from fort_gym.bench.run import keyboard_docker_audit as audit_module
 from fort_gym.bench.run import keyboard_docker_audit_contract as contract
@@ -48,10 +49,13 @@ def seed(directory):
     return directory
 
 
-def run_fixture(attempt, origin, mode, *, model="gpt-6-astra", segments=1, token_limit=None):
+def run_fixture(attempt, origin, mode, *, model="gpt-6-astra", segments=1, token_limit=None,
+                dispatch_limit=None, budget_window=False, extension=None):
     condition = config(model=model)
     if token_limit is not None:
         condition["max_total_tokens"] = token_limit
+    if dispatch_limit is not None:
+        condition["max_dispatches"] = dispatch_limit
     native = attempt / "game/native"
     native.mkdir(parents=True)
     summaries = []
@@ -90,6 +94,16 @@ def run_fixture(attempt, origin, mode, *, model="gpt-6-astra", segments=1, token
             "snapshot_profile": "native_menu_preserving_save/v4",
             "runtime_rpc_transport": "native-rpc",
         }
+    if mode == "continue" and budget_window:
+        state = read(origin / "agent.json")
+        declaration.update(
+            schema_version="fortgym.codex-keyboard-window/v2",
+            budget_before=effective_budget(
+                state["configuration"], state.get("budget_extensions", []), state["usage"]
+            ),
+        )
+        if extension is not None:
+            declaration["budget_extension"] = extension
     write(condition_path, condition)
     write(declaration_path, declaration)
     inputs = prepare_inputs(condition_path, declaration_path, origin, campaign_id, mode=mode)
@@ -179,6 +193,7 @@ def run_fixture(attempt, origin, mode, *, model="gpt-6-astra", segments=1, token
                 checkpoint=parent,
                 latest_usage=parent / "usage.jsonl",
                 expected_cursor=read(parent / "checkpoint.json")["payload"]["next_step"],
+                budget_extension=declaration.get("budget_extension") if index == 0 else None,
             )
             saved_segments.append(segment)
             write(
@@ -506,6 +521,13 @@ def test_multiple_saved_segments_and_standalone_continuation(windows, tmp_path):
     assert standalone["windows"][0]["saved_elapsed_ticks"] == 60
     chained = audit_module.audit([windows[0], (attempt, windows[1][1])])
     assert chained["model_responses"] == 6
+    report_path = tmp_path / "multi-save-audit.json"
+    write(report_path, chained)
+    replay = recording.export(
+        [windows[0][0], attempt], report_path, recording.sha(report_path),
+        identity="multi-save-fixture", title="Fixture only",
+    )
+    assert [frame["decision"] for frame in replay["frames"]] == list(range(1, 7))
 
 
 def test_positive_frame_budget_pause_stays_a_pause(tmp_path):

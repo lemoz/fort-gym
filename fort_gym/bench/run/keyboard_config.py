@@ -19,6 +19,7 @@ from ..env.screen_observation import TEXT_PROFILE
 from .keyboard_save import LEGACY_SAVE_PROFILE, SAVE_PROFILES
 from .campaign_food import validate_profile, validate_timeout_seconds
 from .campaign_resources import PROFILE as RESOURCE_PROFILE
+from .keyboard_window_budget import WINDOW_V2, declared_limits
 
 
 def positive(value: object, name: str, *, maximum: int | None = None) -> int:
@@ -90,7 +91,7 @@ def validate_condition(config: dict) -> dict:
 def load_window(condition_path: Path, window_path: Path) -> tuple[dict, dict]:
     condition, window = validate_condition(read(condition_path)), read(window_path)
     if (
-        window.get("schema_version") != "fortgym.codex-keyboard-window/v1"
+        window.get("schema_version") not in ("fortgym.codex-keyboard-window/v1", WINDOW_V2)
         or window.get("original_condition") != condition_path.name
         or not isinstance(window.get("condition_id"), str)
         or not window["condition_id"]
@@ -99,6 +100,8 @@ def load_window(condition_path: Path, window_path: Path) -> tuple[dict, dict]:
         or window.get("strategy_intervention") is not False
     ):
         raise ValueError("Continuation window must preserve its declared condition")
+    if window["schema_version"] == WINDOW_V2:
+        declared_limits(window)
     positive(window.get("continuation_from_next_step"), "continuation cursor")
     if "continuation_checkpoint_sha256" in window:
         checkpoint = window["continuation_checkpoint_sha256"]
@@ -106,6 +109,12 @@ def load_window(condition_path: Path, window_path: Path) -> tuple[dict, dict]:
             raise ValueError("Invalid declared continuation checkpoint digest")
     positive(window.get("steps_per_segment"), "segment size", maximum=64)
     positive(window.get("max_segments"), "segment count", maximum=16)
+    if window["schema_version"] == WINDOW_V2 and (
+        window["continuation_from_next_step"]
+        + window["steps_per_segment"] * window["max_segments"]
+        > declared_limits(window)["max_dispatches"]
+    ):
+        raise ValueError("Window exceeds the declared campaign dispatch ceiling")
     if window.get("snapshot_profile", LEGACY_SAVE_PROFILE) not in SAVE_PROFILES:
         raise ValueError("Unsupported declared snapshot profile")
     validate_profile(window.get("private_measurement_profile"))

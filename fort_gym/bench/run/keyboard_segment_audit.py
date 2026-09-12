@@ -17,6 +17,7 @@ from .campaign_checkpoint import verify_checkpoint
 from .campaign_loop import reconciled_usage
 from .keyboard_restart import validate_discontinuities
 from .keyboard_window_audit import SegmentSpan
+from .keyboard_window_budget import appended_budget_state
 
 
 def _require(condition: bool, message: str) -> None:
@@ -75,6 +76,7 @@ def verify_saved_segment(
     campaign_id: str,
     revision: str,
     expected_initial_metrics: dict,
+    budget_extension: dict | None = None,
 ) -> dict:
     """Verify native bytes, load, saved cursor, own usage and full trace prefix."""
     _require(
@@ -147,14 +149,15 @@ def verify_saved_segment(
     new_ticks = _clock(after, "pause_state") - _clock(before, "pause_state")
     _require(new_ticks >= 0, "Native calendar regressed")
     initial, agent = read(parent / "agent.json"), read(checkpoint / "agent.json")
+    expected_initial = appended_budget_state(initial, parent_manifest["sha256"], budget_extension)
     _require(
-        initial == read(segment_path / "agent-before.json")
+        expected_initial == read(segment_path / "agent-before.json")
         and agent == read(segment_path / "agent-after.json"),
         "Native segment changed its bound agent state",
     )
     for key in ("configuration", "budget_extensions", "prompt_changes", "campaign_id"):
         _require(
-            agent.get(key) == initial.get(key),
+            agent.get(key) == expected_initial.get(key),
             "Campaign conditions changed inside segment",
         )
     _require(initial["campaign_id"] == campaign_id, "Agent belongs to another campaign")
