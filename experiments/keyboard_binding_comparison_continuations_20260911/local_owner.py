@@ -25,6 +25,7 @@ from continuation_state import (
     sha,
 )
 from local_lifecycle import MINIMUM_FREE_KIB, execute
+from storage_amendment import DECLARATION, load_binding
 from window_courier import serve
 
 SOURCE_BRANCH = "codex/displayed-key-owner"
@@ -71,7 +72,13 @@ def launch_archive(condition_path: Path, window_path: Path) -> bytes:
     return stream.getvalue()
 
 
-def specification(native: Any, origin: dict, window_path: Path, revision: str) -> dict:
+def specification(
+    native: Any,
+    origin: dict,
+    window_path: Path,
+    revision: str,
+    storage_amendment: Path | None = None,
+) -> dict:
     window, owner = origin["window"], native.owner
     identity = window["expected_campaign_id"]
     # Identity was validated by the shared preparation reader, before forming paths.
@@ -84,9 +91,11 @@ def specification(native: Any, origin: dict, window_path: Path, revision: str) -
     condition_path = FRESH / window["original_condition"]
     archive = launch_archive(condition_path, window_path)
     config = owner.transport.APP / "fg-v2/colima.yaml"
+    amendment = load_binding(storage_amendment, identity) if storage_amendment else None
+    config_sha = amendment["vm_config_sha256"] if amendment else owner.CONFIG_SHA
     seccomp = owner.RUNTIME.parent / "seccomp-moby27-dfhack.json"
     require(
-        sha(config) == owner.CONFIG_SHA and sha(seccomp) == owner.SECCOMP_SHA,
+        sha(config) == config_sha and sha(seccomp) == owner.SECCOMP_SHA,
         "Existing VM configuration or seccomp changed",
     )
     parent_config = read(origin["checkpoint"].parents[3] / "container-config.json")
@@ -111,13 +120,15 @@ def specification(native: Any, origin: dict, window_path: Path, revision: str) -
         "output_volume": name + "-evidence",
         "archive_sha256": hashlib.sha256(archive).hexdigest(),
         "source_sha256": {path.name: sha(path) for path in sorted(BASE.glob("*.py"))},
-        "vm_config_sha256": owner.CONFIG_SHA,
+        "vm_config_sha256": config_sha,
         "seccomp_sha256": owner.SECCOMP_SHA,
         "minimum_guest_free_kib": MINIMUM_FREE_KIB,
         "maximum_live_games": 1,
         "maximum_responses_per_start": 64,
         "courier_seconds": 23340,
     }
+    if amendment is not None:
+        binding["storage_amendment"] = amendment
     return {
         "origin": origin,
         "session": owner.BASE / (identity + "-64-128"),
@@ -157,14 +168,23 @@ def verify_ci(run_id: str, revision: str) -> None:
     )
 
 
-def verify_release(native: Any, revision: str, ci_run: str) -> None:
+def verify_release(
+    native: Any, revision: str, ci_run: str, storage_amendment: Path | None = None
+) -> None:
     require(
         re.fullmatch(r"[a-f0-9]{40}", revision) is not None,
         "Supply the exact reviewed owner revision",
     )
     # The full terminal audit must exist before this owner can launch.
     require((BASE / "terminal_review.py").is_file(), "Terminal audit integration is incomplete")
-    for path in sorted(BASE.iterdir()):
+    declarations = sorted(BASE.iterdir())
+    if storage_amendment is not None:
+        require(
+            storage_amendment.resolve(strict=True) == DECLARATION.resolve(strict=True),
+            "Select the canonical storage amendment",
+        )
+        declarations.append(DECLARATION)
+    for path in declarations:
         if path.is_file() and path.suffix in {".py", ".json", ".md"}:
             committed = subprocess.check_output(
                 ["git", "show", revision + ":" + str(path.relative_to(ROOT))], cwd=ROOT, timeout=30
@@ -223,13 +243,16 @@ def main() -> None:
     parser.add_argument("--declaration-revision", required=True)
     parser.add_argument("--ci-run", required=True)
     parser.add_argument("--preflight", action="store_true")
+    parser.add_argument("--storage-amendment", type=Path)
     args = parser.parse_args()
     window_path = args.window.resolve(strict=True)
     require(window_path.parent == BASE.resolve(), "Select a committed matched window")
     native = load_native()
     origin = inspect_origin(ROOT, window_path, native)
-    verify_release(native, args.declaration_revision, args.ci_run)
-    spec = specification(native, origin, window_path, args.declaration_revision)
+    verify_release(native, args.declaration_revision, args.ci_run, args.storage_amendment)
+    spec = specification(
+        native, origin, window_path, args.declaration_revision, args.storage_amendment
+    )
     require(not spec["session"].exists(), "Never relaunch an existing window")
     if args.preflight:
         admission = native.owner.read_allowance(

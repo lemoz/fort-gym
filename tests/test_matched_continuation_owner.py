@@ -214,3 +214,11 @@ def test_container_cannot_mount_a_peer_save_or_make_source_writable(runtime):
         changed["Mounts"][0]["Name" if isinstance(value, str) else "RW"] = value
         with pytest.raises(ValueError, match="mount"):
             lifecycle.verify_container(changed, spec)
+
+
+def test_finalization_uses_the_explicit_execution_config_binding(runtime):
+    lifecycle, native, spec, courier, _, _, _ = runtime
+    spec["binding"]["vm_config_sha256"] = lifecycle.sha(spec["config"])
+    native.owner.CONFIG_SHA = "0" * 64
+    result = lifecycle.execute(native, spec, courier)
+    assert result["vm_config_unchanged"] is True

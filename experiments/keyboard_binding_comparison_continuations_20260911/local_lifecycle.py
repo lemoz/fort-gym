@@ -11,6 +11,7 @@ import time
 from typing import Any, Callable
 
 from continuation_state import read, require, sha
+from storage_amendment import verify_binding
 
 START_ARGS = [
     "start",
@@ -29,6 +30,21 @@ START_ARGS = [
     "--mount=none",
 ]
 MINIMUM_FREE_KIB = 1536 * 1024
+
+
+def start_arguments(spec: dict) -> list[str]:
+    amendment = spec["binding"].get("storage_amendment")
+    if amendment is None:
+        return list(START_ARGS)
+    verified = verify_binding(amendment, spec["origin"]["window"]["expected_campaign_id"])
+    require(
+        spec["binding"]["vm_config_sha256"] == verified["vm_config_sha256"]
+        and spec["binding"]["minimum_guest_free_kib"] == MINIMUM_FREE_KIB,
+        "Storage execution binding differs",
+    )
+    return ["--disk=40" if arg == "--disk=32" else arg for arg in START_ARGS] + [
+        "--save-config=false"
+    ]
 
 
 def verify_container(config: dict, spec: dict) -> None:
@@ -140,7 +156,8 @@ def cleanup(
 def finalize(native: Any, spec: dict, out: Path, result: dict) -> None:
     """Retain an honest result even when native output or final checks are incomplete."""
     try:
-        result["vm_config_unchanged"] = sha(spec["config"]) == native.owner.CONFIG_SHA
+        expected_config = spec["binding"].get("vm_config_sha256", native.owner.CONFIG_SHA)
+        result["vm_config_unchanged"] = sha(spec["config"]) == expected_config
         result["original_checkpoint_verified_unchanged"] = (
             native.verify_checkpoint(spec["origin"]["checkpoint"]) == spec["origin"]["manifest"]
         )
@@ -225,7 +242,7 @@ def execute(native: Any, spec: dict, courier: Callable) -> dict:
         for sig in prior_signals:
             signal.signal(sig, owner.transport.interrupted)
         started = result["vm_started"] = True
-        owner.run(owner.COLIMA + START_ARGS, "vm-start", 480)
+        owner.run(owner.COLIMA + start_arguments(spec), "vm-start", 480)
         require(owner.output(owner.DOCKER + ["ps", "-q"]) == "", "Another game is already running")
         require(
             spec["name"]

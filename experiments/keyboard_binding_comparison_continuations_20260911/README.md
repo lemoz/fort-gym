@@ -163,3 +163,24 @@ journal retains dispatch counter 65, while actual provider calls and new returne
 tokens are zero. Keep that distinction in failure and any future recovery
 accounting. Offline regression is not a successful rerun; no repaired native
 continuation has launched, and a new attempt must preserve this failure.
+
+## Explicit storage-only amendment, September 12
+
+The Sol r2 capacity failure remains a failed outcome. It is not rerun. The unused
+Astra r2 64-to-128 window may explicitly select
+`experiments/keyboard_comparison_storage_amendment_20260912.json` with
+`--storage-amendment` on both the owner and terminal reviewer commands.
+
+A separate recorded operation expanded only the existing fg-v2 data disk from
+32 to 40 GiB. It preserved all container, evidence-volume and image identities,
+left 9,463,500 KiB free, and stopped both project VMs. The 1,572,864 KiB admission
+floor, CPU, RAM, native image/source, model, prompt, control settings and own-save
+window are unchanged. The growth cannot be reversed by shrinking the disk.
+
+The explicit option pins the declaration and retained operation receipt, verifies
+the new configuration hash, and uses the amended capacity without rewriting VM
+configuration at startup. It cannot apply to another campaign or alter historical
+results. Without the option, the old configuration check remains in force.
+The result exporter discloses the amendment as a comparison limitation rather
+than describing the storage configurations as identical. Storage repair and
+offline tests do not count as gameplay or a completed continuation.
