@@ -1,0 +1,62 @@
+{
+  "schema_version": "fortgym.selected-workshop-continuation-preparation/v1",
+  "date_utc": "2026-09-12",
+  "campaign_id": "selected-workshop-v2-p1-shortcuts",
+  "status": "prepared_not_launched",
+  "source_revision": "5ddf1e6718dab2e8351e8dc24a2afe5071cd2592",
+  "image": "sha256:dcbc9b042538401a146159fcf5f6456b21dc900c4649369c008f7a77f661fed3",
+  "study_declaration_sha256": "e325f69f40978a9a0b2ed962a505c893aa7ea397b569e3300455972d7b94ebc8",
+  "operator_artifact_directory": "fort_gym/artifacts/selected-workshop-study-20260912",
+  "operators": {
+    "prepare_v2_p1_shortcuts_continuation.py": "e004b735f71e167d63194bb188c5c7ea4149049174a759e982cdae43f549966a",
+    "run_v2_p1_shortcuts_continue.py": "9b3891e07ec62eafa521bc51eeab9aab83ddbfeb4ea82c5e5434db2eab81a761",
+    "relay_v2_p1_shortcuts_continue.py": "6fdcd7dd34b1495cb13a519534c47c9b67b6697e6f745f210c208772dbb56c6c",
+    "test_v2_continuation_preparation.py": "e439a178e070dff520e8399448ed194f66ae7f87ab2434264d0c68f91b323321"
+  },
+  "validation": {
+    "tests_passed": 26,
+    "warnings": 2,
+    "junit_file": "v2-continuation-preparation-source.xml",
+    "junit_sha256": "d309ce774ccd1ef9dd3298a54148cda39e5383ad4df5d171d468a12c3d605d3d",
+    "ruff_passed": true,
+    "coverage": [
+      "Actual v2 shortcuts condition, source, image and own-save output bindings",
+      "Missing or incomplete terminal operation rejected before engine/provider commands",
+      "Every recorded teardown requirement checked before continuation",
+      "Continuation relay rejects fresh window, wrong cursor, wrong controls and dead owner"
+    ],
+    "prior_test_run": {
+      "passed": 22,
+      "failed": 4,
+      "junit_file": "v2-continuation-preparation-final.xml",
+      "junit_sha256": "258ec89d0518b08681ddc6286bfab37f95c9f49846bbc0990e6d544eb5b8f621",
+      "cause": "Pytest invoked from integration checkout preloaded the wrong fort_gym package. Exact unchanged operator/tests passed when invoked from their declared frozen source worktree."
+    }
+  },
+  "continuation": {
+    "origin": "this campaign's verified checkpoint64",
+    "first_decision": 65,
+    "last_decision": 128,
+    "additional_responses": 64,
+    "attempt_token_limit": 8000000,
+    "model": "gpt-6-astra",
+    "reasoning_effort": "medium",
+    "reset_memory": false,
+    "reset_usage": false,
+    "change_prompt": false,
+    "change_image": false,
+    "change_resources": false,
+    "mandatory_teardown": true,
+    "requires_finished_fresh_window_and_verified_teardown": true
+  },
+  "checkpoint64_verified": false,
+  "continuation_launched": false,
+  "continuation_manifest_created": false,
+  "gameplay_inputs": 0,
+  "model_calls": 0,
+  "cloud_vm_created": false,
+  "paid_api_fallback": false,
+  "current_run_restarted": false,
+  "frozen_source_modified": false,
+  "note": "Preparation checks are not native save/resume acceptance. Actual first-window audit and checkpoint-bound continuation declaration must be generated from settled evidence before launch."
+}

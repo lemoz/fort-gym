@@ -41,6 +41,12 @@ teardown, then continue from that same save to response 128. All six declared v2
 attempts keep the same source, image, conditions and resources. Earlier v1 results
 are not pooled into the corrected comparison. The broader goal remains active.
 
+The [v2 own-save continuation preparation](../experiments/evidence/selected_workshop_v2_p1_shortcuts_continuation_preparation_20260912.json)
+now has 26 passing offline checks for its exact source/condition bindings,
+unfinished-owner rejection, teardown requirements and continuation-only relay.
+It remains unlaunched: the current first-window save and native audit are still
+required. Preparation neither resets the live run nor establishes checkpoint64.
+
 ## Historical comparison work: Astra r2 continuation
 
 The [explicit storage amendment](../experiments/keyboard_comparison_storage_amendment_20260912.json)
