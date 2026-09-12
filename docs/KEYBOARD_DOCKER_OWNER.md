@@ -201,13 +201,37 @@ and `game/native/` layout. They do not call a model, send gameplay inputs,
 control Docker, or change saved evidence. Publish only their allowlisted
 derivatives, never raw requests, responses, agent memory or transcripts.
 
-Export ordered, completed windows with their exact independent audit:
+Audit an ordinary settled run from its retained files. Pass each owner output
+and the exact original snapshot or checkpoint it used, in campaign order:
 
-The current exporter accepts the retained `portable-owner-continuity-audit/v1`
-format from the two-VM acceptance setup, including that setup's VM stop fields.
-It is not yet a general audit generator for arbitrary single-engine runs. A
-versioned, reusable run-audit contract remains to be added; operators must not
-invent VM stop assertions or stop an unrelated shared VM to satisfy this format.
+    python -m scripts.campaign_keyboard_docker_audit \
+      --window /absolute/fresh-output /absolute/starting-snapshot \
+      --window /absolute/continuation-output /absolute/fresh-output/game/native/segment-0/checkpoint \
+      --output /absolute/new-audit.json
+
+The write-once `fortgym.portable-owner-continuity-audit/v2` report supports one
+to sixteen owner windows, including a standalone continuation and multi-segment
+windows. It reads only retained evidence: original declarations, native save
+bytes, semantic save boundaries, request/action/memory history, known returned
+usage and the owned-container stop and resource/isolation receipt. The exporter
+rechecks the report's metadata digests. No private memory or transcript is
+included in the replay.
+
+This audit currently covers fresh and unchanged own-save windows using
+`native_menu_preserving_save/v4`, with settled usage and at least one new
+decision per window. Completed and budget-paused saved windows are supported;
+a pause stays a pause. Failed, zero-call or unsettled windows keep their original
+owner outcome and do not acquire invented replay frames. Recovery, prompt
+changes, budget extensions and historical save profiles keep their dedicated
+auditors.
+
+The report verifies recorded container stop, not current Docker state or VM
+teardown. It neither calls Docker nor controls a VM, and does not assert a full
+syscall-policy audit. A normal single-engine run requires no two-VM fiction.
+The original `portable-owner-continuity-audit/v1` acceptance format remains
+supported with its original two-VM stop requirements unchanged.
+
+Export the audited windows using the SHA256 printed by the audit command:
 
     python -m scripts.export_keyboard_docker_recording \
       --attempt /absolute/fresh-output --attempt /absolute/continuation-output \
@@ -219,6 +243,10 @@ The write-once recording verifies the audit, native results, checkpoints,
 model receipts, executed actions and consecutive own-save offsets. It uses
 the existing `fortgym.watch-recording/v1` player format. The captured four
 acceptance decisions exercise this export without any new inference.
+The reusable v2 audit also passes against those retained native saves: four
+decisions and 95,786 tokens reconcile, all replay frames match the original,
+and the legacy v1 export remains byte-for-byte identical. This is offline
+acceptance of the auditor, not a new native run or proof of game progress.
 
 For an expiring public-format status feed outside the private attempt tree:
 

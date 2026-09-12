@@ -235,3 +235,21 @@ call, runtime build or website change occurred during this review. A reviewed
 policy appropriate for a future engine, compatible image construction and an
 actual end-to-end run remain necessary. The known guest-space shortage and
 frozen cohort declarations are unchanged.
+
+## Reusable portable-run audit
+
+The two-VM-specific replay audit identified in the runtime review now has a
+separate reusable v2 contract. A public read-only CLI audits settled fresh and
+unchanged own-save windows from their declared original inputs and retained
+native/container/model receipts. It supports multi-segment windows, preserves
+budget-pause classification, reconciles new versus cumulative tokens and binds
+the metadata that the exporter rechecks. The legacy v1 acceptance keeps its
+two-VM requirements and exact recording bytes.
+
+Offline acceptance against the original four-decision native capture passes:
+all 95,786 tokens reconcile and every replay frame matches the original.
+All four decisions remain paused with zero elapsed game ticks. There was no
+new model call, native execution, Docker operation, VM control or publication.
+This fixes the ordinary-run audit dependency; it does not claim live follow
+acceptance, fresh-machine provisioning, full integration review or a main merge.
+See [the audit commands and scope](KEYBOARD_DOCKER_OWNER.md#spectator-output).

@@ -140,7 +140,14 @@ and explicit action descriptions, not private model reasoning or hidden memory.
 Committing a result, publishing it, and verifying a public replay are separate
 delivery steps. Neither a test suite nor a checkpoint alone completes the goal.
 
-Portable-owner outputs can be projected by
+Ordinary settled portable-owner saves can first be audited with
+`scripts.campaign_keyboard_docker_audit --window ATTEMPT ORIGIN --output NEW_AUDIT`.
+The read-only v2 contract supports current semantic-save fresh/own-save windows
+without assuming a two-VM setup. It checks saved history and retained container
+receipts, not current VM state; failed or zero-call attempts keep their original
+outcomes. Historical recovery protocols retain their dedicated auditors.
+
+Audited portable-owner outputs can be projected by
 `scripts.export_keyboard_docker_recording` and
 `scripts.campaign_keyboard_docker_observe`; see
 [their commands and proof boundaries](KEYBOARD_DOCKER_OWNER.md#spectator-output).

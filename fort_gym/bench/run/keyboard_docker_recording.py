@@ -10,6 +10,10 @@ from fort_gym.bench.agent.keyboard_exchange import digest, read, validate_reques
 from fort_gym.bench.api import watch
 from fort_gym.bench.run.campaign_checkpoint import verify_checkpoint
 from fort_gym.bench.run.keyboard_config import validate_condition
+from fort_gym.bench.run.keyboard_docker_audit_contract import (
+    SCHEMA as RUN_AUDIT_SCHEMA,
+    verify_artifact_hashes,
+)
 from scripts.export_displayed_key_recording import recorded_action
 
 
@@ -116,16 +120,26 @@ def export(attempts: list[Path], audit_path: Path, expected_sha: str,
     watch.label(title, 160)
     require(sha(audit_path) == expected_sha, "Audit digest differs")
     audit = read(audit_path)
-    require(audit.get("schema_version") == "fortgym.portable-owner-continuity-audit/v1"
+    require(audit.get("schema_version") in ("fortgym.portable-owner-continuity-audit/v1", RUN_AUDIT_SCHEMA)
             and audit.get("passed") is True
             and len(attempts) == len(audit["windows"]) and 1 <= len(attempts) <= 16,
             "Matching successful public-owner audit required")
     frames, previous, condition = [], None, None
     for attempt, proof in zip(attempts, audit["windows"], strict=True):
-        require(all(proof.get(key) is True for key in (
+        checks: tuple[str, ...] = (
             "checkpoint_verified", "memory_usage_and_history_preserved",
             "original_inputs_unchanged", "native_cleanup_verified",
-            "container_stopped_verified", "both_vms_stopped", "both_vm_disks_closed")),
+            "container_stopped_verified")
+        if audit["schema_version"] == RUN_AUDIT_SCHEMA:
+            require(audit.get("vm_teardown_audited") is False
+                    and audit.get("current_container_state_observed") is False,
+                    "Run audit cannot claim current engine or VM observation")
+            checks += ("recorded_resource_and_isolation_limits_verified",)
+            verify_artifact_hashes(attempt, proof.get("artifact_sha256"))
+        else:
+            # Keep the original acceptance's two-VM promises unchanged.
+            checks += ("both_vms_stopped", "both_vm_disks_closed")
+        require(all(proof.get(key) is True for key in checks),
             "Window lacks audited continuity/teardown")
         added, selected, manifest = export_window(attempt, audit, proof)
         require(condition is None or selected == condition, "Recording changes model condition")
