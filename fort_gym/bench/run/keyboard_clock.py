@@ -11,7 +11,8 @@ DEFERRAL_SCHEMAS = (SCHEMA, MODAL_SCHEMA)
 # Other dwarfmode focuses still try the clock; no menu is dismissed here.
 BLOCKING_FOCUS = "dwarfmode/Build/Type"
 WORKSHOP_JOB_FOCUS = "dwarfmode/QueryBuilding/Some/Workshop/AddJob"
-BLOCKING_FOCI = frozenset((BLOCKING_FOCUS, WORKSHOP_JOB_FOCUS))
+WORKSHOP_JOB_LIST_FOCUS = "dwarfmode/QueryBuilding/Some/Workshop/Job"
+BLOCKING_FOCI = frozenset((BLOCKING_FOCUS, WORKSHOP_JOB_FOCUS, WORKSHOP_JOB_LIST_FOCUS))
 NATIVE_VIEW = "<type: viewscreen_dwarfmodest>"
 
 

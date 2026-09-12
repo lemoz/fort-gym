@@ -5,7 +5,11 @@ import pytest
 from fort_gym.bench.run import campaign_environment as adapter
 from fort_gym.bench.run.campaign_checkpoint import verify_checkpoint
 from fort_gym.bench.run.campaign_loop import CampaignLoop
-from fort_gym.bench.run.keyboard_clock import WORKSHOP_JOB_FOCUS, validate_menu_deferral
+from fort_gym.bench.run.keyboard_clock import (
+    WORKSHOP_JOB_FOCUS,
+    WORKSHOP_JOB_LIST_FOCUS,
+    validate_menu_deferral,
+)
 from fort_gym.bench.run.keyboard_clock_timeout import SCHEMA, validate_clock_unavailable
 from tests.test_campaign_codex_keyboard import Environment, agent, decision, start
 from tests.test_keyboard_clock import boundary, native_adapter, observed
@@ -29,14 +33,56 @@ def unavailable():
     }
 
 
-def test_workshop_job_menu_defers_without_time_dispatch_or_a_harness_key(monkeypatch):
-    env, calls = native_adapter(monkeypatch, WORKSHOP_JOB_FOCUS)
+# Keep the observed focus literal so a typo in the production constant fails.
+@pytest.mark.parametrize("focus", [
+    WORKSHOP_JOB_FOCUS, "dwarfmode/QueryBuilding/Some/Workshop/Job",
+])
+@pytest.mark.parametrize("profile", sorted(adapter.CAMPAIGN_KEYBOARD_PROFILES))
+def test_workshop_job_menu_defers_without_time_dispatch_or_a_harness_key(monkeypatch, focus, profile):
+    env, calls = native_adapter(monkeypatch, focus)
+    env.control_profile = profile
     after, receipt = env.advance(10, observed())
     assert calls == [("probe", []), ("probe", [])]
     assert (
         validate_menu_deferral(receipt, requested_ticks=10, before=observed(), after=after) is None
     )
     assert receipt["clock_dispatched"] is False and receipt["timeout"] is False
+
+
+@pytest.mark.parametrize("focus", [
+    "dwarfmode/QueryBuilding/Some/Workshop",
+    "dwarfmode/QueryBuilding/Some/Workshop/Jobs",
+    "dwarfmode/QueryBuilding/Some/Workshop/Job/Unseen",
+    "dwarfmode/QueryBuilding/Some/Furnace/Job",
+    "dwarfmode/Default",
+])
+def test_job_list_recognition_does_not_skip_other_native_focuses(monkeypatch, focus):
+    env, calls = native_adapter(monkeypatch, focus)
+    _, receipt = env.advance(10, observed())
+    assert calls == [("probe", []), ("clock", (10,))]
+    assert receipt == {"ok": True, "ticks_advanced": 10}
+
+
+@pytest.mark.parametrize("profile", ["native_keyboard/v1", "dfhack_shortcuts/v1"])
+def test_job_list_does_not_change_historical_control_profiles(monkeypatch, profile):
+    env, calls = native_adapter(monkeypatch, WORKSHOP_JOB_LIST_FOCUS)
+    env.control_profile = profile
+    env.advance(10, observed())
+    assert calls == [("clock", (10,))]
+
+
+def test_historical_job_list_timeout_is_not_reclassified_as_a_deferral():
+    receipt = unavailable()
+    for key in ("native_before", "native_after"):
+        receipt[key]["focus"] = WORKSHOP_JOB_LIST_FOCUS
+    original = deepcopy(receipt)
+    assert validate_clock_unavailable(
+        receipt, requested_ticks=10, before=observed(), after=observed()
+    ) is None
+    assert validate_menu_deferral(
+        receipt, requested_ticks=10, before=observed(), after=observed()
+    ) is not None
+    assert receipt == original
 
 
 def test_unknown_focus_retains_original_timeout_and_matches_two_read_only_probes(monkeypatch):
