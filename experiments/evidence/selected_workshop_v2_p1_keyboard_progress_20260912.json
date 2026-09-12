@@ -1,0 +1,58 @@
+{
+  "schema_version": "fortgym.selected-workshop-progress/v1",
+  "captured_at_unix": 1789230013,
+  "campaign_id": "selected-workshop-v2-p1-keyboard",
+  "status": "running",
+  "source_revision": "5ddf1e6718dab2e8351e8dc24a2afe5071cd2592",
+  "image": "sha256:dcbc9b042538401a146159fcf5f6456b21dc900c4649369c008f7a77f661fed3",
+  "control_profile": "native_keyboard_bindings/v1",
+  "observed_completed_decision": 82,
+  "elapsed_ticks": 34900,
+  "metrics": {
+    "population": 7,
+    "food_stock": 59,
+    "drink_stock": 128,
+    "wood_stock": null,
+    "stone_stock": null,
+    "functional_rooms": null,
+    "completed_workshops": 2,
+    "completed_beds": 7,
+    "completed_farms": 1,
+    "recorded_dead_citizens": 0
+  },
+  "usage_at_completed_boundary": {
+    "accounted_responses": 82,
+    "cost_basis": "codex_subscription_charge_unreported/v1",
+    "dispatched_requests": 82,
+    "returned_responses": 82,
+    "total_cost_usd": null,
+    "total_tokens": 2376000
+  },
+  "action_routes": {
+    "KEYSTROKE": 82
+  },
+  "trace_record_sha256": "a6c972e81dd9de0c319062248a740c90e75d3525c90fa61e04ea3f603e1adb95",
+  "bed_count_transitions_after_checkpoint64": [
+    {
+      "decision": 71,
+      "completed_beds": 7,
+      "population": 7,
+      "recorded_dead_citizens": 0,
+      "action_route": "KEYSTROKE",
+      "trace_record_sha256": "b5bd12184374dc8be8f3cd22a1fcd6f429800ce14400dcb4b7875f0ca1a03dc2"
+    }
+  ],
+  "prior_checkpoint64_receipt_sha256": "2ad394e3e10b58e302b173713404955a39ba5291735e266726fa86cdb2511b2f",
+  "prior_checkpoint64_completed_beds": 0,
+  "experiment_modified": false,
+  "operator_gameplay_inputs": 0,
+  "human_gameplay_rescue": false,
+  "no_manual_restart": true,
+  "terminal_result": false,
+  "checkpoint_verified": false,
+  "owner_mandatory_teardown_active": true,
+  "actual_subscription_charge_usd": null,
+  "paired_comparison_complete": false,
+  "full_goal_complete": false,
+  "note": "Completed-building observations during the running continuation, not a saved 128-decision endpoint or independent native audit. The final save and paired comparison remain pending. No comparative superiority or sustainability is claimed."
+}
