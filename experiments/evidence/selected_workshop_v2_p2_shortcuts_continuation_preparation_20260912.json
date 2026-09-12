@@ -1,0 +1,42 @@
+{
+  "schema_version": "fortgym.selected-workshop-continuation-preparation/v1",
+  "date_utc": "2026-09-12",
+  "campaign_id": "selected-workshop-v2-p2-shortcuts",
+  "state": "prepared_not_executed",
+  "source_revision": "5ddf1e6718dab2e8351e8dc24a2afe5071cd2592",
+  "study_declaration_sha256": "e325f69f40978a9a0b2ed962a505c893aa7ea397b569e3300455972d7b94ebc8",
+  "fresh_supervisor_sha256": "d1b2686d2355bafcd86753865123fc5a7f9a80f8fd5ae027358111cfcb52ca41",
+  "helpers": {
+    "prepare_v2_p2_shortcuts_continuation.py": "b95e1e94e82c766b3b1608715b0897c93484cef395bbb1cad1874d96d84f47ba",
+    "run_v2_p2_shortcuts_continue.py": "69586feed299aba6e63131e703d5f03e5a3b1782e5edc3e4d94b8ee24216c316",
+    "relay_v2_p2_shortcuts_continue.py": "129614baf4b94cb7e665bca1ce4a85b5ecf958ce524cb7114a3e93b4337eedbd",
+    "test_v2_p2_shortcuts_continuation_preparation.py": "596703f7e9bafa456b188ce17e10d9edb92e8c8231dddfbcbd7c787ab33a3153"
+  },
+  "tests": {
+    "passed": 47,
+    "failed": 0,
+    "warnings": 2,
+    "ruff": "passed",
+    "junit_sha256": "c51780edc16606e7efc1baf316789c4000ce86cd085f5a002b2c25124bdbb09c",
+    "scope": "Offline fresh launch, relay and continuation-binding checks. No native save/reload performed."
+  },
+  "requires_before_execution": [
+    "Finished original first window with 64 responses",
+    "Native audit of this trial's own checkpoint, memory, usage and history",
+    "Verified owner/container/VM teardown and preserved configurations",
+    "Unchanged source, image, condition/trial bytes and declared order"
+  ],
+  "continuation_from_decision": 64,
+  "continuation_to_decision": 128,
+  "reset_memory": false,
+  "reset_usage": false,
+  "condition_changed": false,
+  "first64_native_audit_performed": false,
+  "continuation_window_created": false,
+  "continuation_launched": false,
+  "model_calls_by_preparation": 0,
+  "gameplay_inputs_by_preparation": 0,
+  "subscription_charge_usd": null,
+  "full_goal_complete": false,
+  "note": "Prepared while the original fresh trial continues. Original startup and game evidence are unchanged. This is not evidence of a saved checkpoint, fresh reload or completed comparison."
+}
