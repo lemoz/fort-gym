@@ -28,6 +28,7 @@ from fort_gym.bench.run.campaign_environment import NativeCampaignEnvironment
 from fort_gym.bench.run.campaign_loop import reconciled_usage
 from fort_gym.bench.run.campaign_save import NativeSaveSnapshotter
 from fort_gym.bench.run.keyboard_config import load_window
+from fort_gym.bench.run.keyboard_window_budget import WINDOW_V2, verify_checkpoint_budget
 from fort_gym.bench.run.campaign_resources import capture_resources
 from fort_gym.bench.agent.keyboard_prompt import BASE_PROMPT, declared_prompt_change
 from fort_gym.bench.run.keyboard_segment import run_keyboard_segment
@@ -203,6 +204,8 @@ def run_window(args) -> dict:
     )
     if window.get("restart") is None and reconciled_usage(state, latest) != state["usage"]:
         raise ValueError("Checkpoint usage is not settled")
+    if window["schema_version"] == WINDOW_V2:
+        verify_checkpoint_budget(state, window, manifest["sha256"])
     args.output.mkdir(mode=0o700, exist_ok=False)
     exchange = args.output / "exchange"
     exchange.mkdir(mode=0o700)

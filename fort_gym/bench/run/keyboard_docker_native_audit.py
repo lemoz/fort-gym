@@ -270,6 +270,7 @@ def audit_native(native: Path, origin: Path, inputs: dict, revision: str) -> lis
             campaign_id=inputs["campaign_id"],
             revision=revision,
             expected_initial_metrics=metrics,
+            budget_extension=declaration.get("budget_extension") if span.index == 0 else None,
         )
         verify_trace_clocks(native / f"segment-{span.index}", span.first_step, span.next_step)
         if reports:

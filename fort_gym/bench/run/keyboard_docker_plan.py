@@ -15,6 +15,7 @@ from .campaign_loop import reconciled_usage
 from .keyboard_config import load_window, positive
 from .keyboard_trial_config import load_trial
 from .keyboard_window_courier import container_path, window_bounds
+from .keyboard_window_budget import WINDOW_V2, verify_checkpoint_budget
 from .keyboard_seccomp import read_profile
 
 SCHEMA = "fortgym.keyboard-docker-runtime/v1"
@@ -144,6 +145,8 @@ def prepare_inputs(
             },
         )
         agent.restore_campaign_state(state, campaign_id=campaign_id)
+        if declaration["schema_version"] == WINDOW_V2:
+            verify_checkpoint_budget(state, declaration, original["sha256"])
         memory = agent.memory
     if (
         declaration.get("expected_campaign_id", campaign_id) != campaign_id

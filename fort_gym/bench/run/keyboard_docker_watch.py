@@ -7,6 +7,8 @@ import re
 
 from ..agent.keyboard_exchange import digest, read, validate_request
 from .keyboard_config import validate_condition
+from .keyboard_window_budget import WINDOW_V2
+from .keyboard_window_courier import window_bounds
 from .keyboard_docker_owner import owned_container
 from .keyboard_docker_plan import absolute_path
 from .keyboard_docker_recording import require, sha
@@ -31,9 +33,13 @@ def baseline(attempt: Path) -> dict:
     require(digest(condition) == plan["condition_sha256"]
             and digest(declaration) == plan["declaration_sha256"], "Owner input binding differs")
     fresh = plan["mode"] == "fresh"
-    require(declaration["schema_version"] ==
-            ("fortgym.keyboard-fresh-trial/v1" if fresh else "fortgym.codex-keyboard-window/v1"),
+    require(declaration["schema_version"] in
+            (("fortgym.keyboard-fresh-trial/v1",) if fresh else
+             ("fortgym.codex-keyboard-window/v1", WINDOW_V2)),
             "Owner mode and declaration differ")
+    if declaration["schema_version"] == WINDOW_V2:
+        require(window_bounds(condition, declaration)[0] == plan["response_limit"],
+                "Spectator budget window differs from its owner bound")
     first = 0 if fresh else declaration["continuation_from_next_step"]
     require(type(first) is int and first >= 0 and
             type(plan["response_limit"]) is int and 1 <= plan["response_limit"] <= 1024,

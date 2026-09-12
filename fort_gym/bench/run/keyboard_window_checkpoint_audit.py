@@ -12,6 +12,7 @@ from .keyboard_config import validate_condition
 from .keyboard_segment_audit import _require, verify_saved_segment
 from .keyboard_window_audit import settled_segment_spans
 from .keyboard_window_courier import window_bounds
+from .keyboard_window_budget import WINDOW_V2, verify_checkpoint_budget
 
 
 def verify_window_checkpoints(
@@ -48,7 +49,10 @@ def verify_window_checkpoints(
         original["sha256"] == window["continuation_checkpoint_sha256"],
         "Native window started from a different checkpoint",
     )
-    initial_usage = read(parent / "agent.json")["usage"]
+    initial_state = read(parent / "agent.json")
+    if window["schema_version"] == WINDOW_V2:
+        verify_checkpoint_budget(initial_state, window, original["sha256"])
+    initial_usage = initial_state["usage"]
     _require(
         window["accounted_responses_before_window"] == initial_usage["accounted_responses"]
         and window["returned_tokens_before_window"] == initial_usage["total_tokens"],
@@ -70,6 +74,7 @@ def verify_window_checkpoints(
             campaign_id=window["expected_campaign_id"],
             revision=window["source_native_revision"],
             expected_initial_metrics=metrics,
+            budget_extension=window.get("budget_extension") if span.index == 0 else None,
         )
         if reports:
             _require(

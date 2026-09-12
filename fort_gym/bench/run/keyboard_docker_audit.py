@@ -275,6 +275,15 @@ def audit_window(attempt: Path, origin: Path) -> tuple[dict, dict]:
             memory = result["action"]["memory_update"]
     require(memory == state["memory"], "Checkpoint omitted the last accepted memory update")
     proof["memory_usage_and_history_preserved"] = True
+    if inputs["declaration"]["schema_version"] == "fortgym.codex-keyboard-window/v2":
+        from ..agent.campaign_budget import effective_budget
+
+        proof["budget_before"] = inputs["declaration"]["budget_before"]
+        proof["budget_after"] = effective_budget(
+            state["configuration"], state.get("budget_extensions", []), state["usage"]
+        )
+        proof["budget_extension"] = inputs["declaration"].get("budget_extension")
+        proof["append_only_budget_history_verified"] = True
     require(
         prepare_inputs(
             condition_path, declaration_path, origin, plan["campaign_id"], mode=plan["mode"]
