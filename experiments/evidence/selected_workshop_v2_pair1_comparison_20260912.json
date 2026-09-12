@@ -1,0 +1,138 @@
+{
+  "schema_version": "fortgym.selected-workshop-paired-result/v1",
+  "date_utc": "2026-09-12",
+  "study_id": "selected-workshop-v2",
+  "pair": 1,
+  "source_revision": "5ddf1e6718dab2e8351e8dc24a2afe5071cd2592",
+  "image": "sha256:dcbc9b042538401a146159fcf5f6456b21dc900c4649369c008f7a77f661fed3",
+  "study_declaration_sha256": "e325f69f40978a9a0b2ed962a505c893aa7ea397b569e3300455972d7b94ebc8",
+  "model": "gpt-6-astra",
+  "reasoning_effort": "medium",
+  "common_decision_boundary": 128,
+  "pair_saved_and_audited": true,
+  "declared_pairs": 3,
+  "remaining_pairs": [
+    2,
+    3
+  ],
+  "full_study_complete": false,
+  "results": [
+    {
+      "condition": "keyboard",
+      "campaign_id": "selected-workshop-v2-p1-keyboard",
+      "evidence_url": "https://github.com/lemoz/fort-gym/blob/38ea3d356f7ded5ab9e309a83ca92368a399c4ac/experiments/evidence/selected_workshop_v2_p1_keyboard_128_20260912.json",
+      "result_sha256": "437266c9f15ae3442d9111290ea4e00795d5b29d9e7fea94a8b517172258689f",
+      "audit_sha256": "3302c95c7e3855f5621e60033b1d97b6bd0803f3609cced273233535039a3a5b",
+      "boundary_64": {
+        "saved_elapsed_ticks": 26900,
+        "metrics": {
+          "population": 7,
+          "food_stock": 54,
+          "drink_stock": 128,
+          "wood_stock": null,
+          "stone_stock": null,
+          "functional_rooms": null,
+          "completed_workshops": 2,
+          "completed_beds": 0,
+          "completed_farms": 1,
+          "recorded_dead_citizens": 0
+        },
+        "returned_tokens": 1884101
+      },
+      "boundary_128": {
+        "saved_elapsed_ticks": 70900,
+        "metrics": {
+          "population": 7,
+          "food_stock": 43,
+          "drink_stock": 135,
+          "wood_stock": null,
+          "stone_stock": null,
+          "functional_rooms": null,
+          "completed_workshops": 2,
+          "completed_beds": 7,
+          "completed_farms": 1,
+          "recorded_dead_citizens": 0
+        },
+        "returned_tokens": 3879799,
+        "reported_charge_usd": null,
+        "confirmed_keyboard_presses": 669,
+        "explicit_shortcut_actions": 0,
+        "clock_timeouts": 1,
+        "clock_deferrals": 1
+      },
+      "own_save64_fresh_reload_verified": true,
+      "final_save128_fresh_reload_verified": false,
+      "no_human_gameplay_rescue": true,
+      "teardown_verified": true,
+      "recording_id": "controls-v2-p1-keyboard-1-128",
+      "recording_sha256": "280e6193242088f0743a000cc84ace5cefa23b82d4c9877f73abf46597c533f5"
+    },
+    {
+      "condition": "shortcuts",
+      "campaign_id": "selected-workshop-v2-p1-shortcuts",
+      "evidence_url": "https://github.com/lemoz/fort-gym/blob/38ea3d356f7ded5ab9e309a83ca92368a399c4ac/experiments/evidence/selected_workshop_v2_p1_shortcuts_128_20260912.json",
+      "result_sha256": "ea4eb4a61594ccea6852c6458dbcaa6b6b5075e80065f2436e4e882c78648e1d",
+      "audit_sha256": "628112a07c1181ce5fca4f94aa706c59579b60d8c867c1ae45983b3bcf179cff",
+      "boundary_64": {
+        "saved_elapsed_ticks": 27000,
+        "metrics": {
+          "population": 7,
+          "food_stock": 45,
+          "drink_stock": 78,
+          "wood_stock": null,
+          "stone_stock": null,
+          "functional_rooms": null,
+          "completed_workshops": 2,
+          "completed_beds": 2,
+          "completed_farms": 1,
+          "recorded_dead_citizens": 0
+        },
+        "returned_tokens": 2041871
+      },
+      "boundary_128": {
+        "saved_elapsed_ticks": 68200,
+        "metrics": {
+          "population": 7,
+          "food_stock": 39,
+          "drink_stock": 115,
+          "wood_stock": null,
+          "stone_stock": null,
+          "functional_rooms": null,
+          "completed_workshops": 2,
+          "completed_beds": 7,
+          "completed_farms": 1,
+          "recorded_dead_citizens": 0
+        },
+        "returned_tokens": 3772495,
+        "reported_charge_usd": null,
+        "confirmed_keyboard_presses": 574,
+        "explicit_shortcut_actions": 12,
+        "clock_timeouts": 6,
+        "clock_deferrals": 1
+      },
+      "own_save64_fresh_reload_verified": true,
+      "final_save128_fresh_reload_verified": false,
+      "no_human_gameplay_rescue": true,
+      "teardown_verified": true,
+      "recording_id": "controls-v2-p1-shortcuts-1-128",
+      "recording_sha256": "9063c997563bd5c00eb3726acfff77088a50877dd66aeb12a95662b46c62d17b"
+    }
+  ],
+  "observations": [
+    "At decision 64, shortcuts had two installed beds and keyboard had zero. Both finished with seven installed beds at decision 128.",
+    "Both endpoints had seven living dwarves, no recorded deaths, two workshops and one farm.",
+    "Keyboard saved 70,900 elapsed ticks with 43 food and 135 drinks. Shortcuts saved 68,200 ticks with 39 food and 115 drinks.",
+    "Keyboard returned 3,879,799 tokens and shortcuts returned 3,772,495. Subscription dollar charges are unreported."
+  ],
+  "interpretation": {
+    "strong_control_ranking_supported": false,
+    "production_or_consumption_rates_measured": false,
+    "sustainability_proven": false,
+    "full_elapsed_year_reached": false,
+    "same_seed_policy_samples_not_independent_worlds": true,
+    "equal_decision_budget_not_equal_ticks_tokens_or_wall_time": true,
+    "ordinary_keyboard_queued_job_count_not_measured_as_shortcut_use": true,
+    "native_audit_performed_by_this_summary": false,
+    "full_goal_complete": false
+  }
+}
