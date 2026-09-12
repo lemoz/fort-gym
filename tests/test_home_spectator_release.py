@@ -100,7 +100,7 @@ def test_public_endpoint_no_connection_no_cache_and_no_private_errors(
 def test_recordings_match_the_reviewed_export_and_contain_no_private_fields():
     root = ROOT / "web/static/recordings"
     catalog = json.loads((root / "catalog.json").read_text())
-    assert len(catalog["recordings"]) == 14
+    assert len(catalog["recordings"]) == 15
     total = 0
     for row in catalog["recordings"]:
         path = root / (row["id"] + ".json")
@@ -118,9 +118,32 @@ def test_recordings_match_the_reviewed_export_and_contain_no_private_fields():
             }
             assert set(frame["action"]) == {"intent", "keys", "advance_ticks"}
         total += len(recording["frames"])
-    assert total == 1056
+    assert total == 1060
     astra = json.loads((root / "astra-97-256.json").read_text())
     assert astra["saved_through_decision"] == 224 and astra["last_decision"] == 256
+
+
+def test_portable_acceptance_is_not_a_comparison_or_default_recording():
+    root = ROOT / "web/static/recordings"
+    catalog = json.loads((root / "catalog.json").read_text())["recordings"]
+    assert catalog[0]["id"] == "terra-matched-r2-65-128"
+    row = catalog[-1]
+    assert row["id"] == "astra-portable-acceptance-1-4"
+    assert "harness save-and-resume check" in row["title"]
+    assert row["sha256"] == "4737508d32fd1a6e27c2c78e1636ec7fb8de91eaca622cd38f8a7d3ab398ddf1"
+    recording = json.loads((root / (row["id"] + ".json")).read_text())
+    assert [frame["decision"] for frame in recording["frames"]] == [1, 2, 3, 4]
+    assert sum(frame["after"]["ticks_advanced"] for frame in recording["frames"]) == 0
+    assert recording["source_revision"] == "40b106b95f483b534a738622e75c4147a1270a96"
+    assert recording["saved_through_decision"] == 4
+    for name, digest in {
+        "displayed-key-comparison.json": "323eb178749f324791ff0b384c069d667af2132e81770c11ff937a656aa1398d",
+        "displayed-key-comparison-128.json": "5a78f4917443c2eafd72e40f81e66d73803179254a0acbc70927fbc34e5a17bb",
+    }.items():
+        assert hashlib.sha256((ROOT / "web/static" / name).read_bytes()).hexdigest() == digest
+    html = (ROOT / "web/worlds.html").read_text()
+    assert "Zero elapsed game ticks." in html
+    assert "not fortress growth or a model ranking" in html
 
 
 def test_recovery_is_separate_and_prior_recordings_are_immutable():
@@ -200,7 +223,7 @@ def test_worlds_recordings_and_previews_match_the_published_catalog():
     assert page.recordings == [row["id"] for row in catalog]
     assert page.recordings == [row["id"] for row in previews["recordings"]]
     assert html.index('id="recent-recordings"') < html.index('id="filters-form"')
-    assert "1,056 captured decisions" in html
+    assert "1,060 captured decisions" in html
     assert "observed, unsaved tail" in html
     for item, preview in zip(catalog, previews["recordings"], strict=True):
         recording = client.get("/static/recordings/" + item["id"] + ".json").json()

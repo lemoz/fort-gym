@@ -257,7 +257,22 @@
       "saved_through_decision": 128,
       "recording_status": "saved",
       "frame_count": 64
+    },
+    {
+      "schema_version": "fortgym.watch-recording/v1",
+      "id": "astra-portable-acceptance-1-4",
+      "title": "Astra · harness save-and-resume check",
+      "model": "gpt-6-astra",
+      "control_profile": "native_keyboard_bindings/v1",
+      "first_decision": 1,
+      "last_decision": 4,
+      "saved_through_decision": 4,
+      "audit_sha256": "a9a193fc539fe7541b48625cde1a00782cb29017f32b9fb92b6d5a059b3e47df",
+      "recording_status": "saved",
+      "window": "1–4",
+      "frame_count": 4,
+      "sha256": "4737508d32fd1a6e27c2c78e1636ec7fb8de91eaca622cd38f8a7d3ab398ddf1"
     }
   ],
-  "updated_at": "2026-09-11"
+  "updated_at": "2026-09-12"
 }

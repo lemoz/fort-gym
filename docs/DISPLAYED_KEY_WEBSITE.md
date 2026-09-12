@@ -256,3 +256,30 @@ Validation: 1,272 Python tests passed with five environment skips and eight
 dependency/deprecation warnings, plus all 51 Node player/gallery contracts.
 Selected Ruff checks and diff checks passed. Browser visual QA was not performed.
 Exact public delivery remains a separately verified release step.
+
+## Portable harness save-and-resume recording
+
+The portable Docker owner acceptance is now available as
+`astra-portable-acceptance-1-4`. Its four paused Astra decisions span a verified
+two-decision save and own-save continuation. Zero game ticks elapsed. This is
+a harness check, not a matched trial, fortress-growth result or sustainability
+claim. The recording digest is
+`4737508d32fd1a6e27c2c78e1636ec7fb8de91eaca622cd38f8a7d3ab398ddf1`;
+the native source is `40b106b95f483b534a738622e75c4147a1270a96`, with audit
+`a9a193fc539fe7541b48625cde1a00782cb29017f32b9fb92b6d5a059b3e47df`.
+Its immutable result is at
+[the acceptance manifest](https://github.com/lemoz/fort-gym/blob/7fe87fb6addc031a95f421ef985f139375fe8920/experiments/evidence/keyboard_portable_owner_acceptance_20260912.json).
+
+The existing player and preview format are reused. This recording is appended
+after all fourteen existing recordings; the homepage default remains Terra's
+matched repeat continuation. The catalog has fifteen windows and 1,060 frames.
+Both comparison reports and all older recordings remain byte-identical. The
+stopped live relay, API, game services and database are outside this static
+update. No new game or model calls were needed. Live follow acceptance for
+the portable owner remains separate from this completed recording.
+
+Validation: 1,273 Python tests passed with five skips and seven existing
+warnings, and all 52 Node player/gallery contracts passed, including scrubbing
+all four new decisions. Scoped Ruff and diff checks pass. The sandbox initially
+denied one localhost socket test; the complete localhost-enabled rerun passed.
+Browser visual QA was not performed; public delivery is verified separately.
