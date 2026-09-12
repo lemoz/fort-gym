@@ -883,7 +883,7 @@ def _require_share(token: str, *, scope: Optional[str] = None) -> ShareToken:
 async def public_watch_active() -> JSONResponse:
     from .watch import live_status
 
-    location = os.getenv("FORT_GYM_PUBLIC_CAMPAIGN_DIR")
+    location = get_settings().FORT_GYM_PUBLIC_CAMPAIGN_DIR
     try:
         data = live_status(Path(location) if location else None)
     except (OSError, ValueError, KeyError, TypeError):

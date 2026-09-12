@@ -186,6 +186,11 @@ def main() -> None:
         parser.add_argument("--" + key, type=Path, required=True)
     parser.add_argument("--owner-pid", type=int, required=True)
     parser.add_argument("--historical-failed-delivery-tokens", type=int, required=True)
+    parser.add_argument(
+        "--publish-watch",
+        action="store_true",
+        help="Publish sanitized screens and action intents for spectators",
+    )
     args = parser.parse_args()
     if args.owner_pid <= 1:
         raise ValueError("A specific live owner PID is required")
@@ -203,6 +208,26 @@ def main() -> None:
         alive = owner_identity(args.owner_pid) == original
         value = snapshot(args.run_dir, base, alive=alive, now=int(time.time()))
         publish_status(args.public_dir, value)
+        if args.publish_watch:
+            from scripts.campaign_watch_observe import (
+                publish,
+                snapshot as watch_snapshot,
+            )
+
+            try:
+                publish(
+                    args.public_dir,
+                    watch_snapshot(
+                        args.run_dir / "attempt",
+                        base,
+                        alive=alive,
+                        now=int(time.time()),
+                    ),
+                )
+            except (OSError, ValueError, KeyError, TypeError):
+                # The optional viewer must not stop the established counter feed.
+                # Its last successful observation will expire independently.
+                print(json.dumps({"watch_status": "unavailable"}), flush=True)
         print(
             json.dumps({"owner_alive": alive, "responses": value["new_responses"]}),
             flush=True,

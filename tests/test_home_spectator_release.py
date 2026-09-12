@@ -3,6 +3,7 @@ from html.parser import HTMLParser
 import json
 from pathlib import Path
 import subprocess
+from types import SimpleNamespace
 
 import pytest
 from fastapi.testclient import TestClient
@@ -76,10 +77,14 @@ def test_screens_and_execution_claims_are_bounded(value):
 def test_public_endpoint_no_connection_no_cache_and_no_private_errors(
     tmp_path, value, monkeypatch
 ):
-    from fort_gym.bench.api.server import app
+    from fort_gym.bench.api import server
 
-    monkeypatch.setenv("FORT_GYM_PUBLIC_CAMPAIGN_DIR", str(tmp_path))
-    client = TestClient(app)
+    monkeypatch.setattr(
+        server,
+        "get_settings",
+        lambda: SimpleNamespace(FORT_GYM_PUBLIC_CAMPAIGN_DIR=str(tmp_path)),
+    )
+    client = TestClient(server.app)
     assert client.get("/public/watch-active").json()["status"] == "not_connected"
     target = tmp_path / FILENAME
     target.write_text(json.dumps(value))
