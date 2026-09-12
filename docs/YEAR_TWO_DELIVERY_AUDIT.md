@@ -1,6 +1,6 @@
 # Year-Two delivery audit
 
-Snapshot: September 12, 2026 UTC. Latest reviewed harness candidate:
+Snapshot: September 12, 2026 UTC. Reviewed integration candidate:
 `0547261450262c8d0b59486b566a2404e02895f9`; PR176 is draft and unmerged.
 This is a progress audit, not a completion certificate or a replacement goal.
 Requirements come from [the approved goal](YEAR_TWO_CAMPAIGNS.md),
@@ -13,8 +13,8 @@ This summary supersedes the capture-time running/preparation statements in the
 historical sections below. Original result manifests and earlier evidence are
 unchanged. The full Year-Two/cross-model goal is still active.
 
-Five of the six declared v2 attempts have terminal native audits at decision
-128. All five freshly reloaded their own decision-64 save; none of these final
+All six declared v2 attempts have terminal native audits at decision
+128. All six freshly reloaded their own decision-64 save; none of these final
 128 saves has had a separate fresh-reload check. The source/image, original
 seed, Astra Medium model and per-attempt ceilings match the v2 declaration.
 
@@ -25,6 +25,53 @@ seed, Astra Medium model and per-attempt ceilings match the v2 declaration.
 | [Pair 2 keyboard](../experiments/evidence/selected_workshop_v2_p2_keyboard_128_20260912.json) | 51,900 | 6 / 1 | 7 / 5 / 1 | 61 / 122 | 3,954,012 |
 | [Pair 2 shortcuts](../experiments/evidence/selected_workshop_v2_p2_shortcuts_128_20260912.json) | 49,600 | 7 / 0 | 10 / 2 / 2 | 40 / 136 | 4,014,250 |
 | [Pair 3 shortcuts](../experiments/evidence/selected_workshop_v2_p3_shortcuts_128_20260912.json) | 58,200 | 7 / 0 | 7 / 2 / 1 | 56 / 161 | 3,621,402 |
+| [Pair 3 keyboard](../experiments/evidence/selected_workshop_v2_p3_keyboard_128_20260912.json) | 46,400 | 7 / 0 | 7 / 3 / 1 | 42 / 122 | 3,753,509 |
+
+The [complete descriptive comparison](../experiments/evidence/selected_workshop_v2_cohort_20260912.json)
+retains all six actual outcomes and 22,995,467 returned tokens, with subscription
+charges unknown. All attempts developed beds, workshops and farms; one keyboard
+attempt retained a native-recorded drowning. These are three paired policy
+samples on the same seed, not independent worlds or a demonstrated control
+ranking. The short controls budget cannot establish a full elapsed game year.
+
+The separate [Astra endurance campaign is now playing](../experiments/evidence/astra_keyboard_endurance_startup_20260912.json)
+on actual image `sha256:a2f12a74805949b8a2fcf0262b5d63048f4bd3a6f2faf4d8bbc74c261b172ed4`,
+built from source `4b526b5636e6f568a4cae1a1227d746d9c6922c3`. The build used
+the existing local VM, preserved prior inventory/configuration, and finished
+with stopped VMs, closed disks and zero shutdown return codes. No image pull,
+new VM or model call was part of the build.
+
+Its initial four native responses saved 2,000 elapsed ticks, all seven dwarves,
+50 food and 60 drinks, using 97,129 returned tokens. The native audit and teardown
+passed. The actual continuation then restored the exact saved clock/metrics,
+memory, usage and history, with one checkpoint-bound append to the declared
+1,028-response/40-million-token cumulative limits. Its first new response used
+27,738 tokens. The original trace and usage prefixes are preserved. The current
+window is decisions 5–68, with mandatory teardown; its final save and later
+inherited-budget cycles are not yet verified. The HTTPS live frame14 matched
+its original captured screen/chosen action and exact running owner. The relay
+has 14 passing offline checks and does not expose private memory/transcripts.
+
+The [sixth controls replay is now published](../experiments/evidence/selected_workshop_v2_p3_keyboard_website_20260912.json)
+from the website branch at
+`4d4d38fd9f5a3b9418e078bc769e156d327e99d9`: 23 recordings and 2,020 frames,
+with all 22 previous files/rows/previews preserved. Local validation passed
+1,305 Python tests (five skips, seven warnings) and 66 Node checks. Earlier
+outdated-count test failures are retained separately. Exact-head remote CI
+`34725975501` passed the same 1,305 tests with five skips and seven warnings.
+Independent HTTPS checks verified all 23 recording digests, the homepage,
+Runs, Results, catalog and previews. The endurance feed was still running at
+decision36 during acceptance; service identities, database counts and all
+existing untracked host files were unchanged. No service restart, new VM,
+gameplay input or main-branch merge was part of this static-only release.
+All six controls replays are public. Earlier candidate/receipt states below
+remain historical; browser visual QA was not performed for this release.
+
+### Earlier controls checkpoints and preparation captures
+
+The chronological records below retain their earlier capture-time running or
+unexecuted statements. The completed cohort and active endurance evidence above
+supersede those statuses without changing the original receipts.
 
 The pair-two keyboard death is a [native-recorded drowning](../experiments/evidence/selected_workshop_v2_p2_keyboard_drowning_20260912.json),
 first observed at decision 86. The observation boundary does not establish its

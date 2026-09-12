@@ -15,20 +15,24 @@ cohort below. Long-term self-sufficiency and the full delivery goal remain open.
 ## Current experiment summary
 
 The [current delivery audit](YEAR_TWO_DELIVERY_AUDIT.md#current-controls-study-and-delivery-checkpoint)
-supersedes the historical capture-time statements below. Five of six frozen
-selected-workshop v2 attempts have completed native decision-128 audits; the
-sixth keyboard attempt is continuing from its own verified decision-64 save.
-At its [completed running decision 93](../experiments/evidence/selected_workshop_v2_p3_keyboard_progress_93_20260912.json),
-all seven dwarves remain alive with seven installed beds, two workshops and
-one farm. That observation is not its final saved result.
+supersedes the historical capture-time statements below. All six frozen
+selected-workshop v2 attempts have completed native decision-128 audits and
+freshly reloaded their own decision-64 saves. The
+[final keyboard result](../experiments/evidence/selected_workshop_v2_p3_keyboard_128_20260912.json)
+retains seven living dwarves, seven beds, three workshops and one farm after
+46,400 elapsed ticks. The [complete descriptive comparison](../experiments/evidence/selected_workshop_v2_cohort_20260912.json)
+preserves all outcomes without claiming a control ranking or independent worlds.
 
-The separate Astra Medium standard-input endurance candidate is pushed with
-passing exact-head CI. Its initial save-window operator is
-[prepared and offline-tested](../experiments/evidence/astra_keyboard_endurance_fresh_preparation_20260912.json),
-but the new image and native save/continuation have not yet run. Finish the
-frozen sixth attempt, then exercise the longer campaign's real save and
-checkpoint-bound budget extension before continuing the same fortress.
-The latest verified public release includes all five completed v2 replays.
+The separate [Astra Medium endurance campaign is now running](../experiments/evidence/astra_keyboard_endurance_startup_20260912.json)
+on its verified new image. Its four-response native save and actual own-save
+reload passed, preserving memory and usage with one declared cumulative budget
+extension. Astra is playing decisions 5–68, with the live viewer following it.
+That window's final save and later inherited-budget cycles are not yet verified.
+The [sixth controls replay is now public](../experiments/evidence/selected_workshop_v2_p3_keyboard_website_20260912.json).
+Exact-head CI passed and independent HTTPS checks verified all 23 recordings
+and 2,020 frames at website revision `4d4d38fd9`. All six v2 replays are available,
+with the earlier 22 recordings, live endurance feed, services and database
+preserved. This was a static-only release, not a main-branch merge.
 The full goal remains active; inventories and checkpoint recovery do not by
 themselves establish sustained fortress management.
 
