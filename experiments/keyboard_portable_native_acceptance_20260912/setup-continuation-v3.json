@@ -1,0 +1,20 @@
+{
+  "schema_version": "fortgym.portable-native-setup-continuation/v1",
+  "identity": "portable-native-20260912-v3",
+  "original_plan_sha256": "5ff6ccaeda6a4d97db7774348774eb2a24ab03555e97592af8fd3ce33061b6a7",
+  "prior_operation_result_sha256": "68697daefe28c0e84fe478c92578cd7de627ae0db73398581afd6516ccc63c8c",
+  "existing_clean_vm_config_sha256": "4f51024d697db2de13a03405073743a32d0a0b26cdabc1fdf282d2391237193d",
+  "original_clean_vm_config_sha256": "07e069aafda062e8e1a6f9befd92c89e3e79e9dd6448066e94f19ba6be20cf3b",
+  "cause": "Colima's start command normalized the previously empty hostname and cleared diskImage after initial installation.",
+  "difference_verification": "Replacing only those two fields in the current bytes exactly reconstructs the original config SHA256; resource settings, mounts and every other byte are unchanged.",
+  "correction": "Keep the installed VM's observed normalized configuration and start with --save-config=false; all configuration and mount verification remains enforced.",
+  "reused_setup_operator_sha256": "5b53295b15ef733792f34f20c635cb1027c8fd31fe107bc0f7d198c1dd5ff3d7",
+  "new_vm_created": false,
+  "existing_profile": "fg-portable",
+  "vm_resource_or_mount_changes": false,
+  "source_context_changes": false,
+  "prior_attempts_preserved": true,
+  "new_output_subdirectory": "native-v3",
+  "new_container_name": "fortgym-portable-native-20260912-v3",
+  "scope": "Complete the original image import/build and two provider-free paused loads with the same bounds and mandatory teardown. No frozen gameplay identity or prior output is reused."
+}
