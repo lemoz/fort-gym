@@ -94,6 +94,18 @@ screen/action, and the single existing local VM retains mandatory teardown.
 The source, image, model, seed and original budgets are unchanged. No new
 cloud VM, paid API fallback, human gameplay input or future terminal result
 is included. The final keyboard result and its replay delivery remain.
+An [immutable decision-54 navigation observation](../experiments/evidence/selected_workshop_v2_p3_keyboard_navigation_20260912.json)
+captures a menu loop and autonomous adaptation. Decisions 40–54 requested and
+advanced zero ticks at year 30, tick 22,801. Repeated Down arrows changed the
+viewed dwarf to a stray dog; the recorded event sets match the declared native
+binding file. At decision 52 Astra switched to `+`, which resolves to the
+separate secondary-scroll event, and its next captured screen contained the
+farming-labor options. It then issued labor toggles and moved on to farm
+inspection. This is evidence of navigation adaptation without injected
+instructions or keys, not independent verification of labor assignments,
+production, complete physical-key equivalence or the trial's final result.
+The observation retains only selected public actions and trace hashes, not
+private model memory.
 The [fifth-attempt replay importer](../experiments/evidence/selected_workshop_v2_p3_shortcuts_website_preparation_20260912.json)
 passed 35 in-memory checks, including its exact result-file binding and
 preservation of all 21 existing recordings/previews. It has now imported the
@@ -142,6 +154,19 @@ has since passed 5,586 tests with 173 skips and seven warnings; the earlier
 preparation snapshot remains unchanged. A real candidate image,
 same-save budget-extension acceptance and endurance gameplay remain unproven.
 No old-source migration, active-cohort change, extra VM or model call was made.
+
+The [endurance source package and bounded image-build operator](../experiments/evidence/astra_keyboard_endurance_runtime_preparation_20260912.json)
+are now prepared for that exact candidate. The standalone 993-file, 31,559,468-byte
+context was independently rechecked against receipt
+`2023484e2d3e1f15b915c6b42eb1d3ccefb994841bfae0d186d3fa43987c06a7`.
+Only its source revision differs from the retained image inputs; the base,
+generated bindings, game/Python paths and unprivileged user are preserved.
+All 26 offline build-operator tests passed, including rejection of a running VM,
+unfinished cohort or changed audit, image-identity checks, and shutdown after
+start/build/poweroff/stop failures. The operator will emit a launch runtime only
+after an actual verified image build and teardown. It has not run, contacted
+Docker, created a VM or called a model. The active sixth controls attempt remains
+unchanged; the candidate image and native continuation are still unproven.
 
 The [latest verified website delivery](../experiments/evidence/selected_workshop_v2_p3_shortcuts_website_20260912.json)
 is revision `286e000e36cb21b23bd7dc66ed54494e259eceeb`: twenty-two recording

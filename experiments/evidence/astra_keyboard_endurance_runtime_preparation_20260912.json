@@ -1,0 +1,59 @@
+{
+  "schema_version": "fortgym.astra-keyboard-endurance-runtime-preparation/v1",
+  "date_utc": "2026-09-12",
+  "status": "packaged_build_operator_prepared_not_executed",
+  "source_revision": "4b526b5636e6f568a4cae1a1227d746d9c6922c3",
+  "source_tree": "f1ca493ebecefd2705e2349b0870ca2f08a63275",
+  "pull_request": "https://github.com/lemoz/fort-gym/pull/181",
+  "exact_head_ci_receipt": "astra_keyboard_endurance_plan_ci_20260912.json",
+  "artifact_directory": "fort_gym/artifacts/selected-workshop-study-20260912/astra-keyboard-endurance-runtime",
+  "artifact_sha256": {
+    "README.md": "2986b51c62a1326d6771b53e44269ac2d61db2628b1104d832096844e8d25c57",
+    "image-inputs.json": "92b076f4cc4af776e9ca75817f6944ef6eb681f55b53a12afb33009e78402147",
+    "build_runtime.py": "4ac3a8e764412fcff928e8bbb0dd86a824dc96c3f3463a17ae8f30f318f75f37",
+    "test_build_runtime.py": "2baf1667c98d359c0b9c0647aca0730469443d30d96a124d052287c24d7c476e",
+    "build-preparation-tests.xml": "254a45b6e7703c9e356d6f98e1e74b4909c4b4d9c4978163eb44dc500699a5b8",
+    "context/context.json": "2023484e2d3e1f15b915c6b42eb1d3ccefb994841bfae0d186d3fa43987c06a7"
+  },
+  "context": {
+    "files": 993,
+    "bytes": 31559468,
+    "standalone_source_verified": true,
+    "source_clean": true,
+    "expected_base_image": "sha256:32bd022138a4772ed0c0d3a14f94feab8ad4a4cd183a20a8cd098745aedbd10d",
+    "base_reference": "fortgym-campaign:d22f28d-dismissed-restart-v2",
+    "base_image_reverified_now": false,
+    "generated_bindings_preserved": true,
+    "docker_contacted": false,
+    "image_built": false,
+    "native_game_verified": false
+  },
+  "build_operator": {
+    "activation": "Only after six actual audited decision-128 outcomes on the declared saved-outcome path, and the existing single local VM is available. Incomplete/failing cohort outcomes require retained classification before a different activation path is considered.",
+    "tag": "fortgym-portable:4b526b563-keyboard-endurance-v1",
+    "offline_build": true,
+    "image_pull": false,
+    "vm_created": false,
+    "source_image_identity_check": true,
+    "prior_image_layers_preserved": true,
+    "mandatory_vm_teardown": true,
+    "original_inventory_preserved": true,
+    "actual_runtime_config_written_only_after_verified_build_and_teardown": true,
+    "executed": false
+  },
+  "tests": {
+    "passed": 26,
+    "ruff_passed": true,
+    "scope": "Offline fixture tests of six-outcome and audit binding, unfinished/running VM rejection, source/base/UID/platform checks, successful image build, start/build/shutdown/inventory/disk failures, and immutable context identity. No actual engine, VM, game or model call."
+  },
+  "new_model_calls": 0,
+  "new_gameplay_inputs": 0,
+  "new_cloud_vm": false,
+  "active_cohort_source_changed": false,
+  "initial_four_response_campaign_launched": false,
+  "native_budget_extension_acceptance": false,
+  "website_change": false,
+  "main_merge": false,
+  "full_goal_complete": false,
+  "note": "This is source packaging and operator preparation, not an actual image or gameplay result. The final frozen keyboard trial remains separately owned and unmodified. The next native step is building this exact candidate after the cohort, then executing the declared fresh four-response save and actual checkpoint-bound continuation."
+}

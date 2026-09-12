@@ -1,0 +1,136 @@
+{
+  "schema_version": "fortgym.selected-workshop-navigation-observation/v1",
+  "date_utc": "2026-09-12",
+  "campaign_id": "selected-workshop-v2-p3-keyboard",
+  "source_revision": "5ddf1e6718dab2e8351e8dc24a2afe5071cd2592",
+  "image": "sha256:dcbc9b042538401a146159fcf5f6456b21dc900c4649369c008f7a77f661fed3",
+  "observation_boundary": 54,
+  "window_first_decision": 40,
+  "window_last_decision": 54,
+  "owner_plan_sha256": "0c7c56f3f74b202e9931378af097aabd3dadc1654ff3ed1d9ff5e3dc633b2a9f",
+  "trace_record_sha256": {
+    "40": "5eb3385d6b86b3d5a15e879bd8c919252540abb86bc6ac409ab6097164d0711c",
+    "41": "45225c03f087a4aa00c39f5d1526425abac88d3565956d06b96b5edd936d3d63",
+    "42": "7b99094021c4f774cb27557d5dbae1301b90b062d917b8418fda2c4131cd05a8",
+    "43": "98ee1b066c27382303f30941db10cd34b7031fc49fd8b424a7cc0398ee8648c8",
+    "44": "8d2d5990d3a2616d893ad44e7f669dd0e7d65951d23b0b4619a50e12c8f90815",
+    "45": "166e628435119683d438758fedbd97705630370460a3a67d8853a3e50606f421",
+    "46": "3e74572b41b65fce580ae3182474415b1e71d7530a12e557286a3ffd0cf65501",
+    "47": "963f0fa10e6c377ba5f6fada6b521dd02d144c8150e187981b9d2a14d90f27ef",
+    "48": "98620613994b86c12b5469c38a5ba4910e93c87265eb90f24b270fa74a358881",
+    "49": "e4f8fa0d7a5cd1f744a9fff6518937b5d02c33ac5fa4fba99b90de09aa274490",
+    "50": "b0143dd1648be96870442f89c2805b86188404891e7f1c0c653340c14d72e676",
+    "51": "04755dff6f9037e35b8897f5b9ac7babee345a661aeb9e394f7f0ed15c981f8b",
+    "52": "3fd5e09dabe3fdbb59d48c1fd820ad200ff5a6a0f775776df767e304b28bbd2b",
+    "53": "ba50fe71ecd399e8448bbfbdcc09e14b6cb77c7f9734dfb941ffe5bbb1ff323e",
+    "54": "f2c81b4d4a478c74e73f660bf5105730eb7fd6b0a5d32c933038dcca9c7b26ed"
+  },
+  "binding_file_sha256": "8176d2bd7a8d96f6bb12feb654519a8361a6f262363b84ec48963be832cb7efd",
+  "down_binding_events": [
+    "A_MOVE_S",
+    "CURSOR_DOWN",
+    "STANDARDSCROLL_DOWN"
+  ],
+  "plus_binding_events": [
+    "D_MILITARY_AMMUNITION_RAISE_AMOUNT",
+    "D_MILITARY_SUPPLIES_WATER_UP",
+    "SECONDSCROLL_DOWN",
+    "STRING_A043"
+  ],
+  "dispatched_binding_sets_match_declared_file": true,
+  "observations": [
+    {
+      "decision": 50,
+      "keys": [
+        "SYM:0:Down",
+        "SYM:0:Down",
+        "SYM:0:Down",
+        "SYM:0:Down",
+        "SYM:0:Down",
+        "SYM:0:Enter"
+      ],
+      "pre_action_subject": "Lokum, Jeweler",
+      "following_screen_subject": "Stray Dog (Tame)"
+    },
+    {
+      "decision": 51,
+      "keys": [
+        "SYM:0:Up",
+        "SYM:0:Up",
+        "SYM:0:Up",
+        "SYM:0:Up",
+        "SYM:0:Up",
+        "p",
+        "l"
+      ],
+      "following_screen_subject": "Lokum, Jeweler"
+    },
+    {
+      "decision": 52,
+      "keys": [
+        "+",
+        "+",
+        "+",
+        "+",
+        "+",
+        "SYM:0:Enter"
+      ],
+      "following_screen_contains": [
+        "Farming (Fields)",
+        "Brewing"
+      ]
+    },
+    {
+      "decision": 53,
+      "keys": [
+        "+",
+        "+",
+        "SYM:0:Enter",
+        "+",
+        "+",
+        "+",
+        "+",
+        "+",
+        "+",
+        "+",
+        "SYM:0:Enter"
+      ],
+      "intent": "Enable farming and brewing for Lokum to establish food and drink production."
+    },
+    {
+      "decision": 54,
+      "keys": [
+        "SYM:0:ESC",
+        "SYM:0:ESC",
+        "SYM:0:ESC",
+        "q",
+        ">",
+        "SYM:0:Right",
+        "SYM:0:Right",
+        "SYM:0:Right",
+        "SYM:0:Right",
+        "SYM:0:Right",
+        "SYM:0:Right",
+        "SYM:0:Up",
+        "SYM:0:Up",
+        "SYM:0:Up"
+      ],
+      "intent": "Inspect the underground farm after enabling farming and brewing for Lokum."
+    }
+  ],
+  "window_requested_ticks": 0,
+  "window_advanced_ticks": 0,
+  "year": 30,
+  "year_tick": 22801,
+  "settled_returned_tokens_through_observation": 1235552,
+  "actual_subscription_charge_usd": null,
+  "human_gameplay_rescue": false,
+  "production_measured": false,
+  "labor_assignment_independently_verified": false,
+  "physical_keyboard_equivalence_independently_verified": false,
+  "terminal_trial_outcome": false,
+  "private_memory_or_transcripts_included": false,
+  "new_model_calls": 0,
+  "new_gameplay_inputs": 0,
+  "interpretation": "Astra repeated arrow-key navigation that changed the viewed subject, then independently switched to the native secondary-scroll character and reached farming labor options. The observed dispatched sets match the declared binding file. This demonstrates menu-navigation adaptation, not completed production, a terminal score or proof of complete physical-keyboard equivalence."
+}
