@@ -8,15 +8,21 @@ from scripts import campaign_keyboard_native as native
 from tests.test_keyboard_model_selection import condition
 from tests.test_keyboard_runtime import CONDITION
 from tests.test_keyboard_prompt import condition as prompt_condition
+from tests.test_keyboard_binding_profile import condition as binding_condition
+from tests.test_selected_workshop_profile import condition as workshop_condition
 
 
 @pytest.mark.parametrize("selected", [
-    CONDITION, condition("gpt-6-astra"), condition("gpt-5.6-sol"), condition("gpt-5.6-terra"), prompt_condition(),
+    CONDITION, condition("gpt-6-astra"), condition("gpt-5.6-sol"), condition("gpt-5.6-terra"),
+    prompt_condition(), binding_condition(), workshop_condition(),
 ])
-def test_worker_binds_declared_selection_into_agent_and_exchange(tmp_path, monkeypatch, selected):
+@pytest.mark.parametrize("fresh", [False, True], ids=["continuation", "fresh"])
+def test_worker_binds_declared_selection_into_agent_and_exchange(tmp_path, monkeypatch, selected, fresh):
     closed, exchanges = [], []
-    window = {"steps_per_segment": 1}
+    window = {"steps_per_segment": 1, "source_snapshot_receipt_sha256": "a" * 64}
     monkeypatch.setattr(native, "load_window", lambda *args: (selected, window))
+    monkeypatch.setattr("fort_gym.bench.run.keyboard_trial_config.load_trial",
+                        lambda *args: (selected, window))
     monkeypatch.setattr(native, "NativeCampaignEnvironment", lambda **kwargs: SimpleNamespace(
         close=lambda: closed.append(True),
     ))
@@ -34,10 +40,14 @@ def test_worker_binds_declared_selection_into_agent_and_exchange(tmp_path, monke
 
     monkeypatch.setattr(native, "exchange_decision", exchange)
     monkeypatch.setattr(native, "run_keyboard_segment", segment)
+    monkeypatch.setattr("fort_gym.bench.run.keyboard_trial.run_keyboard_trial", segment)
+    monkeypatch.setattr(native, "read", lambda path: {})
     args = SimpleNamespace(
         condition=tmp_path / "condition", window=tmp_path / "window", runtime=tmp_path,
         exchange=tmp_path, output=tmp_path, checkpoint=tmp_path, latest_usage=tmp_path,
         cursor=1, revision="offline", extend_budget=False,
+        trial=tmp_path / "trial" if fresh else None,
+        campaign_id="offline", loaded_boundary=tmp_path / "loaded",
     )
     assert native.worker(args) == {"offline": True}
     assert closed == [True] and len(exchanges) == 1

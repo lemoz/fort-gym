@@ -1,8 +1,8 @@
 # Astra controls study: selected-workshop job entry
 
-Status: implementation and study preparation. No native acceptance or paired
-gameplay result has been claimed for this new profile. Historical displayed-key
-results, the integration candidate, and their runtime images remain unchanged.
+Status: representative native job execution verified; paired gameplay not run.
+Historical displayed-key results, the integration candidate, and their runtime
+images remain unchanged.
 
 ## Question and scope
 
@@ -38,8 +38,27 @@ The helper uses the selected native building and the runtime's workshop job
 definitions. DFHack documents the selected-building and world-job APIs in its
 [version-matched Lua reference](https://docs.dfhack.org/en/0.47.05-r8/docs/dev/Lua%20API.html).
 It queues ordinary work with the native item/reagent filters. Workers, input
-materials and time are still required. Actual native equivalence remains to be
-verified on a disposable copy, including job execution, not just queue insertion.
+materials and time are still required. A provider-free check of source `8622618c8`
+verified actual bed and plant-brewing execution on a disposable checkpoint copy.
+Native completion of the other item types has not been separately exercised.
+
+## Native check and launch correction
+
+The [September 12 native receipt](../experiments/evidence/selected_workshop_native_acceptance_20260912.json)
+records two retained attempts. The first stopped on a diagnostic screen-label
+comparison before creating jobs. The corrected test reused the same immutable
+image and succeeded: actual keyboard selection, wrong-workshop rejection,
+one job ID per request, paused dispatch, ordinary material filters, observed
+workers and inputs, one completed bed, and 25 units of drink after 2,000 ticks.
+The wood log and five-unit plant stack were consumed; the brewing barrel remained.
+Both game/VM lifecycles were torn down and the source checkpoint stayed unchanged.
+Private position reads guided this scripted test, never an autonomous model.
+
+Pre-launch inspection also found that the native worker omitted the v5 prompt
+profile when calling the model exchange. A failing regression reproduced it;
+the worker now forwards that declared profile for both fresh and continued play.
+The existing native receipt remains bound to its earlier source. Build a new
+source-bound image with this wiring correction before the first scored call.
 
 ## Planned attempts and budgets
 
@@ -92,9 +111,8 @@ new condition's prior-action feedback.
 
 ## Remaining execution work
 
-1. Native-check the exact new source on a disposable copy: correct selected
-   carpenter/still, normal worker/material consumption, queue rendering, no
-   duplicate jobs, and unchanged paused clock at dispatch.
+1. Build and verify the corrected worker image. The representative native job
+   check above is complete; do not relabel it as model play or as new-source proof.
 2. Bind the exact runtime/resources and execute the declared paired starts.
    Verify live follow during an otherwise-needed game.
 3. Audit own-save continuation, failure categories and teardown; publish the

@@ -1,0 +1,81 @@
+{
+  "schema_version": "fortgym.selected-workshop-native-acceptance/v1",
+  "date_utc": "2026-09-12",
+  "status": "representative_native_jobs_verified",
+  "source_revision": "8622618c899a9c526df7efd5557e12f267ec72fa",
+  "control_profile": "native_keyboard_selected_workshop_jobs/v1",
+  "image_id": "sha256:639db802c5138f11322e1fa2b77f2c8dd454943ed42ef0487dccd8d33379d609",
+  "source_checkpoint_file_sha256": "6fd70146993ad318a680b212db327b38cae5e833342de41297e251573ae76197",
+  "context_receipt_sha256": "5839fe7ded2a1c049990a0364583fd94530c475be78952904eb762f73058e47e",
+  "attempts": [
+    {
+      "id": "selected-workshop-native-20260912-v1",
+      "outcome": "diagnostic_script_failure_before_job_creation",
+      "reason": "Test compared the native viewscreen type label with an incorrectly normalized string.",
+      "operation_receipt_sha256": "5ad878338a08863979c4e42f0757fb08b2ba85d5d551796b8f2dce722677b0df",
+      "model_calls": 0,
+      "teardown_verified": true
+    },
+    {
+      "id": "selected-workshop-native-20260912-v2",
+      "outcome": "representative_native_job_execution_passed",
+      "operation_receipt_sha256": "97cfd74c27117bac06148b887667d1f28fcf410b21525058d245525e9d42ff61",
+      "worker_receipt_sha256": "4192ee66c985e3432aaf4feeddd4930fc876b59ad42b10b9a73bf1639a8a3815",
+      "native_runtime_receipt_sha256": "9db7b9c1db62401b41323ac4f2eeda70705d7dd2950387ce849a348160942090",
+      "model_calls": 0,
+      "teardown_verified": true
+    }
+  ],
+  "execution": {
+    "model_calls": 0,
+    "scripted_private_navigation": true,
+    "scored_model_attempt": false,
+    "initial_year": 30,
+    "initial_year_tick": 39801,
+    "final_year": 30,
+    "final_year_tick": 41801,
+    "actual_elapsed_ticks": 2000,
+    "native_load_verified": true,
+    "selected_carpenter_bed_job": true,
+    "selected_still_plant_brew_job": true,
+    "unselected_and_wrong_type_rejected_without_mutation": true,
+    "paused_clock_unchanged_at_dispatch": true,
+    "single_unique_id_per_job": true,
+    "worker_observed_on_both_jobs": true,
+    "real_inputs_observed_on_both_jobs": true,
+    "completed_products": {
+      "beds": 1,
+      "drink_stack_units": 25
+    },
+    "consumed_inputs_observed": {
+      "wood_log_items": 1,
+      "plant_stack_units": 5
+    },
+    "brew_container_preserved": true,
+    "ordinary_material_filters_present": true,
+    "no_material_labor_or_terrain_cheats": true
+  },
+  "cleanup": {
+    "native_game_stopped": true,
+    "container_stopped": true,
+    "both_project_vms_stopped": true,
+    "original_checkpoint_unchanged": true,
+    "prior_containers_images_and_volumes_preserved": true,
+    "vm_configurations_unchanged": true,
+    "docker_context_unchanged": true,
+    "data_disks_closed": true
+  },
+  "cost": {
+    "new_vm_created": false,
+    "cloud_vms": 0,
+    "cloud_spend_usd": 0,
+    "model_calls": 0,
+    "local_energy_and_subscription_cost_usd": null
+  },
+  "limitations": [
+    "This is a scripted functional check on a copied campaign checkpoint, not autonomous gameplay or one of the six paired runs.",
+    "Native execution was exercised for bed and plant-brewing jobs. Other allowed item types retain unit and Lua-fixture coverage, not separate native completion evidence.",
+    "A subsequent host-worker prompt-forwarding bug was reproduced and repaired separately. This receipt does not claim a model invocation or native proof for an unbuilt later source.",
+    "No website release, main merge, Year-Two result, production rate or cross-model performance is established."
+  ]
+}
