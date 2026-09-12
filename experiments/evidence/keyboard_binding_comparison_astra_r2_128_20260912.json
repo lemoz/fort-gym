@@ -1,0 +1,87 @@
+{
+  "schema_version": "fortgym.public-displayed-key-result/v1",
+  "cohort_id": "bindings-comparison-20260911",
+  "campaign_id": "bindings-comparison-20260911-astra-r2",
+  "model": "gpt-6-astra",
+  "replicate": 2,
+  "reasoning_effort": "medium",
+  "source_revision": "d22f28d99f4fd103188979e964e148139d3f3efd",
+  "image_id": "sha256:32bd022138a4772ed0c0d3a14f94feab8ad4a4cd183a20a8cd098745aedbd10d",
+  "seed_receipt_sha256": "eaf5fa5a40014719e6c313f33497740e536a8faa1c90a84c4e09dcc380ac0595",
+  "condition_file_sha256": "7bf8ebf8656cf9c993764b6f1d02bb22dcd75d2a68aa2d4d1f868e49b5f4e1ab",
+  "trial_file_sha256": "3925997ef8a992a6da24e760543750e9d256d54d3ca832732e371983789dc0c8",
+  "response_limit": 128,
+  "status": "saved",
+  "responses": 128,
+  "returned_tokens": 3483445,
+  "reported_charge_usd": null,
+  "human_gameplay_rescue": false,
+  "native_teardown_verified": true,
+  "vm_teardown_verified": true,
+  "terminal_audit_sha256": "31dceaeea4f5b20f98b08bca0b029233ae0419fd1c8d8a8302afb6704f7325f7",
+  "checkpoint": {
+    "next_step": 128,
+    "sha256": "2560a4d7f1140223b35c41eca89b6b5d702179a59f27fb0f38898e13fcd07c2e",
+    "saved_elapsed_ticks": 50400,
+    "metrics": {
+      "population": 7,
+      "recorded_dead_citizens": 0,
+      "food_stock": 42,
+      "drink_stock": 121,
+      "completed_beds": 7,
+      "completed_workshops": 3,
+      "completed_farms": 1,
+      "functional_rooms": null,
+      "wood_stock": null,
+      "stone_stock": null
+    }
+  },
+  "evidence_details": {
+    "source_result_sha256": "5905e6bb70fb9a3db7b0fa3038a6bf87c8230b788d2d301133c6d1d2daec868f",
+    "source_checkpoint_sha256": "cfd3f704e93715803964cc47d21647edac01b6f0d96a99d39bbff1d49b5d21ef",
+    "source_checkpoint_fresh_load_verified": true,
+    "fresh_final_checkpoint_reload_verified": false,
+    "new_responses": 64,
+    "new_tokens": 1934059,
+    "new_saved_elapsed_ticks": 41200,
+    "confirmed_key_presses": 403,
+    "clock_outcomes": {
+      "no_error": 64
+    },
+    "storage_amendment": {
+      "schema_version": "fortgym.matched-window-storage-amendment/v1",
+      "amendment_id": "comparison-storage-20260912-40gib",
+      "campaign_id": "bindings-comparison-20260911-astra-r2",
+      "first_step": 64,
+      "target_next_step": 128,
+      "profile": "fg-v2",
+      "original_config_sha256": "ee0e3b0ced1cb0642f691959783e48c4ed45ecb182474974ae1afee84f0def93",
+      "vm_config_sha256": "d5d2cc59755f2c6ad4ec95097557e8ac2fff7a27b39f636a68f3c4e002f54263",
+      "operation_receipt_sha256": "c378124e57bf04f64fee50c3c2e136c2f1e2c73f1b7c0f82017857cfdf1532f9",
+      "disk_gib_before": 32,
+      "disk_gib_after": 40,
+      "cpu": 2,
+      "memory_gib": 3,
+      "root_disk_gib": 8,
+      "minimum_guest_free_kib": 1572864,
+      "model_or_prompt_changes": false,
+      "native_source_or_image_changes": false,
+      "other_configuration_changes": false,
+      "mandatory_teardown": true,
+      "declaration_sha256": "eeb3fa8b08234819247b4dec7ecf50fda9f137fd57cabe07d1426d968d15116e"
+    }
+  },
+  "assessment": {
+    "strong_model_ranking_supported": false,
+    "gameplay_success_assessment": "not_inferred_by_export",
+    "production_rates": null,
+    "consumption_rates": null,
+    "limits": [
+      "A verified saved window is not a successful fortress or a model ranking.",
+      "Stocks and sampled jobs do not establish production or consumption rates.",
+      "Reported subscription and hardware charges remain unreported, not zero.",
+      "The parent save was loaded; the new final save has not had a separate fresh reload.",
+      "This window used a declared storage-only capacity amendment from 32 to 40 GiB; its VM storage configuration is not identical to preceding runs. Model, prompt, game controls, CPU and RAM are unchanged."
+    ]
+  }
+}
