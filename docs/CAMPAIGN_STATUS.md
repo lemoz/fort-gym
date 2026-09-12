@@ -12,7 +12,7 @@ and [reload verification](#later-checkpoint-1057-verification-and-website-delive
 Do not confuse that achieved duration with the younger, independent matched
 cohort below. Long-term self-sufficiency and the full delivery goal remain open.
 
-## Current state: three saved continuations; Sol r2 is next
+## Current state: three saved continuations; native capacity floor reached
 
 All six displayed-key fresh attempts have completed and passed their terminal
 audits at 64 responses. The [source-linked index](../experiments/evidence/keyboard_binding_comparison_20260911_index.json)
@@ -73,7 +73,7 @@ farms. Food and drink stocks fell to 36 and 26. This is elapsed-time progress,
 not demonstrated fortress development or sustainable management. The original
 save, memory and usage were preserved. Native/VM teardown and stopped-relay
 publication passed; no local game is running. Its final checkpoint has not had a
-separate fresh reload. The goal-branch index has four 128-budget outcomes; this
+separate fresh reload. At that point the index had four 128-budget outcomes; this
 new Terra result's replay and integration update remain pending. Sol r2 and
 Astra r2 are next, subject to the unchanged capacity and allowance checks.
 
@@ -81,6 +81,21 @@ Sol r2's read-only preflight passed its own-save, frozen-source, CI and current
 allowance checks. It launched no VM or model. Guest free space is checked by the
 owner after boot and before any game allocation; no capacity is assumed from
 this offline preflight, and no storage growth or evidence deletion is authorized.
+
+The subsequent [Sol r2 start stopped at the guest capacity floor](../experiments/evidence/keyboard_binding_comparison_sol_r2_128_capacity_failure_20260912.json):
+1,541,972 KiB available against the unchanged 1,572,864 KiB minimum. No game was
+created and no model call, returned token or gameplay input occurred. The normal
+VM stop succeeded and stopped state was verified after a guest-poweroff warning.
+The private failure review reverified the original save and reconciled its memory
+and usage offline. The comparison preserves that 64-response, 10,400-tick,
+1,221,506-token parent as an infrastructure failure, not a new save or Sol collapse.
+
+The index now has five 128-budget outcomes: three saved windows and two startup
+infrastructure failures. Astra r2 has not launched; do not consume its identity
+against the same known capacity shortage. No retry, evidence deletion, disk
+growth, paid fallback or cloud VM was used. Publishing Terra r2's replay and
+these latest results, remaining source review and portable setup work can
+continue while native capacity remains unresolved. The full goal stays active.
 
 The isolated integration candidate is pushed as
 [draft PR176](https://github.com/lemoz/fort-gym/pull/176), head

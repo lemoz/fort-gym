@@ -468,8 +468,8 @@ def test_astra_own_save_128_keeps_development_and_unequal_game_time_explicit():
     data = read_comparison(
         ROOT, "experiments/evidence/keyboard_binding_comparison_20260911_index.json", boundary=128
     )
-    assert data["recorded_attempts"] == 4
-    assert data["outcome_counts"] == {"infrastructure_failure": 1, "saved": 3}
+    assert data["recorded_attempts"] == 5
+    assert data["outcome_counts"] == {"infrastructure_failure": 2, "saved": 3}
     astra = data["trials"][2]["result"]
     assert astra["status"] == "saved" and astra["responses"] == 128
     assert astra["returned_tokens"] == 4123021 and astra["reported_charge_usd"] is None
@@ -482,7 +482,7 @@ def test_astra_own_save_128_keeps_development_and_unequal_game_time_explicit():
     assert (metrics["population"], metrics["recorded_dead_citizens"]) == (7, 0)
     assert (metrics["food_stock"], metrics["drink_stock"]) == (61, 83)
     assert astra["native_teardown_verified"] is astra["vm_teardown_verified"] is True
-    assert all(row["result"] is None for row in data["trials"][4:])
+    assert data["trials"][5]["result"] is None
     assert data["strong_ranking_supported"] is data["all_saved_boundaries_reached"] is False
 
 
@@ -504,3 +504,22 @@ def test_terra_repeat_128_preserves_time_without_inventing_development():
     assert (metrics["food_stock"], metrics["drink_stock"]) == (36, 26)
     assert terra["native_teardown_verified"] is terra["vm_teardown_verified"] is True
     assert data["strong_ranking_supported"] is False
+
+
+def test_sol_repeat_capacity_failure_keeps_its_original_64_response_save():
+    data = read_comparison(
+        ROOT, "experiments/evidence/keyboard_binding_comparison_20260911_index.json", boundary=128
+    )
+    sol = data["trials"][4]["result"]
+    assert sol["status"] == "infrastructure_failure" and sol["response_limit"] == 128
+    assert sol["responses"] == sol["checkpoint"]["next_step"] == 64
+    assert sol["returned_tokens"] == 1221506 and sol["reported_charge_usd"] is None
+    assert sol["checkpoint"]["saved_elapsed_ticks"] == 10400
+    assert sol["checkpoint"]["sha256"] == (
+        "e082332f969bef80a5ff4049206fa2a6a4580ab26c0b4ddad6e8bb3a74fd4f59"
+    )
+    metrics = sol["checkpoint"]["metrics"]
+    assert (metrics["population"], metrics["recorded_dead_citizens"]) == (7, 0)
+    assert (metrics["food_stock"], metrics["drink_stock"]) == (50, 60)
+    assert data["trials"][5]["publication_state"] == "no_published_result"
+    assert data["strong_ranking_supported"] is data["all_saved_boundaries_reached"] is False
