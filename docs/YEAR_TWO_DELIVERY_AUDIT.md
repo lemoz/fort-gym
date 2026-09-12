@@ -73,6 +73,18 @@ the unchanged baseline; native acceptance of this correction is still pending.
 has now passed 5,544 tests with 173 skips and seven warnings. That hosted result
 does not replace the differently skipped local suite or the native-game gate.
 
+A [separate portable endurance-budget candidate](../experiments/evidence/portable_endurance_budget_preparation_20260912.json)
+is pushed as draft PR180 at `7594b3b2d762195627046baa64091577a7c64d69`,
+stacked on PR179. It verifies the exact parent checkpoint and inherited limits,
+appends any increase once, and carries that history through later saves, audits,
+the spectator and replay export. It also fixes multi-save replay lineage. The
+complete local rerun passed 5,729 tests with ten skips and eight warnings;
+all 22 new budget checks passed. Broad lint/type diagnostics match the parent.
+The integration fixtures use fake game/model/container receipts with real
+checkpoint machinery, not native gameplay. Hosted CI was still running at the
+preparation snapshot. No new image, runtime migration or native acceptance is
+claimed, and the active controls study is unchanged.
+
 The [latest verified website delivery](../experiments/evidence/selected_workshop_v2_p2_shortcuts_website_20260912.json)
 is revision `94425be289a28b3683bf2ce11d83634009839d36`: twenty-one recording
 windows and 1,764 frames, including all four v2 terminal replays. Local testing
@@ -102,9 +114,11 @@ does not rewrite the native result's original unpublished state.
    agent support recorded, checkpoint-bound budget extensions, but the portable
    window courier and window auditor deliberately reject `budget_extension`.
    Merely increasing a JSON limit would not establish a valid portable
-   continuation. Extend the owner/courier/native/audit path together in an
-   isolated revision, retain the unchanged parent save and cumulative usage,
-   and verify an actual continuation before claiming this capability. A new
+   continuation. The isolated PR180 candidate now extends the
+   owner/courier/native/audit path together with local regression coverage;
+   retain the unchanged parent save and cumulative usage, then verify an actual
+   native continuation before claiming this capability. Old-source/image
+   migration remains a separate unimplemented transition. A new
    fresh campaign with a larger initial declared budget is a different experiment,
    not recovery of these saves. Do not change the active cohort's source/image.
 4. Strengthen long-play evaluation with separately versioned measurements of

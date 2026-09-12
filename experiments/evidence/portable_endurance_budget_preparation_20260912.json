@@ -1,0 +1,88 @@
+{
+  "schema_version": "fortgym.portable-endurance-budget-preparation/v1",
+  "date_utc": "2026-09-12",
+  "status": "implemented_tested_draft_review_native_acceptance_pending",
+  "baseline_revision": "af922cb4c3e0cf33bfe62cf6ba702bdf83363e1a",
+  "source_revision": "7594b3b2d762195627046baa64091577a7c64d69",
+  "branch": "codex/portable-endurance-budget",
+  "pull_request": "https://github.com/lemoz/fort-gym/pull/180",
+  "review_state": {
+    "draft": true,
+    "merged": false,
+    "base_branch": "codex/workshop-job-clock-feedback",
+    "exact_head_ci_run": 34718879477,
+    "ci_observed_status": "in_progress",
+    "ci_passed": false
+  },
+  "change": {
+    "window_schema": "fortgym.codex-keyboard-window/v2",
+    "exact_parent_checkpoint_bound": true,
+    "original_condition_unchanged": true,
+    "budget_before_verified_against_parent": true,
+    "optional_append_only_cumulative_increase": true,
+    "extension_applied_first_segment_only": true,
+    "later_windows_inherit_actual_limits": true,
+    "original_memory_usage_and_trace_preserved": true,
+    "owner_courier_native_auditors_spectator_and_replay_updated": true,
+    "multisave_replay_lineage_fixed": true,
+    "legacy_portable_v1_budget_changes_rejected": true,
+    "runtime_migration_supported": false
+  },
+  "validation": {
+    "full_local_suite": {
+      "passed": 5729,
+      "skipped": 10,
+      "warnings": 8,
+      "junit_sha256": "93f25d9a68f1c0858b2c2c6ee5862e68a5940128a3a408e6ff506c850b77d0ad",
+      "scope": "Complete rerun after final production and regression-test changes; only documentation subsequently changed."
+    },
+    "new_budget_tests": {
+      "passed": 22,
+      "warnings": 2,
+      "scope": "Real checkpoint/journal machinery with fake game/model/container receipts; not native gameplay."
+    },
+    "intermediate_focused_suite": {
+      "passed": 273,
+      "warnings": 2,
+      "junit_sha256": "a70ef689305b9578abefce1c78c745960afcb883c573af57f0d1eae1c8da6ea7",
+      "final_source": false
+    },
+    "interrupted_suite": {
+      "passed_before_interrupt": 3236,
+      "skipped": 10,
+      "exit_code": 2,
+      "junit_sha256": "58c6f7d43fa4e0d661acb66ed79a22d20491a8017b9fe6167cb158b1b869b100",
+      "complete": false,
+      "reason": "Stopped only the owned pytest process after a separate focused test exposed a multi-save replay lineage bug. The original partial report remains; full acceptance uses the final rerun."
+    },
+    "changed_file_ruff_passed": true,
+    "repository_ruff": {
+      "candidate_diagnostics": 10,
+      "baseline_diagnostics": 10,
+      "new_diagnostics": 0
+    },
+    "repository_mypy": {
+      "candidate_diagnostics": 465,
+      "baseline_diagnostics": 465,
+      "new_diagnostics": 0,
+      "comparison": "Sorted diagnostics with source line numbers normalized."
+    },
+    "diff_check_passed": true
+  },
+  "delivery": {
+    "source_pushed": true,
+    "remote_head_verified": true,
+    "active_cohort_revision_unchanged": "5ddf1e6718dab2e8351e8dc24a2afe5071cd2592",
+    "active_image_unchanged": true,
+    "new_image_built": false,
+    "native_acceptance_performed": false,
+    "model_calls_by_this_preparation": 0,
+    "new_vm_created": false,
+    "website_deployed": false,
+    "main_merged": false,
+    "full_goal_complete": false
+  },
+  "next_native_gate": "After the frozen six-attempt controls cohort, verify a real native same-save budget extension using this candidate's own source/image. Older cohort checkpoints need a separately audited source/image transition, which this candidate does not enable.",
+  "note": "Budget declarations are bookkeeping rather than new spending authorization. No account reset, API fallback, prompt intervention, human gameplay rescue or retrospective relabeling of controls evidence is included."
+}
+
