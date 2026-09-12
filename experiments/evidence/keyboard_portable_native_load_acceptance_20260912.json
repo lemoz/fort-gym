@@ -104,6 +104,8 @@
     "final_container_oom_killed": false,
     "final_container_stopped": true,
     "both_project_vms_stopped": true,
+    "both_profile_statuses_independently_rechecked_after_audit": true,
+    "profile_discovery_note": "This tooling's profile-selected list returns only that profile. Final read-only checks independently selected fg-v2 and fg-portable, both Stopped; future preflight must check each existing profile.",
     "both_data_disks_closed": true,
     "guest_poweroff_returncode": 0,
     "vm_stop_returncode": 1,
