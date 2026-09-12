@@ -1,0 +1,61 @@
+# Year-Two delivery audit
+
+Snapshot: September 12, 2026 UTC, goal branch
+`293b4ca8ee1262d3bf5e7a029130b6cf16ecd300` before this documentation update.
+This is a progress audit, not a completion certificate or a replacement goal.
+Requirements come from [the approved goal](YEAR_TWO_CAMPAIGNS.md),
+[the standard-input phase](ASTRA_STANDARD_INPUT_EXPERIMENTS.md), and the
+[frozen displayed-key cohort](../experiments/keyboard_binding_comparison_20260911/cohort.json).
+
+## Evidence and remaining work
+
+| Requirement | Current evidence | Remaining work or limit |
+| --- | --- | --- |
+| Autonomous functioning fortress after a full elapsed year, continuing past its anniversary | The [displayed-key Astra result](../experiments/evidence/keyboard_binding_astra_r1_continuation_256_416_20260911.json) retains 429,845 ticks, 13 living citizens, zero recorded deaths, 12 beds, three workshops and one farm, without human gameplay rescue. Twenty-three post-anniversary samples support a qualitative operating-at-endpoint assessment. | This achieved milestone is one exploratory campaign, not a matched replicate or proof of indefinite self-sufficiency. Preserve its disclosed earlier save loss. Continue the longer-play investigation; do not rerun baseline acceptance to replace gameplay. |
+| Persistent save/resume with memory and honest budget accounting | [Checkpoint 416's later native reload](../experiments/evidence/keyboard_binding_astra_r1_reload_416_20260911.json) preserves the fortress, memory, prompt, history and cumulative usage. [Terra's completed checkpoint128](../experiments/evidence/keyboard_binding_comparison_terra_r1_128_20260912.json) passed its terminal audit and teardown after a verified native parent load. [Astra's next startup](../experiments/evidence/matched_continuation_astra_r1_startup_20260912.json) also passed that load gate. | Astra is still running. Its startup is not a terminal result, and Terra's final checkpoint has not had a separate fresh reload. Retain Sol's failed startup and its native dispatch counter separately from zero new provider calls. |
+| Three configuration-selected models and repeated comparable attempts | The [index](../experiments/evidence/keyboard_binding_comparison_20260911_index.json) and reader verify six audited fresh 64-response outcomes, two each for Astra, Sol and Terra. Conditions share seed, source/image, Medium effort, prompt, screen, controls and ceilings. | The declared 128-response comparison now retains two outcomes: Sol's infrastructure failure and Terra's saved result. Astra r1 is running; three further declared windows remain. Do not present an infrastructure failure as model collapse or remove it from the denominator. |
+| Standard input versus optional shortcuts | This cohort explicitly uses displayed native keyboard controls and excludes shortcuts. The standard-input phase preserves a separate three-pair comparison with explicit shortcuts. | That paired comparison is not proved by these six model trials. Declare and run it separately with matching starts and budgets; do not alter the current cohort or silently introduce helpers. |
+| Inspectable development, adaptation and sustainability | Saved native metrics, job samples, elapsed time, chosen controls and rejected actions are retained and replayable. The Astra endpoint review explicitly qualifies its observations. | Stocks and sampled jobs are not production/consumption rates, accessible reserves or completed job counts. Keep unmeasured fields unknown; use longer gameplay and separately versioned measurement improvements for stronger sustainability claims. |
+| Honest cost and resource reporting | Returned model tokens and known lost responses remain accounted. Results identify subscription transport and leave dollar charges null. | Subscription dollar charges, hardware energy and app cost are unreported, not zero. Do not create a fabricated actual cost or silently substitute API-price estimates. |
+| Live and recorded website delivery | [The verified release](../experiments/evidence/website_six_matched_release_20260912.json) serves all six current results, eleven replay windows, a 64/128 budget selector and immutable evidence links. The current Astra feed was checked against original captured screen and response events. | Publish each newly audited outcome and its recording. Terra's completed 128 result is indexed remotely but its replay and public-table update remain pending. Original recordings remain immutable. |
+| Reviewed and merged remote implementation, tests, setup and manifests | Native code, website code and result manifests are pushed, with exact-revision tests and native/public evidence. Main is `f1aa05f429c189b67891cf2629e8e00329222aca`. | Main does not contain the delivered stack. The consolidated candidate is pushed as draft PR176, head `5cedb5e91e0405e3b2ae0065c9a230a7ff02db88`, with 5,398 local tests passing. Exact-head CI, source review and setup acceptance remain. Pushed branches and public static deployment are not merged harness delivery. |
+| Reusable setup rather than one machine's retained experiment assets | Public conditions load through the native parser. The native CLI accepts explicit source/checkpoint/window inputs; experiment owners bind exact private runtime assets. | Verify the final integrated setup instructions and configuration-driven invocation from an isolated checkout. Do not publish restricted game files, account data or private model payloads. Existing-machine execution alone is not a fresh-setup acceptance claim. |
+
+## Integration started without changing active gameplay
+
+The isolated `codex/year-two-integration` worktree starts at current remote main.
+Merge `72f732546f1b6fa48a8074c582b8562f2592b92c` joins main's ancestry to frozen
+native source `d22f28d99f4fd103188979e964e148139d3f3efd`. Its tree is
+`2cf88a83406d01954de3ea1ad550caa293f87f2a`, exactly the native source tree;
+all 5,056 Python tests passed, with ten skips. The difference is ancestry,
+not a new gameplay implementation.
+
+Eleven specific viewer commits through published website revision
+`c763742f6e45d96c9b82df10a9776ee5bbbcb8fc` were then cherry-picked with source
+provenance, retaining current main's campaign navigation. This excludes unrelated
+historical benchmark-calibration and provider changes from the website branch.
+The viewer slice passed 95 focused Python tests and all 48 Node contracts.
+All eleven recording files remain byte-identical to their published sources.
+
+The inherited-loss audit and rejected-choice observer changes are also integrated.
+The observer helpers now match the current eleven-window viewer and shared
+configured feed location. Sixty-one comparison, own-save, test and evidence files
+were copied byte-for-byte from goal revision `727514096d8ec4fde22e4a0f47b5f7bf1bd5bd4e`.
+The complete candidate passed 5,398 Python tests, with ten skips, and all 48 Node
+contracts. Both website comparison tables match the integrated source reader.
+The pushed candidate is [draft PR176](https://github.com/lemoz/fort-gym/pull/176),
+head `5cedb5e91e0405e3b2ae0065c9a230a7ff02db88`; it is not merged or deployed.
+Both the original native tree and combined candidate retain ten repository-wide
+Ruff findings and 465 mypy errors in 27 files. Four historical evidence/test files retain trailing
+blank lines. These pre-existing findings are not described as green checks.
+
+Next integrate outcomes settled after that snapshot, including Terra's checkpoint128,
+verify reusable setup, inspect exact-head CI, review the combined source, and
+merge only after that evidence exists. Preserve current main's work, all historical protocols and
+results, and private-data exclusions. Never merge the whole conflicting
+work-in-progress branch merely because its latest focused tests pass.
+
+Terra completed and its VM stopped before Astra started. The running Astra owner,
+frozen native checkout/image and pinned observer remain isolated from integration. Finish the declared model sequence before unequal-length endurance
+windows. Keep the full goal active until gameplay, comparison, setup, merged
+source and public delivery requirements are all actually evidenced.

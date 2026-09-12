@@ -1,6 +1,6 @@
 # Campaign status
 
-Verified September 11, 2026 UTC. The Year-Two Autonomous Play objective remains
+Verified September 12, 2026 UTC. The Year-Two Autonomous Play objective remains
 unfinished; work continues toward the same objective. The owner has approved starting the project
 work for [Astra standard-input experiments](ASTRA_STANDARD_INPUT_EXPERIMENTS.md).
 
@@ -12,7 +12,54 @@ and [reload verification](#later-checkpoint-1057-verification-and-website-delive
 Do not confuse that achieved duration with the younger, independent matched
 cohort below. Long-term self-sufficiency and the full delivery goal remain open.
 
-## Current state: Sol and Terra first outcomes saved, Astra running
+## Current state: Terra saved at 128; Astra own-save continuation running
+
+All six displayed-key fresh attempts have completed and passed their terminal
+audits at 64 responses. The [source-linked index](../experiments/evidence/keyboard_binding_comparison_20260911_index.json)
+retains two attempts each for Sol, Terra and Astra. The [public release](../experiments/evidence/website_six_matched_release_20260912.json)
+now contains all six results, eleven recording windows and 864 captured
+decisions, with a selector for the declared 64- and 128-decision budgets.
+The older ten recording files remain unchanged.
+
+The first Sol r1 continuation retained an
+[infrastructure startup failure](../experiments/evidence/keyboard_binding_comparison_sol_r1_128_startup_failure_20260911.json)
+before any new provider call. Its original 64-response checkpoint stays in the
+128-budget comparison, and the failed identity was not reused. The initial
+load gate now accounts for the frozen runner's exact pending-decision journal
+marker. Corrected owner source `99121512af7ab3bb9d960076fae5554795432e30`
+passed CI `34663140011` before the next declared attempt.
+
+[Terra r1 completed its own-save continuation](../experiments/evidence/keyboard_binding_comparison_terra_r1_128_20260912.json)
+and passed the terminal audit. It retained 128 responses, 3,717,561 tokens and
+120,200 elapsed game ticks, with 15 living citizens, zero recorded deaths,
+one completed workshop, no beds or farms, 36 food and 26 drinks. The new window
+added 116,000 ticks with no recorded clock error. Native cleanup, VM teardown
+and the unchanged original checkpoint were verified. This is not Year-Two or
+self-sufficiency proof, nor a separate fresh reload of the final checkpoint.
+The result and updated 128-budget index are pushed; its replay and public-table
+update remain pending, so the website still has only Sol's settled 128-stage row.
+
+[Astra r1 started next](../experiments/evidence/matched_continuation_astra_r1_startup_20260912.json)
+from its own checkpoint64, preserving memory, usage, feedback and native metrics.
+Its first new subscription response and corrected load gate passed. Public frame67
+matched the original native screen, explicit action and retained provider events.
+The existing homepage relay now follows Astra; no service restart was needed.
+This startup is not terminal acceptance or a verified checkpoint128. Audit it
+when it settles, then continue Terra r2, Sol r2 and Astra r2 in declared order.
+
+The isolated integration candidate is pushed as
+[draft PR176](https://github.com/lemoz/fort-gym/pull/176), head
+`5cedb5e91e0405e3b2ae0065c9a230a7ff02db88`. It combines native/main ancestry,
+the published viewer and matched tools; 5,398 Python tests and 48 Node contracts
+pass. Exact-head CI and source review remain separate from those local checks.
+The candidate is not merged or deployed, and does not replace the running source.
+
+The [delivery audit](YEAR_TWO_DELIVERY_AUDIT.md) separates the achieved
+Year-Two milestone, unfinished matched comparison, planned shortcut comparison,
+and remaining main-branch integration. Do not interpret older current-state
+headings below as live owner instructions or relaunch completed attempts.
+
+## Historical snapshot: Sol and Terra first outcomes saved, Astra running
 
 The [new declaration](../experiments/keyboard_binding_comparison_20260911/README.md)
 sets six fresh attempts, two each for Sol, Terra and Astra at Medium, with the
