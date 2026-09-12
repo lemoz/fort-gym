@@ -62,6 +62,10 @@ those operators or relays has run, and no future checkpoint is assumed. Their
 passed 198 combined offline tests. The shortcut fresh relay and startup capture
 are now consumed/running as appropriate; its own-save reload and terminal
 evidence, the final keyboard run and both public replay deliveries remain.
+The [fifth-attempt replay importer](../experiments/evidence/selected_workshop_v2_p3_shortcuts_website_preparation_20260912.json)
+is prepared with 35 passing in-memory checks, including its exact result-file
+binding and preservation of all 21 existing recordings/previews. It has not
+imported or published a future result; actual terminal audit and release remain.
 
 A [separate workshop job-screen feedback correction](../experiments/evidence/workshop_job_clock_feedback_preparation_20260912.json)
 is pushed for draft review as PR179. It recognizes the exact paused `Workshop/Job`

@@ -1,0 +1,46 @@
+{
+  "schema_version": "fortgym.selected-workshop-replay-preparation/v1",
+  "date_utc": "2026-09-12",
+  "status": "prepared_not_imported_or_published",
+  "campaign_id": "selected-workshop-v2-p3-shortcuts",
+  "recording_id": "controls-v2-p3-shortcuts-1-128",
+  "source_revision": "5ddf1e6718dab2e8351e8dc24a2afe5071cd2592",
+  "image": "sha256:dcbc9b042538401a146159fcf5f6456b21dc900c4649369c008f7a77f661fed3",
+  "required_site_revision": "94425be289a28b3683bf2ce11d83634009839d36",
+  "artifact_directory": "fort_gym/artifacts/selected-workshop-study-20260912/website-v2-p3-shortcuts-replay",
+  "artifact_sha256": {
+    "prepare.mjs": "6684576c3e0fc0daaac6636b1f915b8d588cccfc1a35b4e50067dd9d95e1ecce",
+    "prepare.test.mjs": "3f1c8b6635930f73b7f4a4c5d8360ed55a6e39aae17cc1565dcc1bfbe62ead39",
+    "README.md": "44ea570783be78a7d0d7e6c7674f4a6c806fa73feef86b72ba4e2a2f167d279b"
+  },
+  "verification": {
+    "tests_passed": 35,
+    "failed": 0,
+    "fixture_only": true,
+    "future_result_audit_and_recording_absent": true,
+    "site_clean_at_required_revision": true,
+    "existing_recordings": 21,
+    "existing_frames": 1764,
+    "preserves_prior_recording_bytes_and_preview_rows": true,
+    "requires_actual_result_audit_and_replay_hashes": true,
+    "requires_actual_decision128_and_own64_reload": true,
+    "requires_verified_native_teardown": true,
+    "cli_result_path_bound_to_fifth_attempt": true
+  },
+  "anticipated_after_valid_import": {
+    "recordings": 22,
+    "frames": 1892,
+    "actual_import_performed": false
+  },
+  "delivery": {
+    "website_deployed": false,
+    "new_site_created": false,
+    "service_restart": false,
+    "model_calls": 0,
+    "gameplay_inputs": 0,
+    "native_run_restarted": false,
+    "private_data_published": false,
+    "full_goal_complete": false
+  },
+  "remaining": "Actual terminal native audit and replay are required before import. Worlds summary, website regression tests, exact-head CI and existing-host release are still pending. This preparation does not contain a future gameplay result."
+}
