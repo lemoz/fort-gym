@@ -260,7 +260,7 @@ test('Year-Two replay displays its endpoint and hides it for other recordings', 
   } finally { Object.assign(globalThis,originals); }
 });
 
-for (const [model, repeat, first=1] of [['astra',1], ['terra',1], ['terra',2], ['sol',2], ['astra',2], ['terra',1,65]]) test(model+' matched run '+repeat+' from '+first+' scrubs audited frames', async () => {
+for (const [model, repeat, first=1] of [['astra',1], ['terra',1], ['terra',2], ['sol',2], ['astra',2], ['terra',1,65], ['astra',1,65]]) test(model+' matched run '+repeat+' from '+first+' scrubs audited frames', async () => {
   const last=first+63, id=model+'-matched-r'+repeat+'-'+first+'-'+last;
   const recording=JSON.parse(fs.readFileSync('web/static/recordings/'+id+'.json'));
   const originals=Object.fromEntries(['document','fetch','location','setInterval','clearInterval'].map(key=>[key,globalThis[key]]));
@@ -298,6 +298,6 @@ for (const [model, repeat, first=1] of [['astra',1], ['terra',1], ['terra',2], [
     assert.equal(get('next').disabled,true);
     await get('prev').emit('click');
     assert.equal(get('decision').textContent,'Decision '+(last-1)+' / '+last);
-    if(first===65) assert.equal(get('population').textContent,'15');
+    if(first===65) assert.equal(get('population').textContent,model==='terra'?'15':'7');
   } finally {Object.assign(globalThis,originals);}
 });

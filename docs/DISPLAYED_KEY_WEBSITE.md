@@ -189,3 +189,36 @@ Validation for this release: 1,269 Python tests passed with five environment ski
 and all 49 Node viewer contracts passed, including continuation scrubbing through
 decision128. Selected Ruff and exporter typing checks pass. These checks are not
 browser visual QA or public delivery; publication is verified separately.
+
+## Astra own-save continuation
+
+This update extends `900e3eba6acd254ea340ecad0585b883279914ca` using the
+source report at `eff32477b54f18d3e1f25c05768cb55813181207`. Astra r1's
+immutable result is retained at `4b3617128f773b1a04120a405809731a66570a8c`.
+The recording `astra-matched-r1-65-128` has digest
+`0f32a0439dafeef5d39dc70702bfbda902bd0e95006fe974744f00fc291a0489`,
+bound to terminal audit
+`fcb09958a87e5c56c707790fc439375410dd7afb5ba18dbc9a06667deadf830e`.
+
+The original 64-response save continues for another 64 responses and 32,700
+actual ticks, reaching 55,700 saved ticks in total. The endpoint has eight beds,
+three workshops, two farms, seven living dwarves and no recorded deaths, with
+61 food and 83 drinks. Returned tokens total 4,123,021; subscription charges
+remain unreported. One blocked-menu clock outcome remains in the source result;
+accepted key commands do not prove their intended game outcome. The parent was
+loaded natively; the final checkpoint has not had a separate fresh reload.
+
+The 128-budget table now contains three results, including Sol's unchanged
+infrastructure failure. Three further outcomes remain unpublished, not zero.
+The homepage and gallery share thirteen recording windows and 992 captured
+frames. All twelve earlier recordings are byte-identical; the current native
+run, observer, exporter and six-result 64-budget report are unchanged. This is
+not a new replicate, sustainability proof or robust model ranking.
+
+Validation: 1,270 Python tests passed, with five environment skips and seven
+existing warnings, and all 50 Node viewer contracts passed. The new continuation
+has its own scrubbing regression and immutable-result link check. The initial
+test draft expected fields outside the public report; it was corrected to use
+the report's actual schema. A sandbox-denied socket test passed in the full
+localhost-enabled rerun. Selected Ruff checks pass. No browser visual QA was
+performed; exact public delivery is checked separately.

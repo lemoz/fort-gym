@@ -134,16 +134,16 @@ def test_astra_repeat_preserves_its_distinct_development():
 def test_continuation_report_keeps_the_real_infrastructure_failure_and_parent_save():
     path = ROOT / "web/static/displayed-key-comparison-128.json"
     assert hashlib.sha256(path.read_bytes()).hexdigest() == (
-        "4200bd8292baaf0d174ff849c44796feb9b32a6374377a0c34621c1b364c207f"
+        "ae4d85923e62237407aa0b0604948d9cef5c0f56dddbc80619398f02fa175655"
     )
     report = json.loads(path.read_text())
-    assert report["comparison_boundary"] == 128 and report["recorded_attempts"] == 2
+    assert report["comparison_boundary"] == 128 and report["recorded_attempts"] == 3
     result = report["trials"][0]["result"]
     assert result["status"] == "infrastructure_failure"
     assert result["responses"] == result["checkpoint"]["next_step"] == 64
     assert result["checkpoint"]["saved_elapsed_ticks"] == 2900
     assert result["returned_tokens"] == 1258321
-    assert all(row["result"] is None for row in report["trials"][2:])
+    assert all(row["result"] is None for row in report["trials"][3:])
     html = (ROOT / "web/results.html").read_text()
     assert 'for="matched-boundary"' in html and 'aria-controls="matched-table"' in html
     assert "Infrastructure failures are not model gameplay failures" in html
@@ -177,4 +177,32 @@ def test_terra_continuation_replay_retains_original_decisions_and_growth():
     assert result["checkpoint"]["metrics"]["completed_workshops"] == 1
     assert result["checkpoint"]["metrics"]["completed_beds"] == 0
     assert all(set(frame["action"]) == {"intent", "keys", "advance_ticks"} for frame in frames)
+    assert all(frame["accepted"] is True for frame in frames)
+
+
+def test_astra_continuation_replay_retains_its_own_clock_and_development():
+    path = ROOT / "web/static/recordings/astra-matched-r1-65-128.json"
+    assert hashlib.sha256(path.read_bytes()).hexdigest() == (
+        "0f32a0439dafeef5d39dc70702bfbda902bd0e95006fe974744f00fc291a0489"
+    )
+    recording = json.loads(path.read_text())
+    report = json.loads((ROOT / "web/static/displayed-key-comparison-128.json").read_text())
+    result = report["trials"][2]["result"]
+    frames = recording["frames"]
+    assert [frame["decision"] for frame in frames] == list(range(65, 129))
+    assert recording["saved_through_decision"] == result["responses"] == 128
+    assert recording["audit_sha256"] == result["terminal_audit_sha256"]
+    assert sum(frame["after"]["ticks_advanced"] for frame in frames) == 32700
+    assert result["checkpoint"]["saved_elapsed_ticks"] == 23000 + 32700
+    assert frames[0]["after"]["population"] == frames[-1]["after"]["population"] == 7
+    assert result["returned_tokens"] == 4123021 and result["reported_charge_usd"] is None
+    metrics = result["checkpoint"]["metrics"]
+    assert [metrics[key] for key in (
+        "completed_beds", "completed_workshops", "completed_farms", "food_stock", "drink_stock",
+    )] == [8, 3, 2, 61, 83]
+    assert report["trials"][2]["evidence_url"] == (
+        "https://github.com/lemoz/fort-gym/blob/4b3617128f773b1a04120a405809731a66570a8c/"
+        "experiments/evidence/keyboard_binding_comparison_astra_r1_128_20260912.json"
+    )
+    assert report["strong_ranking_supported"] is False
     assert all(frame["accepted"] is True for frame in frames)
