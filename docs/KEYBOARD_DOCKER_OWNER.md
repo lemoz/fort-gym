@@ -5,15 +5,21 @@ existing native runner and subscription courier on an already available local
 Docker engine. It supports fresh starts and unchanged own-save continuations
 without importing a dated private operator.
 
-This implementation has offline regression coverage, not fresh native
-acceptance. Keep existing frozen trials on their original owner and source.
+Source `40b106b95f483b534a738622e75c4147a1270a96` passed a bounded native
+acceptance: Astra made two fresh decisions, saved, reloaded that own save and
+made two more decisions. The independent continuity audit is
+`a9a193fc539fe7541b48625cde1a00782cb29017f32b9fb92b6d5a059b3e47df`.
+All four decisions were paused (zero elapsed game ticks). This proves the
+save/resume path, not fortress growth, sustainability or model ranking.
+Keep existing frozen trials on their original owner and source.
 Do not move the unfinished matched Astra attempt to this entry point to bypass
 the known capacity gate.
 
 The [source-context packager](KEYBOARD_IMAGE_CONTEXT.md) prepares an independent
 checkout and checksum-bound generated bindings for a new image, without the
 dated private build scripts. It does not install a base runtime or execute a
-Docker build; those and actual native acceptance remain separate steps.
+Docker build. Runtime preparation, image building and native acceptance are
+separate steps; the acceptance above covers that exact source/image only.
 
 When a declaration pins its original source/image, campaign, condition digest
 or prior usage, those bindings are checked. A different runtime cannot silently
@@ -178,6 +184,46 @@ An uncertain delivery never triggers another inference.
 
 Recovery, prompt-change and budget-extension declarations retain their
 dedicated launchers and audits. This owner rejects those windows instead of
-silently simplifying them. Fresh-machine image construction, actual native
-wire compatibility, end-to-end container acceptance, live-observer wiring for
-this layout and the remaining source review still need verification.
+silently simplifying them. Fresh-machine portability, a live spectator run
+with this layout and the remaining source review still need verification.
+
+## Spectator output
+
+The read-only portable adapters use this owner's `owner-plan.json`, `model/`
+and `game/native/` layout. They do not call a model, send gameplay inputs,
+control Docker, or change saved evidence. Publish only their allowlisted
+derivatives, never raw requests, responses, agent memory or transcripts.
+
+Export ordered, completed windows with their exact independent audit:
+
+    python -m scripts.export_keyboard_docker_recording \
+      --attempt /absolute/fresh-output --attempt /absolute/continuation-output \
+      --audit /absolute/audit.json --audit-sha256 <exact-audit-sha256> \
+      --id example-save-resume --title 'Harness save-and-resume check' \
+      --output /absolute/new-recording.json
+
+The write-once recording verifies the audit, native results, checkpoints,
+model receipts, executed actions and consecutive own-save offsets. It uses
+the existing `fortgym.watch-recording/v1` player format. The captured four
+acceptance decisions exercise this export without any new inference.
+
+For an expiring public-format status feed outside the private attempt tree:
+
+    python -m scripts.campaign_keyboard_docker_observe once \
+      --attempt /absolute/completed-output --public-dir /absolute/public-feed
+
+`once` requires retained terminal owner and owned-container stop evidence and
+always reports a stopped recording. It supports older plans without process
+metadata. For a future running owner, replace `once` with `follow`; new plans
+record an optional host PID/start/command identity. `follow` must match that
+identity before publishing live status, checks it again on each observation,
+and reports stopped if it disappears or changes. Missing process-inspection
+permission disables follow mode, not gameplay. Observation errors let the last
+good feed expire instead of inventing liveness. The adapter is not a relay or
+deployment command.
+
+The live feed shows stated intent and chosen keys, explicitly not verified
+execution. The audited recording separately verifies execution. Offline
+contracts and stopped captured-data export are covered; actual live follow
+acceptance awaits the next otherwise-needed native run. Adding spectator
+metadata does not extend native acceptance to a newer source revision.

@@ -22,6 +22,7 @@ from .keyboard_docker_plan import (
     validate_runtime,
 )
 from .keyboard_seccomp import read_profile
+from .keyboard_owner_process import capture_owner_process
 from .keyboard_window_courier import DockerExchange, serve_fresh, serve_window
 
 
@@ -177,6 +178,7 @@ def run_owner(
             "response_limit": inputs["limit"],
             "courier_timeout_seconds": inputs["seconds"],
             "vm_provisioning": False,
+            "owner_process": capture_owner_process(),
             "image_pull": False,
             "seccomp_sha256": runtime.get("seccomp_sha256"),
         },
