@@ -42,6 +42,7 @@ def boundary():
         },
         "window": {"expected_campaign_id": "bindings-comparison-20260911-sol-r1"},
         "prefix_sha256": {"trace.jsonl": "b" * 64, "usage.jsonl": "c" * 64},
+        "dispatch_prefix_sha256": {"trace.jsonl": "b" * 64, "usage.jsonl": "e" * 64},
         "checkpoint": Path("/synthetic/checkpoint"),
     }
     request = {
@@ -69,7 +70,7 @@ def boundary():
             "metrics": deepcopy(origin["metrics"]),
             "menu": "reloaded default",
         },
-        "prefix_sha256": deepcopy(origin["prefix_sha256"]),
+        "prefix_sha256": deepcopy(origin["dispatch_prefix_sha256"]),
         "request": request,
         "metrics": lambda before: before["metrics"],
     }
@@ -83,6 +84,23 @@ def test_load_gate_preserves_own_state_without_requiring_identical_menu(state, b
     assert result["new_checkpoint_verified"] is False
     assert boundary[0]["agent"]["memory"] not in json.dumps(result)
     assert boundary[0]["feedback"]["reason"] not in json.dumps(result)
+    assert result["exact_decision_started_marker_verified"] is True
+    assert result["original_prefix_sha256"] == boundary[0]["prefix_sha256"]
+    assert result["first_dispatch_prefix_sha256"] == boundary[0]["dispatch_prefix_sha256"]
+
+
+def test_native_loop_marker_is_exact_and_does_not_reset_saved_usage(state):
+    assert state.decision_started_bytes(64) == b'{"type": "decision_started", "step": 64}\n'
+    for value in (True, 0, 63, 65, "64", None):
+        with pytest.raises(ValueError):
+            state.decision_started_bytes(value)
+
+
+def test_a_saved_prefix_without_the_started_marker_is_not_a_dispatch_boundary(state, boundary):
+    origin, loaded = boundary
+    loaded["prefix_sha256"] = deepcopy(origin["prefix_sha256"])
+    with pytest.raises(ValueError, match="pending-dispatch"):
+        state.verify_loaded_state(origin, **loaded)
 
 
 @pytest.mark.parametrize(

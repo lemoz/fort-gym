@@ -177,7 +177,7 @@ def test_actual_sol_checkpoint_preparation_has_no_vm_or_model_side_effect():
     )
 
 
-@pytest.mark.parametrize("slot", ["sol-r1", "terra-r1", "astra-r1", "terra-r2", "sol-r2"])
+@pytest.mark.parametrize("slot", ["sol-r1", "terra-r1", "astra-r1", "terra-r2", "sol-r2", "astra-r2"])
 def test_each_prepared_window_is_exactly_derived_from_its_own_recorded_result(slot):
     identity = "bindings-comparison-20260911-" + slot
     path = ROOT / "experiments/keyboard_binding_comparison_continuations_20260911"
