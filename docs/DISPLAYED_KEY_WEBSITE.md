@@ -68,3 +68,29 @@ attempt is the latest recording, while the live observer still takes priority
 unless the viewer explicitly selects a replay. Each of the three published
 comparison rows links directly to its own replay and immutable result. The
 earlier Year-Two campaign remains separate historical evidence.
+
+## Terra repeat and rejected-command visibility
+
+The next publication extends `09d0c5cb3dd9c35b20246b0a68a16c8ffd543856`.
+The source report at `d7944ae7114fcaff185ad880dbb9d1747b390112` includes four
+reviewed results and all six declared slots. Terra's second trial is saved at 64
+responses, with 1,186,821 tokens, zero game ticks and no completed buildings.
+Seven dwarves at unchanged starting time are not evidence of management success.
+
+The exporter now uses the separate observer candidate
+`7cd3b96763998abfd99ed623630d658320a27918`, whose native typed-rejection parser and
+displayed-key catalog exactly match the frozen gameplay source. It reconstructs
+rejected choices using the original screen and declared control profile, binds
+them to the audited trace, verifies zero key/clock dispatch and publishes only
+the existing allowlisted frame fields. Run it in a fresh standalone process to
+keep the evidence parser separate from the public server package. No transport
+or game operation is invoked by these read-only imports.
+
+`terra-matched-r2-1-64` contains all 64 frames, including the nine rejected choices
+at decisions 3, 4, 8, 23, 25, 46, 51, 62 and 63. Its digest is
+`d34f451723a40ef11c2cb966b2c568702e44489163b51e79721bffb15aeaeeb1`.
+The catalog and gallery contain nine windows and 736 frames. The new recording
+is available from the homepage and its comparison row. Original recordings stay
+unchanged; re-exporting all three first attempts with this parser reproduced
+their existing bytes exactly. Updating the exporter does not switch the active
+Sol r2 relay, restart services or change any game protocol.

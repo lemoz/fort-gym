@@ -27,7 +27,7 @@ const text = element => all(element).map(node=>node.textContent).join(' ');
 const settle=async()=>{for(let n=0;n<10;n++)await new Promise(resolve=>setImmediate(resolve));};
 
 test('published metadata is bounded and matches every immutable recording',()=>{
-  assert.equal(validateCatalog(catalog).length,8);
+  assert.equal(validateCatalog(catalog).length,9);
   for(const row of catalog.recordings) {
     const rec=JSON.parse(fs.readFileSync('web/static/recordings/'+row.id+'.json'));
     for(const key of ['model','control_profile','first_decision','last_decision','saved_through_decision','recording_status'])
@@ -50,16 +50,16 @@ for(const name of ['landing','results']) {
       requests.push(url);return {ok:true,json:async()=>url.endsWith('catalog.json')?catalog:previews};
     });
     assert.deepEqual(requests,['/static/recordings/catalog.json','/static/recordings/previews.json']);
-    assert.equal(list.children.length,8);
+    assert.equal(list.children.length,9);
     for(const row of catalog.recordings)assert.ok(all(list).some(el=>el.href==='/?recording='+row.id+'#watch-root'));
-    assert.equal(all(list).filter(el=>el.tag==='canvas').reduce((sum,el)=>sum+el.fills,0),38400);
+    assert.equal(all(list).filter(el=>el.tag==='canvas').reduce((sum,el)=>sum+el.fills,0),43200);
     assert.match(text(list),/unsaved tail included/);
     assert.doesNotMatch(text(list),/Loading/);
     if(name==='landing') {
-      assert.equal(nodes.get('latest-model').textContent,'gpt-6-astra · matched trial 1');
+      assert.equal(nodes.get('latest-model').textContent,'gpt-5.6-terra · matched trial 2');
       assert.equal(nodes.get('latest-save').textContent,'64');
       assert.equal(nodes.get('latest-ranking').textContent,'Not compared');
-      assert.match(nodes.get('story-source').textContent,/gpt-5.6-terra/);
+      assert.match(nodes.get('story-source').textContent,/gpt-6-astra/);
       assert.match(nodes.get('reason-source').textContent,/gpt-5.6-sol/);
     }
   });
@@ -73,7 +73,7 @@ test('catalog and preview failure states retain routes and never strand Latest o
     if(url.endsWith('previews.json'))throw Error('offline');
     return {ok:true,json:async()=>catalog};
   });
-  assert.equal(list.children.length,8);
+  assert.equal(list.children.length,9);
   assert.match(text(list),/Preview unavailable/);
   assert.ok(all(list).some(el=>el.href==='/?recording=terra-65-128#watch-root'));
 });

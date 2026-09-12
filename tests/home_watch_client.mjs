@@ -260,8 +260,8 @@ test('Year-Two replay displays its endpoint and hides it for other recordings', 
   } finally { Object.assign(globalThis,originals); }
 });
 
-for (const model of ['astra', 'terra']) test(model+' matched first run scrubs all audited frames', async () => {
-  const id=model+'-matched-r1-1-64';
+for (const [model, repeat] of [['astra',1], ['terra',1], ['terra',2]]) test(model+' matched run '+repeat+' scrubs audited frames', async () => {
+  const id=model+'-matched-r'+repeat+'-1-64';
   const recording=JSON.parse(fs.readFileSync('web/static/recordings/'+id+'.json'));
   const originals=Object.fromEntries(['document','fetch','location','setInterval','clearInterval'].map(key=>[key,globalThis[key]]));
   const elements=new Map();
@@ -275,12 +275,12 @@ for (const model of ['astra', 'terra']) test(model+' matched first run scrubs al
     globalThis.fetch=async url=>({ok:true,json:async()=>url.includes('watch-active')
       ? {schema_version:'fortgym.watch-live/v1',status:'not_connected'}
       : JSON.parse(fs.readFileSync('web'+url))});
-    await import('../web/static/home-watch.mjs?test=matched-first-'+model);
+    await import('../web/static/home-watch.mjs?test=matched-'+model+'-'+repeat);
     for(let n=0;n<10;n++) await new Promise(resolve=>setImmediate(resolve));
     assert.equal(get('title').textContent,recording.title);
     assert.equal(get('decision').textContent,'Decision 1 / 64');
     assert.equal(get('outcome').hidden,true);
-    for(const index of [15,31,63]) {
+    for(const index of (repeat===2 ? [2,3,7,22,24,45,50,61,62,63] : [15,31,63])) {
       get('range').value=String(index);await get('range').emit('input');
       assert.equal(get('decision').textContent,'Decision '+(index+1)+' / 64');
       assert.equal(get('intent').textContent,recording.frames[index].action.intent);
@@ -288,6 +288,10 @@ for (const model of ['astra', 'terra']) test(model+' matched first run scrubs al
       assert.deepEqual(get('keys').children.map(key=>key.textContent),
         recording.frames[index].action.keys.map(key=>key===' '?'SPACE':key));
       assert.match(get('boundary').textContent,/saved checkpoint 64/);
+      if(repeat===2 && index!==63) {
+        assert.equal(get('execution').textContent,'Key command was not accepted.');
+        assert.equal(get('advance').textContent,'0');
+      }
     }
     assert.equal(get('next').disabled,true);
     await get('prev').emit('click');

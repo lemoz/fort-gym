@@ -21,12 +21,12 @@ ROOT = Path(__file__).resolve().parents[1]
 def test_public_report_and_replay_bindings(name, replay_sha, ticks):
     path = ROOT / "web/static/displayed-key-comparison.json"
     assert hashlib.sha256(path.read_bytes()).hexdigest() == (
-        "9ca00a5e652490b6963544aafbf68f99615ae0d9e2f629a80e966e76fc41a805"
+        "d5d0a334e02017288595bafa825ba0ebcd2e2e669ac4864150ba79610de47baf"
     )
     report = json.loads(path.read_text())
     identity = "bindings-comparison-20260911-" + name + "-r1"
     result = next(row for row in report["trials"] if row["campaign_id"] == identity)
-    assert report["recorded_attempts"] == 3 and report["strong_ranking_supported"] is False
+    assert report["recorded_attempts"] == 4 and report["strong_ranking_supported"] is False
     replay_path = ROOT / ("web/static/recordings/" + name + "-matched-r1-1-64.json")
     assert hashlib.sha256(replay_path.read_bytes()).hexdigest() == replay_sha
     replay = json.loads(replay_path.read_text())
@@ -68,6 +68,27 @@ def test_comparison_client():
     subprocess.run(
         ["node", "--test", "tests/displayed_key_comparison_client.mjs"], cwd=ROOT, check=True
     )
+
+
+def test_terra_repeat_keeps_every_rejected_choice_and_actual_zero_time():
+    path = ROOT / "web/static/recordings/terra-matched-r2-1-64.json"
+    assert hashlib.sha256(path.read_bytes()).hexdigest() == (
+        "d34f451723a40ef11c2cb966b2c568702e44489163b51e79721bffb15aeaeeb1"
+    )
+    recording = json.loads(path.read_text())
+    frames = recording["frames"]
+    assert [frame["decision"] for frame in frames] == list(range(1, 65))
+    assert [frame["decision"] for frame in frames if frame["accepted"] is False] == (
+        [3, 4, 8, 23, 25, 46, 51, 62, 63]
+    )
+    assert all(frame["after"]["ticks_advanced"] == 0 for frame in frames)
+    assert all(set(frame["action"]) == {"intent", "keys", "advance_ticks"} for frame in frames)
+    report = json.loads((ROOT / "web/static/displayed-key-comparison.json").read_text())
+    result = report["trials"][3]["result"]
+    assert result["terminal_audit_sha256"] == recording["audit_sha256"]
+    assert result["returned_tokens"] == 1186821
+    assert result["checkpoint"]["saved_elapsed_ticks"] == 0
+    assert result["reported_charge_usd"] is None
 
 
 def test_current_comparison_is_not_the_legacy_benchmark():

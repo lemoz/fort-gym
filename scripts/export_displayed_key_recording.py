@@ -9,10 +9,11 @@ import hashlib
 import importlib.util
 import json
 import subprocess
+import sys
 from pathlib import Path
 from typing import Any
 
-OBSERVER_REVISION = "2778519991899ee3360db1caf6daec29721bbc4a"
+OBSERVER_REVISION = "7cd3b96763998abfd99ed623630d658320a27918"
 
 
 def read(path: Path) -> dict[str, Any]:
@@ -21,6 +22,34 @@ def read(path: Path) -> dict[str, Any]:
 
 def sha(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def recorded_action(watch: Any, request: dict, result: dict, row: dict) -> dict:
+    """Publish an original typed choice, including a proven rejected response."""
+    action = watch.receipt_action(request, result)
+    if action != row["action"]:
+        raise ValueError("Model choice and native trace differ")
+    if result.get("action") is None:
+        execution, clock = row["execute"], row["tick_advance"]
+        native = execution["result"]
+        if not (
+            row["record_origin"] == "model_input_rejection/v1"
+            and execution["accepted"] is False
+            and execution["validation_rejected"] is True
+            and native["native_action_dispatched"] is False
+            and native["command_mutation"] == "not_attempted"
+            and type(native["keys_sent"]) is type(native["keys_confirmed"]) is int
+            and native["keys_sent"] == native["keys_confirmed"] == 0
+            and type(clock["ticks_advanced"]) is int
+            and clock["ticks_advanced"] == 0
+            and clock["clock_dispatched"] is False
+            and clock["start_year"] == clock["end_year"] == row["state_after_advance"]["year"]
+            and clock["start_tick"] == clock["end_tick"] == row["state_after_advance"]["year_tick"]
+        ):
+            raise ValueError("Rejected choice lacks a zero-dispatch native record")
+    elif row["execute"]["accepted"] is not True:
+        raise ValueError("Accepted model choice lacks an accepted native record")
+    return action
 
 
 def export(attempt: Path, observer: Path, audit_sha: str, identity: str) -> dict[str, Any]:
@@ -44,9 +73,13 @@ def export(attempt: Path, observer: Path, audit_sha: str, identity: str) -> dict
         ["git", "status", "--porcelain"], cwd=observer
     ):
         raise ValueError("Observer source is not clean and pinned")
-    # Load only the frozen, stdlib-only projection module. No game/provider imports.
+    if any(name == "fort_gym" or name.startswith("fort_gym.") for name in sys.modules):
+        raise ValueError("Recording export requires a fresh standalone process")
+    # Rejection parsing uses only this pinned observer's native receipt readers.
+    # Never mix the public server's package with the frozen evidence parser.
+    sys.path.insert(0, str(observer))
     spec = importlib.util.spec_from_file_location(
-        "frozen_watch", observer / "fort_gym/bench/api/watch.py"
+        "fort_gym.bench.api.watch", observer / "fort_gym/bench/api/watch.py"
     )
     assert spec is not None and spec.loader is not None
     watch = importlib.util.module_from_spec(spec)
@@ -76,7 +109,6 @@ def export(attempt: Path, observer: Path, audit_sha: str, identity: str) -> dict
         request_sha = hashlib.sha256(
             json.dumps(request, sort_keys=True, ensure_ascii=False, allow_nan=False).encode()
         ).hexdigest()
-        action = response["result"].get("action")
         if (
             request_sha != receipt["request_sha256"]
             or request_sha != response["request_sha256"]
@@ -84,11 +116,9 @@ def export(attempt: Path, observer: Path, audit_sha: str, identity: str) -> dict
             or request["model"] != audit["model"]
             or request["reasoning_effort"] != audit["reasoning_effort"]
             or summary["request_id"] != request["request_id"]
-            or action != row["action"]
         ):
             raise ValueError("Screen, model receipt and native trace differ")
-        if action is None:
-            raise ValueError("This exporter supports accepted typed receipts only")
+        action = recorded_action(watch, request, response["result"], row)
         clock, after = row["tick_advance"], row["state_after_advance"]
         frames.append(
             {
