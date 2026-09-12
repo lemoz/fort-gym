@@ -12,7 +12,7 @@ and [reload verification](#later-checkpoint-1057-verification-and-website-delive
 Do not confuse that achieved duration with the younger, independent matched
 cohort below. Long-term self-sufficiency and the full delivery goal remain open.
 
-## Current comparison work: storage repaired; final Astra window prepared
+## Current comparison work: Astra r2 resumed and broadcasting
 
 The [explicit storage amendment](../experiments/keyboard_comparison_storage_amendment_20260912.json)
 expanded only the existing fg-v2 data disk from 32 to 40 GiB. The operation
@@ -30,9 +30,22 @@ Owner revision `10e849e508933ec79c1e9d68ab974fe647ecd840` is pushed in
 preserves teardown, and discloses the storage difference in the public result.
 The 159 focused tests, scoped Ruff and eight-file mypy passed. An offline
 specification check passed against the actual parent checkpoint and operation
-receipt without starting a VM or model. Exact-head CI `34685958481` is pending.
-Astra r2 has not launched at this record. This is operational progress, not a
-new saved game outcome. Earlier capacity-blocked status below is historical.
+receipt without starting a VM or model. Exact-head CI `34685958481` then passed
+3,571 tests with 73 skips. The broader local suite passed 3,627 with ten skips
+and seven failures: six sandbox loopback denials passed on a permitted rerun;
+the remaining legacy OCI/source-hook mismatch involves files unchanged from
+the owner baseline. No entirely green local-suite result is claimed.
+
+[Astra r2 has now started its unchanged own-save continuation](../experiments/evidence/matched_continuation_astra_r2_startup_20260912.json).
+The initial native load verifies its original checkpoint64, memory, usage,
+feedback, clock and metrics. Its first new Astra Medium response used 30,379
+tokens. The unchanged space floor passed with 9,463,500 KiB available.
+Public live frame69 matched the original native screen and chosen input;
+the refreshed homepage browser then showed a live session at decision72.
+The existing sanitized relay required no deploy or service restart. It exposes
+no private memory or raw provider payload. The owner retains the 64-new-response
+limit and mandatory teardown. This running observation is not a new saved
+checkpoint or terminal acceptance. Earlier capacity-blocked status is historical.
 
 The reviewed integration PR176 remains draft and unmerged; its separate
 main-branch authorization boundary has not been bypassed.
