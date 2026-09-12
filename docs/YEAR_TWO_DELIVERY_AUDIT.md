@@ -31,6 +31,15 @@ acceptance are covered without another VM, model call or game input.
 Actual portable live follow, full source review, main merge and the remaining
 gameplay/comparison goals remain open. This is not another growth experiment.
 
+[Final spectator source verification](../experiments/evidence/keyboard_portable_spectator_delivery_20260912.json)
+passes at that combined candidate: 5,546 local tests / 10 skips / 7 warnings,
+52 Node contracts, and hosted CI `34680939875` with 5,402 tests / 154 skips /
+7 warnings. Hosted/local scopes differ. An integration-only stale catalog-count
+assertion failed the preceding hosted run and was corrected in a separate
+two-assertion test commit; no native or website behavior was changed.
+The adapters' scoped Ruff and new-module mypy checks pass, while the existing
+whole-repository 10 Ruff findings and 465 mypy errors remain qualified.
+
 | Requirement | Current evidence | Remaining work or limit |
 | --- | --- | --- |
 | Autonomous functioning fortress after a full elapsed year, continuing past its anniversary | The [displayed-key Astra result](../experiments/evidence/keyboard_binding_astra_r1_continuation_256_416_20260911.json) retains 429,845 ticks, 13 living citizens, zero recorded deaths, 12 beds, three workshops and one farm, without human gameplay rescue. Twenty-three post-anniversary samples support a qualitative operating-at-endpoint assessment. | This achieved milestone is one exploratory campaign, not a matched replicate or proof of indefinite self-sufficiency. Preserve its disclosed earlier save loss. Continue the longer-play investigation; do not rerun baseline acceptance to replace gameplay. |

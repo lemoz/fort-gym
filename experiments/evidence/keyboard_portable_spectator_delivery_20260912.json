@@ -1,0 +1,72 @@
+{
+  "schema_version": "fortgym.portable-owner-spectator-delivery/v1",
+  "spectator_revision": "8e1b57ab6bc4c9194d86389bdcc1705e97a064f9",
+  "integration_revision": "c0f6dd458adaa6aaa437b2d71e17a13664454f4c",
+  "website_revision": "6a14c641edbc31b112fe921fd9d90e81d675b4ae",
+  "native_acceptance_revision": "40b106b95f483b534a738622e75c4147a1270a96",
+  "native_acceptance_result": "evidence/keyboard_portable_owner_acceptance_20260912.json",
+  "website_delivery_result": "evidence/website_portable_replay_release_20260912.json",
+  "audit_sha256": "a9a193fc539fe7541b48625cde1a00782cb29017f32b9fb92b6d5a059b3e47df",
+  "recording_sha256": "4737508d32fd1a6e27c2c78e1636ec7fb8de91eaca622cd38f8a7d3ab398ddf1",
+  "stopped_watch_sha256": "77e404efe72cf3a91db8cdda19bff13fb995ffcb6326d17188f1e8cbfa8e7379",
+  "source_sha256": {
+    "keyboard_docker_recording": "d01a3364e97fd332466a457d396af896f0cdbf43ff7557fdc37e31d719aa80e1",
+    "keyboard_docker_watch": "e5e34eec5e89d9931fbcc5981f13b17429466fa2994c1cc07b74d5c6b270af61"
+  },
+  "first_decision": 1,
+  "last_decision": 4,
+  "saved_through_decision": 4,
+  "elapsed_game_ticks": 0,
+  "export_reproduced_from_clean_integrated_source": true,
+  "terminal_watch_status": "stopped",
+  "new_model_calls": 0,
+  "new_gameplay_inputs": 0,
+  "new_vm_starts": 0,
+  "original_native_acceptance_unchanged": true,
+  "public_contains_private_transcripts": false,
+  "live_follow_native_acceptance_verified": false,
+  "new_native_acceptance": false,
+  "main_merge": false,
+  "full_goal_complete": false,
+  "validation": {
+    "spectator_contracts_passed": 15,
+    "combined_focused_tests_passed": 48,
+    "node_contracts_passed": 52,
+    "selected_ruff_passed": true,
+    "new_module_mypy_passed": true,
+    "repository_ruff_baseline_findings": 10,
+    "repository_mypy_baseline_errors": 465,
+    "repository_mypy_baseline_files": 27,
+    "browser_visual_qa": false,
+    "full_local_tests_passed": 5546,
+    "full_local_skipped": 10,
+    "full_local_warnings": 7,
+    "local_full_suite_revision": "c0f6dd458adaa6aaa437b2d71e17a13664454f4c"
+  },
+  "retained_failed_ci": {
+    "run_id": 34680630017,
+    "head_sha": "bfce400ca3cbab3b6661c5167de73f7b4e1c38f5",
+    "failed": 1,
+    "passed": 5401,
+    "skipped": 154,
+    "cause": "Integration-only catalog contract still expected 14 recordings and 1056 frames after the website slice added its fifteenth recording.",
+    "fix_revision": "c0f6dd458adaa6aaa437b2d71e17a13664454f4c",
+    "behavior_changed": false
+  },
+  "limits": [
+    "Native runtime acceptance remains bound to 40b106b95; the later spectator change does not claim new game acceptance.",
+    "Live follow is covered by synthetic matching, missing, PID-reuse and permission-failure contracts, plus a stopped snapshot from captured real data. Verify live operation during the next otherwise-needed native window.",
+    "A recorded screen and chosen action on the live feed do not prove execution. Audited saved replay checks original native trace actions separately.",
+    "This delivery proves website connectivity and preserves prior outcomes; it does not add fortress growth, sustainability or matched trial results."
+  ],
+  "passed": true,
+  "ci": {
+    "run_id": 34680939875,
+    "head_sha": "c0f6dd458adaa6aaa437b2d71e17a13664454f4c",
+    "status": "completed",
+    "conclusion": "success",
+    "tests_passed": 5402,
+    "skipped": 154,
+    "warnings": 7
+  }
+}
