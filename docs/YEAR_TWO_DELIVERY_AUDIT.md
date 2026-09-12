@@ -7,6 +7,26 @@ Requirements come from [the approved goal](YEAR_TWO_CAMPAIGNS.md),
 [the standard-input phase](ASTRA_STANDARD_INPUT_EXPERIMENTS.md), and the
 [frozen displayed-key cohort](../experiments/keyboard_binding_comparison_20260911/cohort.json).
 
+The [first v2 shortcuts window](../experiments/evidence/selected_workshop_v2_p1_shortcuts_startup_20260912.json)
+is now running as `selected-workshop-v2-p1-shortcuts`. Its loaded clock and
+measured initial state match the original fresh seed, with empty agent memory
+and no borrowed usage. The actual first provider response is valid and retains
+the required v5 prompt profile. At the captured decision-ten boundary, ten
+responses reconcile to 261,241 returned tokens, with eight keyboard actions and
+two workshop shortcuts. This is provisional ongoing play, not a verified save
+or paired comparison result. The bounded owner retains mandatory VM teardown.
+
+The existing public live feed matches the original screen/action at decision
+two and, separately, the actual decision-eleven shortcut for two barrels. The
+latter HTTPS payload SHA256 is
+`e4b8015281cbcb3c3db555019d6c0fc07f32988526f2342c7baae1522113b6ec`.
+Browser inspection verifies the native live screen and the explicit label
+"Workshop shortcut: queue 2 × barrel", with chosen-versus-executed status
+preserved. The long-open tab initially ran older player code; refreshing that
+same tab loaded the already deployed labels. No new site deployment, service
+restart, synthetic frame or private model context was published. The viewer
+remains open; do not restart the live owner when an observation expires.
+
 The corrected courier's exact-head hosted CI now passes, and its
 [new native acceptance](../experiments/evidence/selected_workshop_courier_native_20260912.json)
 binds source `5ddf1e6718dab2e8351e8dc24a2afe5071cd2592` to image
