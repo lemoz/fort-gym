@@ -105,6 +105,24 @@ has since passed 5,566 tests with 173 skips and seven warnings; the earlier
 preparation snapshot remains unchanged. No new image, runtime migration or native acceptance is
 claimed, and the active controls study is unchanged.
 
+A [longer standard-input campaign and reusable next-window planner](../experiments/evidence/astra_keyboard_endurance_plan_preparation_20260912.json)
+are pushed as draft PR181 at `4b526b5636e6f568a4cae1a1227d746d9c6922c3`,
+stacked on PR180. The planner derives a continuation from a completed owner's
+actual audit and save, preserves its condition/source/image/resources, and
+extends the cumulative budget once before inheriting it in later windows.
+The separate Astra Medium experiment uses the original fresh seed and standard
+keyboard condition. Its initial four-response save is a native continuation
+check, not a successful trial or endpoint; the declared next target is 1,028
+cumulative responses and 40 million returned tokens in at-most-64-response
+windows. These are ceilings, not dollar reservations or guaranteed game time.
+The first anniversary remains 403,200 elapsed ticks and is not an automatic stop.
+The complete functional suite passed 5,749 tests with ten skips; final
+post-format focused checks passed 135 tests. Three model configurations were
+exercised with fake game/model/container receipts, not native comparisons.
+Hosted CI was running at the preparation snapshot. A real candidate image,
+same-save budget-extension acceptance and endurance gameplay remain unproven.
+No old-source migration, active-cohort change, extra VM or model call was made.
+
 The [latest verified website delivery](../experiments/evidence/selected_workshop_v2_p2_shortcuts_website_20260912.json)
 is revision `94425be289a28b3683bf2ce11d83634009839d36`: twenty-one recording
 windows and 1,764 frames, including all four v2 terminal replays. Local testing
@@ -124,7 +142,8 @@ does not rewrite the native result's original unpublished state.
 1. Finish the declared six-attempt controls cohort, auditing each own-save chain
    and publishing its actual replay. Compare all three pairs descriptively;
    do not choose a control winner from the first pair or hide the drowning.
-2. Return to longer play with an explicit endurance declaration. The controls
+2. Return to longer play using the separate PR181 endurance declaration after
+   the six frozen attempts. It is prepared, not launched. The controls
    limit of 128 decisions at at most 2,000 ticks each cannot cover the 403,200
    ticks in a full elapsed year. Do not alter these frozen attempts to disguise
    that limit or count a new window as an independent model trial.

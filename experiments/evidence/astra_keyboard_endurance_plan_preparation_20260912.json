@@ -1,0 +1,109 @@
+{
+  "schema_version": "fortgym.astra-keyboard-endurance-preparation/v1",
+  "date_utc": "2026-09-12",
+  "status": "implemented_tested_draft_review_native_acceptance_pending",
+  "baseline_revision": "7594b3b2d762195627046baa64091577a7c64d69",
+  "source_revision": "4b526b5636e6f568a4cae1a1227d746d9c6922c3",
+  "branch": "codex/astra-keyboard-endurance-v1",
+  "pull_request": "https://github.com/lemoz/fort-gym/pull/181",
+  "review_state": {
+    "draft": true,
+    "merged": false,
+    "base_branch": "codex/portable-endurance-budget",
+    "exact_head_ci_run": 34721042603,
+    "ci_observed_status": "in_progress",
+    "ci_passed": false
+  },
+  "configuration_sha256": {
+    "condition.json": "2f1cdb67ecea64a7b4e5c86724f7f0dc5c24d696ae4bf0116a9ff722f0616f15",
+    "trial.json": "a27ac3e922a76ee390f6a526b9cbd8f8eca10796452a61862538b6a0c64dd116",
+    "protocol.json": "ac9a05cfd81e718a3ff28970e4eb8b0cfc2a3aa4c4438025953c54ddfbfe9911",
+    "README.md": "7f249aa1234421faa9691426f50369f4e6804767d8b35d660b2083fcd96c995b"
+  },
+  "planned_experiment": {
+    "campaign_id": "astra-keyboard-endurance-v1",
+    "kind": "separate_exploratory_campaign_not_pooled_with_frozen_controls",
+    "model": "gpt-6-astra",
+    "reasoning_effort": "medium",
+    "control_profile": "native_keyboard_bindings/v1",
+    "screen_size": [
+      120,
+      40
+    ],
+    "original_seed_receipt_sha256": "eaf5fa5a40014719e6c313f33497740e536a8faa1c90a84c4e09dcc380ac0595",
+    "initial_responses": 4,
+    "initial_max_returned_tokens": 500000,
+    "initial_four_responses_are_only_a_save_boundary": true,
+    "target_cumulative_responses": 1028,
+    "target_cumulative_returned_tokens": 40000000,
+    "max_responses_per_window": 64,
+    "one_campaign_not_independent_windows": true,
+    "first_anniversary_elapsed_ticks": 403200,
+    "stop_at_first_anniversary": false,
+    "token_limits_are_not_dollar_reservations": true
+  },
+  "planner": {
+    "audits_actual_previous_owner": true,
+    "derives_actual_final_checkpoint": true,
+    "preserves_original_condition_memory_usage_and_history": true,
+    "extends_once_then_inherits_budget": true,
+    "rejects_incomplete_owners_changed_evidence_and_runtime_migrations": true,
+    "only_new_declaration_written": true,
+    "model_or_vm_actions": false,
+    "current_vm_teardown_verified": false
+  },
+  "validation": {
+    "full_functional_suite": {
+      "passed": 5749,
+      "skipped": 10,
+      "warnings": 7,
+      "junit_sha256": "cf9ba5738f6a57c9f1b48031a9a14f80cdd40a3e98e2e484a53c71c91cd33d2c",
+      "scope": "Complete functional suite began before final import sorting/formatting of three new Python files; final post-format focused suite separately verifies committed code."
+    },
+    "final_post_format_focused": {
+      "passed": 135,
+      "warnings": 2,
+      "junit_sha256": "f0bbcdc43dc5fd22bcc0b1baee8bd82e768a8df6cb12898a9d108c934348674b",
+      "new_tests": 20,
+      "fixture_models": [
+        "gpt-6-astra",
+        "gpt-5.6-sol",
+        "gpt-5.6-terra"
+      ],
+      "native_gameplay": false
+    },
+    "changed_file_ruff_passed": true,
+    "repository_ruff": {
+      "baseline": 10,
+      "candidate": 10,
+      "new": 0,
+      "normalized_sha256": "cde9e75cc254279801406f30b755012fb97079bbc64bed8fca1cff246f19517d"
+    },
+    "repository_mypy": {
+      "baseline": 465,
+      "candidate": 465,
+      "new": 0,
+      "post_format_normalized_sha256": "35e1c17aaec74092f893a6e504b30144e57e8c4e90d7fc99a893f1ba708944de"
+    },
+    "diff_check_passed": true,
+    "early_attempts": "One negative-test fixture initially used its unchanged memory limit and was corrected. One invocation named a missing test file and ran no tests. Acceptance uses only the successful reports above.",
+    "formatting": "Ruff import sorting and formatting used because the isort executable was unavailable; only the three new Python files were formatted."
+  },
+  "delivery": {
+    "source_pushed": true,
+    "remote_head_verified": true,
+    "active_cohort_revision_unchanged": "5ddf1e6718dab2e8351e8dc24a2afe5071cd2592",
+    "active_image_unchanged": true,
+    "new_image_built": false,
+    "native_candidate_launched": false,
+    "native_budget_extension_acceptance": false,
+    "new_cloud_vm": false,
+    "model_calls_by_preparation": 0,
+    "api_fallback": false,
+    "reset_or_purchase": false,
+    "website_deployed": false,
+    "main_merged": false,
+    "full_goal_complete": false
+  },
+  "remaining": "Finish all six frozen controls attempts with actual retained outcomes; verify exact-head CI; bind/build the actual candidate image and runtime; validate a real same-save budget extension on the single existing local VM with mandatory teardown and fresh account admission; then pursue longer autonomous play and publish audited recordings. This plan does not establish native endurance, sustained production or a model ranking."
+}
