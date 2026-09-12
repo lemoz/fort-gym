@@ -10,6 +10,8 @@
 .comparison-table th, .comparison-table td { text-align: left; vertical-align: top; padding: 14px 12px; border-top: 1px solid var(--line); }
 .comparison-table thead th { color: var(--muted); font-weight: 600; }
 .comparison-table tbody th { color: var(--paper); font-weight: 700; }
+.comparison-amendment { display: block; color: var(--muted); font-size: .875rem; font-weight: 400; margin-top: .4rem; min-width: 11rem; }
+.comparison-amendment-note { color: var(--muted); font-size: .875rem; line-height: 1.5; margin-top: 1rem; }
 .comparison-table tr[data-result="saved"] { background: rgba(167, 226, 46, .04); }
 .comparison-table td { font-variant-numeric: tabular-nums; }
 .comparison-table a { display: inline-block; color: var(--acid); margin: 0 12px 6px 0; }

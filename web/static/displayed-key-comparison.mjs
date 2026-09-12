@@ -55,6 +55,15 @@ export function validateComparison(data, boundary = 64) {
     if (result.status === 'saved' && (result.responses !== boundary || result.checkpoint?.next_step !== boundary ||
         result.checkpoint.saved_elapsed_ticks === null || result.returned_tokens === null ||
         result.native_teardown_verified !== true || result.vm_teardown_verified !== true)) throw Error('Incomplete saved result');
+    if (Object.hasOwn(result,'storage_amendment')) {
+      const note = result.storage_amendment;
+      if (!note || note.schema_version !== 'fortgym.public-comparison-storage-note/v1' ||
+          row.campaign_id !== 'bindings-comparison-20260911-astra-r2' || boundary !== 128 ||
+          note.first_step !== 64 || note.target_next_step !== boundary ||
+          note.disk_gib_before !== 32 || note.disk_gib_after !== 40 || note.other_conditions_unchanged !== true ||
+          note.declaration_sha256 !== 'eeb3fa8b08234819247b4dec7ecf50fda9f137fd57cabe07d1426d968d15116e')
+        throw Error('Invalid storage amendment');
+    }
     recorded++;
   }
   if (recorded !== data.recorded_attempts) throw Error('Published count differs');
@@ -95,6 +104,10 @@ export async function renderComparison(doc = document, request = fetch, boundary
       const tr = node(doc,'tr'), result = row.result, checkpoint = result?.checkpoint, metrics = checkpoint?.metrics;
       tr.dataset.result = result?.status || 'unpublished';
       const name = node(doc,'th',MODELS[row.model]+' · '+row.replicate); name.setAttribute('scope','row'); tr.append(name);
+      if (result?.storage_amendment) {
+        const note = node(doc,'span','Storage: 32 → 40 GiB from decision 65');
+        note.className='comparison-amendment'; name.append(note);
+      }
       for (const value of [result ? STATUS[result.status] : 'No published result',
         result ? format(result.responses) : '—',format(checkpoint?.saved_elapsed_ticks),
         metrics ? format(metrics.population)+' / '+format(metrics.recorded_dead_citizens) : '—',
@@ -111,6 +124,10 @@ export async function renderComparison(doc = document, request = fetch, boundary
     const scroll = node(doc,'div'); scroll.className='comparison-scroll'; scroll.tabIndex=0;
     scroll.setAttribute('role','region'); scroll.setAttribute('aria-label','Matched experiment results, scroll horizontally for all measurements');
     scroll.append(table); root.replaceChildren(scroll);
+    if (data.trials.some(row => row.result?.storage_amendment)) {
+      const note = node(doc,'p','Astra attempt 2 had more disk capacity for decisions 65–128. Model, prompt, game controls, CPU and RAM were unchanged. Earlier infrastructure failures remain in the comparison.');
+      note.className='comparison-amendment-note'; root.append(note);
+    }
     summary.textContent=data.recorded_attempts+' of 6 reviewed results published · '+boundary+'-decision budget';
     doc.getElementById('matched-plan').href=data.plan_url;
   } catch (_) {
