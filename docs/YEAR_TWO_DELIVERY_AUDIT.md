@@ -7,18 +7,21 @@ Requirements come from [the approved goal](YEAR_TWO_CAMPAIGNS.md),
 [the standard-input phase](ASTRA_STANDARD_INPUT_EXPERIMENTS.md), and the
 [frozen displayed-key cohort](../experiments/keyboard_binding_comparison_20260911/cohort.json).
 
-The separate [selected-workshop controls preparation](../experiments/evidence/selected_workshop_study_preparation_20260912.json)
-is pushed at `8622618c899a9c526df7efd5557e12f267ec72fa`, in draft
-[PR177](https://github.com/lemoz/fort-gym/pull/177) stacked on the unchanged
-integration candidate. It adds an explicitly versioned keyboard-plus-job-entry
-condition, preserves screen-only observation and normal worker/material/time
-requirements, labels shortcuts in the viewer, and prepares three paired Astra
-repetitions at common 64/128-decision budgets. Exact-head local tests pass
-5,681 with ten skips and seven warnings; 70 new focused Python/Lua and 19 Node
-player tests pass. The standalone source/image context is prepared and checked,
-but no image was built, game/VM or model call started, or site deployed for this
-new study. Actual native job execution and the paired comparisons remain next.
-This preparation does not reinterpret the earlier model cohort or merge PR176.
+The separate [selected-workshop controls study](../experiments/evidence/selected_workshop_wiring_native_20260912.json)
+is now pushed at `422c915d23bf828371be481d3079a23bbb3e9e94` in draft
+[PR177](https://github.com/lemoz/fort-gym/pull/177), stacked on the unchanged
+integration candidate. The exact new image passed a provider-free native check:
+keyboard workshop selection, valid and invalid job dispatch, workers using real
+materials, one completed bed and 25 drink units after 2,000 ticks. The original
+checkpoint and prior runtime inventory remain intact; game and both VMs are
+stopped. This was scripted acceptance, not a model result. A missing v5 prompt
+forwarding path was reproduced and fixed; local tests pass 5,690 with ten skips
+and eight warnings, including fresh and continued worker wiring. The paired
+study's [source/image/resources are declared](../experiments/evidence/selected_workshop_runtime_declaration_20260912.json)
+before any scored calls. Three Astra pairs and portable live-follow validation
+remain next. No new website release or main merge is claimed. The earlier
+[preparation receipt](../experiments/evidence/selected_workshop_study_preparation_20260912.json)
+is retained unchanged.
 
 The [Astra r2 terminal result](../experiments/evidence/keyboard_binding_comparison_astra_r2_128_20260912.json)
 now closes the declared 128-decision comparison: all six outcomes are recorded,

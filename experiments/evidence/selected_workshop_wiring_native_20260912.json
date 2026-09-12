@@ -1,0 +1,75 @@
+{
+  "schema_version": "fortgym.selected-workshop-wiring-native-verification/v1",
+  "date_utc": "2026-09-12",
+  "source_revision": "422c915d23bf828371be481d3079a23bbb3e9e94",
+  "pr": 177,
+  "pr_base": "codex/year-two-integration",
+  "main_merge": false,
+  "website_deployed": false,
+  "source_push_verified": true,
+  "regression": {
+    "cause": "Native worker forwarded prompt profiles for condition v3/v4 but omitted the new v5 condition.",
+    "before_fix": {
+      "failed": 1,
+      "passed": 6
+    },
+    "after_fix": {
+      "focused_passed": 121,
+      "full_passed": 5690,
+      "full_skipped": 10,
+      "full_warnings": 8,
+      "junit_sha256": "dfd1274d3051bfd228e7caf0d0b480f741c69f85c9fedeff891a70045b7ae61c",
+      "changed_file_ruff": "passed",
+      "fresh_and_continued_worker_wiring_covered": true
+    }
+  },
+  "ci": {
+    "run_id": 34691379067,
+    "status": "in_progress_at_receipt_preparation",
+    "head_sha": "422c915d23bf828371be481d3079a23bbb3e9e94",
+    "url": "https://github.com/lemoz/fort-gym/actions/runs/34691379067"
+  },
+  "runtime": {
+    "image_id": "sha256:540dcf422a3bf40999b0e34f463e73936f14e3365fa7dcca5f2b41cf532c9364",
+    "context_receipt_sha256": "081cc1bdfa08d6072d47a2c1892559ebda29c650c63d01f786d8a6838eb4fd0b",
+    "source_tree": "74101f5af10b0fa49b98c69d94b4222151f41d2b",
+    "context_files": 980,
+    "context_bytes": 31476210,
+    "exact_source_native_check": true
+  },
+  "native": {
+    "attempt_id": "selected-workshop-native-20260912-v3",
+    "operator_result_sha256": "756883e8a7126918f20e7db5ed74302effca1f197b93b4fdb2085643d7a12853",
+    "worker_result_sha256": "aa0532da73b548229ae81b3c0ce28f361981cbc44092e69c5c79b098820e0ecc",
+    "status": "passed",
+    "scripted_private_navigation": true,
+    "scored_model_attempt": false,
+    "model_calls": 0,
+    "elapsed_ticks": 2000,
+    "queued_jobs": 2,
+    "completed_products": {
+      "beds": 1,
+      "drink_units": 25
+    },
+    "workers_and_materials_observed_on_both_jobs": true,
+    "unselected_and_wrong_workshop_rejections_verified": true,
+    "unique_job_ids_and_paused_dispatch_verified": true,
+    "source_checkpoint_unchanged": true,
+    "prior_inventory_preserved": true,
+    "game_container_and_both_vms_stopped": true,
+    "vm_configuration_and_docker_context_unchanged": true,
+    "data_disks_closed": true,
+    "teardown_command_note": "Guest poweroff returned 0. Subsequent colima stop returned 1 because the VM was already Stopped. Independent profile and disk-holder checks verified teardown; the failed redundant command is retained."
+  },
+  "cost": {
+    "model_calls": 0,
+    "cloud_vms": 0,
+    "cloud_spend_usd": 0,
+    "local_energy_and_subscription_charge_usd": null
+  },
+  "remaining": [
+    "Run the three declared Astra keyboard/shortcut pairs under the frozen runtime.",
+    "Verify portable live follow during an otherwise-needed run, audit own-save continuation and publish real records/results.",
+    "Longer autonomous survival and sustainable production, plus the full Year-Two goal, remain incomplete."
+  ]
+}

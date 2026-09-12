@@ -1,0 +1,87 @@
+{
+  "schema_version": "fortgym.selected-workshop-study-runtime-declaration/v1",
+  "date_utc": "2026-09-12",
+  "status": "declared_before_scored_calls",
+  "source_revision": "422c915d23bf828371be481d3079a23bbb3e9e94",
+  "image": "sha256:540dcf422a3bf40999b0e34f463e73936f14e3365fa7dcca5f2b41cf532c9364",
+  "runtime_file_sha256": "30edcf3656e8c11237c98b44ae17c56ce2965a4aeebc75bb64fb7ed237c6c557",
+  "context_receipt_sha256": "081cc1bdfa08d6072d47a2c1892559ebda29c650c63d01f786d8a6838eb4fd0b",
+  "source_snapshot_receipt_sha256": "eaf5fa5a40014719e6c313f33497740e536a8faa1c90a84c4e09dcc380ac0595",
+  "source_condition_directory": "experiments/selected_workshop_study_v1",
+  "condition_file_sha256": {
+    "keyboard-condition.json": "f09dc18e7e0f08647759a9c4bcca86f9894a5be1f1767b737a0ed3fac0c94cd9",
+    "keyboard-trial.json": "9f31feb94ced50b5cf40f28643f7f2735a7d0d43f74a6a0afdefb82ec6db1950",
+    "shortcuts-condition.json": "bb7d63df0ff86bfad5e89275f252c292cf06991608f7084ad71239234f6b309a",
+    "shortcuts-trial.json": "9ab32d821b669e11a1a2495cd57e184d3387b180bdb09042095e12df16ada059"
+  },
+  "model": "gpt-6-astra",
+  "reasoning_effort": "medium",
+  "transport": "codex-exec-chatgpt/v1",
+  "vm": {
+    "profile": "fg-portable",
+    "existing_vm": true,
+    "new_provisioning": false,
+    "configuration_sha256": "4f51024d697db2de13a03405073743a32d0a0b26cdabc1fdf282d2391237193d",
+    "cpus": 2,
+    "memory_bytes": 3221225472,
+    "data_disk_bytes": 10737418240,
+    "root_disk_gib": 8,
+    "architecture": "aarch64",
+    "translation": "vz-rosetta",
+    "mount_change": false
+  },
+  "container": {
+    "cpus": 2,
+    "memory_mib": 1536,
+    "swap_additional_mib": 0,
+    "pids_limit": 256,
+    "network": "none",
+    "read_only_root": true,
+    "user": "501:20",
+    "seccomp_sha256": "5ae96ce3d0a9c746765df7d4c5948312f3847b08e917174368797d788461657a"
+  },
+  "storage": {
+    "evidence_volume_uuid": "244B2B81-3EB5-45DC-BBAC-90E0C65EE766",
+    "within_existing_writable_mount": true,
+    "minimum_host_free_bytes": 1610612736,
+    "minimum_guest_free_kib": 1572864,
+    "no_deletion_or_growth": true
+  },
+  "order": [
+    "selected-workshop-v1-p1-keyboard",
+    "selected-workshop-v1-p1-shortcuts",
+    "selected-workshop-v1-p2-shortcuts",
+    "selected-workshop-v1-p2-keyboard",
+    "selected-workshop-v1-p3-keyboard",
+    "selected-workshop-v1-p3-shortcuts"
+  ],
+  "bounds": {
+    "max_dispatches_per_attempt": 128,
+    "checkpoint_decisions": [
+      64,
+      128
+    ],
+    "max_returned_tokens_per_attempt": 8000000,
+    "max_advance_ticks_per_decision": 2000,
+    "screen_size": [
+      120,
+      40
+    ],
+    "one_game_at_a_time": true,
+    "mandatory_teardown": true,
+    "initial_memory": "empty",
+    "own_save_continuation_only": true,
+    "retain_failures": true,
+    "api_fallback": false,
+    "cloud_launch": false,
+    "automatic_reset_or_credit_purchase": false
+  },
+  "native_verification_receipt": "selected_workshop_wiring_native_20260912.json",
+  "scored_calls_at_declaration": 0,
+  "actual_charge_usd": null,
+  "notes": [
+    "The native scripted checks are not one of these scored attempts.",
+    "The old Astra-r2-only 40 GiB disk amendment is not reused; this study binds the existing 10 GiB fg-portable profile.",
+    "Material resource/source/control changes require a separately declared study change before further comparison calls."
+  ]
+}
