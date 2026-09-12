@@ -1,7 +1,7 @@
 # Year-Two delivery audit
 
 Snapshot: September 12, 2026 UTC, goal branch
-`aa12d891c00ede817b39b72752b37719a4b11e0a` before this documentation update.
+`b0a104af43a0bf245e48dd38e12deaed4c0059dc` before this documentation update.
 This is a progress audit, not a completion certificate or a replacement goal.
 Requirements come from [the approved goal](YEAR_TWO_CAMPAIGNS.md),
 [the standard-input phase](ASTRA_STANDARD_INPUT_EXPERIMENTS.md), and the
@@ -17,9 +17,9 @@ Requirements come from [the approved goal](YEAR_TWO_CAMPAIGNS.md),
 | Standard input versus optional shortcuts | This cohort explicitly uses displayed native keyboard controls and excludes shortcuts. The standard-input phase preserves a separate three-pair comparison with explicit shortcuts. | That paired comparison is not proved by these six model trials. Declare and run it separately with matching starts and budgets; do not alter the current cohort or silently introduce helpers. |
 | Inspectable development, adaptation and sustainability | Saved native metrics, job samples, elapsed time, chosen controls and rejected actions are retained and replayable. The Astra endpoint review explicitly qualifies its observations. | Stocks and sampled jobs are not production/consumption rates, accessible reserves or completed job counts. Keep unmeasured fields unknown; use longer gameplay and separately versioned measurement improvements for stronger sustainability claims. |
 | Honest cost and resource reporting | Returned model tokens and known lost responses remain accounted. Results identify subscription transport and leave dollar charges null. | Subscription dollar charges, hardware energy and app cost are unreported, not zero. Do not create a fabricated actual cost or silently substitute API-price estimates. |
-| Live and recorded website delivery | [The verified Astra release](../experiments/evidence/website_astra_own_save_release_20260912.json) serves all six fresh results, thirteen replay windows, a 64/128 budget selector and immutable evidence links. Terra r1 and Astra r1 continuations are live. Terra r2's live observer published its stopped state after teardown. | Terra r2's replay and the Terra r2/Sol r2 table updates remain pending. Astra r2 is unlaunched because of the known native capacity shortage. Original recordings stay immutable. |
-| Reviewed and merged remote implementation, tests, setup and manifests | Native code, website code and result manifests are pushed, with exact-revision tests and native/public evidence. Main is `f1aa05f429c189b67891cf2629e8e00329222aca`. | PR176's updated candidate `3b5b0aa1f6b12fae042a7c7304e74eb6be1effd3` includes Astra's result/replay and passes 136 focused Python tests and 50 Node contracts; CI `34669546552` passed. Its earlier combined head passed 5,420 tests and CI. The two explicit partial-review inventories and isolated setup's 659 tests are retained. Full source review and portable native setup acceptance remain. Public deployment is not merged harness delivery. |
-| Reusable setup rather than one machine's retained experiment assets | The isolated candidate installs in a fresh Python environment, loads all three declared model conditions, reproduces the reports and serves twelve byte-verified recordings. The local server was stopped after acceptance. | Generated protocol bindings, fresh-machine game provisioning and portable native-owner invocation remain unverified. Python/viewer setup acceptance is not complete native setup acceptance. Do not publish restricted game files, account data or private model payloads. |
+| Live and recorded website delivery | [The verified repeat-outcome release](../experiments/evidence/website_repeat_outcomes_release_20260912.json) serves all six fresh results, fourteen replay windows, 1,056 captured frames, a 64/128 budget selector and immutable evidence links. Terra r2's continuation and both latest table outcomes are live. All thirteen older recordings and the stopped observer are unchanged. | Astra r2 is unlaunched because of the known native capacity shortage. No replay is invented for Sol's zero-call capacity failure. This release is not another game acceptance or independent trial. |
+| Reviewed and merged remote implementation, tests, setup and manifests | Native code, website code and result manifests are pushed, with exact-revision tests and native/public evidence. Main is `f1aa05f429c189b67891cf2629e8e00329222aca`. | PR176's updated candidate `a259382aa174e46d27a8081cb811a097cb4084bf` includes the five-outcome128 source and fourteen replays. Its code passed 5,426 full-suite tests and 51 Node contracts; the final documentation/evidence-only follow-up passed 61 focused tests. Exact-head CI `34671288581` is in progress. The two explicit partial-review inventories and isolated setup's 659 tests are retained. Full source review and portable native setup acceptance remain. Public deployment is not merged harness delivery. |
+| Reusable setup rather than one machine's retained experiment assets | The isolated candidate installs in a fresh Python environment, loads all three declared model conditions, reproduces the reports and serves twelve byte-verified recordings. The local server was stopped after acceptance. | The [later protocol check](../experiments/evidence/keyboard_integration_protocol_setup_176_20260912.json) generated and imported all eight official 52.04-r1 bindings in that isolated environment, without a game connection. Native wire compatibility, fresh-machine game provisioning and portable native-owner invocation remain unverified. Python/viewer and binding-generation acceptance is not complete native setup acceptance. Do not publish restricted game files, account data or private model payloads. |
 
 ## Integration started without changing active gameplay
 
@@ -71,11 +71,11 @@ subsequently completed from its original memory and zero-elapsed-time parent,
 retaining 108,000 new ticks and 2,339,683 total tokens. Seven dwarves remain alive,
 but no beds, workshops or farms are complete; food and drink stocks fell. Its
 terminal audit, original-save preservation and VM teardown passed. The final
-save has not had a separate fresh reload. Its replay is the next publication
-update. Sol r2 subsequently hit the unchanged guest free-space floor before any
+save has not had a separate fresh reload. Its replay and the latest comparison
+outcomes are now verified live. Sol r2 hit the unchanged guest free-space floor before any
 game or model call, with its parent intact and VM stopped. Astra r2 remains
 unlaunched against that known shortage. No storage growth or evidence deletion
-occurred; continue publication, source review and setup work within scope.
+occurred; continue remaining source review and portable setup work within scope.
 
 The frozen native checkout/image
 and pinned observer remain isolated from integration. Finish the declared model sequence before unequal-length endurance

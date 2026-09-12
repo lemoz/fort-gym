@@ -104,16 +104,21 @@ remains unresolved. The full goal stays active.
 
 The isolated integration candidate is pushed as
 [draft PR176](https://github.com/lemoz/fort-gym/pull/176), head
-`062ee6252b899bcbe94f4281a0c8643ae4265a11`. It includes the Terra r2/Sol r2
+`a259382aa174e46d27a8081cb811a097cb4084bf`. It includes the Terra r2/Sol r2
 results, five-outcome128 index and fourteen-recording viewer. Its updated full
 suite passes 5,426 Python tests with ten skips and seven warnings, plus all 51
-Node contracts and 126 focused comparison/viewer/exporter tests. Exact-head
-CI `34671086332` is being checked separately; the earlier candidate's CI
-`34669546552` passed.
+Node contracts and 126 focused comparison/viewer/exporter tests. The final
+documentation/evidence-only follow-up passes 61 focused tests; its CI is being
+checked separately. The earlier candidate's CI `34669546552` passed.
 The [additional setup and source review](../experiments/evidence/keyboard_integration_setup_review_176_20260912.json)
 verifies an isolated Python/viewer install and 659 focused tests on its exact
-prior head. Generated bindings and fresh-machine native provisioning are still
-unverified, and source review is partial rather than merge approval. The current
+prior head. A [separate protocol setup check](../experiments/evidence/keyboard_integration_protocol_setup_176_20260912.json)
+now generates and imports all eight official 52.04-r1 binding modules in that
+isolated environment, with partial round trips for 131 message types. It leaves
+the original acceptance and frozen experiment bindings unchanged. No game or
+model was contacted; actual wire compatibility, fresh-machine native provisioning
+and portable owner acceptance remain unverified. Source review is still partial
+rather than merge approval. The current
 source reader exactly reproduces the public five-result128 and six-result64
 tables.
 The candidate is not merged or deployed, and does not replace the running source.
