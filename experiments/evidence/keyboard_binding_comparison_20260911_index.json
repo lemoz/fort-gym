@@ -50,6 +50,11 @@
       }
     },
     "bindings-comparison-20260911-sol-r1": {
+      "128": {
+        "path": "experiments/evidence/keyboard_binding_comparison_sol_r1_128_startup_failure_20260911.json",
+        "sha256": "1db3f17e4fe4d80ef190d3e80031acddad46f9df692b7c13a005e7afbd30b8d6",
+        "revision": "a085f52b1205217dfdee8ba7bf40fb8771fc7d16"
+      },
       "64": {
         "path": "experiments/evidence/keyboard_binding_comparison_sol_r1_64_20260911.json",
         "sha256": "5d0cb5ea363ef5ac4bf24d8336ea1479bbd84a1966a90f68a646d0635923af66",
