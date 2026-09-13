@@ -1,0 +1,87 @@
+{
+  "schema_version": "fortgym.endurance-terminal-capture-preparation/v1",
+  "date_utc": "2026-09-13",
+  "campaign_id": "astra-keyboard-endurance-v1",
+  "previous_goal_turn_classification": "progress",
+  "previous_public_website_revision": "28cbf0ac230e401719447aa7a0bf814795007104",
+  "source_revision": "4b526b5636e6f568a4cae1a1227d746d9c6922c3",
+  "sequence_revision": "4ce541fbe0cc20556744cd381298c31f1fb580a2",
+  "native_source_and_sequence_worktrees_clean": true,
+  "artifacts": {
+    "capture": {
+      "path": "fort_gym/artifacts/selected-workshop-study-20260912/astra-keyboard-endurance-runtime/capture1028.py",
+      "sha256": "6c8f62111e895dc3f3ecb927af1ae3b66cd7045e8dd9bad800eea033f3189275"
+    },
+    "tests": {
+      "path": "fort_gym/artifacts/selected-workshop-study-20260912/astra-keyboard-endurance-runtime/test_capture1028.py",
+      "sha256": "d326d290aec345c054c3e207a415047ee6847ac251204385ea75f1979d407e74"
+    },
+    "junit": {
+      "path": "fort_gym/artifacts/selected-workshop-study-20260912/astra-keyboard-endurance-runtime/terminal-capture-tests.xml",
+      "sha256": "33e4b1e949ba23dbb0319e1df2501c3541e3ca13c0ae5755c4c75cbb11fe02f5"
+    },
+    "shared_read_helpers": {
+      "path": "fort_gym/artifacts/selected-workshop-study-20260912/astra-keyboard-endurance-runtime/capture964.py",
+      "sha256": "90e3ea15f8e22e755fdd6d0ae0c87eab0b2a2da96ecb250a3b0142abf150ff7f"
+    }
+  },
+  "validation": {
+    "unit_tests_passed": 55,
+    "unit_tests_failed": 0,
+    "warnings": 2,
+    "seconds": 7.39,
+    "scoped_ruff_passed": true,
+    "fixtures": "Synthetic terminal counters on schemas/configuration read from the retained completed checkpoint-964 window. No fixture is native acceptance.",
+    "coverage": [
+      "missing terminal result runs no process and writes no files",
+      "active, failed or wrong-boundary sequence is rejected",
+      "unsettled owner and teardown are rejected",
+      "changed memory, usage, strategy, image or budget is rejected",
+      "unknown subscription charges stay unknown, not zero",
+      "missing native audit proof and invented fresh-reload claim are rejected",
+      "death of the entire population is not relabelled as a budget pause",
+      "validated inputs remain unchanged"
+    ]
+  },
+  "terminal_capture_executed": false,
+  "checkpoint1028_verified": false,
+  "final_native_reload_verified": false,
+  "final_gameplay_assessment": null,
+  "required_terminal_evidence": [
+    "sole coordinator returns a terminal result",
+    "final operation and native audit agree at decision1028",
+    "checkpoint save, complete trace, usage and predecessor prefixes verify",
+    "all final supervisor and relay return codes are zero",
+    "recording and terminal event hashes match",
+    "separate live process/VM-state confirmation after the owner exits"
+  ],
+  "fresh_reload_boundary": "This capture deliberately does not claim a fresh reload. Checkpoint1028 has no following gameplay window; its reload must be verified separately without dispatching decision1029.",
+  "live_observation": {
+    "coordinator_session": 23270,
+    "coordinator_pid": 38257,
+    "supervisor_pid": 24418,
+    "supervisor_parent_pid": 38257,
+    "live_handle_confirmed": true,
+    "processes_confirmed_live": true,
+    "public_decision": 1004,
+    "public_observed_at_unix": 1789301024,
+    "public_status": "running",
+    "public_owner_alive": true,
+    "terminal_result_present": false
+  },
+  "saved_checkpoint_still": 964,
+  "cumulative_limits": {
+    "max_dispatches": 1028,
+    "max_total_tokens": 40000000
+  },
+  "new_budget_extension": false,
+  "new_cloud_vm": false,
+  "model_switch": false,
+  "native_condition_changed": false,
+  "human_gameplay_rescue": false,
+  "gameplay_inputs": 0,
+  "model_calls": 0,
+  "main_merged": false,
+  "full_goal_complete": false,
+  "next": "Retain the same sole owner. Once it ends, inspect its actual terminal result. Use the prepared capture only if its real checkpoint1028 evidence and teardown satisfy the gates; handle a partial or failed outcome as observed instead of inventing success. Then review production and independently reload the final save without extending gameplay."
+}

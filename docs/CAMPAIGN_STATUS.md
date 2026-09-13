@@ -14,6 +14,17 @@ cohort below. Long-term self-sufficiency and the full delivery goal remain open.
 
 ## Current experiment summary
 
+The [final-window capture preparation](../experiments/evidence/astra_keyboard_endurance_terminal_capture_preparation_20260913.json)
+adds a read-only terminal verifier and 55 passing synthetic contract tests. It
+requires the sequence's real terminal result, checkpoint/audit/history bindings,
+settled teardown and unchanged cumulative limits. It cannot load a game, call a
+model or convert the missing final result into acceptance. Checkpoint1028 has no
+following gameplay window, so fresh-reload verification remains a separate step;
+no decision1029 is authorized by this preparation. The live handle and exact
+coordinator/supervisor processes were confirmed, with public decision1004 and no
+terminal result yet. Checkpoint964 remains the latest verified saved endpoint.
+No native source, model, control, budget or existing owner was changed.
+
 The [checkpoint 964 save and actual reload](../experiments/evidence/astra_keyboard_endurance_964_20260913.json)
 and [gameplay review](../experiments/evidence/astra_keyboard_endurance_964_gameplay_review_20260913.json)
 are complete. At 639,895 elapsed ticks, the fort has nineteen living dwarves,
