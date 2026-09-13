@@ -22,10 +22,22 @@ comparison command at `26edd37c0f5946bfb4f0a98d30ae432d8d590e7f` in existing
 [new review receipt](../experiments/evidence/controls_study_release_review_20260913.json)
 records 175 focused passes, 5,946 local passes with ten skips, and 5,783 hosted
 passes with 173 skips. Both full suites reported 58 warnings. Scoped Ruff passed;
-Black was unavailable. Native runtime, conditions, recordings and website files
-are unchanged. Next is the public paired-controls Results panel and its release
-integration, followed by the remaining review and permitted merged delivery.
-No new gameplay window or model call was used to close this gap.
+Black was unavailable. That offline integration left native runtime, conditions,
+recordings and website files unchanged. No new gameplay window or model call
+was used to close the reproducibility gap.
+
+The [paired-controls comparison is now publicly verified](../experiments/evidence/controls_study_website_20260913.json)
+at `2cdfee3131d3792b5cde8c6fadaeef742940f12e` on
+[Results](https://fortgym.live/results#controls-comparison). It shows all six
+saved endpoints with direct replay/result links, unknown charges and single-seed
+limitations. The table works without JavaScript and preserves the established
+site layout. Local and hosted suites each passed 1,336 tests, five skipped and
+seven warnings. Public checks verified the table, download, nine source files
+and six replay hashes; service identities, database counts and all eleven
+protected public routes were unchanged. All 39 recordings, 3,048 frames and
+seven saved endpoints remain. No browser visual QA, service restart, native
+input, model call or main merge occurred. Next is this panel's combined-release
+integration, then the remaining review and permitted merged delivery.
 
 The declared endurance run is complete at **1,028 decisions and 765,895 elapsed
 ticks (1.90 game years)**. The [final save](../experiments/evidence/astra_keyboard_endurance_1028_save_20260913.json),
