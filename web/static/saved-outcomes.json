@@ -1,0 +1,91 @@
+{
+  "schema_version": "fortgym.watch-saved-outcomes/v1",
+  "outcomes": [
+    {
+      "recording_id": "astra-keyboard-endurance-v1-645-708",
+      "recording_sha256": "fc4febb01c736109863f9f42a316956a0c66883e8c8883b19edf468ce4286427",
+      "source_recording_id": "astra-keyboard-endurance-v1-581-644",
+      "campaign_id": "astra-keyboard-endurance-v1",
+      "source_revision": "4b526b5636e6f568a4cae1a1227d746d9c6922c3",
+      "model": "gpt-6-astra",
+      "reasoning_effort": "medium",
+      "control_profile": "native_keyboard_bindings/v1",
+      "saved_decision": 708,
+      "saved_elapsed_ticks": 447050,
+      "saved_year": 31,
+      "saved_year_tick": 60651,
+      "origin_year": 30,
+      "origin_year_tick": 16801,
+      "ticks_per_year": 403200,
+      "total_responses": 708,
+      "total_tokens": 20492446,
+      "reported_model_charge_usd": null,
+      "saved_metrics": {
+        "population": 18,
+        "recorded_dead_citizens": 1,
+        "completed_beds": 9,
+        "completed_workshops": 4,
+        "completed_farms": 3,
+        "food_stock": 75,
+        "drink_stock": 93
+      },
+      "checkpoint_sha256": "2286ea12bfd9d8d57abfb89d4dab0535c43a0a6eb3b54bc0944098e43e49f64e",
+      "native_audit_sha256": "bcb79a1b1d2729d1060dc0c4157c7cf4782f9941031832433c2de86ab38557bd",
+      "fresh_reload_verified": true,
+      "human_gameplay_rescue": false,
+      "functioning_assessment": "operating_but_fragile",
+      "sustainability_proven": false,
+      "result": {
+        "url": "https://github.com/lemoz/fort-gym/blob/7d60e87c77ba31a4881d69b429c63566a7876ae4/experiments/evidence/astra_keyboard_endurance_708_20260913.json",
+        "sha256": "aef02757b7e26049f1efcac3793f6d8e74f334e2a155ed61a75f285b948bbc0b"
+      },
+      "review": {
+        "url": "https://github.com/lemoz/fort-gym/blob/7d60e87c77ba31a4881d69b429c63566a7876ae4/experiments/evidence/astra_keyboard_endurance_708_gameplay_review_20260913.json",
+        "sha256": "6cc2af61440205908a6aeb083f1f2ece321f4dcc1bbba5fcc164c8fe90e1676a"
+      }
+    },
+    {
+      "recording_id": "astra-keyboard-endurance-v1-581-644",
+      "recording_sha256": "418cefb6e70d71a7276abdcb61fcbf099eb9e93de1579ae4731e0b538e03512b",
+      "source_recording_id": "astra-keyboard-endurance-v1-517-580",
+      "campaign_id": "astra-keyboard-endurance-v1",
+      "source_revision": "4b526b5636e6f568a4cae1a1227d746d9c6922c3",
+      "model": "gpt-6-astra",
+      "reasoning_effort": "medium",
+      "control_profile": "native_keyboard_bindings/v1",
+      "saved_decision": 644,
+      "saved_elapsed_ticks": 423050,
+      "saved_year": 31,
+      "saved_year_tick": 36651,
+      "origin_year": 30,
+      "origin_year_tick": 16801,
+      "ticks_per_year": 403200,
+      "total_responses": 644,
+      "total_tokens": 19259777,
+      "reported_model_charge_usd": null,
+      "saved_metrics": {
+        "population": 19,
+        "recorded_dead_citizens": 0,
+        "completed_beds": 9,
+        "completed_workshops": 4,
+        "completed_farms": 3,
+        "food_stock": 66,
+        "drink_stock": 112
+      },
+      "checkpoint_sha256": "9cd9ebfa15a6af91df65a62fbc8932f7c413e0513caaa818f21b6077dfa647d9",
+      "native_audit_sha256": "083b20dabd9d6268144769dd598eb9bc1ba2cf5c6c68bd7b75c8697b68c86970",
+      "fresh_reload_verified": true,
+      "human_gameplay_rescue": false,
+      "functioning_assessment": "operating_but_fragile",
+      "sustainability_proven": false,
+      "result": {
+        "url": "https://github.com/lemoz/fort-gym/blob/7d60e87c77ba31a4881d69b429c63566a7876ae4/experiments/evidence/astra_keyboard_endurance_644_20260913.json",
+        "sha256": "e5f8db850ebdbd535390c3ae80591d34ad2329a42a00713ac43464290c3c07bb"
+      },
+      "review": {
+        "url": "https://github.com/lemoz/fort-gym/blob/7d60e87c77ba31a4881d69b429c63566a7876ae4/experiments/evidence/astra_keyboard_endurance_644_gameplay_review_20260913.json",
+        "sha256": "ffca6cafc6a064ca4726efe97301d5ec8e32a8195d961e222cf61be128ff060b"
+      }
+    }
+  ]
+}
