@@ -14,6 +14,22 @@ cohort below. Long-term self-sufficiency and the full delivery goal remain open.
 
 ## Current experiment summary
 
+The [comparison reproducibility repair](../experiments/evidence/year_two_reproducibility_review_20260913.json)
+is pushed separately as [draft PR185](https://github.com/lemoz/fort-gym/pull/185)
+at `617bf4ce51e8162f0f31a5b27c54a762fb2e4021`, based on PR184.
+Its offline 64- and 128-response commands now match the bundled website JSON
+byte for byte. The missing Astra r2 continuation and its exact storage amendment
+are imported from existing evidence; four saved continuations and both Sol
+infrastructure failures are retained. The quickstart identifies the checkout's
+32-recording snapshot separately from the later public catalog and distinguishes
+the generic portable owner from this campaign's pinned coordinator.
+All 77 focused checks and the full local suite passed: 5,870 tests, ten skips,
+seven warnings. Scoped Ruff is green; full Ruff and mypy remain at the inherited
+ten-diagnostic and 465-error baselines. Hosted CI is still pending at this capture.
+The isolated worktree is `fort_gym/artifacts/worktrees/year-two-reproducible-results`.
+No website bytes, active runtime, native condition, original result, or protected
+worktree changed. This is development delivery, not a main merge or deployment.
+
 The [separate combined release candidate](../experiments/evidence/year_two_release_candidate_20260913.json)
 is pushed as [draft PR184](https://github.com/lemoz/fort-gym/pull/184) at
 `e8a4c48065c3391f06a9605900b1294f742142e6`. It combines the unchanged current

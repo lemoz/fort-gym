@@ -1,0 +1,102 @@
+{
+  "schema_version": "fortgym.year-two-reproducibility-review/v1",
+  "status": "development_head_tested_and_pushed",
+  "source_revision": "617bf4ce51e8162f0f31a5b27c54a762fb2e4021",
+  "base_revision": "e8a4c48065c3391f06a9605900b1294f742142e6",
+  "imported_from_revision": "4cae19ad6b47450af7a9ab579ed37ec556d8f632",
+  "branch": "codex/year-two-reproducible-results",
+  "draft_pr": "https://github.com/lemoz/fort-gym/pull/185",
+  "local_worktree": "fort_gym/artifacts/worktrees/year-two-reproducible-results",
+  "regression": {
+    "before": {
+      "boundary": 128,
+      "recorded_attempts": 5,
+      "saved": 3,
+      "infrastructure_failure": 2
+    },
+    "after": {
+      "boundary": 128,
+      "recorded_attempts": 6,
+      "saved": 4,
+      "infrastructure_failure": 2
+    },
+    "cli_equals_bundled_report_bytes": [
+      64,
+      128
+    ],
+    "original_64_report_sha256": "323eb178749f324791ff0b384c069d667af2132e81770c11ff937a656aa1398d",
+    "strong_ranking_supported": false
+  },
+  "imported_result_sha256": "f92270fac8c90bae4a9d73b519641985acc2dd848e869f1ecc0261a0e0f7161a",
+  "storage_declaration_sha256": "eeb3fa8b08234819247b4dec7ecf50fda9f137fd57cabe07d1426d968d15116e",
+  "exact_source_imports": [
+    "fort_gym/bench/eval/displayed_key_comparison.py",
+    "experiments/evidence/keyboard_binding_comparison_20260911_index.json",
+    "experiments/evidence/keyboard_binding_comparison_astra_r2_128_20260912.json",
+    "experiments/keyboard_comparison_storage_amendment_20260912.json"
+  ],
+  "focused_tests": {
+    "passed": 77,
+    "warnings": 3,
+    "scopedRuff": true,
+    "initialFailed": 1,
+    "initialPassed": 76,
+    "initialCause": "new regression used nonexistent -64 filename; corrected to original displayed-key-comparison.json"
+  },
+  "complete_local_tests": {
+    "passed": 5870,
+    "skipped": 10,
+    "warnings": 7,
+    "head": "617bf4ce51e8162f0f31a5b27c54a762fb2e4021",
+    "junit_sha256": "c98c7b8f87f93f73b4ea526ff31a75f9d0f7fb3b17b2dbb5f4194912e5dddf7a",
+    "junit_project_relative": "fort_gym/artifacts/selected-workshop-study-20260912/astra-keyboard-endurance-runtime/year-two-reproducibility-full-20260913.xml"
+  },
+  "quality": {
+    "ruffDiagnostics": 10,
+    "changedFileRuffDiagnostics": 0,
+    "mypyErrors": 465,
+    "mypyFiles": 27,
+    "sourceFilesChecked": 181,
+    "mypyExactBaseline": true,
+    "mypySha256": "ecace04ae1e076658e9810e320aab89d76455b880a5a11fd4a46fc5aec44ad25"
+  },
+  "hosted_ci": {
+    "run": 34745349677,
+    "job": 103692175583,
+    "status": "in_progress",
+    "conclusion": null,
+    "head": "617bf4ce51e8162f0f31a5b27c54a762fb2e4021"
+  },
+  "snapshot": {
+    "bundled_recordings": 32,
+    "bundled_frames": 2600,
+    "separate_published_recordings": 33,
+    "separate_published_frames": 2664,
+    "website_bytes_changed": false,
+    "later_public_replays_still_need_carry_forward_before_combined_promotion": true
+  },
+  "preserved": {
+    "native_source_revision": "4b526b5636e6f568a4cae1a1227d746d9c6922c3",
+    "coordinator_revision": "4ce541fbe0cc20556744cd381298c31f1fb580a2",
+    "website_revision": "577c6c1474160e8c1366bedf22596ecb75005891",
+    "release_candidate_revision": "e8a4c48065c3391f06a9605900b1294f742142e6",
+    "all_four_worktrees_clean": true,
+    "original_evidence_unchanged": true
+  },
+  "this_change": {
+    "native_game_launches": 0,
+    "model_calls": 0,
+    "gameplay_inputs": 0,
+    "new_vms": 0,
+    "deployment": false,
+    "main_merge": false,
+    "condition_change": false,
+    "full_goal_complete": false
+  },
+  "limits": [
+    "This is offline reporting reproducibility, not new native acceptance.",
+    "The copied result retains its declared storage-only amendment; VM storage was not identical across all windows.",
+    "Unknown subscription charges remain null; failed outcomes remain in the comparison.",
+    "The generic public Docker owner is distinct from the campaign-specific host coordinator."
+  ]
+}
