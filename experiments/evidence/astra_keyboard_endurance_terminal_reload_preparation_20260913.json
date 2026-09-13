@@ -1,0 +1,92 @@
+{
+  "schema_version": "fortgym.endurance-terminal-reload-preparation/v1",
+  "date_utc": "2026-09-13",
+  "campaign_id": "astra-keyboard-endurance-v1",
+  "source_revision": "4b526b5636e6f568a4cae1a1227d746d9c6922c3",
+  "image": "sha256:a2f12a74805949b8a2fcf0262b5d63048f4bd3a6f2faf4d8bbc74c261b172ed4",
+  "previous_progress_revision": "99513b1d15833ab88570269d22a75e2d44512dcf",
+  "artifacts": {
+    "worker": {
+      "path": "fort_gym/artifacts/selected-workshop-study-20260912/astra-keyboard-endurance-runtime/reload_terminal_worker.py",
+      "sha256": "43aa67e41a9cc6f0d88123411cda4593c34b6b3c26ab4c5e3cfbd006357b02f9"
+    },
+    "worker_tests": {
+      "path": "fort_gym/artifacts/selected-workshop-study-20260912/astra-keyboard-endurance-runtime/test_reload_terminal_worker.py",
+      "sha256": "db2a259853cc62e22eaec7bb99bc61f1c901f366fe6fae76d126678568b401fc"
+    },
+    "operator": {
+      "path": "fort_gym/artifacts/selected-workshop-study-20260912/astra-keyboard-endurance-runtime/run_reload1028.py",
+      "sha256": "dfd829762fb15f408b218754f8002ba36329e625b3e270ddea99069d4535237d"
+    },
+    "operator_tests": {
+      "path": "fort_gym/artifacts/selected-workshop-study-20260912/astra-keyboard-endurance-runtime/test_run_reload1028.py",
+      "sha256": "deb6ac4ea869e5b5bd32ea5e83e00cd59c4a9bc65fade9cea4cdf8082cc15e8d"
+    },
+    "readme": {
+      "path": "fort_gym/artifacts/selected-workshop-study-20260912/astra-keyboard-endurance-runtime/RELOAD_README.md",
+      "sha256": "40fd3434e431778b8dd4fffea99aff9ccb09d471deee22da64a0ac1a5c2ae834"
+    },
+    "combined_junit": {
+      "path": "fort_gym/artifacts/selected-workshop-study-20260912/astra-keyboard-endurance-runtime/terminal-reload-combined-tests.xml",
+      "sha256": "eb78cf7c50228652ee01e976656872b7772c22767a2464d4fcdea7267b5c48c0"
+    }
+  },
+  "validation": {
+    "tests_passed": 107,
+    "tests_failed": 0,
+    "warnings": 2,
+    "seconds": 4.87,
+    "scoped_ruff_passed": true,
+    "breakdown": {
+      "terminal_capture_contracts": 55,
+      "actual_checkpoint964_restore_contracts": 8,
+      "operator_synthetic_contracts": 44
+    },
+    "native_acceptance_performed": false
+  },
+  "inspection_contract": {
+    "restore_path": "CampaignLoop.resume",
+    "final_cursor": 1028,
+    "budget_extension": null,
+    "complete_agent_state_preserved": true,
+    "trace_usage_history_preserved": true,
+    "paused_native_clock_preserved": true,
+    "original_checkpoint_readonly": true,
+    "same_frozen_native_image": true,
+    "resource_isolation_unchanged": true,
+    "model_transport_absent": true,
+    "new_native_save_forbidden": true,
+    "model_call_forbidden": true,
+    "gameplay_action_forbidden": true,
+    "time_advance_forbidden": true,
+    "existing_derived_pathfinding_cache_comparison_only": true
+  },
+  "execution_gates": [
+    "Actual settled sequence, native audit, checkpoint, usage and teardown bind at decision1028.",
+    "Original coordinator and supervisor have exited without interruption.",
+    "Existing VM profiles are stopped and unchanged, with the expected external volume mounted.",
+    "Only a new unique reload output is created; the original checkpoint is mounted read-only.",
+    "Every attempted VM start reaches owned-container cleanup and VM shutdown, including failed load."
+  ],
+  "live_observation": {
+    "coordinator_session": 23270,
+    "coordinator_pid": 38257,
+    "supervisor_pid": 24418,
+    "handle_still_running": true,
+    "public_relay_decision": 1023,
+    "public_observed_at_unix": 1789302229,
+    "terminal_result_present": false
+  },
+  "terminal_capture_executed": false,
+  "native_reload_executed": false,
+  "checkpoint1028_verified": false,
+  "final_native_reload_verified": false,
+  "model_calls": 0,
+  "gameplay_inputs": 0,
+  "new_vm": false,
+  "new_cloud_spend_usd": 0,
+  "new_budget_extension": false,
+  "main_merged": false,
+  "full_goal_complete": false,
+  "next": "Retain the same sole owner until it settles. Verify actual final1028 evidence, then execute the declared provider-free native reload once and retain its real result and teardown."
+}

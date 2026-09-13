@@ -14,6 +14,17 @@ cohort below. Long-term self-sufficiency and the full delivery goal remain open.
 
 ## Current experiment summary
 
+The [final checkpoint reload preparation](../experiments/evidence/astra_keyboard_endurance_terminal_reload_preparation_20260913.json)
+now has 107 passing combined checks: 55 terminal contracts, eight restore checks
+using the actual checkpoint964, and 44 synthetic operator contracts. The new
+worker uses the unchanged native image and real campaign-loop restore path, with
+model calls, gameplay actions, time advance and saves forbidden. It compares the
+complete agent state, history, usage and paused native state. The outer launcher
+requires the actual terminal1028 result and both original owners to have exited;
+it preserves the existing resource/isolation limits and always attempts teardown.
+No reload or new VM has run from this preparation. The sole owner remained live
+at public decision1023; checkpoint964 was still the latest verified saved result.
+
 The [final-window capture preparation](../experiments/evidence/astra_keyboard_endurance_terminal_capture_preparation_20260913.json)
 adds a read-only terminal verifier and 55 passing synthetic contract tests. It
 requires the sequence's real terminal result, checkpoint/audit/history bindings,
