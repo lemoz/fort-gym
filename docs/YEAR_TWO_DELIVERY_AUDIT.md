@@ -13,7 +13,23 @@ This summary supersedes the capture-time running/preparation statements in the
 historical sections below. Original result manifests and earlier evidence are
 unchanged. The full Year-Two/cross-model goal is still active.
 
-The latest [endurance save and actual reload](../experiments/evidence/astra_keyboard_endurance_452_20260913.json)
+The latest [endurance save and actual reload](../experiments/evidence/astra_keyboard_endurance_516_20260913.json)
+are verified through decision516: 345,050 elapsed ticks, nineteen living dwarves,
+nine beds, four workshops, three farms, 170 food and 29 drinks, with no recorded
+deaths. All 64 actions were accepted and all 209 keys confirmed. All 44,000
+requested ticks advanced without timeouts or deferrals. Food rose from 134 to
+170 while drinks remained at 29; causes remain unmeasured. Cumulative returned
+usage is 15,847,406 tokens, with one inherited budget extension and unknown
+actual charges. The [fifth automatic handoff](../experiments/evidence/astra_keyboard_endurance_sequence_handoff_516_20260913.json)
+verified save and teardown before the unchanged coordinator launched 517–580.
+Whole agent state, native clock/metrics and trace/usage prefixes matched on actual
+reload. Decision517 confirmed one key and zero ticks; public frame523 matched the
+original screen and chosen action. The first fourteen event lines and the plan
+remain unchanged, with the seventeen-event prefix retained. The 453–516 replay
+is exported, not yet published at this capture. Year Two, functioning-fortress
+assessment and sustainability remain unverified for this campaign.
+
+The preceding [endurance save and actual reload](../experiments/evidence/astra_keyboard_endurance_452_20260913.json)
 are verified through decision452: 301,050 elapsed ticks, nineteen living dwarves,
 nine beds, four workshops, three farms, 134 food and 29 drinks, with no recorded
 deaths. All 64 keyboard actions were accepted, all 235 keys confirmed, and all

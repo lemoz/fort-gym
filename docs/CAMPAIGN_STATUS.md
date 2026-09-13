@@ -35,7 +35,23 @@ retains seven living dwarves, seven beds, three workshops and one farm after
 46,400 elapsed ticks. The [complete descriptive comparison](../experiments/evidence/selected_workshop_v2_cohort_20260912.json)
 preserves all outcomes without claiming a control ranking or independent worlds.
 
-The latest [Astra Medium endurance save and actual reload are verified through decision452](../experiments/evidence/astra_keyboard_endurance_452_20260913.json):
+The latest [Astra Medium endurance save and actual reload are verified through decision516](../experiments/evidence/astra_keyboard_endurance_516_20260913.json):
+345,050 elapsed ticks (about 86% of one game year), nineteen living dwarves,
+nine beds, four workshops, three farms, 170 food and 29 drinks, with no recorded
+deaths. All 64 actions and 209 requested keys were accepted/confirmed; all 44,000
+requested ticks advanced with no timeouts or deferrals. Food rose from 134 to 170
+while drinks remained at 29; these stocks do not attribute production or consumption.
+Cumulative returned usage is 15,847,406 tokens; actual subscription charges remain
+unreported. The [fifth automatic handoff](../experiments/evidence/astra_keyboard_endurance_sequence_handoff_516_20260913.json)
+verified save and teardown before launching 517–580 under the same coordinator.
+Actual reload restored the complete agent state, native clock/metrics and history
+prefixes. Decision517 confirmed one key with zero requested/actual ticks, and
+public frame523 matched its original screen and chosen action. No new budget
+append, manual relaunch or human gameplay rescue occurred. Its 64-frame replay
+is exported; website publication remains a separate step. Year Two and sustained
+production remain unverified for this campaign.
+
+The preceding [Astra Medium endurance save and actual reload are verified through decision452](../experiments/evidence/astra_keyboard_endurance_452_20260913.json):
 301,050 elapsed ticks (about 75% of one game year), nineteen living dwarves,
 nine beds, four workshops, three farms, 134 food and 29 drinks, with no recorded
 deaths. The window added 66,000 requested and actual ticks, with all 64 actions
