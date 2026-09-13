@@ -13,7 +13,26 @@ This summary supersedes the capture-time running/preparation statements in the
 historical sections below. Original result manifests and earlier evidence are
 unchanged. The full Year-Two/cross-model goal is still active.
 
-The latest [endurance save and actual reload](../experiments/evidence/astra_keyboard_endurance_388_20260913.json)
+The latest [endurance save and actual reload](../experiments/evidence/astra_keyboard_endurance_452_20260913.json)
+are verified through decision452: 301,050 elapsed ticks, nineteen living dwarves,
+nine beds, four workshops, three farms, 134 food and 29 drinks, with no recorded
+deaths. All 64 keyboard actions were accepted, all 235 keys confirmed, and all
+66,000 requested ticks advanced, without clock timeouts or deferrals. Food/drink
+stocks fell from 184/88; production and consumption causes remain unmeasured.
+The cumulative budget still has one append and 14,136,731 returned tokens;
+actual charges remain unknown. The
+[fourth automatic successor handoff](../experiments/evidence/astra_keyboard_endurance_sequence_handoff_452_20260913.json)
+verified save and teardown before launching 453–516 under the same coordinator.
+Whole agent state, native clock/metrics and trace/usage prefixes matched on the
+actual reload. Decision453 confirmed one key and zero requested/actual ticks;
+public frame457 matched its original screen and chosen action. The plan and
+first eleven event lines are unchanged; the fourteen-event prefix is retained.
+The 389–452 replay is exported, not published. Public recorded coverage remains
+through decision388 with 29 recordings / 2,408 frames. No manual continuation,
+new infrastructure, budget append, human gameplay input or main merge occurred.
+The current window's final save, Year Two and sustained functioning remain open.
+
+The preceding [endurance save and actual reload](../experiments/evidence/astra_keyboard_endurance_388_20260913.json)
 are verified through decision388: 235,050 elapsed ticks, nineteen living dwarves,
 nine beds, four workshops, three farms, 184 food and 88 drinks, with no recorded
 deaths. The window added 65,950 actual ticks, with 64 accepted actions and 149
@@ -30,8 +49,8 @@ history contains one extension. Its
 launched 389–452 under the same coordinator. Decision389 has a completed native
 execution row with 2,000 actual ticks; public frame390 independently matches the
 captured screenshot and chosen action. The original plan and first eight event
-lines are unchanged; the eleven-event prefix is retained. The new window's final
-save remains unverified. The [325–388 replay is now publicly verified](../experiments/evidence/astra_keyboard_endurance_388_website_20260913.json)
+lines are unchanged; the eleven-event prefix is retained. That window's final
+save and successor reload are now verified above. The [325–388 replay is now publicly verified](../experiments/evidence/astra_keyboard_endurance_388_website_20260913.json)
 at website revision `5b2ed351032dd9a139e3caa38746c710cf291f9d`: 29 recordings
 and 2,408 frames. All 28 earlier recording files, catalog rows and previews are
 unchanged. Local and exact-head CI each passed 1,312 Python tests with five skips
@@ -121,8 +140,31 @@ are verified. The [second actual successor handoff](../experiments/evidence/astr
 then finished and audited checkpoint324, exported its replay and launched
 325–388 under the same coordinator. Actual reload and public frame326 are
 verified. The original plan and first five event lines are unchanged; the new
-eight-event prefix is retained. Later handoffs and the full sequence remain
-unverified. Export is not publication.
+eight-event prefix is retained. Third and fourth handoffs are recorded above;
+subsequent handoffs and the full sequence remain unverified.
+Export is not publication.
+
+The [private native-observer probe candidate](../experiments/evidence/native_production_observer_probe_candidate_20260913.json)
+is pushed in draft PR183 at `909e0eb43a1757de027ca7e90f75bc21027b4acb`.
+It prepares a provider-free passive interval on a copied save, with direct RPC,
+unique observer ownership, hashed item/event boundaries, exact clock receipts,
+source revalidation and owned native-process teardown. It cannot provision or
+admit a VM and has not been run natively. No keys, job orders, item injection,
+continuation saves or model calls are part of the probe. Incomplete intervals
+stop without retries or menu rescue; production coverage remains inconclusive.
+The final focused suite passed 170 tests with one skip and two warnings, including
+46 new probe cases and 82 executed Lua-backed collector/adapter cases.
+Scoped lint, types, formatting, diff and CLI-help checks passed. The initial full
+local collection passed 5,869 tests with ten skips and seven warnings, but preceded
+the final output-path guard and four tests; it is not exact-final-head acceptance.
+Exact-head hosted CI was pending in that immutable capture. Its separately
+[verified CI completion](../experiments/evidence/native_production_observer_probe_ci_20260913.json)
+passed 5,874 tests with nine skips and seven warnings under Lua 5.3.6, including
+all 82 Lua-backed cases. Repository baselines remain ten Ruff errors and 465
+mypy errors in 27 unrelated files; the changed sources pass scoped checks.
+Controlled production
+with an independent oracle, native noninterference, overhead, attribution and
+checkpoint/reload binding remain open. The live campaign stays frozen.
 
 The [private inventory-observer candidate](../experiments/evidence/native_production_observer_inventory_candidate_20260913.json)
 is draft PR183 at `fb5688f62e087e5d8dbdd709842214c4f8328f82`. Paused inventory

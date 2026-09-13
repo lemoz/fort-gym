@@ -1,0 +1,47 @@
+{
+  "schema_version": "fortgym.native-production-observer-probe-ci/v1",
+  "date_utc": "2026-09-13",
+  "source_revision": "909e0eb43a1757de027ca7e90f75bc21027b4acb",
+  "draft_pr": 183,
+  "ci": {
+    "run": 34738211509,
+    "job": 103673309188,
+    "url": "https://github.com/lemoz/fort-gym/actions/runs/34738211509/job/103673309188",
+    "status": "completed",
+    "conclusion": "success",
+    "passed": 5874,
+    "skipped": 9,
+    "warnings": 7,
+    "summary_utc": "2026-09-13T04:41:13.9526795Z",
+    "lua_version": "5.3.6",
+    "lua_install_step_passed": true,
+    "checkout": "GitHub pull-request merge ref b721d65 combines candidate 909e0eb43 with base 4b526b563; no main merge performed"
+  },
+  "final_local_focused": {
+    "passed": 170,
+    "skipped": 1,
+    "warnings": 2
+  },
+  "executed_lua_cases": 82,
+  "repository_baselines": {
+    "ruff_errors": 10,
+    "mypy_errors": 465,
+    "mypy_error_files": 27,
+    "mypy_source_files_checked": 183,
+    "changed_source_scoped_checks": "passed"
+  },
+  "candidate_receipt": "native_production_observer_probe_candidate_20260913.json",
+  "initial_full_regression_not_exact_final_head": true,
+  "original_pending_receipt_preserved": true,
+  "native_fixture_executed": false,
+  "native_coverage_validated": false,
+  "independent_production_oracle": false,
+  "complete_flow_attribution": false,
+  "current_campaign_changed": false,
+  "website_changed": false,
+  "new_cloud_vms": 0,
+  "new_model_calls_by_candidate": 0,
+  "main_merged": false,
+  "full_goal_complete": false
+}
+

@@ -1,0 +1,88 @@
+{
+  "schema_version": "fortgym.endurance-sequence-handoff/v1",
+  "date_utc": "2026-09-13",
+  "handoff_number": 4,
+  "completed_decision": 452,
+  "next_window": {
+    "first_decision": 453,
+    "last_decision": 516,
+    "final_checkpoint_verified": false
+  },
+  "coordinator": {
+    "pid": 38257,
+    "child_pid": 95079,
+    "actual_parent_child_verified": true,
+    "source_revision": "4ce541fbe0cc20556744cd381298c31f1fb580a2"
+  },
+  "plan_sha256": "265a7902df85ca2fa79c05db507881bc78a0eb351e1a179912191e971b43ebb1",
+  "earlier_event_prefix": {
+    "lines": 11,
+    "sha256": "2c4eac3054b420641c5d02793cfae8250a50ffcade0e78d2932b283f234b3210",
+    "unchanged": true
+  },
+  "current_event_prefix": {
+    "lines": 14,
+    "sha256": "84933f79d5735b891a7622b2a30f40de1c7c03c8dd02293e108a4d63b2504587"
+  },
+  "events": [
+    {
+      "observed_at_unix": 1789273825,
+      "type": "window_finished",
+      "target": 452,
+      "returncode": 0,
+      "relay_returncode": 0,
+      "reported_owner_status": "execution_finished",
+      "owner_result_sha256": "3628275b4eb692376e9e9d3d4e2df1fdf56294fed94c671feae7167c03c4b5e2"
+    },
+    {
+      "observed_at_unix": 1789273834,
+      "type": "checkpoint_verified",
+      "decision": 452,
+      "operation_sha256": "cebd0bc343d1bc1f50807fd0260159b3ca1a76205505991576c7a98c4bc7fb8c",
+      "audit_sha256": "4d2cea9669cbe40ef04cc9984c65ada1a8b83d5bc7ca43ab7498fedeaaf4d2b6",
+      "recording_sha256": "c64ee2c324d0a343fb6f0ee80991a515dff035c97c2c8a127728194f2b678860",
+      "checkpoint_sha256": "de02c492f74bef5f29f449956348e41899f2f6d66a9476ab2e46fab1c22771b9",
+      "saved_elapsed_ticks": 301050,
+      "saved_metrics": {
+        "population": 19,
+        "food_stock": 134,
+        "drink_stock": 29,
+        "wood_stock": null,
+        "stone_stock": null,
+        "functional_rooms": null,
+        "completed_workshops": 4,
+        "completed_beds": 9,
+        "completed_farms": 3,
+        "recorded_dead_citizens": 0
+      },
+      "cumulative_returned_tokens": 14136731,
+      "reported_subscription_charge_usd": null,
+      "budget_extensions": 1,
+      "guest_poweroff_returncode": 0,
+      "vm_stop_returncode": 0,
+      "website_recording_published": false,
+      "full_goal_complete": false
+    },
+    {
+      "observed_at_unix": 1789273834,
+      "type": "window_started",
+      "target": 516,
+      "supervisor_pid": 95079
+    }
+  ],
+  "save_and_actual_reload_receipt": "astra_keyboard_endurance_452_20260913.json",
+  "complete_agent_state_and_trace_usage_prefixes_equal": true,
+  "native_clock_and_metrics_equal": true,
+  "first_executed_decision": 453,
+  "first_executed_keys": 1,
+  "first_executed_ticks": 0,
+  "capture_helper_sha256": "2caa49ff2c793f94eefff7d1a4b786b342ae1b5eeec5460b00796495eb71794c",
+  "read_only_capture": true,
+  "new_budget_extensions": 0,
+  "new_cloud_vms": 0,
+  "manual_native_launches": 0,
+  "human_gameplay_rescue": false,
+  "main_merged": false,
+  "full_goal_complete": false
+}
+

@@ -1,0 +1,104 @@
+{
+  "schema_version": "fortgym.native-production-observer-probe-candidate/v1",
+  "date_utc": "2026-09-13",
+  "source_revision": "909e0eb43a1757de027ca7e90f75bc21027b4acb",
+  "base_revision": "fb5688f62e087e5d8dbdd709842214c4f8328f82",
+  "branch": "codex/native-production-observer",
+  "draft_pr": 183,
+  "pushed": true,
+  "source_sha256": {
+    "fort_gym/bench/production_observer_probe.py": "a6c5527c90b514521ed604566967b38540a943506718fbda67f21d2a9bded663",
+    "scripts/campaign_production_probe.py": "68f1efcf338a5c4d9e318200a09d99797bb9ba776eb6f726b96a81e4c57107b8",
+    "tests/test_production_observer_probe.py": "4dfb18d208c22cb8a9738768b5f562e1beed9bbb5b05719490660bff954c9f27",
+    "tests/test_campaign_production_probe.py": "ad0ee0e7a470fd3c4589ffaf4437b76bcab0f8d95f4553f170bb17ca3ba67906",
+    "docs/PRIVATE_PRODUCTION_OBSERVER.md": "933c158ce2cbb3875aa0394de8394ac814f0c51aa3c4a2caa6c7bbec4911dca5"
+  },
+  "implementation": {
+    "native_process_launcher_prepared": true,
+    "outer_vm_launcher_or_admission_added": false,
+    "worker_transport": "native-rpc",
+    "cli_fallback_forbidden": true,
+    "mode": "passive_native_interval",
+    "default_intervals": 4,
+    "max_intervals": 32,
+    "default_ticks": 250,
+    "max_ticks_per_interval": 2000,
+    "worker_deadline_seconds": 600,
+    "max_events_and_retained_item_records": 256,
+    "max_inventory_entries": 8192,
+    "retains_hashed_inventory_and_events": true,
+    "owns_only_its_observer_slot": true,
+    "attempts_stop_after_start_timeout": true,
+    "retains_incomplete_native_receipts": true,
+    "stops_without_menu_rescue": true,
+    "verifies_original_checkpoint_after_failure": true,
+    "gameplay_keys": 0,
+    "workshop_orders": 0,
+    "model_calls": 0,
+    "saves_created": 0
+  },
+  "verification": {
+    "final_focused": {
+      "passed": 170,
+      "skipped": 1,
+      "warnings": 2,
+      "new_probe_cases": 46,
+      "lua_collector_and_adapter_cases": 82
+    },
+    "scoped_ruff": "passed",
+    "scoped_mypy": "passed",
+    "format": "passed",
+    "diff_check": "passed",
+    "cli_help": "passed",
+    "initial_full_regression": {
+      "passed": 5869,
+      "skipped": 10,
+      "warnings": 7,
+      "report_sha256": "5af21813d543412a3d00468f2b82b7546ce35be2b3e24556305d89bcedd58383",
+      "exact_final_head": false,
+      "note": "Collected before the final nested-output guard and four tests were added. Final focused rerun passed; hosted CI checks the exact final head."
+    },
+    "initial_test_collection": {
+      "status": "failed",
+      "cause": "Test fixture imports omitted tests package prefix",
+      "fixed_before_execution": true
+    },
+    "ci": {
+      "run": 34738211509,
+      "job": 103673309188,
+      "status_at_capture": "in_progress",
+      "conclusion_at_capture": null,
+      "source_revision": "909e0eb43a1757de027ca7e90f75bc21027b4acb",
+      "lua_install_passed": true
+    }
+  },
+  "native_fixture_executed": false,
+  "native_coverage_validated": false,
+  "production_coverage": "inconclusive",
+  "independent_production_oracle": false,
+  "complete_flow_attribution": false,
+  "checkpoint_binding": false,
+  "agent_observation_changed": false,
+  "active_source_or_image_changed": false,
+  "website_changed": false,
+  "active_campaign": {
+    "saved_decision": 452,
+    "saved_elapsed_ticks": 301050,
+    "current_window": "453-516",
+    "actual_reload_verified": true,
+    "coordinator_sole_runtime_owner": true
+  },
+  "main_merged": false,
+  "new_cloud_vms": 0,
+  "new_paid_model_calls": 0,
+  "full_goal_complete": false,
+  "remaining": [
+    "Native binding run after coordinator releases sole local runtime",
+    "Controlled production with independent oracle",
+    "Cancellation and multi-output coverage",
+    "Noninterference and overhead control",
+    "Checkpoint/reload measurement binding",
+    "Production and consumption attribution"
+  ]
+}
+

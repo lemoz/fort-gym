@@ -23,7 +23,25 @@ retains seven living dwarves, seven beds, three workshops and one farm after
 46,400 elapsed ticks. The [complete descriptive comparison](../experiments/evidence/selected_workshop_v2_cohort_20260912.json)
 preserves all outcomes without claiming a control ranking or independent worlds.
 
-The latest [Astra Medium endurance save and actual reload are verified through decision388](../experiments/evidence/astra_keyboard_endurance_388_20260913.json):
+The latest [Astra Medium endurance save and actual reload are verified through decision452](../experiments/evidence/astra_keyboard_endurance_452_20260913.json):
+301,050 elapsed ticks (about 75% of one game year), nineteen living dwarves,
+nine beds, four workshops, three farms, 134 food and 29 drinks, with no recorded
+deaths. The window added 66,000 requested and actual ticks, with all 64 actions
+accepted and all 235 keys confirmed; no clock timeouts or deferrals occurred.
+Stocks fell from 184 food / 88 drinks. That decline is not an attributed
+consumption rate, and sustainability remains unmeasured. Cumulative returned
+usage is 14,136,731 tokens; actual subscription charges remain unreported.
+The [fourth automatic handoff](../experiments/evidence/astra_keyboard_endurance_sequence_handoff_452_20260913.json)
+verified save and teardown before the same coordinator launched 453–516.
+Actual reload restored the complete agent state, native clock/metrics and history
+prefixes. Decision453 confirmed one key with zero requested/actual ticks;
+public frame457 independently matched the original screen and chosen action.
+No budget append, manual relaunch or human gameplay rescue occurred. The
+389–452 replay is exported, not yet published. The public replay library remains
+at decision388 (29 recordings / 2,408 frames); the current live feed is separate.
+The 453–516 final save, Year Two and sustainability remain unverified.
+
+The preceding [Astra Medium endurance save and actual reload are verified through decision388](../experiments/evidence/astra_keyboard_endurance_388_20260913.json):
 235,050 elapsed ticks, nineteen living dwarves, nine beds, four workshops,
 three farms, 184 food and 88 drinks, with no recorded deaths. This window added
 65,950 actual ticks and eight living citizens. All 64 keyboard actions were
@@ -39,7 +57,8 @@ separate stopped-state/closed-disk checks passing. The original warning is retai
 The complete agent state, native clock/metrics and history prefixes matched on
 actual reload. Decision389 has a completed native execution record with 2,000
 actual ticks; public frame390 matched its original screenshot and chosen action.
-The same coordinator now owns decisions 389–452. That window is not yet audited.
+At that capture, the same coordinator owned decisions 389–452. Its final save
+and actual successor reload are now verified separately above.
 The [325–388 replay is now public](../experiments/evidence/astra_keyboard_endurance_388_website_20260913.json):
 29 recordings / 2,408 frames at website revision `5b2ed3510`. Local and exact-head
 remote suites each passed 1,312 Python tests with five skips and seven warnings.
@@ -116,8 +135,31 @@ the same coordinator finished 197–260, audited and exported the save, then lau
 [second actual successor handoff is also verified](../experiments/evidence/astra_keyboard_endurance_sequence_handoff_324_20260913.json):
 the same coordinator finished 261–324, audited and exported checkpoint324, then
 launched 325–388 with the exact saved state. The original plan and earlier event
-prefix remain unchanged. Later handoffs remain unverified. Do not start a
+prefix remain unchanged. Third and fourth handoffs are recorded above;
+subsequent handoffs remain unverified. Do not start a
 competing manual continuation while it is running.
+
+The [private native-observer probe candidate](../experiments/evidence/native_production_observer_probe_candidate_20260913.json)
+is pushed in draft PR183 at `909e0eb43a1757de027ca7e90f75bc21027b4acb`.
+It prepares a provider-free passive interval on a copied save, with direct RPC,
+unique observer ownership, hashed item/event boundaries, exact clock receipts,
+source revalidation and owned native-process teardown. It cannot provision or
+admit a VM and has not been run natively. No keys, job orders, item injection,
+continuation saves or model calls are part of the probe. Incomplete intervals
+stop without retries or menu rescue; production coverage remains inconclusive.
+The final focused suite passed 170 tests with one skip and two warnings, including
+46 new probe cases and 82 executed Lua-backed collector/adapter cases.
+Scoped lint, types, formatting, diff and CLI-help checks passed. The initial full
+local collection passed 5,869 tests with ten skips and seven warnings, but preceded
+the final output-path guard and four tests; it is not exact-final-head acceptance.
+Exact-head hosted CI was pending in that immutable capture. Its separately
+[verified CI completion](../experiments/evidence/native_production_observer_probe_ci_20260913.json)
+passed 5,874 tests with nine skips and seven warnings under Lua 5.3.6, including
+all 82 Lua-backed cases. Repository baselines remain ten Ruff errors and 465
+mypy errors in 27 unrelated files; the changed sources pass scoped checks.
+Controlled production
+with an independent oracle, native noninterference, overhead, attribution and
+checkpoint/reload binding remain open. The live campaign stays frozen.
 
 The [private inventory-observer candidate](../experiments/evidence/native_production_observer_inventory_candidate_20260913.json)
 is pushed in draft PR183 at `fb5688f62`. It adds paused food/drink item identities,
@@ -143,8 +185,8 @@ hosted CI passed 5,586 tests with 220 skips. Native event coverage, noninterfere
 checkpoint binding and complete flow attribution remain unverified or unimplemented.
 The [earlier candidate receipt](../experiments/evidence/native_production_observer_candidate_20260913.json)
 is preserved. Nothing is installed in the active campaign. Its unchanged
-coordinator now owns the 389–452 window, with the actual checkpoint388 reload
-and public frame390 verified separately above.
+coordinator now owns the 453–516 window, with the actual checkpoint452 reload
+and public frame457 verified separately above.
 
 An [input-level adaptation observation](../experiments/evidence/astra_keyboard_endurance_key_adaptation_20260913.json)
 retains decision89's unsupported keypad aliases and decision90's accepted arrow
