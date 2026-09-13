@@ -52,6 +52,27 @@ native-runtime change, restart, new VM or main merge was part of publication.
 Its mutation helpers are consumed. Combined native release promotion remains
 separate from this delivered static website update.
 
+The [refreshed combined release and source review](../experiments/evidence/year_two_release_outcomes_review_20260913.json)
+is pushed at `90e4c977cb49b1efbefda295b4bd27ec806ae98f` on
+`codex/year-two-release-outcomes`, with draft [PR #186](https://github.com/lemoz/fort-gym/pull/186).
+It now carries all 36 published recordings, 2,856 frames and four saved-outcome
+summaries while retaining the native harness, comparison reproducibility repair,
+batch-job guard, Campaigns navigation and supported protocol links. All 79 public
+web assets were compared; only three documented navigation/protocol differences
+remain. The original 32-recording manifest and all prior recording bytes remain
+unchanged. Full local validation passed 5,887 tests with ten skips and 55 warnings;
+160 focused tests and 98 Node checks passed. Scoped Ruff/mypy passed, while the
+full-tree baseline remains nine Ruff findings and 465 mypy errors.
+
+The draft-creation problem was resolved through the REST path. A fresh duplicate
+check then allowed the missing scheduler [PR #187](https://github.com/lemoz/fort-gym/pull/187)
+to be created at its unchanged `5957c4890ad05905bdea7c3519a71a096f73efef` head.
+Both hosted checks are running at this receipt boundary; neither PR is merged
+or deployed. The active native/coordinator sources remain clean and unchanged,
+and Astra continued through decision895 toward checkpoint900. This integration
+made no model calls, launched no VM and did not alter the published website.
+
+
 The previous verified [checkpoint772 and actual reload](../experiments/evidence/astra_keyboard_endurance_772_20260913.json) retained:
 496,250 elapsed ticks, eighteen living dwarves, one earlier recorded death,
 nine beds, five workshops, three farms, 134 food and 143 drinks. The

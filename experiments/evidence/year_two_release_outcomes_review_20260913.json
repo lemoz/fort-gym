@@ -1,0 +1,143 @@
+{
+  "schema_version": "year-two-release-outcomes-review/v1",
+  "verified_at_utc": "2026-09-13T10:17:55Z",
+  "candidate": {
+    "branch": "codex/year-two-release-outcomes",
+    "revision": "90e4c977cb49b1efbefda295b4bd27ec806ae98f",
+    "base_revision": "5957c4890ad05905bdea7c3519a71a096f73efef",
+    "remote": "https://github.com/lemoz/fort-gym.git",
+    "pushed": true,
+    "remote_revision_verified": true,
+    "worktree": "fort_gym/artifacts/worktrees/year-two-release-outcomes",
+    "clean_after_commit": true,
+    "changed_files": 23
+  },
+  "sources": {
+    "published_website_revision": "d5af4339a936a908e0caf34ecbdaa6a4ec5837cd",
+    "active_native_revision": "4b526b5636e6f568a4cae1a1227d746d9c6922c3",
+    "active_coordinator_revision": "4ce541fbe0cc20556744cd381298c31f1fb580a2",
+    "native_and_coordinator_clean_verified": true,
+    "manifest": "experiments/evidence/year_two_release_outcomes_source_20260913.json",
+    "manifest_sha256": "5b3bd64df0004a13541776f5fd74985ad932f3efac51755de99fdb389c457fda",
+    "consumed_importer_sha256": "367009104b78384fc6c81cf6e8e53935afa506c9f15efd099fced53b2324043d"
+  },
+  "coverage": {
+    "recordings": 36,
+    "frames": 2856,
+    "saved_outcome_endpoints": [
+      836,
+      772,
+      708,
+      644
+    ],
+    "latest_saved_elapsed_ticks": 552250,
+    "original_32_recordings_and_source_manifest_unchanged": true,
+    "protected_source_files": 263,
+    "published_web_assets_compared": 79,
+    "web_compatibility_differences": [
+      "web/landing.html",
+      "web/results.html",
+      "web/protocols.html"
+    ],
+    "test_compatibility_retained": "Cached get_settings fixture from the combined base"
+  },
+  "local_verification": {
+    "full_suite": {
+      "passed": 5887,
+      "skipped": 10,
+      "warnings": 55,
+      "duration_seconds": 302.95,
+      "junit_sha256": "81e5d63637b4b2d6b9b869e165e879a45c64e67c20bc1cfaf46fd8d6e4bb090f",
+      "junit_artifact": "fort_gym/artifacts/release-outcomes-review/full-local.xml"
+    },
+    "focused": {
+      "passed": 160,
+      "warnings": 51
+    },
+    "node": {
+      "passed": 98,
+      "failed": 0
+    },
+    "scoped_ruff": "passed",
+    "scoped_mypy": "passed",
+    "full_ruff": {
+      "findings": 9,
+      "inherited": true
+    },
+    "full_mypy": {
+      "errors": 465,
+      "files": 27,
+      "checked_source_files": 181,
+      "inherited": true
+    },
+    "initial_fixture_failure": {
+      "failed": 1,
+      "passed": 159,
+      "cause": "Published test's environment override did not replace the combined application's cached settings",
+      "fix": "Restored existing base fixture; focused and full runs then passed"
+    },
+    "ambient_ruff_discarded": "Initial PATH-resolved Anaconda Ruff used a noncomparable expanded rule set. Final baseline uses project-venv Ruff 0.15.21.",
+    "browser_visual_qa": false
+  },
+  "remote_review": {
+    "number": 186,
+    "url": "https://github.com/lemoz/fort-gym/pull/186",
+    "state": "OPEN",
+    "draft": true,
+    "head_verified": true,
+    "base": "codex/dfhack-job-serialization",
+    "ci": {
+      "run_id": 34751354318,
+      "status": "in_progress",
+      "conclusion": null
+    }
+  },
+  "prerequisite_review": {
+    "number": 187,
+    "url": "https://github.com/lemoz/fort-gym/pull/187",
+    "state": "OPEN",
+    "draft": true,
+    "head": "5957c4890ad05905bdea7c3519a71a096f73efef",
+    "base": "codex/year-two-reproducible-results",
+    "ci": {
+      "run_id": 34751447851,
+      "status": "in_progress",
+      "conclusion": null
+    },
+    "earlier_failed_attempts_preserved": true,
+    "recovery": "After REST creation succeeded for PR186, a fresh read confirmed no scheduler PR. One REST creation succeeded for PR187."
+  },
+  "public_read_only_verification": {
+    "catalog_sha256": "879324126b5767915d24dd894ac0174aa948e6adaeaedd49c231523533e4fe03",
+    "saved_outcomes_sha256": "5953aac42361031c75653c100b99ab26dcf722acd78afe58f3b6a7d3939a3a23",
+    "both_match_candidate": true,
+    "live": {
+      "decision": 888,
+      "status": "running",
+      "owner_alive": true,
+      "observed_at_unix": 1789294252
+    }
+  },
+  "active_campaign": {
+    "coordinator_continues": true,
+    "latest_observed_local_decision": 895,
+    "saved_checkpoint": 836,
+    "current_target": 900,
+    "response_ceiling": 1028,
+    "returned_token_ceiling": 40000000,
+    "new_launch": false,
+    "new_extension": false,
+    "human_gameplay_rescue": false
+  },
+  "boundaries": {
+    "active_experiment_changed": false,
+    "main_merged": false,
+    "pr176_changed": false,
+    "combined_application_deployed": false,
+    "website_deployed_by_this_slice": false,
+    "new_vm": false,
+    "model_calls_by_integration": false,
+    "private_observer_included": false,
+    "full_goal_complete": false
+  }
+}
