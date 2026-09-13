@@ -3,6 +3,7 @@ import {decodeScreen, glyph} from './home-watch-model.mjs';
 const integer = value => Number.isSafeInteger(value) && value >= 0;
 const hash = value => typeof value === 'string' && /^[a-f0-9]{64}$/.test(value);
 const identity = value => typeof value === 'string' && /^[a-z0-9-]{1,100}$/.test(value);
+const terminalAssessment = 'operating_at_declared_boundary_with_production_gaps';
 const evidence = value => value && Object.keys(value).sort().join(',') === 'sha256,url'
   && hash(value.sha256) && typeof value.url === 'string'
   && /^https:\/\/github\.com\/lemoz\/fort-gym\/blob\/[a-f0-9]{40}\/experiments\/evidence\/[a-z0-9_]+\.json$/.test(value.url);
@@ -19,7 +20,7 @@ const fields = ['recording_id','recording_sha256','source_recording_id','campaig
 function validInventoryScope(value) {
   const scope=value.inventory_scope;
   if (scope === undefined) return !['operating_with_workshop_development',
-    'operating_with_incident_recovery'].includes(value.functioning_assessment);
+    'operating_with_incident_recovery',terminalAssessment].includes(value.functioning_assessment);
   return scope && typeof scope === 'object' && !Array.isArray(scope)
     && Object.keys(scope).sort().join(',') === ['schema_version','food_trader_flagged_units',
       'food_nontrader_units','food_nontrader_start_units','drink_trader_flagged_units',
@@ -48,6 +49,20 @@ function validIncidentRecovery(value, recording) {
     glyph(tiles[x*height+y][0])).join('')).some(line=>line.includes(incident.announcement));
 }
 
+function validTermination(value) {
+  if (value.functioning_assessment !== terminalAssessment)
+    return value.termination === undefined && value.reload === undefined;
+  const end=value.termination;
+  return end && Object.keys(end).sort().join(',') ===
+      'next_decision_dispatched,reason,response_limit,schema_version'
+    && end.schema_version === 'fortgym.watch-terminal-boundary/v1'
+    && end.reason === 'declared_response_boundary_reached'
+    && integer(end.response_limit) && end.response_limit === value.saved_decision
+    && end.response_limit === value.total_responses && end.next_decision_dispatched === false
+    && evidence(value.reload) && value.reload.url !== value.result?.url
+    && value.reload.url !== value.review?.url;
+}
+
 export function validateSavedOutcomes(data) {
   if (!data || data.schema_version !== 'fortgym.watch-saved-outcomes/v1'
       || Object.keys(data).sort().join(',') !== 'outcomes,schema_version'
@@ -69,10 +84,11 @@ export function savedOutcome(data, recording, catalog) {
   const countFields = ['saved_decision','saved_elapsed_ticks','saved_year',
     'saved_year_tick','origin_year','origin_year_tick','ticks_per_year',
     'total_responses','total_tokens'];
-  const expectedFields=[...fields, ...['inventory_scope','incident_recovery'].filter(key=>value[key]!==undefined)];
+  const expectedFields=[...fields, ...['inventory_scope','incident_recovery','termination','reload'].filter(key=>value[key]!==undefined)];
   if (Object.keys(value).sort().join(',') !== [...expectedFields].sort().join(',')
       || !validInventoryScope(value)
       || !validIncidentRecovery(value, recording)
+      || !validTermination(value)
       || !row || !previous || previous.id === row.id
       || !identity(value.campaign_id) || !identity(value.source_recording_id)
       || !hash(value.recording_sha256) || value.recording_sha256 !== row.sha256
@@ -99,7 +115,7 @@ export function savedOutcome(data, recording, catalog) {
       || (value.saved_year - value.origin_year) * value.ticks_per_year
         + value.saved_year_tick - value.origin_year_tick !== value.saved_elapsed_ticks
       || value.fresh_reload_verified !== true || value.human_gameplay_rescue !== false
-      || !['operating_but_fragile','operating_with_adaptive_supply_recovery','operating_with_workshop_development','operating_with_incident_recovery'].includes(value.functioning_assessment)
+      || !['operating_but_fragile','operating_with_adaptive_supply_recovery','operating_with_workshop_development','operating_with_incident_recovery',terminalAssessment].includes(value.functioning_assessment)
       || value.sustainability_proven !== false
       || value.saved_elapsed_ticks < 403200
       || value.reported_model_charge_usd !== null
@@ -116,6 +132,8 @@ export function savedOutcomeSummary(value) {
   const m = value.saved_metrics;
   const assessment = value.functioning_assessment === 'operating_with_adaptive_supply_recovery'
     ? 'Operating with adaptive supply recovery at this saved endpoint. Long-term sustainability remains unproven.'
+    : value.functioning_assessment === terminalAssessment
+    ? 'Surviving at the declared stopping point, with unresolved production gaps. Long-term sustainability remains unproven.'
     : value.functioning_assessment === 'operating_with_incident_recovery'
     ? 'Operating with incident recovery at this saved endpoint. Captured game announcement before decision '
       + value.incident_recovery.before_decision + ': “' + value.incident_recovery.announcement
@@ -146,5 +164,8 @@ export function savedOutcomeHistory(value, recording) {
     + value.total_responses.toLocaleString() + ' cumulative responses and '
     + value.total_tokens.toLocaleString()
     + ' returned tokens. Subscription dollar charges were not reported. '
-    + 'This is the same campaign, not an independent trial.';
+    + 'This is the same campaign, not an independent trial.'
+    + (value.termination ? ' Stopped at the declared limit of '
+      + value.termination.response_limit.toLocaleString()
+      + ' responses, not a fortress collapse. No later gameplay decision was dispatched.' : '');
 }

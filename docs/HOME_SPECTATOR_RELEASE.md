@@ -1,5 +1,34 @@
 # Website-only spectator release
 
+## Final declared boundary at checkpoint1028
+
+The final replay adds decisions 965–1028 without changing any previous recording,
+catalog row, preview or saved outcome. The site now exposes 39 recordings and
+3,048 captured frames, with seven reviewed saved endpoints.
+
+The final fortress reached 765,895 elapsed ticks, 1.90 game years, with nineteen
+living dwarves and one earlier recorded death. The 1,028-response limit ended the
+run, not a native collapse. Non-trader food rose from 139 to 172 as merchant stock
+left the measured inventory. Drink stock declined; brewing was not observed in
+captured workers and the still queues were empty at the save. The assessment is
+operating at the declared boundary with unresolved production gaps, not proven
+self-sufficiency.
+
+The new optional terminal record binds the declared response limit to the saved
+cursor and response count. It requires a separate reload evidence reference.
+The player exposes that third link alongside the unchanged save and gameplay
+assessment links, and hides it for older recordings, invalid metadata and live
+mode. No older endpoint is relabelled. The separate reload restored full agent,
+usage/history and native state without another model turn, tick or save.
+
+The source records are pinned to
+`2264121ab02c693092d3cfbf378cacaf728f3bd5`: the final save, separate reload,
+and gameplay review under `experiments/evidence/astra_keyboard_endurance_1028_*`.
+Static module cache keys advance to checkpoint1028. This does not alter native
+services, database state, model conditions or gameplay. Public verification
+must still bind the tested deployment head, all 39 original recording hashes,
+all 15 public source references, and preserved service/database identities.
+
 User approved publishing the homepage on September 11, 2026. This release starts
 at the observed public server revision `47c035f117f2a8663c2b276160d546c49f47a5da`.
 It does not deploy the broader unpublished campaign/runtime stack.

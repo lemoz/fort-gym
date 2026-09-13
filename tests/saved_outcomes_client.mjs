@@ -8,6 +8,8 @@ const index = JSON.parse(fs.readFileSync('web/static/saved-outcomes.json'));
 const catalog = JSON.parse(fs.readFileSync('web/static/recordings/catalog.json')).recordings;
 const replay = id => JSON.parse(fs.readFileSync('web/static/recordings/'+id+'.json'));
 const newest = index.outcomes[0].recording_id;
+const incidentId='astra-keyboard-endurance-v1-901-964';
+const incidentPosition=index.outcomes.findIndex(value=>value.recording_id===incidentId);
 
 test('saved outcomes bind original recordings, native clocks, metrics and evidence links', () => {
   for (const value of index.outcomes) {
@@ -19,7 +21,8 @@ test('saved outcomes bind original recordings, native clocks, metrics and eviden
     assert.match(savedOutcomeSummary(value),value.functioning_assessment === 'operating_with_adaptive_supply_recovery'
       ? /Operating with adaptive supply recovery/ : value.functioning_assessment === 'operating_with_workshop_development'
       ? /Operating with workshop development/ : value.functioning_assessment === 'operating_with_incident_recovery'
-      ? /Operating with incident recovery/ : /Operating but fragile/);
+      ? /Operating with incident recovery/ : value.functioning_assessment === 'operating_at_declared_boundary_with_production_gaps'
+      ? /Surviving at the declared stopping point/ : /Operating but fragile/);
     assert.match(savedOutcomeHistory(value,recording),/dollar charges were not reported/);
     assert.match(savedOutcomeHistory(value,recording),/not an independent trial/);
     assert.equal(recording.campaign,undefined);
@@ -51,7 +54,7 @@ test('workshop development does not turn trader inventory into a production clai
 });
 
 for (const [key,value] of [
-  ['schema_version','unknown'],['food_trader_flagged_units',0],
+  ['schema_version','unknown'],['food_trader_flagged_units',1],
   ['food_trader_flagged_units',-1],['food_trader_flagged_units',true],
   ['food_nontrader_units',388],['food_nontrader_units',138.5],
   ['food_nontrader_start_units',-1],['food_nontrader_start_units',null],
@@ -86,7 +89,7 @@ for (const [field,value] of [
   assert.throws(()=>savedOutcome(changed,replay(newest),catalog));
 });
 
-for (const field of ['result','review']) test('rejects unsafe or incomplete '+field+' links', () => {
+for (const field of ['result','review','reload']) test('rejects unsafe or incomplete '+field+' links', () => {
   for (const value of [null,{url:'javascript:alert(1)',sha256:'a'.repeat(64)},
     {...index.outcomes[0][field],url:index.outcomes[0][field].url.replace('github.com','github.com.evil.test')},
     {...index.outcomes[0][field],sha256:'wrong'}, {...index.outcomes[0][field],private:'leak'}]) {
@@ -117,17 +120,48 @@ class Element {
   async emit(type) { for (const fn of this.listeners[type] || []) await fn({target:this}); }
 }
 const settle=async()=>{for(let n=0;n<10;n++)await new Promise(resolve=>setImmediate(resolve));};
+test('final outcome preserves its separate reload proof and declared stop',()=>{
+  const value=savedOutcome(index,replay(newest),catalog);
+  assert.equal(value.saved_decision,1028);
+  assert.equal(value.functioning_assessment,'operating_at_declared_boundary_with_production_gaps');
+  assert.match(savedOutcomeSummary(value),/Surviving at the declared stopping point/);
+  assert.match(savedOutcomeSummary(value),/Long-term sustainability remains unproven/);
+  assert.match(savedOutcomeHistory(value,replay(newest)),/not a fortress collapse/);
+  assert.equal(value.reload.sha256,'b9399c10b2da2ca8e62f0307b0d0f37c861e06c50aa92712c05f73478fac3756');
+  assert(index.outcomes.slice(1).every(row=>row.reload===undefined && row.termination===undefined));
+});
+for(const [key,value] of [
+  ['schema_version','unknown'],['reason','gameplay_collapse'],['response_limit',1029],
+  ['response_limit',1027],['response_limit',true],['next_decision_dispatched',true],
+  ['private_memory','DO_NOT_EXPORT'],
+])test('rejects forged terminal boundary: '+key,()=>{
+  const changed=structuredClone(index);changed.outcomes[0].termination[key]=value;
+  assert.throws(()=>savedOutcome(changed,replay(newest),catalog));
+});
+for(const field of ['termination','reload'])test('final outcome requires '+field,()=>{
+  for(const value of [undefined,null,[],{},'unknown']) {
+    const changed=structuredClone(index);
+    if(value===undefined)delete changed.outcomes[0][field];else changed.outcomes[0][field]=value;
+    assert.throws(()=>savedOutcome(changed,replay(newest),catalog));
+  }
+});
+test('final reload reference cannot masquerade as either existing evidence link',()=>{
+  for(const field of ['result','review']) {
+    const changed=structuredClone(index);changed.outcomes[0].reload=changed.outcomes[0][field];
+    assert.throws(()=>savedOutcome(changed,replay(newest),catalog));
+  }
+});
 
 test('incident recovery is bound to the native announcement, not the action intent',()=>{
-  const value=savedOutcome(index,replay(newest),catalog);
+  const value=savedOutcome(index,replay(incidentId),catalog);
   assert.equal(value.functioning_assessment,'operating_with_incident_recovery');
   assert.equal(value.incident_recovery.before_decision,954);
   assert.match(savedOutcomeSummary(value),/Avuz Kàsfikod, Ghostly Mason has been put to rest/);
   assert.match(savedOutcomeSummary(value),/139 non-trader food units/);
   assert.match(savedOutcomeSummary(value),/Drink inventory: 531 units/);
   assert.match(savedOutcomeSummary(value),/Long-term sustainability remains unproven/);
-  assert(index.outcomes.slice(1).every(value=>value.incident_recovery===undefined));
-  const changed=replay(newest);
+  assert(index.outcomes.filter(value=>value.recording_id!==incidentId).every(value=>value.incident_recovery===undefined));
+  const changed=replay(incidentId);
   changed.frames.find(frame=>frame.decision===954).screen=changed.frames[0].screen;
   assert.throws(()=>savedOutcome(index,changed,catalog));
 });
@@ -136,22 +170,23 @@ for (const [key,value] of [
   ['before_decision',965],['before_decision',true],['announcement',''],
   ['announcement','Another Ghostly Mason has been put to rest.'],['private_memory','DO_NOT_EXPORT'],
 ]) test('rejects unsupported incident claim: '+key+'='+value,()=>{
-  const changed=structuredClone(index); changed.outcomes[0].incident_recovery[key]=value;
-  assert.throws(()=>savedOutcome(changed,replay(newest),catalog));
+  const changed=structuredClone(index); changed.outcomes[incidentPosition].incident_recovery[key]=value;
+  assert.throws(()=>savedOutcome(changed,replay(incidentId),catalog));
 });
 test('incident label requires captured evidence and cannot relabel an earlier outcome',()=>{
   for(const incident of [undefined,null,[],{},'unknown']) {
     const changed=structuredClone(index);
-    if(incident===undefined)delete changed.outcomes[0].incident_recovery;
-    else changed.outcomes[0].incident_recovery=incident;
-    assert.throws(()=>savedOutcome(changed,replay(newest),catalog));
+    if(incident===undefined)delete changed.outcomes[incidentPosition].incident_recovery;
+    else changed.outcomes[incidentPosition].incident_recovery=incident;
+    assert.throws(()=>savedOutcome(changed,replay(incidentId),catalog));
   }
   const changed=structuredClone(index);
-  changed.outcomes[1].incident_recovery=index.outcomes[0].incident_recovery;
-  assert.throws(()=>savedOutcome(changed,replay(changed.outcomes[1].recording_id),catalog));
+  const earlier=changed.outcomes.find(value=>value.saved_decision===900);
+  earlier.incident_recovery=index.outcomes[incidentPosition].incident_recovery;
+  assert.throws(()=>savedOutcome(changed,replay(earlier.recording_id),catalog));
 });
 
-for (const mode of ['valid','unavailable','invalid','invalid-inventory','invalid-incident','delayed']) test('real player preserves replay and evidence state: '+mode,async()=>{
+for (const mode of ['valid','unavailable','invalid','invalid-inventory','invalid-termination','delayed']) test('real player preserves replay and evidence state: '+mode,async()=>{
   const originals=Object.fromEntries(['document','fetch','location','setInterval','clearInterval'].map(key=>[key,globalThis[key]]));
   const elements=new Map(), timers=[];
   for(const match of fs.readFileSync('web/landing.html','utf8').matchAll(/id="(watch-[^"]+)"/g))
@@ -170,13 +205,13 @@ for (const mode of ['valid','unavailable','invalid','invalid-inventory','invalid
         const value=structuredClone(index);
         if(mode==='invalid') value.outcomes[0].recording_sha256='0'.repeat(64);
         if(mode==='invalid-inventory') value.outcomes[0].inventory_scope.food_nontrader_units=388;
-        if(mode==='invalid-incident') value.outcomes[0].incident_recovery.before_decision=953;
+        if(mode==='invalid-termination') value.outcomes[0].termination.reason='gameplay_collapse';
         return {ok:true,json:async()=>value};
       }
       return {ok:true,json:async()=>url.includes('watch-active') ? live : JSON.parse(fs.readFileSync('web'+url))};
     };
     await import('../web/static/home-watch.mjs?saved-outcome-test='+mode); await settle();
-    assert.equal(get('decision').textContent,'Decision 901 / 964');
+    assert.equal(get('decision').textContent,'Decision 965 / 1028');
     assert.equal(get('play').disabled,false);
     if(mode==='delayed') {
       assert.equal(get('outcome').hidden,true);
@@ -189,19 +224,23 @@ for (const mode of ['valid','unavailable','invalid','invalid-inventory','invalid
     if(mode==='valid'||mode==='delayed') {
       assert.equal(get('outcome').hidden,false);
       assert.equal(get('outcome-status').hidden,true);
-      assert.match(get('outcome-summary').textContent,/19 living dwarves.*139 non-trader food units/);
-      assert.match(get('outcome-summary').textContent,/250 trader-flagged/);
+      assert.match(get('outcome-summary').textContent,/19 living dwarves.*172 non-trader food units/);
+      assert.match(get('outcome-summary').textContent,/0 trader-flagged/);
       assert.equal(get('result').href,index.outcomes[0].result.url);
       assert.equal(get('reload').href,index.outcomes[0].review.url);
+      assert.equal(get('fresh-reload').href,index.outcomes[0].reload.url);
+      assert.equal(get('fresh-reload').hidden,false);
+      assert.match(get('recovery').textContent,/Stopped at the declared limit of 1,028 responses, not a fortress collapse/);
       assert.equal(get('reload').textContent,'Inspect the gameplay assessment →');
-      assert.equal(get('prior').href,'/?recording=astra-keyboard-endurance-v1-837-900#watch-root');
+      assert.equal(get('prior').href,'/?recording=astra-keyboard-endurance-v1-901-964#watch-root');
       get('range').value='5'; await get('range').emit('input');
-      assert.equal(get('decision').textContent,'Decision 906 / 964');
+      assert.equal(get('decision').textContent,'Decision 970 / 1028');
       assert.equal(get('execution').textContent,'Key command accepted by the harness. Acceptance does not prove the intended outcome.');
       // The previous replay retains its rejected input and its own endpoint links.
       await get('runs').children.find(node=>node.dataset.recording==='astra-keyboard-endurance-v1-645-708').emit('click'); await settle();
       assert.equal(get('result').href,index.outcomes.find(row=>row.recording_id==='astra-keyboard-endurance-v1-645-708').result.url);
       assert.match(get('outcome-summary').textContent,/75 food units and 93 drinks/);
+      assert.equal(get('fresh-reload').hidden,true);
       get('range').value='24'; await get('range').emit('input');
       assert.equal(get('decision').textContent,'Decision 669 / 708');
       assert.equal(get('execution').textContent,'Key command was not accepted.');
@@ -210,7 +249,7 @@ for (const mode of ['valid','unavailable','invalid','invalid-inventory','invalid
       assert.equal(get('outcome').hidden,true);
       assert.equal(get('outcome-status').hidden,false);
       await get('next').emit('click');
-      assert.equal(get('decision').textContent,'Decision 902 / 964');
+      assert.equal(get('decision').textContent,'Decision 966 / 1028');
     }
     live={schema_version:'fortgym.watch-live/v1',status:'running',run_id:'current',model:'gpt-6-astra',
       observed_at_unix:Math.floor(Date.now()/1000),fresh_for_seconds:30,
@@ -219,5 +258,6 @@ for (const mode of ['valid','unavailable','invalid','invalid-inventory','invalid
     assert.equal(get('outcome').hidden,true);
     assert.equal(get('outcome-status').hidden,true);
     assert.equal(get('prior').hidden,true);
+    assert.equal(get('fresh-reload').hidden,true);
   } finally { Object.assign(globalThis,originals); }
 });
