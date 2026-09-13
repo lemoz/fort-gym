@@ -13,7 +13,30 @@ This summary supersedes the capture-time running/preparation statements in the
 historical sections below. Original result manifests and earlier evidence are
 unchanged. The full Year-Two/cross-model goal is still active.
 
-The latest [endurance save and actual reload](../experiments/evidence/astra_keyboard_endurance_516_20260913.json)
+The latest [endurance save and actual reload](../experiments/evidence/astra_keyboard_endurance_580_20260913.json)
+are verified through decision580: 403,050 elapsed ticks, nineteen living dwarves,
+nine beds, four workshops, three farms, 73 food and 130 drinks, with no recorded
+deaths. All 64 actions and 216 keys were accepted/confirmed, and all 58,000
+requested ticks advanced without timeouts or deferrals. Food fell from 170 to
+73 while drinks rose from 29 to 130; stock changes remain unattributed.
+Cumulative returned usage is 17,698,403 tokens, with one inherited budget
+extension and unknown actual charges.
+
+The [sixth automatic handoff](../experiments/evidence/astra_keyboard_endurance_sequence_handoff_580_20260913.json)
+verified save and stopped-state/closed-disk teardown before launching 581–644.
+The guest-poweroff wrapper returned 1, followed by a successful VM stop that
+reported it already not running; original command results are retained.
+Actual reload restored whole agent state, native clock/metrics and trace/usage
+prefixes. Decision581 confirmed one key and 2,000 actual ticks, reaching 405,050
+elapsed ticks with nineteen living citizens and zero recorded deaths. This
+crossed the first anniversary, but the running window has no verified later
+checkpoint yet. Public frame582 matched the original screen and chosen action.
+The immutable plan and first seventeen event lines are unchanged. The
+517–580 replay is exported; website publication is pending exact-head checks.
+The post-anniversary save and functioning-fortress assessment remain open.
+
+
+The preceding [endurance save and actual reload](../experiments/evidence/astra_keyboard_endurance_516_20260913.json)
 are verified through decision516: 345,050 elapsed ticks, nineteen living dwarves,
 nine beds, four workshops, three farms, 170 food and 29 drinks, with no recorded
 deaths. All 64 actions were accepted and all 209 keys confirmed. All 44,000
@@ -587,15 +610,15 @@ reserves or self-sufficiency. No hints were sent to the model.
    128-response attempts to manufacture a longer-duration comparison.
 2. Continue the active, separate PR181 Astra endurance campaign through its
    declared save boundaries. Its initial four-response save and actual own-save
-   reload are verified, and checkpoint516 has now saved and freshly reloaded.
-   The automatic coordinator now owns the 517–580 window and later serial
+   reload are verified, and checkpoint580 has now saved and freshly reloaded.
+   The automatic coordinator now owns the 581–644 window and later serial
    handoffs under the existing limits. Observe that same coordinator; do not
    manually relaunch a window. Publish actual replay batches after their audits.
    The 403,200-tick anniversary is a milestone, not the stop condition or proof
    of a functioning fortress. Each continuation is not an independent trial.
 3. The portable cumulative-budget path now has an actual append, saved extension
-   through checkpoint516 and inherited-limit fresh reload, with memory/usage preserved.
-   Verify the current inherited-budget window's final save at decision580 next.
+   through checkpoint580 and inherited-limit fresh reload, with memory/usage preserved.
+   Verify the current post-anniversary window's final save at decision644 next.
    Do not append repeatedly, reset accounting, change the condition, migrate
    old controls saves or replace the running owner to obtain a passing result.
    The unchanged frozen source `5ddf1e6718dab2e8351e8dc24a2afe5071cd2592`

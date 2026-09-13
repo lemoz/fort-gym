@@ -14,6 +14,29 @@ cohort below. Long-term self-sufficiency and the full delivery goal remain open.
 
 ## Current experiment summary
 
+The latest [endurance save and actual reload](../experiments/evidence/astra_keyboard_endurance_580_20260913.json)
+are verified through decision580: 403,050 elapsed ticks, nineteen living dwarves,
+nine beds, four workshops, three farms, 73 food and 130 drinks, with no recorded
+deaths. All 64 actions and 216 keys were accepted/confirmed, and all 58,000
+requested ticks advanced without timeouts or deferrals. Food fell from 170 to
+73 while drinks rose from 29 to 130; stock changes remain unattributed.
+Cumulative returned usage is 17,698,403 tokens, with one inherited budget
+extension and unknown actual charges.
+
+The [sixth automatic handoff](../experiments/evidence/astra_keyboard_endurance_sequence_handoff_580_20260913.json)
+verified save and stopped-state/closed-disk teardown before launching 581–644.
+The guest-poweroff wrapper returned 1, followed by a successful VM stop that
+reported it already not running; original command results are retained.
+Actual reload restored whole agent state, native clock/metrics and trace/usage
+prefixes. Decision581 confirmed one key and 2,000 actual ticks, reaching 405,050
+elapsed ticks with nineteen living citizens and zero recorded deaths. This
+crossed the first anniversary, but the running window has no verified later
+checkpoint yet. Public frame582 matched the original screen and chosen action.
+The immutable plan and first seventeen event lines are unchanged. The
+517–580 replay is exported; website publication is pending exact-head checks.
+The post-anniversary save and functioning-fortress assessment remain open.
+
+
 The [decision453–516 gameplay review](../experiments/evidence/astra_keyboard_endurance_516_gameplay_review_20260913.json)
 finds observable adaptation attempts, not a demonstrated solution to drink supply.
 Recorded screens show inactive plant brewing, a fruit-brewing task later assigned
@@ -57,7 +80,7 @@ retains seven living dwarves, seven beds, three workshops and one farm after
 46,400 elapsed ticks. The [complete descriptive comparison](../experiments/evidence/selected_workshop_v2_cohort_20260912.json)
 preserves all outcomes without claiming a control ranking or independent worlds.
 
-The latest [Astra Medium endurance save and actual reload are verified through decision516](../experiments/evidence/astra_keyboard_endurance_516_20260913.json):
+The preceding [Astra Medium endurance save and actual reload are verified through decision516](../experiments/evidence/astra_keyboard_endurance_516_20260913.json):
 345,050 elapsed ticks (about 86% of one game year), nineteen living dwarves,
 nine beds, four workshops, three farms, 170 food and 29 drinks, with no recorded
 deaths. All 64 actions and 209 requested keys were accepted/confirmed; all 44,000
