@@ -34,7 +34,23 @@ one key and advanced 2,000 ticks; public frame839 matched its original screen
 and chosen action with the owner alive. The sole coordinator continues toward
 checkpoint900 under the unchanged 1,028-response/40-million-token ceiling. No
 new budget extension, runtime/model/prompt/control change or human rescue was
-introduced. The new replay is exported; its website publication is still pending.
+introduced. The original capture's publication flag is preserved as a snapshot.
+
+The [773–836 replay and reviewed outcome are now publicly verified](../experiments/evidence/astra_keyboard_endurance_836_website_20260913.json)
+at `d5af4339a936a908e0caf34ecbdaa6a4ec5837cd`. The site now has 36 recordings and
+2,856 captured frames, with saved-outcome panels for 644, 708, 772 and 836.
+The new summary says operating with adaptive supply recovery; earlier labels
+and all 35 prior recording files, catalog rows, previews and three outcome
+entries remain unchanged. All 34 focused Python, 102 Node, 25 importer and the
+all-64-frame player checks passed. Local and hosted full suites each passed
+1,322 tests with five skips and seven warnings. Eight public source receipts
+and all 36 recordings were checked against exact published bytes. The live feed
+continued through decision865. Homepage, Results and core player code, service
+identities, database counts and host-local files were unchanged; the saved-outcome
+validator/summary supports the additional reviewed label. No browser visual QA,
+native-runtime change, restart, new VM or main merge was part of publication.
+Its mutation helpers are consumed. Combined native release promotion remains
+separate from this delivered static website update.
 
 The previous verified [checkpoint772 and actual reload](../experiments/evidence/astra_keyboard_endurance_772_20260913.json) retained:
 496,250 elapsed ticks, eighteen living dwarves, one earlier recorded death,
@@ -61,8 +77,8 @@ At that boundary the sole coordinator continued toward checkpoint836 under the u
 1,028-response/40-million-token ceiling. No new allowance, model/prompt/control
 change, competing native owner or human rescue was introduced.
 
-The [709–772 replay and reviewed outcome are now publicly verified](../experiments/evidence/astra_keyboard_endurance_772_website_20260913.json)
-at `1cc292acf1584c10b6eb0d6929207aa8d7d32dca`. The site has 35 recordings and
+The [709–772 replay and reviewed outcome were publicly verified](../experiments/evidence/astra_keyboard_endurance_772_website_20260913.json)
+at `1cc292acf1584c10b6eb0d6929207aa8d7d32dca`. That release had 35 recordings and
 2,792 captured frames, with saved-outcome panels for checkpoints 644, 708 and 772.
 All 34 older recordings, catalog rows and previews and both earlier outcome
 entries are unchanged. All 33 focused Python, 101 Node, 25 importer and the
