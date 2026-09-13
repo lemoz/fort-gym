@@ -37,8 +37,17 @@ Actual reload restored the complete agent state, native clock/metrics and histor
 prefixes. Decision453 confirmed one key with zero requested/actual ticks;
 public frame457 independently matched the original screen and chosen action.
 No budget append, manual relaunch or human gameplay rescue occurred. The
-389–452 replay is exported, not yet published. The public replay library remains
-at decision388 (29 recordings / 2,408 frames); the current live feed is separate.
+[389–452 replay is now public](../experiments/evidence/astra_keyboard_endurance_452_website_20260913.json):
+30 recordings / 2,472 frames at website revision `06259dfbc`. Local and exact-head
+remote suites each passed 1,313 Python tests with five skips and seven warnings.
+All 66 Node, 23 importer and 25 focused Python checks passed. An additional
+player test scrubbed all 64 new frames and verified actions, population, saved
+boundaries and navigation. An initial expected-catalog-order assertion was
+updated to include the new recording; the native replay stayed unchanged.
+HTTPS verified every recording and the live feed at decision483. All 29 earlier
+recording files, rows and previews, service identities, database counts and
+host-local files were preserved. No service restart, main merge or native
+campaign change occurred. The current live feed remains separate from replays.
 The 453–516 final save, Year Two and sustainability remain unverified.
 
 The preceding [Astra Medium endurance save and actual reload are verified through decision388](../experiments/evidence/astra_keyboard_endurance_388_20260913.json):
