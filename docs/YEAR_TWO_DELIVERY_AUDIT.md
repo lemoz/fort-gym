@@ -22,7 +22,18 @@ deferral, 63 accepted keyboard actions and one rejection. Original outcomes are 
 teardown passed before the next window restored the complete saved agent state,
 native clock/metrics and original history. The single budget append is unchanged.
 Decisions 197–260 are running, with public frame198 independently verified.
-The 133–196 replay is exported, not yet published.
+The [133–196 replay is now publicly verified](../experiments/evidence/astra_keyboard_endurance_196_website_20260913.json)
+at website revision `a0bf019b7eec2cb9144ae34d7cae638dd2f7dd8f`: 26 recordings
+and 2,216 frames. All 25 prior recording files, rows and previews are unchanged.
+Local and exact-head CI each passed 1,309 Python tests with five skips; local
+warnings were eight, hosted warnings seven. All 66 Node interaction checks and
+23 importer checks passed. The importer tests retain their pinned fixture after
+import. The initial focused title assertion failure was corrected to use the
+validated latest catalog row; the focused rerun passed all 24 tests.
+Public HTTPS verified every recording and the live campaign at decision233.
+Service identities, database counts, host-local files, coordinator and native
+runtime were preserved. No new infrastructure, service restart, gameplay input,
+manual continuation or main merge occurred.
 The [new nonoverlapping 64-frame replay is publicly verified](../experiments/evidence/astra_keyboard_endurance_132_website_20260913.json)
 at revision `2adee475b5c0ddcb1256bd74ff8fdf6f14662377`: 25 recordings / 2,152
 frames. All 24 prior recordings, rows and previews are unchanged. Local and
