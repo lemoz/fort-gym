@@ -14,6 +14,19 @@ cohort below. Long-term self-sufficiency and the full delivery goal remain open.
 
 ## Current experiment summary
 
+Delivery follow-up: the [goal audit](GOAL_DELIVERY_AUDIT_20260913.md) found and
+closed a controls-study reproducibility gap. The combined candidate now includes
+the unchanged declaration, all six paired results, aggregate summary and read-only
+comparison command at `26edd37c0f5946bfb4f0a98d30ae432d8d590e7f` in existing
+[draft PR #186](https://github.com/lemoz/fort-gym/pull/186). The
+[new review receipt](../experiments/evidence/controls_study_release_review_20260913.json)
+records 175 focused passes, 5,946 local passes with ten skips, and 5,783 hosted
+passes with 173 skips. Both full suites reported 58 warnings. Scoped Ruff passed;
+Black was unavailable. Native runtime, conditions, recordings and website files
+are unchanged. Next is the public paired-controls Results panel and its release
+integration, followed by the remaining review and permitted merged delivery.
+No new gameplay window or model call was used to close this gap.
+
 The declared endurance run is complete at **1,028 decisions and 765,895 elapsed
 ticks (1.90 game years)**. The [final save](../experiments/evidence/astra_keyboard_endurance_1028_save_20260913.json),
 [separate native reload](../experiments/evidence/astra_keyboard_endurance_1028_reload_20260913.json)

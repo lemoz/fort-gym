@@ -1,0 +1,119 @@
+{
+  "schema_version": "fortgym.controls-study-release-review/v1",
+  "date_utc": "2026-09-13",
+  "candidate": {
+    "revision": "26edd37c0f5946bfb4f0a98d30ae432d8d590e7f",
+    "base_revision": "5e7f0fddb475bcb8e6c3943f4d42e2817188689f",
+    "branch": "codex/year-two-release-outcomes",
+    "changed_files": 14,
+    "original_files_imported_unchanged": 10,
+    "original_public_evidence_source": "e36e95b1eea9cf38754cd02630b45496a1260936",
+    "source_manifest": "experiments/evidence/controls_study_release_source_20260913.json",
+    "source_manifest_sha256": "a6fd00b1ebeb21c753ad5d05cf3f1a6e8143ea76f9abf1963703130aefedeb29",
+    "consumed_importer_sha256": "c6e151dfddc03223ac1921bdd5c6a941107029fd798555dccd61d10426b1a903"
+  },
+  "source_review": {
+    "reviewer": "implementer",
+    "independent_approval": false,
+    "standalone_summarizer_and_both_test_modules_read": true,
+    "original_summary_reproduced_byte_for_byte": true,
+    "all_six_results_bound_to_retained_replay_audits_profiles_actions_ticks": true,
+    "original_condition_bytes_unchanged": true,
+    "native_runtime_and_website_unchanged_from_base": true,
+    "dependencies_unchanged": true
+  },
+  "study": {
+    "attempts": 6,
+    "paired_repetitions": 3,
+    "common_response_boundary": 128,
+    "models": [
+      "gpt-6-astra"
+    ],
+    "reasoning_effort": "medium",
+    "starting_seeds": 1,
+    "returned_tokens": 22995467,
+    "reported_charge_usd": null,
+    "strong_ranking": false,
+    "sustainability_proven": false,
+    "final_128_checkpoint_new_reload_claim": false
+  },
+  "local_tests": {
+    "focused": {
+      "passed": 175,
+      "warnings": 3,
+      "seconds": 17.11,
+      "junit_artifact": "fort_gym/artifacts/release-controls-reproducibility-review/focused.xml",
+      "junit_sha256": "b1062d66a0aa38115ca2f809d9ebd9b066aefe84be27f5517994fc412bf6a86d"
+    },
+    "controls_only_passed": 50,
+    "scoped_ruff_passed": true,
+    "full": {
+      "passed": 5946,
+      "skipped": 10,
+      "warnings": 58,
+      "seconds": 293.9,
+      "junit_artifact": "fort_gym/artifacts/release-controls-reproducibility-review/full-local.xml",
+      "junit_sha256": "357b2b16877881f2b6aca39c5e630ffdf3aac8166ff44557a8ad3bef084ffe0b"
+    },
+    "black_check": {
+      "completed": false,
+      "reason": "Black is not installed in the existing repository virtual environment."
+    }
+  },
+  "prior_global_static_baseline": {
+    "source_revision": "5e7f0fddb475bcb8e6c3943f4d42e2817188689f",
+    "ruff_findings": 9,
+    "mypy_errors": 465,
+    "mypy_error_files": 27,
+    "rerun_at_this_head": false,
+    "native_files_unchanged": true
+  },
+  "remote": {
+    "pr": 186,
+    "url": "https://github.com/lemoz/fort-gym/pull/186",
+    "draft": true,
+    "base_branch": "codex/dfhack-job-serialization",
+    "pushed_exact_head_verified": true,
+    "main_revision_observed": "f1aa05f429c189b67891cf2629e8e00329222aca",
+    "main_merged": false
+  },
+  "fresh_revalidations": {
+    "final_native_checkpoint": 1028,
+    "original_record_match_excluding_observed_time": true,
+    "native_observed_at_unix": 1789306569,
+    "public_website_revision": "62427fce64590b0b958e4618c36aab31586c41c2",
+    "public_recordings": 39,
+    "public_frames": 3048,
+    "public_saved_outcomes": 7,
+    "public_source_references": 15,
+    "public_https_bytes_reverified": true,
+    "fresh_browser_visual_qa": false,
+    "fresh_service_identity_inspection": false
+  },
+  "boundaries": {
+    "model_calls": 0,
+    "gameplay_actions": 0,
+    "vm_starts": 0,
+    "website_changed": false,
+    "combined_application_deployed": false,
+    "service_restarts": 0,
+    "database_mutations": 0,
+    "original_evidence_preserved": true,
+    "full_goal_complete": false
+  },
+  "remaining_delivery": [
+    "Public paired-controls aggregate panel and corresponding combined-release update",
+    "Remaining exact-source review and permitted merged delivery"
+  ],
+  "hosted_tests": {
+    "passed": 5783,
+    "skipped": 173,
+    "warnings": 58,
+    "seconds": 396.18,
+    "ci_run": 34760767874,
+    "ci_job": 103733085542,
+    "summary_utc": "2026-09-13T13:53:22.5067086Z",
+    "source_revision": "26edd37c0f5946bfb4f0a98d30ae432d8d590e7f",
+    "conclusion": "success"
+  }
+}
