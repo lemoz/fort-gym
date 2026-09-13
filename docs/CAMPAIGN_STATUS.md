@@ -42,6 +42,24 @@ tokens accounted at the save and subscription charges unreported. No source,
 model, prompt, control or budget change, new VM or human rescue was introduced.
 The 901–964 replay is exported but remains unpublished by this native receipt.
 
+The [901–964 replay and incident-recovery outcome are now publicly verified](../experiments/evidence/astra_keyboard_endurance_964_website_20260913.json)
+at `28cbf0ac230e401719447aa7a0bf814795007104`. The site has 38 recordings,
+2,984 captured frames and six reviewed saved endpoints. All 37 prior recordings,
+catalog/preview rows and five previous outcomes are unchanged. The incident
+summary binds the exact ghost-resolution announcement to the native screen
+before decision 954; intent alone cannot enable the outcome. Food ownership
+qualification and unknown drink ownership remain explicit.
+
+The exact website head passed 1,325 local and hosted tests (five skips), 127 Node
+checks, 25 importer checks and an all-64-frame player test. Twelve public source
+receipts matched. Public HTTPS bytes and original recording hashes passed; live
+frame 994 still had the sole owner alive. Both service identities, database
+counts, host-local files, Results and player logic were preserved. Only import
+cache keys changed outside the new outcome renderer and gallery/data update.
+No native change, service restart, new VM, main merge or combined candidate
+deployment occurred. The original native publication flag stays untouched; the
+separate website receipt records delivery. The full goal remains open.
+
 The [checkpoint 900 capture and actual reload](../experiments/evidence/astra_keyboard_endurance_900_20260913.json)
 and [detailed gameplay review](../experiments/evidence/astra_keyboard_endurance_900_gameplay_review_20260913.json)
 are now complete. The fort saved at 606,650 elapsed ticks with nineteen living
