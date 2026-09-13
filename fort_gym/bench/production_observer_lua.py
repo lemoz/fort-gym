@@ -16,10 +16,15 @@ local function new_production_observer(df, dfhack, eventful, config)
     assert(integer(config.segment_id))
     assert(integer(config.max_events) and config.max_events >= 1
         and config.max_events <= 8192)
+    local max_inventory_items = config.max_inventory_items
+    if max_inventory_items == nil then max_inventory_items = 8192 end
+    assert(integer(max_inventory_items) and max_inventory_items >= 1
+        and max_inventory_items <= 65536)
     assert(type(config.expected_root) == 'string'
         and config.expected_root:sub(1, 1) == '/')
     config = {campaign_id=config.campaign_id, segment_id=config.segment_id,
-        max_events=config.max_events, expected_root=config.expected_root}
+        max_events=config.max_events, expected_root=config.expected_root,
+        max_inventory_items=max_inventory_items}
     assert(dfhack.getDFVersion() == 'v0.47.05 linux64')
     assert(dfhack.getDFHackVersion() == '0.47.05-r8')
     local key = 'fortgym_production_observer_v1'
@@ -217,6 +222,89 @@ local function new_production_observer(df, dfhack, eventful, config)
     function api.stop()
         stop('explicit_stop')
         if eventful.onUnload[key] == on_unload then eventful.onUnload[key] = nil end
+    end
+    function api.inventory_snapshot()
+        assert(installed, 'inventory requires an installed collector')
+        local result = {
+            schema_version = 'fortgym.private-production-inventory/v1',
+            campaign_id = config.campaign_id, segment_id = config.segment_id,
+            df_version = 'v0.47.05 linux64', dfhack_version = '0.47.05-r8',
+            source = 'world.items.other.IN_PLAY', predicate_argument = 0,
+            scope = 'DRINK or isEdibleRaw(0); not ownership, accessibility or flow',
+            observer_start = copy(origin), event_sequence = sequence,
+            max_inventory_items = config.max_inventory_items,
+            start = false, endpoint = false, expected_items = false,
+            scanned_items = 0, omitted_items = false, excluded_items = 0,
+            nonfood_items = 0, duplicate_items = 0, item_read_failures = 0,
+            list_read_failures = 0, boundary_read_failures = 0,
+            items = {}, complete = false, units = false,
+            native_coverage_validated = false, agent_observation = false,
+            accessibility = 'not_measured', attribution = 'unattributed',
+        }
+        local before_ok, before = pcall(function() return boundary(true) end)
+        if not before_ok then
+            result.boundary_read_failures = 1
+            return result
+        end
+        result.start = before
+        local seen, totals = {}, {food=0, drink=0}
+        local list_ok = pcall(function()
+            local list = df.global.world.items.other.IN_PLAY
+            local count = #list
+            assert(integer(count), 'invalid inventory length')
+            result.expected_items = count
+            for _, item in ipairs(list) do
+                if result.scanned_items >= config.max_inventory_items then break end
+                result.scanned_items = result.scanned_items + 1
+                local ok, record, category = pcall(function()
+                    assert(integer(item.id), 'invalid inventory identity')
+                    if seen[item.id] then return nil, 'duplicate_items' end
+                    seen[item.id] = true
+                    assert(type(item.flags.removed) == 'boolean'
+                        and type(item.flags.garbage_collect) == 'boolean',
+                        'unreadable exclusion flags')
+                    if item.flags.removed or item.flags.garbage_collect then
+                        return nil, 'excluded_items'
+                    end
+                    local value = read_item(item, false)
+                    if not value then return nil, 'nonfood_items' end
+                    assert(integer(totals[value.resource] + value.units_at_observation),
+                        'inventory total overflow')
+                    return value
+                end)
+                if not ok then
+                    result.item_read_failures = result.item_read_failures + 1
+                elseif record then
+                    result.items[#result.items + 1] = record
+                    totals[record.resource] = totals[record.resource]
+                        + record.units_at_observation
+                else
+                    result[category] = result[category] + 1
+                end
+            end
+            result.omitted_items = math.max(0, count - result.scanned_items)
+            assert(#list == count and result.scanned_items
+                == math.min(count, config.max_inventory_items), 'inventory list changed')
+        end)
+        if not list_ok then result.list_read_failures = 1 end
+        local after_ok, after = pcall(function() return boundary(true) end)
+        if after_ok then
+            result.endpoint = after
+            for field, value in pairs(before) do
+                if after[field] ~= value then after_ok = false end
+            end
+        end
+        if not after_ok or sequence ~= result.event_sequence then
+            result.boundary_read_failures = 1
+        end
+        result.complete = result.boundary_read_failures == 0
+            and result.list_read_failures == 0 and result.item_read_failures == 0
+            and result.duplicate_items == 0 and result.omitted_items == 0
+        -- Partial item records remain inspectable, but never become a complete
+        -- inventory total, an accessible supply or an attributed production flow.
+        if result.complete then result.units = totals end
+        if after_ok then last_clock = after.year * 403200 + after.year_tick end
+        return result
     end
     function api.snapshot()
         assert(started, 'collector not started')

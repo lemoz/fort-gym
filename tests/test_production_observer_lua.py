@@ -330,3 +330,156 @@ def test_candidate_collector_executes_without_game_or_complete_flow_claims(scena
         timeout=5,
     )
     assert result.returncode == 0, result.stderr
+
+
+@pytest.mark.skipif(LUA is None, reason="Lua interpreter unavailable")
+@pytest.mark.parametrize(
+    "scenario",
+    [
+        """
+local food, drink = item(17, 3, 7, true), item(18, 5, 6)
+local nonfood, removed = item(19, 9, 7, false), item(20, 50, 6)
+food.flags.forbid = true
+drink.flags.trader = true
+drink.flags.rotten = true
+removed.flags.removed = true
+df.global.world.items = {other={IN_PLAY={food, drink, nonfood, removed}}}
+local observer = new_production_observer(df, dfhack, eventful, config)
+observer.start()
+eventful.onItemCreated[key](17)
+local r = observer.inventory_snapshot()
+assert(r.complete and r.units.food == 3 and r.units.drink == 5)
+assert(r.scanned_items == 4 and r.expected_items == 4 and r.omitted_items == 0)
+assert(#r.items == 2 and r.excluded_items == 1 and r.nonfood_items == 1)
+assert(r.items[1].item_id == 17 and r.items[2].item_id == 18)
+assert(r.items[1].flags.forbid and r.items[2].flags.trader and r.items[2].flags.rotten)
+assert(r.event_sequence == 1 and r.start.year_tick == r.endpoint.year_tick)
+assert(r.accessibility == 'not_measured' and r.attribution == 'unattributed')
+assert(not r.agent_observation and not r.native_coverage_validated)
+r.items[1].units_at_observation = 99
+r.items[2].flags.trader = false
+assert(observer.inventory_snapshot().items[1].units_at_observation == 3)
+assert(drink.flags.trader and food:getStackSize() == 3)
+assert(observer.snapshot().retained_events == 1)
+assert(observer.snapshot().flow_measurement.production == 'not_measured')
+df.global.cur_year_tick = 101
+drink.getStackSize = function() return 2 end
+local later = observer.inventory_snapshot()
+assert(later.complete and later.units.drink == 2 and later.event_sequence == 1)
+assert(later.start.year_tick == 101 and later.observer_start.year_tick == 100)
+df.global.cur_year_tick = 100
+assert(not observer.inventory_snapshot().complete)
+""",
+        """
+df.global.world.items = {other={IN_PLAY={}}}
+local observer = new_production_observer(df, dfhack, eventful, config)
+observer.start()
+local r = observer.inventory_snapshot()
+assert(r.complete and r.units.food == 0 and r.units.drink == 0)
+assert(r.scanned_items == 0 and #r.items == 0)
+""",
+        """
+config.max_inventory_items = 1
+df.global.world.items = {other={IN_PLAY={item(17, 3, 6), item(18, 5, 6)}}}
+local observer = new_production_observer(df, dfhack, eventful, config)
+config.max_inventory_items = 65536
+observer.start()
+local r = observer.inventory_snapshot()
+assert(not r.complete and r.units == false and r.omitted_items == 1)
+assert(r.scanned_items == 1 and #r.items == 1 and r.max_inventory_items == 1)
+assert(observer.snapshot().collector_records_complete)
+""",
+        """
+local a = item(17, 3, 6)
+df.global.world.items = {other={IN_PLAY={a, a}}}
+local observer = new_production_observer(df, dfhack, eventful, config)
+observer.start()
+local r = observer.inventory_snapshot()
+assert(not r.complete and r.units == false and r.duplicate_items == 1)
+assert(#r.items == 1 and r.scanned_items == 2)
+""",
+        *[
+            f"""
+local a, b = item(17, 3, 6), item(18, 5, 6)
+df.global.world.items = {{other={{IN_PLAY={{a, b}}}}}}
+local observer = new_production_observer(df, dfhack, eventful, config)
+observer.start()
+{change}
+local r = observer.inventory_snapshot()
+assert(not r.complete and r.units == false)
+assert(r.item_read_failures == 1 and #r.items == 1)
+assert(observer.snapshot().read_failures == 0)
+"""
+            for change in (
+                "a.id = -1",
+                "a.flags.removed = nil",
+                "a.flags.hidden = nil",
+                "a.getType = function() return false end",
+                "a.getStackSize = function() return -1 end",
+                "a.getStackSize = function() return math.huge end",
+                "a.getStackSize = function() return 9007199254740991 end",
+                "a.getType = function() return 7 end; a.isEdibleRaw = function() return nil end",
+            )
+        ],
+        *[
+            f"""
+df.global.world.items = {{other={{IN_PLAY={{item(17, 3, 6)}}}}}}
+local observer = new_production_observer(df, dfhack, eventful, config)
+observer.start()
+{change}
+local r = observer.inventory_snapshot()
+assert(not r.complete and r.units == false)
+assert(r.boundary_read_failures == 1)
+"""
+            for change in (
+                "df.global.pause_state = false",
+                "loaded = false",
+                "df.global.world.cur_savegame.save_dir = 'different'",
+                "df.global.cur_year_tick = 99",
+                "items[17].getStackSize = function() df.global.cur_year_tick = 101; return 3 end",
+                "items[17].getStackSize = function() df.global.world.frame_counter = 501; return 3 end",
+                "items[17].getStackSize = function() df.global.pause_state = false; return 3 end",
+                "items[17].getStackSize = function() eventful.onJobCompleted[key](job()); return 3 end",
+            )
+        ],
+        *[
+            f"""
+df.global.world.items = {{other={{IN_PLAY={{item(17, 3, 6)}}}}}}
+local observer = new_production_observer(df, dfhack, eventful, config)
+observer.start()
+{change}
+local r = observer.inventory_snapshot()
+assert(not r.complete and r.units == false and r.list_read_failures == 1)
+"""
+            for change in (
+                "df.global.world.items = nil",
+                "df.global.world.items.other.IN_PLAY = nil",
+                "setmetatable(df.global.world.items.other.IN_PLAY, {__len=function() return 2 end})",
+                "items[17].getStackSize = function() df.global.world.items.other.IN_PLAY[2] = item(18, 1, 6); return 3 end",
+            )
+        ],
+        *[
+            f"""
+config.max_inventory_items = {value}
+assert(not pcall(function() new_production_observer(df, dfhack, eventful, config) end))
+"""
+            for value in ("0", "65537", "true", "1.5", "math.huge", "'10'")
+        ],
+        """
+local observer = new_production_observer(df, dfhack, eventful, config)
+assert(not pcall(observer.inventory_snapshot))
+observer.start()
+observer.stop()
+assert(not pcall(observer.inventory_snapshot))
+""",
+    ],
+)
+def test_candidate_inventory_is_identity_level_bounded_and_not_a_flow_claim(scenario):
+    result = subprocess.run(
+        [LUA, "-"],
+        input=PRELUDE + PRODUCTION_OBSERVER_LUA + scenario,
+        text=True,
+        capture_output=True,
+        timeout=5,
+    )
+    assert result.returncode == 0, result.stderr

@@ -72,6 +72,36 @@ Stopping removes owned listeners, not shared plugin polling registration. Use
 only in a disposable, separately declared native process whose teardown bounds
 that overhead. Never install this candidate into the current frozen campaign.
 
+## Item-level inventory boundaries
+
+The candidate now also exposes `inventory_snapshot()` while its collector is
+installed. This is an explicit read, not an automatic scan in each callback or
+an addition to the agent observation. A fixture should call it at its initial and
+final paused boundaries, alongside event snapshots, to retain identities needed
+for later reconciliation.
+
+It scans `world.items.other.IN_PLAY`, using the same pinned food predicate as the
+existing private food scan: `isEdibleRaw(0)`, with `DRINK` classified separately.
+Each retained food/drink record has its actual item ID, type, stack size and flags.
+Removed/garbage-collection entries and nonfood items have separate counters;
+forbidden, rotten, foreign, trader-owned and other flagged supplies remain visible,
+not silently relabeled as accessible fortress supplies.
+
+The declaration's optional `max_inventory_items` defaults to 8,192 and is bounded
+at 65,536 scanned entries, including nonfood entries. A scan stops at that bound
+and reports omitted entries. It attests the native save/calendar/frame boundary
+before and after the read and includes the collector start and event sequence.
+Changing clocks, pause state, event sequence or list length, missing reads,
+duplicate IDs, total overflow and truncation prevent a complete inventory total.
+Partial records remain inspectable; `units` is false rather than a misleading
+zero or partial sum. A complete empty scan is the distinct case with zero totals.
+Snapshots neither consume the event buffer nor mutate retained game records.
+
+This inventory is still not production or consumption attribution. Matching a
+new item with a reaction callback, deduplicating cumulative output vectors and
+accounting for stack changes need a separately verified reconciliation layer.
+Native coverage, accessibility and reload/checkpoint binding remain unproven.
+
 ## Native acceptance still required
 
 1. Pin source/image and the measurement profile in a new fixture declaration.
@@ -86,7 +116,7 @@ that overhead. Never install this candidate into the current frozen campaign.
 3. Check trade/migrant arrivals, splitting/merging stacks, disappearance before a
    callback, consumption and spoilage. If the event interface cannot identify
    a cause, retain it as unattributed and add a separately tested native hook.
-   A later attribution layer must reconcile identity-level inventory snapshots,
+   The attribution layer must reconcile these identity-level inventory snapshots,
    recipe outputs and event records; this collector alone cannot do so.
 4. Verify no game state or agent-visible observation is changed by callbacks.
    Measure callback overhead and missed events against an observer-free control.
@@ -97,3 +127,10 @@ that overhead. Never install this candidate into the current frozen campaign.
 Lua fixture tests execute the collector code with fake objects and callbacks.
 They validate its data handling, not DFHack event coverage, real production,
 campaign recovery or native noninterference.
+
+The candidate CI explicitly installs Lua 5.3 and verifies the interpreter before
+running tests, so these fixtures cannot silently skip because Lua is absent.
+This matches the version family of the pinned DFHack build's
+[embedded Lua 5.3.6 header](https://github.com/DFHack/dfhack/blob/0.47.05-r8/depends/lua/include/lua.h).
+The development host currently runs the fixtures with Lua 5.5.1; neither host
+interpreter substitutes for real DFHack binding and gameplay acceptance.
