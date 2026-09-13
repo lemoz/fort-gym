@@ -27,5 +27,12 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -e '.[dev,agent]'
 
+      - name: Install Lua for native helper fixture tests
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends lua5.3
+          lua -e 'assert(_VERSION == "Lua 5.3")'
+          lua -v
+
       - name: Run tests
         run: python -m pytest -q
