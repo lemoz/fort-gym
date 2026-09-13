@@ -1,6 +1,55 @@
 # Astra endurance: operation after the first anniversary
 
-## Latest assessment: workshop development at decision 900
+## Latest assessment: incident recovery at decision 964
+
+The [901–964 review](../experiments/evidence/astra_keyboard_endurance_964_gameplay_review_20260913.json)
+finds continued operation and a verified memorial outcome. The fort saved at
+639,895 elapsed ticks, 236,695 into Year Two, with nineteen living dwarves, one
+earlier recorded death, seven workshops, nine beds and three farms. The actual
+965–1028 continuation restored the complete agent state, clock, metrics, history
+and trace/usage prefixes. Decision 965 sent one key and advanced 2,000 ticks.
+
+Astra navigated workshop and memorial menus itself. Native ConstructSlab job
+4287 was staffed at decisions 944–948. EngraveSlab job 4292 was observed queued
+at 947–948 without a worker in those samples. The captured screen before
+decision 953 offered limonite slabs; Astra selected one and advanced 2,000 ticks.
+The game screen before decision 954, row 39, then reported:
+
+> Avuz Kàsfikod, Ghostly Mason has been put to rest.
+
+This is a game-generated outcome, not the model's intent being scored as success.
+The source recording and native audit hashes bind that captured message to the
+executed placement sequence. The frozen measurements do not expose a slab
+building ID or native ghost flags, and engraving's worker was not sampled.
+Those narrower limits are retained without discarding the game's confirmation.
+The earlier death record remains present; no additional death was observed.
+
+Seven text/meeting screens interrupted already-dispatched time advances.
+Those requests completed 1,245 of 13,200 ticks before interruption. Astra
+navigated the diplomatic conversations without human input, then continued.
+All 64 actions and 172 requested keys were accepted/confirmed. Twenty-three
+positive-time decisions advanced 33,245 of 45,200 requested ticks. There were
+no timeouts, undispatched build-menu deferrals or calendar-safety errors.
+
+Food ended at 389 raw units, including the same 250 trader-flagged units.
+Non-trader food moved from 138 to 139, ranging between 137 and 142. Raw drinks
+fell from 560 to 531; drink ownership and exact flow attribution remain unknown.
+No brewing was observed at the 64 complete citizen boundaries or in the three
+endpoint still queues. Three world-job samples were capped, so transient work
+between observations is not ruled out. Fishing, fish preparation and barrel
+work remained staffed. Five older harvest jobs are still unstaffed and
+cache-disconnected, and twelve of sixteen labor-eligible dwarves are idle.
+
+The assessment is **operating with incident recovery**. The memorial is meaningful
+adaptation even though the coarse workshop/bed/farm counters did not increase.
+It does not establish supply self-sufficiency or a strong model ranking. This is
+the same continuing campaign, with no roster/labor changes or human rescue.
+Returned usage totals 28,011,285 tokens, including 1,925,755 in this window;
+subscription dollar charges are unreported. The existing 1,028-response and
+40-million-token ceilings are unchanged. The replay is exported, not published
+by this native capture and review.
+
+## Earlier assessment: workshop development at decision 900
 
 The [837–900 review](../experiments/evidence/astra_keyboard_endurance_900_gameplay_review_20260913.json)
 finds continued operation and two new workshops, with an important inventory

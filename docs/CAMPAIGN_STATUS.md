@@ -14,6 +14,34 @@ cohort below. Long-term self-sufficiency and the full delivery goal remain open.
 
 ## Current experiment summary
 
+The [checkpoint 964 save and actual reload](../experiments/evidence/astra_keyboard_endurance_964_20260913.json)
+and [gameplay review](../experiments/evidence/astra_keyboard_endurance_964_gameplay_review_20260913.json)
+are complete. At 639,895 elapsed ticks, the fort has nineteen living dwarves,
+one earlier recorded death, seven workshops, nine beds and three farms.
+Astra made and placed a memorial through ordinary keyboard menus. The captured
+game announcement before decision 954 says Avuz Kàsfikod, Ghostly Mason has been
+put to rest. A staffed slab job and the placement sequence support this incident
+recovery; no native ghost flag or slab-building ID is claimed.
+
+All 64 actions and 172 keys were accepted/confirmed. Twenty-three decisions
+advanced 33,245 ticks. Seven diplomatic text/meeting interruptions explain the
+11,955 requested ticks not advanced; there were no timeouts or undispatched menu
+deferrals. Non-trader food moved from 138 to 139 while trader-flagged food stayed
+at 250; raw drinks fell from 560 to 531, with ownership unmeasured. Brewing was
+not observed at the complete citizen boundaries or final still queues. The
+assessment is operating with incident recovery, not demonstrated self-sufficiency.
+
+The [twelfth handoff](../experiments/evidence/astra_keyboard_endurance_sequence_handoff_964_20260913.json)
+preserved the plan and first 35 event lines, complete saved agent state, native
+clock/metrics, trace/usage prefixes and inherited loss history. Both teardown
+operations returned zero. First continued decision 965 sent one key and advanced
+2,000 ticks; public frame 966 matched the original screen and chosen action with
+the owner alive. The sole coordinator is now in its final planned 965–1028 window.
+The same 1,028-response/40-million-token limits remain, with 28,011,285 returned
+tokens accounted at the save and subscription charges unreported. No source,
+model, prompt, control or budget change, new VM or human rescue was introduced.
+The 901–964 replay is exported but remains unpublished by this native receipt.
+
 The [checkpoint 900 capture and actual reload](../experiments/evidence/astra_keyboard_endurance_900_20260913.json)
 and [detailed gameplay review](../experiments/evidence/astra_keyboard_endurance_900_gameplay_review_20260913.json)
 are now complete. The fort saved at 606,650 elapsed ticks with nineteen living
