@@ -27,7 +27,8 @@ def test_endurance_recording_preserves_audited_keyboard_actions_and_save_boundar
 
 def test_endurance_card_keeps_the_short_study_and_year_two_claim_separate():
     catalog = json.loads((RECORDINGS / "catalog.json").read_text())["recordings"]
-    assert [row["id"] for row in catalog[:6]] == [
+    assert [row["id"] for row in catalog[:7]] == [
+        "astra-keyboard-endurance-v1-325-388",
         "astra-keyboard-endurance-v1-261-324",
         "astra-keyboard-endurance-v1-197-260",
         "astra-keyboard-endurance-v1-133-196",
@@ -37,8 +38,8 @@ def test_endurance_card_keeps_the_short_study_and_year_two_claim_separate():
     ]
     assert len([row for row in catalog if row["id"].startswith("controls-v2-")]) == 6
     previews = json.loads((RECORDINGS / "previews.json").read_text())["recordings"]
-    assert previews[4]["id"] == IDENTITY
-    assert previews[4]["recording_sha256"] == catalog[4]["sha256"]
+    assert previews[5]["id"] == IDENTITY
+    assert previews[5]["recording_sha256"] == catalog[5]["sha256"]
     html = (ROOT / "web/worlds.html").read_text()
     assert "30,700 game ticks" in html and "six installed beds" in html
     assert "1,788,513 returned tokens" in html
@@ -143,4 +144,34 @@ def test_checkpoint_324_preserves_growth_rejection_and_its_native_boundary():
     assert "10,418,341 returned tokens" in html
     assert "decision-324 save was freshly reloaded" in html
     assert "grew from seven to eleven living dwarves" in html
+    assert "stock counts alone do not establish sustainability" in html
+
+
+def test_checkpoint_388_keeps_growth_and_interrupted_native_time_visible():
+    raw = (RECORDINGS / "astra-keyboard-endurance-v1-325-388.json").read_bytes()
+    assert hashlib.sha256(raw).hexdigest() == "0049b28cc0e13fbb1ae2143b51eac5e6fef8bc26faf44fc5dc0d9282d340612f"
+    data = json.loads(raw)
+    assert data["audit_sha256"] == "3509c41e5f8e97c3c03786bde64edf8dd9d77ae1d87fd6fac1009a3fc48d9f56"
+    previous = json.loads((RECORDINGS / "astra-keyboard-endurance-v1-261-324.json").read_text())
+    frames = data["frames"]
+    assert [frame["decision"] for frame in frames] == list(range(325, 389))
+    assert data["saved_through_decision"] == 388
+    assert data["source_revision"] == previous["source_revision"]
+    assert data["control_profile"] == previous["control_profile"]
+    assert frames[0]["before"]["tick"] == previous["frames"][-1]["after"]["tick"]
+    assert sum(frame["after"]["ticks_advanced"] for frame in frames) == 65950
+    assert sum(frame["action"]["advance_ticks"] for frame in frames) == 78000
+    assert all(frame["accepted"] and "shortcut" not in frame["action"] for frame in frames)
+    assert sum(len(frame["action"]["keys"]) for frame in frames) == 149
+    interrupted = [frame for frame in frames if frame["after"]["ticks_advanced"] < frame["action"]["advance_ticks"]]
+    assert [frame["decision"] for frame in interrupted] == [351, 353, 354, 358, 362, 364, 369]
+    assert sum(frame["after"]["ticks_advanced"] for frame in frames if frame["decision"] > 369) == 30000
+    assert previous["frames"][-1]["after"]["population"] == 11
+    assert frames[-1]["after"]["population"] == 19
+    html = (ROOT / "web/worlds.html").read_text()
+    assert "235,050 total game ticks" in html
+    assert "12,096,579 returned tokens" in html
+    assert "decision-388 save was freshly reloaded" in html
+    assert "grew from eleven to nineteen living dwarves" in html
+    assert "Seven meeting or text screens interrupted time advancement" in html
     assert "stock counts alone do not establish sustainability" in html

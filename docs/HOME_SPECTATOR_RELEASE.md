@@ -564,3 +564,36 @@ feed, services, database and host-local files. No infrastructure creation,
 service restart, gameplay input or main merge belongs to this release.
 Browser-only preview and visual QA are skipped in this background continuation.
 Local validation, exact-head CI and public HTTPS acceptance remain separate.
+
+## Astra keyboard endurance, checkpoint 388
+
+Start from public revision `6427600645cdbd29594ff2f41f93a9a6a165d346` and add
+`astra-keyboard-endurance-v1-325-388`. Its 64 frames continue the same campaign
+without duplicating earlier frames. Recording SHA-256:
+`0049b28cc0e13fbb1ae2143b51eac5e6fef8bc26faf44fc5dc0d9282d340612f`.
+Native audit: `3509c41e5f8e97c3c03786bde64edf8dd9d77ae1d87fd6fac1009a3fc48d9f56`.
+Campaign result `astra_keyboard_endurance_388_20260913.json` has SHA-256
+`0523fb1644ff00a4a515f6a9c255f568b6e4735518753e7a019cd5c0a4840913`.
+It binds the completed native save, teardown and actual fresh reload at 388,
+including decision389's completed execution row with 2,000 actual ticks.
+
+The window added 65,950 elapsed ticks, ending at 235,050 with nineteen living
+dwarves and no recorded deaths. Population increased from eleven to nineteen;
+the endpoint retains nine beds, four workshops, three farms, 184 food and 88 drinks.
+All 64 keyboard actions were accepted, with 149 confirmed keys. Seven blocking
+text/meeting-screen transitions explain 12,050 requested but unadvanced ticks;
+these are not timeouts or saved-history loss. The model continued without human
+input and advanced another 30,000 ticks after the last interruption. Preserve
+the actual timing and screens in the replay rather than filling requested ticks.
+Cumulative usage is 12,096,579 returned tokens; subscription charges remain
+unreported. The third automatic handoff restored the entire saved agent state
+and inherited the original cumulative budget extension. This is a continuation,
+not an independent trial or a Year-Two result. Inventories alone do not establish
+sustainability.
+
+Preserve all 28 older recording files, catalog rows and previews. The new total
+is 29 recordings and 2,408 captured frames. Preserve the coordinator-owned live
+feed, services, database and host-local files. No infrastructure creation,
+service restart, gameplay input or main merge belongs to this release.
+Browser-only preview and visual QA are skipped in this background continuation.
+Local validation, exact-head CI and public HTTPS acceptance remain separate.
