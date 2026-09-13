@@ -27,7 +27,11 @@ def test_endurance_recording_preserves_audited_keyboard_actions_and_save_boundar
 
 def test_endurance_card_keeps_the_short_study_and_year_two_claim_separate():
     catalog = json.loads((RECORDINGS / "catalog.json").read_text())["recordings"]
-    assert [row["id"] for row in catalog[:10]] == [
+    assert [row["id"] for row in catalog[:14]] == [
+        "astra-keyboard-endurance-v1-773-836",
+        "astra-keyboard-endurance-v1-709-772",
+        "astra-keyboard-endurance-v1-645-708",
+        "astra-keyboard-endurance-v1-581-644",
         "astra-keyboard-endurance-v1-517-580",
         "astra-keyboard-endurance-v1-453-516",
         "astra-keyboard-endurance-v1-389-452",
@@ -41,8 +45,8 @@ def test_endurance_card_keeps_the_short_study_and_year_two_claim_separate():
     ]
     assert len([row for row in catalog if row["id"].startswith("controls-v2-")]) == 6
     previews = json.loads((RECORDINGS / "previews.json").read_text())["recordings"]
-    assert previews[8]["id"] == IDENTITY
-    assert previews[8]["recording_sha256"] == catalog[8]["sha256"]
+    assert previews[12]["id"] == IDENTITY
+    assert previews[12]["recording_sha256"] == catalog[12]["sha256"]
     html = (ROOT / "web/worlds.html").read_text()
     assert "30,700 game ticks" in html and "six installed beds" in html
     assert "1,788,513 returned tokens" in html
@@ -262,3 +266,141 @@ def test_checkpoint_580_preserves_year_rollover_and_qualified_anniversary_claim(
     assert "Food fell from 170 to 73 while drinks rose from 29 to 130" in html
     assert "later progress is not part of this saved replay" in html
     assert "stock counts alone do not establish sustainability" in html
+
+
+def test_checkpoint_644_preserves_the_saved_year_two_boundary_without_relabeling_580():
+    raw = (RECORDINGS / "astra-keyboard-endurance-v1-581-644.json").read_bytes()
+    assert hashlib.sha256(raw).hexdigest() == "418cefb6e70d71a7276abdcb61fcbf099eb9e93de1579ae4731e0b538e03512b"
+    data = json.loads(raw)
+    assert data["audit_sha256"] == "083b20dabd9d6268144769dd598eb9bc1ba2cf5c6c68bd7b75c8697b68c86970"
+    previous = json.loads((RECORDINGS / "astra-keyboard-endurance-v1-517-580.json").read_text())
+    frames = data["frames"]
+    assert [frame["decision"] for frame in frames] == list(range(581, 645))
+    assert data["saved_through_decision"] == 644
+    for key in ("source_revision", "control_profile", "model"):
+        assert data[key] == previous[key]
+    assert frames[0]["before"] == {key: previous["frames"][-1]["after"][key] for key in ("year", "tick")}
+    assert frames[-1]["after"]["year"] == 31
+    assert frames[-1]["after"]["tick"] == 36651
+    assert sum(frame["after"]["ticks_advanced"] for frame in frames) == 20000
+    assert sum(frame["action"]["advance_ticks"] for frame in frames) == 20000
+    for frame in frames:
+        before, after = frame["before"], frame["after"]
+        assert (after["year"] - before["year"]) * 403200 + after["tick"] - before["tick"] == after["ticks_advanced"]
+        assert after["ticks_advanced"] == frame["action"]["advance_ticks"]
+        assert (after["year"] - 30) * 403200 + after["tick"] - 16801 > 403200
+        assert frame["accepted"] and "shortcut" not in frame["action"]
+        assert after["population"] == 19
+    assert sum(len(frame["action"]["keys"]) for frame in frames) == 266
+    assert 403050 + sum(frame["after"]["ticks_advanced"] for frame in frames) == 423050
+    html = (ROOT / "web/worlds.html").read_text()
+    assert "Saved in Year Two" in html
+    assert "423,050 total game ticks" in html
+    assert "19,259,777 returned tokens" in html
+    assert "decision-644 save was freshly reloaded" in html
+    assert "Food fell from 73 to 66 and drinks from 130 to 112" in html
+    assert "later progress is not part of this saved replay" in html
+    assert "stock counts alone do not establish sustainability" in html
+
+
+def test_checkpoint_708_preserves_mortality_and_rejected_input():
+    raw = (RECORDINGS / "astra-keyboard-endurance-v1-645-708.json").read_bytes()
+    assert hashlib.sha256(raw).hexdigest() == "fc4febb01c736109863f9f42a316956a0c66883e8c8883b19edf468ce4286427"
+    data = json.loads(raw)
+    assert data["audit_sha256"] == "bcb79a1b1d2729d1060dc0c4157c7cf4782f9941031832433c2de86ab38557bd"
+    previous = json.loads((RECORDINGS / "astra-keyboard-endurance-v1-581-644.json").read_text())
+    frames = data["frames"]
+    assert [frame["decision"] for frame in frames] == list(range(645, 709))
+    assert data["saved_through_decision"] == 708
+    for key in ("source_revision", "control_profile", "model"):
+        assert data[key] == previous[key]
+    assert frames[0]["before"] == {key: previous["frames"][-1]["after"][key] for key in ("year", "tick")}
+    assert frames[-1]["after"] == {"year": 31, "tick": 60651, "population": 18, "ticks_advanced": 0}
+    assert sum(frame["after"]["ticks_advanced"] for frame in frames) == 24000
+    assert sum(frame["action"]["advance_ticks"] for frame in frames) == 24000
+    assert sum(frame["accepted"] for frame in frames) == 63
+    assert sum(len(frame["action"]["keys"]) for frame in frames if frame["accepted"]) == 464
+    rejected = [frame for frame in frames if not frame["accepted"]]
+    assert [(frame["decision"], frame["action"]["keys"]) for frame in rejected] == [
+        (669, ["SYM:0:PageUp", "SYM:0:PageUp"])
+    ]
+    assert next(frame["decision"] for frame in frames if frame["after"]["population"] == 18) == 662
+    for frame in frames:
+        before, after = frame["before"], frame["after"]
+        assert (after["year"] - before["year"]) * 403200 + after["tick"] - before["tick"] == after["ticks_advanced"]
+        assert after["ticks_advanced"] == frame["action"]["advance_ticks"]
+        assert (after["year"] - 30) * 403200 + after["tick"] - 16801 > 403200
+        assert "shortcut" not in frame["action"]
+    html = (ROOT / "web/worlds.html").read_text()
+    assert "447,050 total game ticks" in html
+    assert "20,492,446 returned tokens" in html
+    assert "decision-708 save was freshly reloaded" in html
+    assert "One dwarf died; the native incident record identifies drowning" in html
+    assert "Food rose from 66 to 75 while drinks fell from 112 to 93" in html
+    assert "one PageUp command was rejected" in html
+
+
+def test_checkpoint_772_preserves_recovery_actions_and_menu_deferral():
+    raw = (RECORDINGS / "astra-keyboard-endurance-v1-709-772.json").read_bytes()
+    assert hashlib.sha256(raw).hexdigest() == "c7a2f3478b38b779db387bf5680c876c397888d6a1cec8f81c2e984f843f1a3a"
+    data = json.loads(raw)
+    assert data["audit_sha256"] == "a89724c72a8c9c51839be2f63806f851bacde020b7310247de45c91b90446aff"
+    previous = json.loads((RECORDINGS / "astra-keyboard-endurance-v1-645-708.json").read_text())
+    frames = data["frames"]
+    assert [frame["decision"] for frame in frames] == list(range(709, 773))
+    assert data["saved_through_decision"] == 772
+    for key in ("source_revision", "control_profile", "model"):
+        assert data[key] == previous[key]
+    assert frames[0]["before"] == {key: previous["frames"][-1]["after"][key] for key in ("year", "tick")}
+    assert frames[-1]["after"] == {"year": 31, "tick": 109851, "population": 18, "ticks_advanced": 0}
+    assert sum(frame["after"]["ticks_advanced"] for frame in frames) == 49200
+    assert sum(frame["action"]["advance_ticks"] for frame in frames) == 50400
+    assert all(frame["accepted"] and "shortcut" not in frame["action"] for frame in frames)
+    assert sum(len(frame["action"]["keys"]) for frame in frames) == 289
+    deferred = [frame for frame in frames if frame["after"]["ticks_advanced"] != frame["action"]["advance_ticks"]]
+    assert [(frame["decision"], frame["action"]["advance_ticks"], frame["after"]["ticks_advanced"]) for frame in deferred] == [(714, 1200, 0)]
+    assert frames[6]["decision"] == 715 and frames[6]["after"]["ticks_advanced"] == 1200
+    assert frames[9]["decision"] == 718
+    assert frames[9]["action"]["keys"] == ["b", "r", "SYM:0:ESC", " "]
+    for frame in frames:
+        before, after = frame["before"], frame["after"]
+        assert (after["year"] - before["year"]) * 403200 + after["tick"] - before["tick"] == after["ticks_advanced"]
+        assert after["population"] == 18
+    html = (ROOT / "web/worlds.html").read_text()
+    for text in ("496,250 total game ticks", "22,152,718 returned tokens", "decision-772 save was freshly reloaded",
+                 "Food rose from 75 to 134", "drinks peaked at 170 and ended at 143", "one 1,200-tick request deferred"):
+        assert text in html
+
+
+def test_checkpoint_836_preserves_labor_brewing_and_population_actions():
+    raw = (RECORDINGS / "astra-keyboard-endurance-v1-773-836.json").read_bytes()
+    assert hashlib.sha256(raw).hexdigest() == "d9fbe4a36e0e792cabd94d1cc0f8dac1c74ed666b731cd01170ba89fd953360b"
+    data = json.loads(raw)
+    assert data["audit_sha256"] == "8cbbd496963c31cdf3b00ab2c5148cf482834c572ccc35496d44ba5aa17f8939"
+    previous = json.loads((RECORDINGS / "astra-keyboard-endurance-v1-709-772.json").read_text())
+    frames = data["frames"]
+    assert [frame["decision"] for frame in frames] == list(range(773, 837))
+    assert data["saved_through_decision"] == 836
+    for key in ("source_revision", "control_profile", "model"):
+        assert data[key] == previous[key]
+    assert frames[0]["before"] == {key: previous["frames"][-1]["after"][key] for key in ("year", "tick")}
+    assert frames[-1]["after"] == {"year": 31, "tick": 165851, "population": 19, "ticks_advanced": 2000}
+    assert sum(frame["after"]["ticks_advanced"] for frame in frames) == 56000
+    assert sum(frame["action"]["advance_ticks"] for frame in frames) == 56000
+    assert sum(frame["after"]["ticks_advanced"] > 0 for frame in frames) == 28
+    assert all(frame["accepted"] and "shortcut" not in frame["action"] for frame in frames)
+    assert sum(len(frame["action"]["keys"]) for frame in frames) == 226
+    by_decision = {frame["decision"]: frame for frame in frames}
+    assert by_decision[783]["action"]["keys"] == ["+"] * 9 + ["SYM:0:Enter"]
+    for decision in (792, 818):
+        assert by_decision[decision]["action"]["keys"] == ["b", "r", "SYM:0:ESC", " "]
+    assert next(frame["decision"] for frame in frames if frame["after"]["population"] == 19) == 823
+    for frame in frames:
+        before, after = frame["before"], frame["after"]
+        assert (after["year"] - before["year"]) * 403200 + after["tick"] - before["tick"] == after["ticks_advanced"]
+        assert after["ticks_advanced"] == frame["action"]["advance_ticks"]
+        assert (after["year"] - 30) * 403200 + after["tick"] - 16801 > 403200
+    html = (ROOT / "web/worlds.html").read_text()
+    for text in ("552,250 total game ticks", "24,149,524 returned tokens", "decision-836 save was freshly reloaded",
+                 "Food rose from 134 to 151", "drinks from 143 to 528", "operating with adaptive supply recovery"):
+        assert text in html

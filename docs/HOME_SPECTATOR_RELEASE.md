@@ -698,3 +698,147 @@ feed, services, database and host-local files. No infrastructure creation,
 service restart, gameplay input or main merge belongs to this release.
 Browser-only preview and visual QA are skipped in this background continuation.
 Local validation, exact-head CI and public HTTPS acceptance remain separate.
+
+## Astra keyboard endurance, checkpoint 644
+
+Start from public revision `3016ab690190affd1435e93bf6e3ff2c12370b37` and add
+`astra-keyboard-endurance-v1-581-644`. Its 64 nonoverlapping frames continue
+the same campaign. Recording SHA-256:
+`418cefb6e70d71a7276abdcb61fcbf099eb9e93de1579ae4731e0b538e03512b`.
+Native audit: `083b20dabd9d6268144769dd598eb9bc1ba2cf5c6c68bd7b75c8697b68c86970`.
+Campaign result `astra_keyboard_endurance_644_20260913.json` has SHA-256
+`e5f8db850ebdbd535390c3ae80591d34ad2329a42a00713ac43464290c3c07bb`.
+It binds the native save, stopped-state/closed-disk checks, and actual reload.
+
+This is the current endurance campaign's first saved checkpoint inside Year Two:
+423,050 elapsed ticks, nineteen living dwarves, no recorded deaths, nine beds,
+four workshops, three farms, 66 food and 112 drinks. The window adds 20,000
+actual ticks. All 64 keyboard actions and 266 keys were accepted/confirmed,
+without clock timeouts or deferrals. Food fell from 73 to 66 and drinks from
+130 to 112. Stock changes are not attributed production or consumption.
+Cumulative returned usage is 19,259,777 tokens; actual charges remain unreported.
+
+The seventh automatic handoff restored the entire agent state, native clock,
+metrics and history prefixes under the unchanged inherited budget. Guest
+poweroff returned 0; the later VM-stop command returned 1 because the VM was
+already Stopped. Both VMs were verified Stopped with disks closed before the
+successor launched. Preserve these original command results. Decision645
+confirmed one key and zero actual ticks after reload.
+
+Preserve all 32 prior recording files, catalog rows and previews. The new total
+is 33 recordings and 2,664 frames. The earlier decision-580 replay remains a
+pre-anniversary save; do not relabel it using later progress. This continuation
+is not an independent trial, and anniversary passage and stock counts alone do
+not establish sustainability. Preserve the existing player, live feed, services,
+database, host-local files, and the separate combined native release candidate.
+No service restart, gameplay input, new infrastructure, or main merge belongs
+to this static update. Browser-only preview and visual QA are skipped in this
+background continuation. Local, hosted, and public HTTPS checks are separate.
+
+## Astra keyboard endurance, checkpoint 708
+
+Start from public revision `577c6c1474160e8c1366bedf22596ecb75005891` and add
+`astra-keyboard-endurance-v1-645-708`. Preserve all 33 prior recordings, catalog
+rows and previews. The new total is 34 recordings and 2,728 frames.
+
+The immutable recording has SHA-256
+`fc4febb01c736109863f9f42a316956a0c66883e8c8883b19edf468ce4286427`,
+bound to audit `bcb79a1b1d2729d1060dc0c4157c7cf4782f9941031832433c2de86ab38557bd`
+and native result `astra_keyboard_endurance_708_20260913.json`, SHA-256
+`aef02757b7e26049f1efcac3793f6d8e74f334e2a155ed61a75f285b948bbc0b`.
+The save contains 447,050 elapsed ticks, eighteen living dwarves, one recorded
+drowning, nine beds, four workshops, three farms, 75 food and 93 drinks.
+Food rose from 66 to 75; drinks fell from 112 to 93. Worker assignments and
+inventories are not attributed production or consumption.
+
+This window has 63 accepted actions and one rejected PageUp command at
+decision669. Its two requested keys were not sent. The other 464 keys were
+confirmed, and all 24,000 requested ticks advanced without timeouts or deferrals.
+The public player must retain the rejected state when scrubbing that frame.
+Cumulative usage is 20,492,446 returned tokens, including 1,232,669 new tokens;
+subscription dollar charges remain unreported.
+
+The eighth automatic handoff verified checkpoint708 and actual reload into
+709–772, preserving whole agent state, native clock, trace/usage prefixes and
+the original budget extension. Guest poweroff returned 1 with exit status 255;
+the following VM stop returned 0 and reported not running. Both stopped-state
+and closed-disk checks passed before the next launch. Decision709 confirmed
+one key and zero actual ticks. Preserve these original outcomes.
+
+This is the same campaign, not another independent trial. It remains operating
+but fragile after the first anniversary, with mortality and drink decline.
+Keep all native sources, controls, images, live feeds, services, database and
+host-local files unchanged. No restart, new infrastructure or main merge.
+This background continuation skips browser-only preview and visual QA; the
+replay is validated with the real player contract and exact public HTTP bytes.
+
+## Astra keyboard endurance, checkpoint 836
+
+This static update starts from public `1cc292acf1584c10b6eb0d6929207aa8d7d32dca`.
+It adds the unchanged audited `astra-keyboard-endurance-v1-773-836` recording,
+its preview and gallery card, and a fourth saved-outcome entry. All 35 prior
+recordings, catalog rows, previews and all three prior outcome entries remain
+unchanged. The total becomes 36 recordings and 2,856 captured frames.
+
+Recording: `d9fbe4a36e0e792cabd94d1cc0f8dac1c74ed666b731cd01170ba89fd953360b`.
+Audit: `8cbbd496963c31cdf3b00ab2c5148cf482834c572ccc35496d44ba5aa17f8939`.
+Checkpoint: `180580b5379d22a50078008d6adf74441b9ada9359c12f69a8ab1c8a41751066`.
+Native result: `38c7132a55d6e1545b0801aa0e752e65a27ca566bbc9a0033396b725d6aacc59`.
+Gameplay review: `160b17b3cd19b2c9e5eed491a73465e0480bca0a2a3d0fd74366b80076de655b`.
+The last two receipts are committed at `77f3f7227b79d41e6856fc0c3b142bc19b4e3a0a`.
+
+The save retains 552,250 elapsed ticks, nineteen living dwarves, one earlier
+death, nine beds, five workshops, three farms, 151 food and 528 drinks. Native
+records verify brewing labor enabled through keyboard menus and worker-assigned
+brewing at two surface stills. A new baby first appears at decision823. The
+assessment is operating with adaptive supply recovery. Earlier labels remain
+unchanged; neither assessment claims indefinite sustainability. The new label
+requires a small additive change to the saved-outcome validator and summary.
+
+All 64 actions and 226 keys were accepted/confirmed, with 56,000 requested and
+actual ticks, no timeouts and no deferrals. The tenth automatic handoff verified
+stopped-state teardown, both shutdown return codes 0, and complete state reload
+before decision837. Cumulative usage is 24,149,524 returned tokens; charges remain
+unreported. No human gameplay rescue, model or native-condition change occurred.
+
+The homepage, Results page and core player stay unchanged. The saved-outcome
+summary, static result data and gallery update; services, database and host-local
+files must remain unchanged. No restart, new infrastructure or main merge.
+Contract checks cover all 64 frames, the new assessment, previous rejection and
+delayed metadata. This background update skips browser-only preview and does
+not claim visual QA. Publication is a separate, verified step after hosted CI.
+
+## Astra keyboard endurance, checkpoint 772
+
+This static update starts from public `e030ccb9c46af539c78b72df1705e50a58033dd6`.
+It adds the unchanged audited `astra-keyboard-endurance-v1-709-772` recording,
+its preview and gallery card, and a third saved-outcome entry. All 34 prior
+recordings, catalog rows and previews and both prior outcome entries remain
+unchanged. The new total is 35 recordings and 2,792 captured frames.
+
+Native recording SHA-256:
+`c7a2f3478b38b779db387bf5680c876c397888d6a1cec8f81c2e984f843f1a3a`.
+Audit: `a89724c72a8c9c51839be2f63806f851bacde020b7310247de45c91b90446aff`.
+Checkpoint: `e95420d952a1ffc7d63915f3fef7c5448e073050eecc91345c2a9dd0f3fbeddc`.
+The saved-outcome entry links native result `ecd0c1461ff32f74f43f1d42f75d38aad9f70d2e035078d3bba05605ee11bb4c`
+and gameplay review `211ca211d14726a4dc069d2a8c7fd07191d769625387c2fd82386623f93fb3e7`,
+both publicly committed at `e1b4e76c3f48e87fa3222b4e425ff6fa9d4492c6`.
+
+The save retains 496,250 elapsed ticks, eighteen living dwarves, one earlier
+death, nine beds, five workshops, three farms, 134 food and 143 drinks. A new
+surface still was completed and a brewing job acquired a worker. Native drinks
+peaked at 170 before falling to143; this is adaptive supply recovery, not proven
+indefinite sustainability or item-level attribution. All 64 actions and 289 keys
+were accepted/confirmed. One open-build-menu request deferred 1,200 ticks; actual
+elapsed time was49,200 against50,400 requested. No timeout or human rescue.
+
+The ninth automatic handoff verified stopped-state teardown and a whole-state
+reload before actual decision773. The original guest-poweroff return1 and
+VM-stop return0 remain preserved. Cumulative usage is22,152,718 returned tokens;
+subscription charges remain unreported. The same frozen campaign continues.
+
+Keep homepage/player code, native runtime, live feed, services, database and
+host-local files unchanged. Only existing static data and the gallery change;
+no restart, new infrastructure or main merge. Contract checks cover all64 new
+frames and preserve earlier rejection and delayed-metadata behavior. This
+background update skips browser-only preview and does not claim visual QA.

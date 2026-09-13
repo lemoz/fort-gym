@@ -135,7 +135,8 @@ test('homepage controls, replay switching and live disconnect work in memory', a
   const requests=[];
   globalThis.fetch=async url=>{
     requests.push(url);
-    const data=url.endsWith('catalog.json') ? {schema_version:'fortgym.watch-catalog/v1',recordings:[{id:'a',title:'A',window:'97–98'},{id:'b',title:'B',window:'97–98'}]}
+    const data=url.endsWith('saved-outcomes.json') ? {schema_version:'fortgym.watch-saved-outcomes/v1',outcomes:[]}
+      : url.endsWith('catalog.json') ? {schema_version:'fortgym.watch-catalog/v1',recordings:[{id:'a',title:'A',window:'97–98'},{id:'b',title:'B',window:'97–98'}]}
       : url.includes('watch-active') ? structuredClone(live) : url.includes('/a.json') ? record('a') : recovered();
     return {ok:true,json:async()=>data};
   };
@@ -205,7 +206,7 @@ test('homepage controls, replay switching and live disconnect work in memory', a
     assert.equal(element('recovery').hidden,false);
     assert.equal(element('live').hidden,true);
     assert.match(element('connection').textContent,/expired/);
-    assert.ok(requests.every(url=>url.startsWith('/static/recordings/') || url.startsWith('/static/live/watch-active.json?') || url==='/public/watch-active'));
+    assert.ok(requests.every(url=>url.startsWith('/static/recordings/') || url.startsWith('/static/live/watch-active.json?') || url==='/public/watch-active' || url==='/static/saved-outcomes.json'));
   } finally {
     globalThis.document=original.document;globalThis.fetch=original.fetch;
     globalThis.setInterval=original.setInterval;globalThis.clearInterval=original.clearInterval;Date.now=original.now;
