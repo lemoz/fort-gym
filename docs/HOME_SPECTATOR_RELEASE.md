@@ -698,3 +698,39 @@ feed, services, database and host-local files. No infrastructure creation,
 service restart, gameplay input or main merge belongs to this release.
 Browser-only preview and visual QA are skipped in this background continuation.
 Local validation, exact-head CI and public HTTPS acceptance remain separate.
+
+## Astra keyboard endurance, checkpoint 644
+
+Start from public revision `3016ab690190affd1435e93bf6e3ff2c12370b37` and add
+`astra-keyboard-endurance-v1-581-644`. Its 64 nonoverlapping frames continue
+the same campaign. Recording SHA-256:
+`418cefb6e70d71a7276abdcb61fcbf099eb9e93de1579ae4731e0b538e03512b`.
+Native audit: `083b20dabd9d6268144769dd598eb9bc1ba2cf5c6c68bd7b75c8697b68c86970`.
+Campaign result `astra_keyboard_endurance_644_20260913.json` has SHA-256
+`e5f8db850ebdbd535390c3ae80591d34ad2329a42a00713ac43464290c3c07bb`.
+It binds the native save, stopped-state/closed-disk checks, and actual reload.
+
+This is the current endurance campaign's first saved checkpoint inside Year Two:
+423,050 elapsed ticks, nineteen living dwarves, no recorded deaths, nine beds,
+four workshops, three farms, 66 food and 112 drinks. The window adds 20,000
+actual ticks. All 64 keyboard actions and 266 keys were accepted/confirmed,
+without clock timeouts or deferrals. Food fell from 73 to 66 and drinks from
+130 to 112. Stock changes are not attributed production or consumption.
+Cumulative returned usage is 19,259,777 tokens; actual charges remain unreported.
+
+The seventh automatic handoff restored the entire agent state, native clock,
+metrics and history prefixes under the unchanged inherited budget. Guest
+poweroff returned 0; the later VM-stop command returned 1 because the VM was
+already Stopped. Both VMs were verified Stopped with disks closed before the
+successor launched. Preserve these original command results. Decision645
+confirmed one key and zero actual ticks after reload.
+
+Preserve all 32 prior recording files, catalog rows and previews. The new total
+is 33 recordings and 2,664 frames. The earlier decision-580 replay remains a
+pre-anniversary save; do not relabel it using later progress. This continuation
+is not an independent trial, and anniversary passage and stock counts alone do
+not establish sustainability. Preserve the existing player, live feed, services,
+database, host-local files, and the separate combined native release candidate.
+No service restart, gameplay input, new infrastructure, or main merge belongs
+to this static update. Browser-only preview and visual QA are skipped in this
+background continuation. Local, hosted, and public HTTPS checks are separate.
