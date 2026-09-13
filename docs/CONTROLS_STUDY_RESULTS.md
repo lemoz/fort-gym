@@ -49,7 +49,11 @@ unknown; this summarizer does not perform a new native execution audit. Each
 attempt freshly reloaded its own decision-64 save before continuing, but the
 final decision-128 saves do not claim another independent reload.
 
-All six replays are already available in the public Worlds gallery and homepage
-selector. The consolidated paired summary is not yet a public Results panel.
-This source integration changes no runtime, model, condition, original result,
-recording or public website file. The main-branch merge remains separate.
+All six replays are available in the public Worlds gallery and homepage selector.
+The [paired Results panel](https://fortgym.live/results#controls-comparison) is
+also published and included in this checkout. Its table, original downloadable
+summary and six replay links have separate
+[website delivery evidence](../experiments/evidence/controls_study_website_20260913.json).
+The [publication guide](CONTROLS_STUDY_PUBLICATION.md) explains its source bindings.
+This later integration changes no native runtime, model, condition, original
+result or recording. The main-branch merge remains separate.

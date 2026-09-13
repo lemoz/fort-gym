@@ -36,6 +36,7 @@
   .evidence-meta { display: flex; justify-content: space-between; gap: 14px; padding: 12px; }
   .evidence-model { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 700 11px/1.3 var(--mono); }
   .evidence-score { color: var(--acid); font: 700 11px/1.3 var(--mono); }
+  .controls-study tbody + tbody tr:first-child > * { border-top: 2px solid var(--cyan); }
   @media (max-width: 900px) {
     .results-hero-grid, .cohort-layout, .archive-band { grid-template-columns: 1fr; }
     .results-band-grid { grid-template-columns: 1fr 1fr; }
@@ -93,6 +94,73 @@
       <p class="comparison-note">Supplies are saved stock counts, not production rates or proof the dwarves can access them. Model charges are unreported by the subscription, not $0. These early, single-seed attempts do not establish a model ranking.</p>
       <p class="comparison-note"><a id="matched-plan" href="https://github.com/lemoz/fort-gym/blob/61fcca7177d8b66ddd7e12e4be0ab53bda5ffd5b/experiments/keyboard_binding_comparison_20260911/cohort.json">Read the frozen experiment plan →</a> · <a id="matched-download" href="/static/displayed-key-comparison.json">Download the selected results</a></p>
       <noscript>Enable JavaScript for the table, or download the source-linked results above.</noscript>
+    </div>
+  </section>
+
+  <section class="fl-section controls-study" id="controls-comparison" aria-labelledby="controls-title">
+    <div class="fl-wrap">
+      <div class="fl-eyebrow">Controls study · Astra Medium</div>
+      <h2 class="fl-section-title" id="controls-title">Keyboard controls or workshop shortcuts?</h2>
+      <p class="fl-copy">Three paired repeats from the same starting save, with empty starting memory and the same 120 × 40 screen. Both conditions allow standard keyboard input. The shortcut condition adds selected-workshop job insertion and its instructions. Each attempt has the same 128-decision budget.</p>
+      <p class="comparison-summary">6 recorded results · 3 pairs · 128 decisions each</p>
+      <div class="comparison-scroll" tabindex="0" role="region" aria-label="Paired controls results, scroll horizontally for all measurements">
+        <table class="comparison-table">
+          <caption>All six saved endpoints at 128 decisions. Grouped by pair, not ranked.</caption>
+          <thead><tr><th scope="col">Pair / controls</th><th scope="col">Elapsed game ticks</th><th scope="col">Living / recorded deaths</th><th scope="col">Completed beds / workshops / farms</th><th scope="col">Raw food / drinks</th><th scope="col">Returned tokens</th><th scope="col">Evidence</th></tr></thead>
+          <tbody id="controls-pair-1">
+            <tr data-result="saved" data-controls-pair="1" data-controls-condition="keyboard">
+              <th scope="row">Pair 1<span class="comparison-amendment">Keyboard</span></th>
+              <td>70,900</td><td>7 / 0</td>
+              <td>7 / 2 / 1</td>
+              <td>43 / 135</td><td>3,879,799</td>
+              <td><a href="/?recording=controls-v2-p1-keyboard-1-128#watch-root" aria-label="Replay pair 1, keyboard">Replay</a><a href="https://github.com/lemoz/fort-gym/blob/26edd37c0f5946bfb4f0a98d30ae432d8d590e7f/experiments/evidence/selected_workshop_v2_p1_keyboard_128_20260912.json" aria-label="Result evidence for pair 1, keyboard">Result</a></td>
+            </tr>
+            <tr data-result="saved" data-controls-pair="1" data-controls-condition="shortcuts">
+              <th scope="row">Pair 1<span class="comparison-amendment">Keyboard + shortcuts</span></th>
+              <td>68,200</td><td>7 / 0</td>
+              <td>7 / 2 / 1</td>
+              <td>39 / 115</td><td>3,772,495</td>
+              <td><a href="/?recording=controls-v2-p1-shortcuts-1-128#watch-root" aria-label="Replay pair 1, shortcuts">Replay</a><a href="https://github.com/lemoz/fort-gym/blob/26edd37c0f5946bfb4f0a98d30ae432d8d590e7f/experiments/evidence/selected_workshop_v2_p1_shortcuts_128_20260912.json" aria-label="Result evidence for pair 1, shortcuts">Result</a></td>
+            </tr>
+          </tbody>
+          <tbody id="controls-pair-2">
+            <tr data-result="saved" data-controls-pair="2" data-controls-condition="keyboard">
+              <th scope="row">Pair 2<span class="comparison-amendment">Keyboard</span></th>
+              <td>51,900</td><td>6 / 1</td>
+              <td>7 / 5 / 1</td>
+              <td>61 / 122</td><td>3,954,012</td>
+              <td><a href="/?recording=controls-v2-p2-keyboard-1-128#watch-root" aria-label="Replay pair 2, keyboard">Replay</a><a href="https://github.com/lemoz/fort-gym/blob/26edd37c0f5946bfb4f0a98d30ae432d8d590e7f/experiments/evidence/selected_workshop_v2_p2_keyboard_128_20260912.json" aria-label="Result evidence for pair 2, keyboard">Result</a></td>
+            </tr>
+            <tr data-result="saved" data-controls-pair="2" data-controls-condition="shortcuts">
+              <th scope="row">Pair 2<span class="comparison-amendment">Keyboard + shortcuts</span></th>
+              <td>49,600</td><td>7 / 0</td>
+              <td>10 / 2 / 2</td>
+              <td>40 / 136</td><td>4,014,250</td>
+              <td><a href="/?recording=controls-v2-p2-shortcuts-1-128#watch-root" aria-label="Replay pair 2, shortcuts">Replay</a><a href="https://github.com/lemoz/fort-gym/blob/26edd37c0f5946bfb4f0a98d30ae432d8d590e7f/experiments/evidence/selected_workshop_v2_p2_shortcuts_128_20260912.json" aria-label="Result evidence for pair 2, shortcuts">Result</a></td>
+            </tr>
+          </tbody>
+          <tbody id="controls-pair-3">
+            <tr data-result="saved" data-controls-pair="3" data-controls-condition="keyboard">
+              <th scope="row">Pair 3<span class="comparison-amendment">Keyboard</span></th>
+              <td>46,400</td><td>7 / 0</td>
+              <td>7 / 3 / 1</td>
+              <td>42 / 122</td><td>3,753,509</td>
+              <td><a href="/?recording=controls-v2-p3-keyboard-1-128#watch-root" aria-label="Replay pair 3, keyboard">Replay</a><a href="https://github.com/lemoz/fort-gym/blob/26edd37c0f5946bfb4f0a98d30ae432d8d590e7f/experiments/evidence/selected_workshop_v2_p3_keyboard_128_20260912.json" aria-label="Result evidence for pair 3, keyboard">Result</a></td>
+            </tr>
+            <tr data-result="saved" data-controls-pair="3" data-controls-condition="shortcuts">
+              <th scope="row">Pair 3<span class="comparison-amendment">Keyboard + shortcuts</span></th>
+              <td>58,200</td><td>7 / 0</td>
+              <td>7 / 2 / 1</td>
+              <td>56 / 161</td><td>3,621,402</td>
+              <td><a href="/?recording=controls-v2-p3-shortcuts-1-128#watch-root" aria-label="Replay pair 3, shortcuts">Replay</a><a href="https://github.com/lemoz/fort-gym/blob/26edd37c0f5946bfb4f0a98d30ae432d8d590e7f/experiments/evidence/selected_workshop_v2_p3_shortcuts_128_20260912.json" aria-label="Result evidence for pair 3, shortcuts">Result</a></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="comparison-note">Neither condition clearly dominates these endpoints. These are repeated attempts on one world, not independent seeds or a strong controls ranking. Equal decisions do not mean equal game time or token use. These short attempts are separate from the Year-Two endurance run.</p>
+      <p class="comparison-note">A queued job is not a completed product. Saved supplies are not production rates, accessible reserves or proof of self-sufficiency. The six attempts used 22,995,467 returned tokens; dollar charges are unreported, not $0.</p>
+      <p class="comparison-note">Each attempt reloaded its own decision-64 checkpoint before continuing. The final decision-128 saves do not claim another independent reload.</p>
+      <p class="comparison-note"><a href="https://github.com/lemoz/fort-gym/blob/26edd37c0f5946bfb4f0a98d30ae432d8d590e7f/experiments/evidence/selected_workshop_runtime_v2_declaration_20260912.json">Read the declared conditions →</a> · <a href="/static/controls-study-comparison.json">Download all paired results</a> · <a href="https://github.com/lemoz/fort-gym/blob/26edd37c0f5946bfb4f0a98d30ae432d8d590e7f/docs/CONTROLS_STUDY_RESULTS.md">Reproduce the comparison →</a></p>
     </div>
   </section>
 

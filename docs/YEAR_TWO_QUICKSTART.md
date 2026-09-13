@@ -70,6 +70,8 @@ The separate [completed keyboard-versus-shortcut study](CONTROLS_STUDY_RESULTS.m
 includes all six paired outcomes, their declaration and a read-only reproduction
 command. It uses Astra Medium in both conditions and is not pooled into the
 three-model comparison. Its original result and replay bytes are preserved.
+The paired table is available at `/results#controls-comparison` in this checkout
+and on the public website, with direct links to all six original replays.
 
 To serve the bundled recordings locally:
 
