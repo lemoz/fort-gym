@@ -536,6 +536,7 @@ service restart, gameplay input or main merge belongs to this release.
 Browser-only preview and visual QA are skipped in this background continuation.
 Local validation, exact-head CI and public HTTPS acceptance remain separate.
 
+
 ## Astra keyboard endurance, checkpoint 324
 
 Start from public revision `67b0ff107abf29dda457705980d3576a29d817cf` and add
@@ -654,6 +655,45 @@ result. Stocks alone do not establish sustainability.
 
 Preserve all 30 older recording files, catalog rows and previews. The new total
 is 31 recordings and 2,536 captured frames. Preserve the coordinator-owned live
+feed, services, database and host-local files. No infrastructure creation,
+service restart, gameplay input or main merge belongs to this release.
+Browser-only preview and visual QA are skipped in this background continuation.
+Local validation, exact-head CI and public HTTPS acceptance remain separate.
+
+
+## Astra keyboard endurance, checkpoint 580
+
+Start from public revision `e5285642b1c0183bba07f2eb844f92e8c895a5ab` and add
+`astra-keyboard-endurance-v1-517-580`. Its 64 nonoverlapping frames continue the
+same campaign. Recording SHA-256:
+`016da429b0dc5829a4618980a62ac733d166c08bc911d28dc6b5f1605db876b6`.
+Native audit: `c7aa4a4c25edbc545ca3c3e7e3dd7d233774234d275082b88d1b665fac771ce4`.
+Campaign result `astra_keyboard_endurance_580_20260913.json` has SHA-256
+`bf26bc0a399253cbc092f7fc7c0ee66d27ee7c8d62dcf31a26ee101382f73340`.
+It binds the completed native save, teardown and actual fresh reload at 580.
+
+The window added 58,000 elapsed ticks, ending at 403,050 with nineteen living
+dwarves and no recorded deaths. The endpoint retains nine beds, four workshops
+and three farms. Food fell from 170 to 73 while drinks rose from 29 to 130. These
+are inventories, not attributed production or consumption. All 64 keyboard
+actions were accepted and all 216 keys confirmed; requested ticks equal actual
+ticks, without timeouts or deferrals. Cumulative usage is 17,698,403 returned
+tokens. Actual subscription charges remain unreported.
+
+The sixth automatic handoff restored the entire saved agent state, clock,
+metrics and history prefixes under the original inherited cumulative limits.
+The first continued decision581 confirmed one key and 2,000 actual ticks, passing
+the 403,200-tick anniversary at 405,050 elapsed ticks. That running-window
+milestone is not part of the saved replay and has no later verified checkpoint
+yet. Neither anniversary passage nor stocks alone establish sustainability.
+
+The guest-poweroff wrapper returned 1 with exit-status-255 output; the subsequent
+VM stop returned 0 and reported it already not running. Both VMs were verified
+Stopped with closed disks before the successor launched. Preserve these original
+return codes rather than rewriting them as all-zero cleanup.
+
+Preserve all 31 older recording files, catalog rows and previews. The new total
+is 32 recordings and 2,600 captured frames. Preserve the coordinator-owned live
 feed, services, database and host-local files. No infrastructure creation,
 service restart, gameplay input or main merge belongs to this release.
 Browser-only preview and visual QA are skipped in this background continuation.

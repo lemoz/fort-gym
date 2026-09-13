@@ -27,7 +27,8 @@ def test_endurance_recording_preserves_audited_keyboard_actions_and_save_boundar
 
 def test_endurance_card_keeps_the_short_study_and_year_two_claim_separate():
     catalog = json.loads((RECORDINGS / "catalog.json").read_text())["recordings"]
-    assert [row["id"] for row in catalog[:9]] == [
+    assert [row["id"] for row in catalog[:10]] == [
+        "astra-keyboard-endurance-v1-517-580",
         "astra-keyboard-endurance-v1-453-516",
         "astra-keyboard-endurance-v1-389-452",
         "astra-keyboard-endurance-v1-325-388",
@@ -40,8 +41,8 @@ def test_endurance_card_keeps_the_short_study_and_year_two_claim_separate():
     ]
     assert len([row for row in catalog if row["id"].startswith("controls-v2-")]) == 6
     previews = json.loads((RECORDINGS / "previews.json").read_text())["recordings"]
-    assert previews[7]["id"] == IDENTITY
-    assert previews[7]["recording_sha256"] == catalog[7]["sha256"]
+    assert previews[8]["id"] == IDENTITY
+    assert previews[8]["recording_sha256"] == catalog[8]["sha256"]
     html = (ROOT / "web/worlds.html").read_text()
     assert "30,700 game ticks" in html and "six installed beds" in html
     assert "1,788,513 returned tokens" in html
@@ -228,4 +229,36 @@ def test_checkpoint_516_preserves_native_continuity_without_inferring_production
     assert "15,847,406 returned tokens" in html
     assert "decision-516 save was freshly reloaded" in html
     assert "Food rose from 134 to 170 and drinks remained at 29" in html
+    assert "stock counts alone do not establish sustainability" in html
+
+
+def test_checkpoint_580_preserves_year_rollover_and_qualified_anniversary_claim():
+    raw = (RECORDINGS / "astra-keyboard-endurance-v1-517-580.json").read_bytes()
+    assert hashlib.sha256(raw).hexdigest() == "016da429b0dc5829a4618980a62ac733d166c08bc911d28dc6b5f1605db876b6"
+    data = json.loads(raw)
+    assert data["audit_sha256"] == "c7aa4a4c25edbc545ca3c3e7e3dd7d233774234d275082b88d1b665fac771ce4"
+    previous = json.loads((RECORDINGS / "astra-keyboard-endurance-v1-453-516.json").read_text())
+    frames = data["frames"]
+    assert [frame["decision"] for frame in frames] == list(range(517, 581))
+    assert data["saved_through_decision"] == 580
+    for key in ("source_revision", "control_profile", "model"):
+        assert data[key] == previous[key]
+    assert frames[0]["before"] == {key: previous["frames"][-1]["after"][key] for key in ("year", "tick")}
+    assert frames[-1]["after"]["year"] == 31
+    assert frames[-1]["after"]["tick"] == 16651
+    assert sum(frame["after"]["ticks_advanced"] for frame in frames) == 58000
+    assert sum(frame["action"]["advance_ticks"] for frame in frames) == 58000
+    for frame in frames:
+        before, after = frame["before"], frame["after"]
+        assert (after["year"] - before["year"]) * 403200 + after["tick"] - before["tick"] == after["ticks_advanced"]
+        assert after["ticks_advanced"] == frame["action"]["advance_ticks"]
+        assert frame["accepted"] and "shortcut" not in frame["action"]
+        assert after["population"] == 19
+    assert sum(len(frame["action"]["keys"]) for frame in frames) == 216
+    html = (ROOT / "web/worlds.html").read_text()
+    assert "403,050 total game ticks" in html
+    assert "17,698,403 returned tokens" in html
+    assert "decision-580 save was freshly reloaded" in html
+    assert "Food fell from 170 to 73 while drinks rose from 29 to 130" in html
+    assert "later progress is not part of this saved replay" in html
     assert "stock counts alone do not establish sustainability" in html
