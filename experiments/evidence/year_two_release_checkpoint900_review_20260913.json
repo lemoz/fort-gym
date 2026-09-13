@@ -1,0 +1,116 @@
+{
+  "schema_version": "year-two-release-checkpoint900-review/v1",
+  "date_utc": "2026-09-13",
+  "candidate": {
+    "revision": "f3d3a3d2020ea20086806fd5363d7bad08c64bec",
+    "branch": "codex/year-two-release-outcomes",
+    "base_revision": "90e4c977cb49b1efbefda295b4bd27ec806ae98f",
+    "changed_files": 19,
+    "source_manifest": "experiments/evidence/year_two_release_checkpoint900_source_20260913.json",
+    "source_manifest_sha256": "c7a9ec932f8714fd62bdd289038b80fbd4157741cdc1726ad08273512c3c8a4a",
+    "consumed_importer_sha256": "d8b313ecd5566222fbfbc7cb31a3ecb49b61eeee40b42e91c13411328bdbe74e"
+  },
+  "published_website_revision": "d8b681e1d8f059d8ac3ee4480aab05778d4cf365",
+  "evidence_scope": {
+    "recordings": 37,
+    "frames": 2920,
+    "saved_outcome_endpoints": [
+      900,
+      836,
+      772,
+      708,
+      644
+    ],
+    "exact_published_imports": 19,
+    "compatibility_adjusted_files": 2,
+    "protected_source_files": 263,
+    "original_32_recording_source_sha256": "477cefadb9c3d8d9c1e2fbddbc34e5b8270d1706507e766883c4b74a323e4d0a",
+    "original_36_recording_source_sha256": "5b3bd64df0004a13541776f5fd74985ad932f3efac51755de99fdb389c457fda",
+    "both_historical_manifests_unchanged": true,
+    "all_prior_recording_bytes_unchanged": true,
+    "old_outcome_entries_unchanged": true,
+    "inventory_qualification": "388 raw food units include 250 trader-flagged and 138 non-trader units, down from 151; 560 raw drink units have unknown ownership. No supply recovery is inferred.",
+    "prior_rejection_and_lost_tail_preserved": true,
+    "active_condition_changed": false
+  },
+  "public_source_comparison": {
+    "publishedAssetsCompared": 80,
+    "byteIdentical": 77,
+    "compatibilityDifferences": [
+      "web/landing.html",
+      "web/protocols.html",
+      "web/results.html"
+    ],
+    "passed": true
+  },
+  "local_tests": {
+    "focused": {
+      "passed": 124,
+      "warnings": 51,
+      "seconds": 11.82,
+      "node": 116,
+      "scopedRuff": true
+    },
+    "full": {
+      "passed": 5890,
+      "skipped": 10,
+      "warnings": 56,
+      "seconds": 296.19,
+      "junitArtifact": "fort_gym/artifacts/release-checkpoint900-review/full-local.xml"
+    },
+    "junit_sha256": "6399c919bf149147aebcd83b9d3fae836fb09015ddf6be34062752e8bc2e1e61"
+  },
+  "static_checks": {
+    "scoped_ruff_passed": true,
+    "full_tree_baseline": {
+      "ruffFindings": 9,
+      "mypyErrors": 465,
+      "mypyErrorFiles": 27
+    },
+    "checked_python_source_files": 181,
+    "native_source_changed": false,
+    "baseline_clean": false
+  },
+  "remote_review": {
+    "pr": 186,
+    "url": "https://github.com/lemoz/fort-gym/pull/186",
+    "draft": true,
+    "pushed_exact_head_verified": true,
+    "head": "f3d3a3d2020ea20086806fd5363d7bad08c64bec",
+    "base_branch": "codex/dfhack-job-serialization"
+  },
+  "no_model_calls_from_integration": true,
+  "no_vm_creation": true,
+  "no_publication_from_integration": true,
+  "no_service_restart": true,
+  "no_database_mutation": true,
+  "active_native_revision": "4b526b5636e6f568a4cae1a1227d746d9c6922c3",
+  "active_coordinator_revision": "4ce541fbe0cc20556744cd381298c31f1fb580a2",
+  "browser_visual_qa": false,
+  "sites_architecture_preserved": true,
+  "main_merged": false,
+  "combined_application_deployed": false,
+  "full_goal_complete": false,
+  "hosted_tests": {
+    "passed": 5727,
+    "skipped": 173,
+    "warnings": 57,
+    "seconds": 303.21,
+    "ci_run": 34753579710,
+    "ci_job": 103714074583,
+    "summary_utc": "2026-09-13T11:11:55.9269366Z",
+    "source_revision": "f3d3a3d2020ea20086806fd5363d7bad08c64bec",
+    "conclusion": "success"
+  },
+  "live_campaign_observation": {
+    "observed_at_unix": 1789297988,
+    "decision": 958,
+    "owner_alive": true,
+    "status": "running",
+    "saved_through_decision": 900,
+    "pending_save_target": 964,
+    "coordinator_pid": 38257,
+    "supervisor_pid": 5463,
+    "coordinator_session": 23270
+  }
+}

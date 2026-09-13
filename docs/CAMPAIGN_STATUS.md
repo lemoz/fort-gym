@@ -93,7 +93,30 @@ native-runtime change, restart, new VM or main merge was part of publication.
 Its mutation helpers are consumed. Combined native release promotion remains
 separate from this delivered static website update.
 
-The [refreshed combined release and source review](../experiments/evidence/year_two_release_outcomes_review_20260913.json)
+The [checkpoint 900 combined-release review](../experiments/evidence/year_two_release_checkpoint900_review_20260913.json)
+is complete at `f3d3a3d2020ea20086806fd5363d7bad08c64bec`, pushed to the existing
+draft [PR #186](https://github.com/lemoz/fort-gym/pull/186). It now carries the
+same 37 recordings, 2,920 frames and five reviewed saved outcomes as the published
+website, including checkpoint 900's inventory caveat. The 19-file increment imports existing evidence, not new
+gameplay. Both prior source manifests, all earlier recordings/outcomes and all
+263 protected native/configuration files remain unchanged.
+
+All 80 public web assets were compared; 77 are byte-identical and the three
+existing Campaigns-navigation/protocol compatibility differences are retained.
+The focused suite passed 124 tests and all 116 Node checks passed. The complete
+local suite passed 5,890 tests with ten skips and 56 warnings; exact-head hosted
+run `34753579710` passed 5,727 with 173 skips and 57 warnings. Scoped Ruff passed.
+Full-tree static debt is unchanged: nine Ruff findings and 465 mypy errors in
+27 files, not a clean global-static-check claim.
+
+The same live owner continued through decision 958 toward checkpoint 964.
+This integration changed no active condition, source, prompt, model or budget,
+made no model calls, and created no VM. The public site remains on its separately
+verified static release. PR #186 is still a draft, not a main merge or combined
+application deployment. The new importer is consumed; older source and CI
+receipts remain intact.
+
+The [earlier combined release and source review](../experiments/evidence/year_two_release_outcomes_review_20260913.json)
 is pushed at `90e4c977cb49b1efbefda295b4bd27ec806ae98f` on
 `codex/year-two-release-outcomes`, with draft [PR #186](https://github.com/lemoz/fort-gym/pull/186).
 It carries the earlier 36-recording snapshot, 2,856 frames and four saved-outcome
