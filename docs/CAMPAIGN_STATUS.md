@@ -39,11 +39,19 @@ The sole coordinator is continuing toward checkpoint836 under the unchanged
 1,028-response/40-million-token ceiling. No new allowance, model/prompt/control
 change, competing native owner or human rescue was introduced.
 
-The 709–772 replay has been exported and audited, but is not yet public. The
-current public site remains at `e030ccb9c46af539c78b72df1705e50a58033dd6`,
-with 34 recordings/2,728 frames through checkpoint708 and saved-outcome panels
-for checkpoints644 and708. Native completion and website delivery remain
-separate evidence; publish the new replay and its reviewed outcome next.
+The [709–772 replay and reviewed outcome are now publicly verified](../experiments/evidence/astra_keyboard_endurance_772_website_20260913.json)
+at `1cc292acf1584c10b6eb0d6929207aa8d7d32dca`. The site has 35 recordings and
+2,792 captured frames, with saved-outcome panels for checkpoints 644, 708 and 772.
+All 34 older recordings, catalog rows and previews and both earlier outcome
+entries are unchanged. All 33 focused Python, 101 Node, 25 importer and the
+all-64-frame player checks passed. Full local validation passed 1,321 tests with
+five skips/eight warnings; hosted CI passed 1,321 with five skips/seven warnings.
+Six public source receipts and all 35 recordings were checked against exact
+published bytes. The live feed remained running through decision 801. Homepage,
+Results and player code, service identities, database counts and host-local
+files remained unchanged. No browser visual QA, runtime change, restart, new VM
+or main merge was part of this static release. Its publication helpers are
+consumed. The combined release snapshot remains separate and unchanged.
 
 The previous verified [checkpoint708 and actual reload](../experiments/evidence/astra_keyboard_endurance_708_20260913.json) retained:
 447,050 elapsed ticks, eighteen living dwarves, one recorded death, nine beds,
