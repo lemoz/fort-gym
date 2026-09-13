@@ -1,0 +1,70 @@
+{
+  "schema_version": "fortgym.endurance-inherited-budget-reload/v1",
+  "date_utc": "2026-09-12",
+  "campaign_id": "astra-keyboard-endurance-v1",
+  "source_revision": "4b526b5636e6f568a4cae1a1227d746d9c6922c3",
+  "image": "sha256:a2f12a74805949b8a2fcf0262b5d63048f4bd3a6f2faf4d8bbc74c261b172ed4",
+  "checkpoint68_sha256": "ca4b881990adbc19aa9ccbab27dd19a34a0101f94dfde4ff3bf9b4aeff5659dd",
+  "checkpoint68_fresh_reload_verified": true,
+  "actual_native_clock_and_metrics_restored": true,
+  "entire_saved_agent_state_restored_exactly": true,
+  "original_trace_usage_prefixes_preserved": true,
+  "budget_extension_count": 1,
+  "no_new_budget_extension": true,
+  "effective_cumulative_limits": {
+    "max_dispatches": 1028,
+    "max_total_tokens": 40000000
+  },
+  "inherited_usage": {
+    "accounted_responses": 68,
+    "cost_basis": "codex_subscription_charge_unreported/v1",
+    "dispatched_requests": 68,
+    "returned_responses": 68,
+    "total_cost_usd": null,
+    "total_tokens": 1788513
+  },
+  "saved_metrics": {
+    "population": 7,
+    "food_stock": 53,
+    "drink_stock": 53,
+    "wood_stock": null,
+    "stone_stock": null,
+    "functional_rooms": null,
+    "completed_workshops": 3,
+    "completed_beds": 6,
+    "completed_farms": 1,
+    "recorded_dead_citizens": 0
+  },
+  "first_new_response": {
+    "decision": 69,
+    "tokens": 44939,
+    "valid": true,
+    "response_sha256": "73988806817affa0835312c729fe6971e9f4949dc2d70de28310bbcf3f323e18"
+  },
+  "window": {
+    "first_decision": 69,
+    "last_decision": 132,
+    "mandatory_teardown": true,
+    "declaration_sha256": "11b24d2ca11f89b5229aa999024c1153dd91dd93ddba022f904848abe4627003",
+    "launch_sha256": "c4a05d3e3910605d196e556bb3a7a29f0e9dc57b3283a672d317387c1f7e09f2",
+    "owner_plan_sha256": "984d9c7faa78c7c425655cf9034cbb9ed8f61369440c5eb006e79077c06770c3"
+  },
+  "initial_agent_sha256": "d4b3248a355cc22ad00ab2d9c4f1e429034e2fd8973183766777af4deed31229",
+  "initial_native_sha256": "55df999f7b2d17d9d7270d8b8c0a2cda12956ebf7cec4103a8d3745011cf0af6",
+  "public_live": {
+    "status": "running",
+    "decision": 75,
+    "owner_identity_verified": true,
+    "original_screen_and_chosen_action_verified": true,
+    "payload_sha256": "c2f3662329f822430fdccc178939a57ff8f6d187f287664140f7eb38e0072a35",
+    "request_sha256": "09198a06e91116a0228089d9d2b2c13108370dfb9550df41b5b39805a7d2f454",
+    "private_memory_or_transcripts_published": false
+  },
+  "reset_memory": false,
+  "reset_usage": false,
+  "human_gameplay_rescue": false,
+  "checkpoint132_verified": false,
+  "actual_subscription_charge_usd": null,
+  "full_goal_complete": false,
+  "note": "The actual new native load preserved the whole saved agent state and inherited the existing budget, without a second append. This proves checkpoint68 reload, not the current window final save or long-term self-sufficiency."
+}

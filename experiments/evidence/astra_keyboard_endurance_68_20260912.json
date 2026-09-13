@@ -1,0 +1,141 @@
+{
+  "schema_version": "fortgym.endurance-window-result/v1",
+  "date_utc": "2026-09-12",
+  "campaign_id": "astra-keyboard-endurance-v1",
+  "status": "saved",
+  "saved_through_decision": 68,
+  "model": "gpt-6-astra",
+  "reasoning_effort": "medium",
+  "control_profile": "native_keyboard_bindings/v1",
+  "source_revision": "4b526b5636e6f568a4cae1a1227d746d9c6922c3",
+  "image": "sha256:a2f12a74805949b8a2fcf0262b5d63048f4bd3a6f2faf4d8bbc74c261b172ed4",
+  "condition_sha256": "b1f0d51d90f26bedbf7c3cd24dea82f724af17cd686b13364ae9cdd1b0326342",
+  "model_responses": 68,
+  "returned_tokens": 1788513,
+  "reported_subscription_charge_usd": null,
+  "cloud_spend_usd": 0,
+  "saved_elapsed_ticks": 30700,
+  "saved_metrics": {
+    "population": 7,
+    "food_stock": 53,
+    "drink_stock": 53,
+    "wood_stock": null,
+    "stone_stock": null,
+    "functional_rooms": null,
+    "completed_workshops": 3,
+    "completed_beds": 6,
+    "completed_farms": 1,
+    "recorded_dead_citizens": 0
+  },
+  "checkpoint_verified": true,
+  "checkpoint_manifest_sha256": "ca4b881990adbc19aa9ccbab27dd19a34a0101f94dfde4ff3bf9b4aeff5659dd",
+  "checkpoint_file_sha256": "4d237a5dfc1c6b56393353e7daaafa0f3869a994584910517ed231cbde1e35ad",
+  "audit_sha256": "a21451d867103c29b5786a9338d8829057228f54e9507d3606e71d22a608fe9f",
+  "operation_sha256": "156cb5a9c783d6100e9afe0a3f37a5dbc25d7d4f27e285bbc9abaca395835123",
+  "owner_result_sha256": "1efab0b35be50d07ad22dd6c210d08cd352a3e934658c8171dc1f242d025c2cb",
+  "original_inputs_unchanged": true,
+  "memory_usage_and_history_preserved": true,
+  "checkpoint4_fresh_reload_verified": true,
+  "checkpoint68_separate_fresh_reload_verified": false,
+  "cumulative_limits": {
+    "max_dispatches": 1028,
+    "max_total_tokens": 40000000
+  },
+  "budget_extension_count": 1,
+  "checkpoint_bound_budget_extension": {
+    "checkpoint_sha256": "6186fa52a2fffc356fceda396a96b995f9adaf47c336f593e9c41f76f995ab01",
+    "limits": {
+      "max_dispatches": 1028,
+      "max_total_tokens": 40000000
+    },
+    "previous": {
+      "max_dispatches": 4,
+      "max_total_tokens": 500000
+    },
+    "schema_version": "fortgym.campaign-budget-extension/v1",
+    "usage_at_extension": {
+      "dispatched_requests": 4,
+      "total_tokens": 97129
+    }
+  },
+  "completed_budget_extension_save_cycle_verified": true,
+  "saved_agent_sha256": "7e145cebbd7e815429bcb14b71766cc50e54fafa758d0dadf143a96eb4fa1b6c",
+  "action_summary": {
+    "schema_version": "fortgym.selected-workshop-action-summary/v1",
+    "decisions": 68,
+    "action_routes": {
+      "KEYSTROKE": 68
+    },
+    "accepted_actions": 68,
+    "rejected_actions": 0,
+    "keyboard": {
+      "decisions": 68,
+      "requested_key_presses": 543,
+      "known_keys_sent": 543,
+      "records_without_key_count": 0
+    },
+    "workshop": {
+      "decisions": 0,
+      "requested_jobs_by_item": {},
+      "known_jobs_queued_by_item": {},
+      "records_without_queue_count": 0,
+      "completed_products_measured": false
+    },
+    "clock": {
+      "requested_ticks": 33900,
+      "advanced_ticks": 30700,
+      "timeout_requests": 0,
+      "zero_tick_timeout_requests": 0,
+      "deferred_requests": 2
+    },
+    "native_audit_performed": false
+  },
+  "teardown": {
+    "verified": true,
+    "both_vms_stopped": true,
+    "configs_unchanged": true,
+    "global_context_unchanged": true,
+    "fg-portable_disk_closed": true,
+    "fg-v2_disk_closed": true,
+    "prior_inventory_preserved": true,
+    "guest_poweroff_returncode": 1,
+    "guest_poweroff_log_sha256": "ab42af519c08e1b9a8347307e782f41dc08e9ead5b388cd828cc2fa13a790c65",
+    "guest_poweroff_log": "exit status 255",
+    "poweroff_error_cause_unknown": true,
+    "vm_stop_returncode": 0,
+    "original_return_codes_preserved": true
+  },
+  "public_stopped_frame": {
+    "schema_version": "fortgym.endurance-public-boundary-proof/v1",
+    "campaign_id": "astra-keyboard-endurance-v1",
+    "decision": 68,
+    "owner_stopped_verified": true,
+    "original_screen_and_chosen_action_verified": true,
+    "public_https_verified": true,
+    "payload_sha256": "e91285af632fe54d46f0e8d09db0e670ae3cf563c04c9efff3e3a877cbf7a9fb",
+    "request_sha256": "51d404443801934058f13039d415ebaba7d692dbfb84bb636c6e679699fb465d",
+    "observed_at_unix": 1789258140,
+    "published_observed_at_unix": 1789258035,
+    "current_projection": "stale",
+    "native_save_audit_separate": true,
+    "model_calls": 0,
+    "gameplay_inputs": 0
+  },
+  "replay": {
+    "id": "astra-keyboard-endurance-v1-1-68",
+    "frames": 68,
+    "sha256": "97cd1ae75d5afa68e6896bcb1868b476ca9cd8430ff59b4fd0975857fdae095c",
+    "exported": true,
+    "website_published": false
+  },
+  "first_anniversary_elapsed_ticks": 403200,
+  "year_two_reached": false,
+  "production_rates": null,
+  "consumption_rates": null,
+  "accessible_reserves": null,
+  "functioning_fortress": "not_assessed",
+  "no_human_gameplay_rescue": true,
+  "main_merged": false,
+  "full_goal_complete": false,
+  "note": "The current window saved and passed its retained-native audit. Exactly one original checkpoint4-bound budget extension survived the save, without resetting usage or memory. A separate reload of checkpoint68 and later save cycle need fresh evidence. Stocks and sampled jobs do not establish self-sufficiency. The earlier six controls attempts remain frozen and are not pooled into this campaign."
+}

@@ -23,11 +23,15 @@ retains seven living dwarves, seven beds, three workshops and one farm after
 46,400 elapsed ticks. The [complete descriptive comparison](../experiments/evidence/selected_workshop_v2_cohort_20260912.json)
 preserves all outcomes without claiming a control ranking or independent worlds.
 
-The separate [Astra Medium endurance campaign is now running](../experiments/evidence/astra_keyboard_endurance_startup_20260912.json)
-on its verified new image. Its four-response native save and actual own-save
-reload passed, preserving memory and usage with one declared cumulative budget
-extension. Astra is playing decisions 5–68, with the live viewer following it.
-That window's final save and later inherited-budget cycles are not yet verified.
+The separate [Astra Medium endurance campaign has saved decision68](../experiments/evidence/astra_keyboard_endurance_68_20260912.json):
+30,700 elapsed ticks, seven living dwarves, six beds, three workshops, one farm,
+53 food and 53 drinks. The native audit and teardown checks passed, preserving
+the original nonzero guest-poweroff code. Its single cumulative budget extension
+survived the save. The [actual checkpoint68 reload also passed](../experiments/evidence/astra_keyboard_endurance_68_reload_20260912.json),
+restoring the entire agent state and inheriting the existing limits without
+another append. Astra is playing decisions 69–132, with the live viewer following
+it. The new window's final save is not yet verified; the first 68-frame endurance
+replay is exported and being validated for website publication.
 The [sixth controls replay is now public](../experiments/evidence/selected_workshop_v2_p3_keyboard_website_20260912.json).
 Exact-head CI passed and independent HTTPS checks verified all 23 recordings
 and 2,020 frames at website revision `4d4d38fd9`. All six v2 replays are available,

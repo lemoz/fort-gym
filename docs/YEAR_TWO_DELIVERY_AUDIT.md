@@ -47,10 +47,27 @@ passed. The actual continuation then restored the exact saved clock/metrics,
 memory, usage and history, with one checkpoint-bound append to the declared
 1,028-response/40-million-token cumulative limits. Its first new response used
 27,738 tokens. The original trace and usage prefixes are preserved. The current
-window is decisions 5–68, with mandatory teardown; its final save and later
-inherited-budget cycles are not yet verified. The HTTPS live frame14 matched
+window at that startup capture was decisions 5–68, with mandatory teardown.
+The HTTPS live frame14 matched
 its original captured screen/chosen action and exact running owner. The relay
 has 14 passing offline checks and does not expose private memory/transcripts.
+
+The [decision68 native result](../experiments/evidence/astra_keyboard_endurance_68_20260912.json)
+now verifies the save at 30,700 elapsed ticks, with seven living dwarves, six
+beds, three workshops, one farm and 53 each of food and drinks. All 68 keyboard
+actions were accepted, sending 543 keys; 33,900 requested ticks yielded 30,700
+actual ticks, with two menu deferrals and no timeouts. Cumulative usage is
+1,788,513 returned tokens. The original poweroff error remains recorded; the
+subsequent VM stop and stopped-state/closed-disk checks passed. The single
+checkpoint4-bound budget extension survived this saved state.
+
+The [actual checkpoint68 reload](../experiments/evidence/astra_keyboard_endurance_68_reload_20260912.json)
+then restored the full saved agent state, clock, metrics and trace/usage prefixes.
+The same 1,028-response/40-million-token limits were inherited without another
+extension. The first new response used 44,939 tokens; public live frame75 matched
+its original capture and chosen action. Decisions 69–132 are running under the
+same mandatory teardown. The first 68-frame replay is exported and imported
+into the website candidate, not yet publicly delivered at this capture.
 
 The [sixth controls replay is now published](../experiments/evidence/selected_workshop_v2_p3_keyboard_website_20260912.json)
 from the website branch at
@@ -291,13 +308,14 @@ the native result's original unpublished state.
    128-response attempts to manufacture a longer-duration comparison.
 2. Continue the active, separate PR181 Astra endurance campaign through its
    declared save boundaries. Its initial four-response save and actual own-save
-   reload are verified. Audit the current decision-68 save and teardown when
-   the owner finishes, publish its actual replay, then continue the same save.
+   reload are verified, and checkpoint68 has now saved and freshly reloaded.
+   Publish its actual replay; audit the current decision-132 save and teardown
+   when the owner finishes, then continue the same fortress.
    The 403,200-tick anniversary is a milestone, not the stop condition or proof
    of a functioning fortress. Each continuation is not an independent trial.
-3. Finish native verification of the portable cumulative-budget path: the
-   checkpoint4-bound append loaded with preserved memory/usage, but the next
-   saved extension and later inherited-limit reload still need actual evidence.
+3. The portable cumulative-budget path now has an actual append, saved extension
+   at checkpoint68 and inherited-limit fresh reload, with memory/usage preserved.
+   Verify the current inherited-budget window's final save at decision132 next.
    Do not append repeatedly, reset accounting, change the condition, migrate
    old controls saves or replace the running owner to obtain a passing result.
    The unchanged frozen source `5ddf1e6718dab2e8351e8dc24a2afe5071cd2592`
