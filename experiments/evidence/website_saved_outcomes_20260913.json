@@ -1,0 +1,101 @@
+{
+  "schema_version": "fortgym.saved-replay-outcomes-delivery/v1",
+  "date_utc": "2026-09-13",
+  "source_revision": "e030ccb9c46af539c78b72df1705e50a58033dd6",
+  "previous_public_revision": "284fb8206c7685d27aafe8969b303134fc02682a",
+  "development_branch": "codex/displayed-key-results",
+  "development_pr": 171,
+  "change": "Expose saved endurance endpoint metrics and native save/reload plus gameplay review links using additive metadata; original recordings remain immutable.",
+  "evidence_source_revision": "7d60e87c77ba31a4881d69b429c63566a7876ae4",
+  "local_verification": {
+    "pythonPassed": 17,
+    "pythonWarnings": 3,
+    "nodePassed": 101,
+    "sourceReferencesVerified": 4,
+    "originalRecordings": 34,
+    "originalFrames": 2728,
+    "scopedRuffPassed": true
+  },
+  "full_local_verification": {
+    "passed": 1320,
+    "skipped": 5,
+    "failures": 0,
+    "errors": 0,
+    "total": 1325,
+    "durationSeconds": 152.227
+  },
+  "hosted_verification": {
+    "passed": 1320,
+    "skipped": 5,
+    "warnings": 7,
+    "head": "e030ccb9c46af539c78b72df1705e50a58033dd6",
+    "ciRun": 34747378038,
+    "ciJob": 103697675079,
+    "summaryUtc": "2026-09-13T08:22:13.0632950Z"
+  },
+  "public_verification": {
+    "schema_version": "fortgym.website-saved-outcomes-release/v1",
+    "passed": true,
+    "release_revision": "e030ccb9c46af539c78b72df1705e50a58033dd6",
+    "ci_run": 34747378038,
+    "ci": {
+      "conclusion": "success",
+      "headSha": "e030ccb9c46af539c78b72df1705e50a58033dd6",
+      "status": "completed"
+    },
+    "assets": {
+      "/": "fb4b49337b8cba2f7ee2bbc975af179e1ec8edb9302021f400e5a910fffd6586",
+      "/worlds": "f778e026e2c62942c4b43aa8b594a0d7de41607fb0178a10fca75b2bd0b55ffb",
+      "/results": "cc95ac8034dd517719cdf2d329f44690cf6c09618a04e477c609645f3d373a45",
+      "/static/home-watch.mjs": "502efe97aa1439dc93c25019e5a07d99d190db728d188a2b65d4bd68b2189013",
+      "/static/saved-outcomes.mjs": "53a6a893171b21aeaf806ed6a7bcd546043225a351a27921bdbc10850d91126e",
+      "/static/saved-outcomes.json": "5edffc6acb14e6ae8b9a6bd7d320f0d74012e64146e33696a67571d7ac5c429f",
+      "/static/recordings/catalog.json": "401b4549953edde21e42106ae374b9e5e5c38de683c35491f690dae3dd826152",
+      "/static/recordings/previews.json": "612823c50f0bf76990f28cdc8cbf6d6179f65e7009d2cd1f2354d2500dbcc9dc"
+    },
+    "full_local_tests_passed": 1320,
+    "skipped": 5,
+    "node_contract_tests_passed": 101,
+    "saved_outcomes": [
+      708,
+      644
+    ],
+    "public_evidence_references_verified": 4,
+    "recordings": 34,
+    "captured_frames": 2728,
+    "original_recordings_catalog_previews_unchanged": true,
+    "new_recordings_published": 0,
+    "worlds_results_unchanged": true,
+    "current_live_campaign": "astra-keyboard-endurance-v1",
+    "observed_live_decision": 759,
+    "retained_feed_status": "running",
+    "retained_feed_owner_alive": true,
+    "retained_feed_observed_at_unix": 1789287787,
+    "browser_visual_qa": false,
+    "service_identities_unchanged": true,
+    "database_counts_unchanged": true,
+    "untracked_files_preserved": true,
+    "website_url": "https://fortgym.live/",
+    "service_restarts": 0,
+    "main_merge": false,
+    "gameplay_inputs": 0,
+    "model_calls": 0,
+    "remote_receipt_sha256": "9f4af38ed72e07f64ac1835e20c584a2861eb9a54f4a5dbad2307b8afb4888d1",
+    "public_source_evidence_sha256": "8066c8256f6f4975e6c856c8c1cb51aa56f91a42e68fe7a4a3bdbdbff78bfafe",
+    "junit_sha256": "2ddc9c9cfe6a5dfa577cf9bcdc1f66c0f3f5ef8636516a19fa48601057802e84"
+  },
+  "helper_sha256": {
+    "public_source_verifier": "ab617ae8bca5dd8cbc15ee313313d054ad0fe498866c42321ef67c078171972c",
+    "remote_deploy": "823531a19109961efe25b763bc58795a3fea4bab47e46c6a472ad4206d74da2e",
+    "publish": "1fb7705959303b759f8f31818c754de93a1acb09d9f86ad062f52491cd783412"
+  },
+  "sidecar_qualification": "Operating but fragile at saved endpoints, not indefinite self-sufficiency. Same campaign, not independent trials. Dollar charges unreported.",
+  "failures_do_not_block_replay": true,
+  "live_and_live_history_hide_saved_outcomes": true,
+  "all_publication_mutators_consumed": true,
+  "active_native_source_unchanged": true,
+  "human_gameplay_rescue": false,
+  "combined_release_snapshot_not_advanced": true,
+  "main_merge": false,
+  "full_goal_complete": false
+}

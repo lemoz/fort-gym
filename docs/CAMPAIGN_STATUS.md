@@ -38,8 +38,8 @@ Original command outcomes are preserved. Decision709 confirmed one key and zero
 ticks; public frame710 matched its original screen and chosen action.
 The coordinator remains the sole native owner; no human gameplay rescue,
 model/prompt/control change or new budget extension occurred.
-The [645–708 replay is now publicly verified](../experiments/evidence/astra_keyboard_endurance_708_website_20260913.json)
-at `284fb8206c7685d27aafe8969b303134fc02682a`.
+The [645–708 replay was publicly verified](../experiments/evidence/astra_keyboard_endurance_708_website_20260913.json)
+initially at `284fb8206c7685d27aafe8969b303134fc02682a`.
 All 29 focused Python, 66 Node, 25 importer and the all-64-frame player test
 passed; the rejected frame remains rejected. Local and hosted full suites each
 passed 1,317 tests with five skips and seven warnings. Public HTTPS verified
@@ -47,6 +47,23 @@ all 34 recordings/2,728 frames and the live feed at decision727, preserving all
 33 older recording files, catalog rows and previews. Home/Results renderers,
 services, database and host-local files were unchanged. No restart, main merge,
 new VM or gameplay input was part of this static replay publication.
+
+The [saved-outcome player panel is now publicly verified](../experiments/evidence/website_saved_outcomes_20260913.json)
+at `e030ccb9c46af539c78b72df1705e50a58033dd6`, pushed through draft PR171.
+It exposes checkpoint644 and checkpoint708 endpoint metrics, cumulative usage,
+the native save/reload receipts and separate gameplay reviews. The original
+recordings stay unchanged; a separate metadata file binds each outcome to its
+recording and published evidence. Scrubbing does not turn endpoint metrics into
+per-frame measurements, and live views hide saved outcomes. Missing or invalid
+metadata leaves replay controls usable. Both saves remain qualified as operating
+but fragile; subscription charges are unreported and these are not independent
+trials. All 17 focused Python and 101 Node checks passed. Local and hosted full
+suites each passed 1,320 tests with five skips; hosted CI recorded seven warnings.
+Public HTTPS verified the four new/updated assets and every original recording,
+with Worlds/Results, catalog/previews, services, database and host-local files
+unchanged. The live feed remained running at decision759. No browser visual QA,
+native runtime change, service restart or main merge is claimed. Publication
+helpers are consumed; the combined release snapshot remains separate.
 
 The [comparison reproducibility repair](../experiments/evidence/year_two_reproducibility_review_20260913.json)
 is pushed separately as [draft PR185](https://github.com/lemoz/fort-gym/pull/185)
