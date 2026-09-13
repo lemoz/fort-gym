@@ -33,7 +33,17 @@ elapsed ticks with nineteen living citizens and zero recorded deaths. This
 crossed the first anniversary, but the running window has no verified later
 checkpoint yet. Public frame582 matched the original screen and chosen action.
 The immutable plan and first seventeen event lines are unchanged. The
-517–580 replay is exported; website publication is pending exact-head checks.
+[517–580 replay is now publicly verified](../experiments/evidence/astra_keyboard_endurance_580_website_20260913.json)
+at website revision `3016ab690190affd1435e93bf6e3ff2c12370b37`: 32 recordings
+and 2,600 captured frames. All 31 prior recording files, rows and previews are
+unchanged. Local and hosted suites each passed 1,315 tests with five skips and
+seven warnings; 27 focused Python, 66 Node, 23 importer and an all-64-frame
+player test passed. The initial stale gallery-caption assertion was corrected
+without changing native bytes. Public HTTPS verified every recording and the
+live campaign at decision594. Services, database, host-local files and the
+homepage/results renderers were preserved. No restart, new VM or main merge
+occurred. The new card separates this pre-anniversary save from the subsequent
+running-window milestone.
 The post-anniversary save and functioning-fortress assessment remain open.
 
 
