@@ -507,6 +507,7 @@ restart, gameplay input or main merge belongs to this release. Browser-only
 preview and visual QA are skipped in this background goal continuation.
 Local validation, exact-head CI and public HTTPS acceptance remain separate.
 
+
 ## Astra keyboard endurance, checkpoint 260
 
 Start from public revision `a0bf019b7eec2cb9144ae34d7cae638dd2f7dd8f` and add
@@ -623,6 +624,36 @@ result. Stocks alone do not establish sustainability.
 
 Preserve all 29 older recording files, catalog rows and previews. The new total
 is 30 recordings and 2,472 captured frames. Preserve the coordinator-owned live
+feed, services, database and host-local files. No infrastructure creation,
+service restart, gameplay input or main merge belongs to this release.
+Browser-only preview and visual QA are skipped in this background continuation.
+Local validation, exact-head CI and public HTTPS acceptance remain separate.
+
+## Astra keyboard endurance, checkpoint 516
+
+Start from public revision `06259dfbcb2b0ef9f848b985800cb34f60d6365b` and add
+`astra-keyboard-endurance-v1-453-516`. Its 64 nonoverlapping frames continue
+the same campaign. Recording SHA-256:
+`36982b8e7703c0ddaaec1d38f11209c95fca23159819fe2441a2171e3f210231`.
+Native audit: `4bf53a6e6086e3636076a67bf944746d4ff2d035d20ae0c34a75aaccb0081d25`.
+Campaign result `astra_keyboard_endurance_516_20260913.json` has SHA-256
+`7fa92c969b5eb9212bfe89ef824a9ebdc0ebc57e583b83a389a3422535f4306d`.
+It binds the completed native save, teardown and actual fresh reload at 516.
+The first continued decision517 executed one key with zero requested/actual ticks.
+
+The window added 44,000 elapsed ticks, ending at 345,050 with nineteen living
+dwarves and no recorded deaths. The endpoint retains nine beds, four workshops
+and three farms. Food rose from 134 to 170 and drinks remained at 29; these are
+inventories, not attributed production or consumption. All 64 keyboard actions
+were accepted and all 209 keys confirmed. All requested ticks advanced, without
+clock timeouts or deferrals. Cumulative usage is 15,847,406 returned tokens;
+actual subscription charges remain unreported. The fifth automatic handoff
+restored the entire saved agent state and inherited the one original cumulative
+budget extension. This is a continuation, not an independent trial or a Year-Two
+result. Stocks alone do not establish sustainability.
+
+Preserve all 30 older recording files, catalog rows and previews. The new total
+is 31 recordings and 2,536 captured frames. Preserve the coordinator-owned live
 feed, services, database and host-local files. No infrastructure creation,
 service restart, gameplay input or main merge belongs to this release.
 Browser-only preview and visual QA are skipped in this background continuation.
