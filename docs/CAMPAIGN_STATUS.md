@@ -36,7 +36,15 @@ measured metrics and trace/usage prefixes were restored. Its one cumulative
 budget extension is inherited without another append or accounting reset.
 Astra is playing decisions 325–388, with public live frame326 independently
 matched to the original screen/chosen action. This new window's final save is
-not yet verified. The 261–324 replay is exported, not yet published.
+not yet verified.
+The [261–324 replay is now public](../experiments/evidence/astra_keyboard_endurance_324_website_20260913.json):
+28 recordings / 2,344 frames at website revision `642760064`. Local and exact-head
+remote suites each passed 1,311 Python tests with five skips; local warnings were
+eight, hosted warnings seven. All 66 Node and 23 importer checks passed, as did
+the 23 focused Python checks. HTTPS verified every recording and the live feed
+at decision344. All 27 earlier files, rows and previews, service identities,
+database counts and host-local files were preserved. The coordinator and native
+runtime were unchanged. This is a static-only release, not a main-branch merge.
 The [197–260 replay is now public](../experiments/evidence/astra_keyboard_endurance_260_website_20260913.json):
 27 recordings / 2,280 frames at website revision `67b0ff107`. Local and exact-head
 remote suites each passed 1,310 Python tests with five skips and seven warnings;

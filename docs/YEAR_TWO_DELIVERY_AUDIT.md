@@ -26,7 +26,18 @@ Guest poweroff and VM stop returned zero. Separate stopped-state and closed-disk
 checks passed before the complete saved agent state, clock/metrics and original
 history were restored. The single budget append is unchanged. Decisions 325–388
 are running, with public frame326 independently matched to its original captured
-screen and chosen action. The 261–324 replay is exported, not yet published.
+screen and chosen action.
+The [261–324 replay is now publicly verified](../experiments/evidence/astra_keyboard_endurance_324_website_20260913.json)
+at website revision `6427600645cdbd29594ff2f41f93a9a6a165d346`: 28 recordings
+and 2,344 frames. All 27 prior recording files, rows and previews are unchanged.
+Local and exact-head CI each passed 1,311 Python tests with five skips; local
+warnings were eight, hosted warnings seven. All 66 Node interaction checks,
+23 importer checks and 23 focused Python checks passed. The native rejection
+at decision294 is retained with its captured action, not removed from the replay.
+Public HTTPS verified every recording and the live feed at decision344.
+Service identities, database counts, host-local files, coordinator and native
+runtime were preserved. No new infrastructure, service restart, gameplay input,
+manual continuation or main merge occurred. Checkpoint388 remains unverified.
 The [197–260 replay is now publicly verified](../experiments/evidence/astra_keyboard_endurance_260_website_20260913.json)
 at website revision `67b0ff107abf29dda457705980d3576a29d817cf`: 27 recordings
 and 2,280 frames. All 26 prior recording files, rows and previews are unchanged.
