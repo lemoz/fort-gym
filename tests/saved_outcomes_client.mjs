@@ -17,7 +17,8 @@ test('saved outcomes bind original recordings, native clocks, metrics and eviden
     assert.equal(savedOutcome(index,recording,catalog),value);
     assert.match(savedOutcomeSummary(value),/standard keyboard input.*elapsed game years/);
     assert.match(savedOutcomeSummary(value),value.functioning_assessment === 'operating_with_adaptive_supply_recovery'
-      ? /Operating with adaptive supply recovery/ : /Operating but fragile/);
+      ? /Operating with adaptive supply recovery/ : value.functioning_assessment === 'operating_with_workshop_development'
+      ? /Operating with workshop development/ : /Operating but fragile/);
     assert.match(savedOutcomeHistory(value,recording),/dollar charges were not reported/);
     assert.match(savedOutcomeHistory(value,recording),/not an independent trial/);
     assert.equal(recording.campaign,undefined);
@@ -27,12 +28,44 @@ test('saved outcomes bind original recordings, native clocks, metrics and eviden
 });
 
 test('the new adaptation assessment does not relabel earlier saved endpoints', () => {
-  assert.equal(index.outcomes[0].functioning_assessment,'operating_with_adaptive_supply_recovery');
-  assert.match(savedOutcomeSummary(index.outcomes[0]),/Long-term sustainability remains unproven/);
-  for (const value of index.outcomes.slice(1)) {
+  const adapted=index.outcomes.find(value=>value.saved_decision===836);
+  assert.equal(adapted.functioning_assessment,'operating_with_adaptive_supply_recovery');
+  assert.match(savedOutcomeSummary(adapted),/Long-term sustainability remains unproven/);
+  for (const value of index.outcomes.filter(value=>value.saved_decision<=772)) {
     assert.equal(value.functioning_assessment,'operating_but_fragile');
     assert.match(savedOutcomeSummary(value),/Operating but fragile/);
     assert.doesNotMatch(savedOutcomeSummary(value),/Operating with adaptive supply recovery/);
+  }
+});
+
+test('workshop development does not turn trader inventory into a production claim', () => {
+  const value=savedOutcome(index,replay(newest),catalog),text=savedOutcomeSummary(value);
+  assert.equal(value.functioning_assessment,'operating_with_workshop_development');
+  assert.match(text,/138 non-trader food units and 250 trader-flagged food units \(388 total\)/);
+  assert.match(text,/previous save: 151/);
+  assert.match(text,/Drink inventory: 560 units. Drink ownership was not measured/);
+  assert.match(text,/do not prove accessible fortress supplies/);
+  assert.doesNotMatch(text,/Operating with adaptive supply recovery|Supplies: 388/);
+  for (const older of index.outcomes.slice(1)) assert.equal(older.inventory_scope,undefined);
+});
+
+for (const [key,value] of [
+  ['schema_version','unknown'],['food_trader_flagged_units',0],
+  ['food_trader_flagged_units',-1],['food_trader_flagged_units',true],
+  ['food_nontrader_units',388],['food_nontrader_units',138.5],
+  ['food_nontrader_start_units',-1],['food_nontrader_start_units',null],
+  ['drink_trader_flagged_units',0],['ownership_and_accessibility_proven',true],
+  ['private_memory','DO_NOT_EXPORT'],
+]) test('rejects forged inventory scope: '+key+'='+value,()=>{
+  const changed=structuredClone(index);changed.outcomes[0].inventory_scope[key]=value;
+  assert.throws(()=>savedOutcome(changed,replay(newest),catalog));
+});
+test('workshop outcome cannot omit its inventory qualification',()=>{
+  for (const scope of [undefined,null,[],{},'unknown']) {
+    const changed=structuredClone(index);
+    if(scope===undefined)delete changed.outcomes[0].inventory_scope;
+    else changed.outcomes[0].inventory_scope=scope;
+    assert.throws(()=>savedOutcome(changed,replay(newest),catalog));
   }
 });
 
@@ -84,7 +117,7 @@ class Element {
 }
 const settle=async()=>{for(let n=0;n<10;n++)await new Promise(resolve=>setImmediate(resolve));};
 
-for (const mode of ['valid','unavailable','invalid','delayed']) test('real player preserves replay and evidence state: '+mode,async()=>{
+for (const mode of ['valid','unavailable','invalid','invalid-inventory','delayed']) test('real player preserves replay and evidence state: '+mode,async()=>{
   const originals=Object.fromEntries(['document','fetch','location','setInterval','clearInterval'].map(key=>[key,globalThis[key]]));
   const elements=new Map(), timers=[];
   for(const match of fs.readFileSync('web/landing.html','utf8').matchAll(/id="(watch-[^"]+)"/g))
@@ -102,12 +135,13 @@ for (const mode of ['valid','unavailable','invalid','delayed']) test('real playe
         if(mode==='delayed') return new Promise(resolve=>{resolveIndex=resolve;});
         const value=structuredClone(index);
         if(mode==='invalid') value.outcomes[0].recording_sha256='0'.repeat(64);
+        if(mode==='invalid-inventory') value.outcomes[0].inventory_scope.food_nontrader_units=388;
         return {ok:true,json:async()=>value};
       }
       return {ok:true,json:async()=>url.includes('watch-active') ? live : JSON.parse(fs.readFileSync('web'+url))};
     };
     await import('../web/static/home-watch.mjs?saved-outcome-test='+mode); await settle();
-    assert.equal(get('decision').textContent,'Decision 773 / 836');
+    assert.equal(get('decision').textContent,'Decision 837 / 900');
     assert.equal(get('play').disabled,false);
     if(mode==='delayed') {
       assert.equal(get('outcome').hidden,true);
@@ -120,13 +154,14 @@ for (const mode of ['valid','unavailable','invalid','delayed']) test('real playe
     if(mode==='valid'||mode==='delayed') {
       assert.equal(get('outcome').hidden,false);
       assert.equal(get('outcome-status').hidden,true);
-      assert.match(get('outcome-summary').textContent,/19 living dwarves.*151 food units and 528 drinks/);
+      assert.match(get('outcome-summary').textContent,/19 living dwarves.*138 non-trader food units/);
+      assert.match(get('outcome-summary').textContent,/250 trader-flagged/);
       assert.equal(get('result').href,index.outcomes[0].result.url);
       assert.equal(get('reload').href,index.outcomes[0].review.url);
       assert.equal(get('reload').textContent,'Inspect the gameplay assessment →');
-      assert.equal(get('prior').href,'/?recording=astra-keyboard-endurance-v1-709-772#watch-root');
+      assert.equal(get('prior').href,'/?recording=astra-keyboard-endurance-v1-773-836#watch-root');
       get('range').value='5'; await get('range').emit('input');
-      assert.equal(get('decision').textContent,'Decision 778 / 836');
+      assert.equal(get('decision').textContent,'Decision 842 / 900');
       assert.equal(get('execution').textContent,'Key command accepted by the harness. Acceptance does not prove the intended outcome.');
       // The previous replay retains its rejected input and its own endpoint links.
       await get('runs').children.find(node=>node.dataset.recording==='astra-keyboard-endurance-v1-645-708').emit('click'); await settle();
@@ -140,7 +175,7 @@ for (const mode of ['valid','unavailable','invalid','delayed']) test('real playe
       assert.equal(get('outcome').hidden,true);
       assert.equal(get('outcome-status').hidden,false);
       await get('next').emit('click');
-      assert.equal(get('decision').textContent,'Decision 774 / 836');
+      assert.equal(get('decision').textContent,'Decision 838 / 900');
     }
     live={schema_version:'fortgym.watch-live/v1',status:'running',run_id:'current',model:'gpt-6-astra',
       observed_at_unix:Math.floor(Date.now()/1000),fresh_for_seconds:30,

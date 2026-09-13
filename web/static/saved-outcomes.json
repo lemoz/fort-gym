@@ -2,6 +2,57 @@
   "schema_version": "fortgym.watch-saved-outcomes/v1",
   "outcomes": [
     {
+      "recording_id": "astra-keyboard-endurance-v1-837-900",
+      "recording_sha256": "52bf9f1908f968f53eabfe1b41b43e3e36e264862b0cd561d2511dd741778edd",
+      "source_recording_id": "astra-keyboard-endurance-v1-773-836",
+      "campaign_id": "astra-keyboard-endurance-v1",
+      "source_revision": "4b526b5636e6f568a4cae1a1227d746d9c6922c3",
+      "model": "gpt-6-astra",
+      "reasoning_effort": "medium",
+      "control_profile": "native_keyboard_bindings/v1",
+      "saved_decision": 900,
+      "saved_elapsed_ticks": 606650,
+      "saved_year": 31,
+      "saved_year_tick": 220251,
+      "origin_year": 30,
+      "origin_year_tick": 16801,
+      "ticks_per_year": 403200,
+      "total_responses": 900,
+      "total_tokens": 26085530,
+      "reported_model_charge_usd": null,
+      "saved_metrics": {
+        "population": 19,
+        "recorded_dead_citizens": 1,
+        "completed_beds": 9,
+        "completed_workshops": 7,
+        "completed_farms": 3,
+        "food_stock": 388,
+        "drink_stock": 560
+      },
+      "checkpoint_sha256": "53a460eb8fc119c06b768d4ae6632f40e45a75d5576e9fa658c9c8f76509f3ec",
+      "native_audit_sha256": "2f4f5f483e49c19c706a7695b68c864888f68a459289076d820b97e1f1799145",
+      "fresh_reload_verified": true,
+      "human_gameplay_rescue": false,
+      "functioning_assessment": "operating_with_workshop_development",
+      "sustainability_proven": false,
+      "result": {
+        "url": "https://github.com/lemoz/fort-gym/blob/bae881829d615dd3afd2e6b9357ad3b8f299ee8f/experiments/evidence/astra_keyboard_endurance_900_20260913.json",
+        "sha256": "a67cea765a66a2e2f301e5f1451868be8c864e63edf50618fabfc462d99e4c21"
+      },
+      "review": {
+        "url": "https://github.com/lemoz/fort-gym/blob/bae881829d615dd3afd2e6b9357ad3b8f299ee8f/experiments/evidence/astra_keyboard_endurance_900_gameplay_review_20260913.json",
+        "sha256": "912b2c18cf18d5c3c7236122fdb55e8cd83deef0a96213f30622cfcd0f6ba95f"
+      },
+      "inventory_scope": {
+        "schema_version": "fortgym.watch-inventory-scope/v1",
+        "food_trader_flagged_units": 250,
+        "food_nontrader_units": 138,
+        "food_nontrader_start_units": 151,
+        "drink_trader_flagged_units": null,
+        "ownership_and_accessibility_proven": false
+      }
+    },
+    {
       "recording_id": "astra-keyboard-endurance-v1-773-836",
       "recording_sha256": "d9fbe4a36e0e792cabd94d1cc0f8dac1c74ed666b731cd01170ba89fd953360b",
       "source_recording_id": "astra-keyboard-endurance-v1-709-772",

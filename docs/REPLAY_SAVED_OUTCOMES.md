@@ -57,3 +57,26 @@ the existing hosting architecture. It changes no game controls, model calls,
 services, database, credentials, runtime image or main branch. In this background
 continuation, browser-only preview and handoff are skipped. Local tests, hosted
 CI and public delivery are recorded separately.
+
+## Checkpoint 900: development and inventory qualification
+
+The fifth saved outcome accompanies the unchanged 837–900 replay. It is operating
+with workshop development at 606,650 elapsed ticks: nineteen living dwarves, seven
+workshops, nine beds and three farms. Native food totals include trader goods.
+Of 388 food units, 250 are trader-flagged and 138 are non-trader, down from 151 at
+the previous save. The raw drink total is 560; the frozen measurement did not
+record drink trader flags, so ownership and exact production attribution remain
+unknown. No corrected drink total or supply recovery is invented.
+
+The optional, strictly validated `inventory_scope` extension carries these
+counts and explicit unknowns without changing raw `saved_metrics` or replay
+bytes. The new `operating_with_workshop_development` label requires this scope
+rather than silently falling back to an unqualified supply summary. Malformed
+scope hides only the affected outcome; playback and live polling remain usable.
+All four earlier entries, labels and summaries remain unchanged.
+
+Checkpoint 900 result/review references pin
+`bae881829d615dd3afd2e6b9357ad3b8f299ee8f`. The catalog has 37 recordings and
+2,920 frames. Player module cache keys advance for the new renderer; player logic,
+Results, active native source, model, controls and budgets remain unchanged.
+This is a website-only update, not promotion of the combined native candidate.

@@ -842,3 +842,26 @@ host-local files unchanged. Only existing static data and the gallery change;
 no restart, new infrastructure or main merge. Contract checks cover all64 new
 frames and preserve earlier rejection and delayed-metadata behavior. This
 background update skips browser-only preview and does not claim visual QA.
+
+## Checkpoint 900 replay and mixed inventory
+
+This update starts from `d5af4339a936a908e0caf34ecbdaa6a4ec5837cd` and adds the
+unchanged 837–900 recording and its inventory-qualified saved outcome. The total
+is 37 recordings, 2,920 frames and five reviewed saved endpoints. All 36 earlier
+recording files, catalog/preview rows and four outcome entries remain unchanged.
+
+Astra built mason and craftsdwarf workshops. The raw food increase is not credited
+to production: 250 of 388 units are trader-flagged, leaving 138 non-trader units,
+down from 151. The simultaneous drink increase remains unattributed because the
+frozen drink scan lacks trader flags. The visible summary states these limits.
+The new validator checks scope fields, reconciles food totals and retains unknown
+drink ownership; missing or forged scope never becomes a supply success claim.
+
+The existing public module responses have ETag and Last-Modified headers but no
+explicit cache policy. Homepage/player import version keys advance so a fresh
+page load requests the new renderer. Layout and player behavior are preserved.
+The Sites compatibility pass preserves the established site architecture; this
+background update has no browser-only preview, visual QA, hosting migration,
+service restart, database mutation, new VM, native change or main merge.
+Publication requires exact-source tests, public evidence links and HTTPS byte
+verification. Local preparation alone is not a delivered website.

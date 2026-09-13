@@ -27,7 +27,8 @@ def test_endurance_recording_preserves_audited_keyboard_actions_and_save_boundar
 
 def test_endurance_card_keeps_the_short_study_and_year_two_claim_separate():
     catalog = json.loads((RECORDINGS / "catalog.json").read_text())["recordings"]
-    assert [row["id"] for row in catalog[:14]] == [
+    assert [row["id"] for row in catalog[:15]] == [
+        "astra-keyboard-endurance-v1-837-900",
         "astra-keyboard-endurance-v1-773-836",
         "astra-keyboard-endurance-v1-709-772",
         "astra-keyboard-endurance-v1-645-708",
@@ -45,8 +46,8 @@ def test_endurance_card_keeps_the_short_study_and_year_two_claim_separate():
     ]
     assert len([row for row in catalog if row["id"].startswith("controls-v2-")]) == 6
     previews = json.loads((RECORDINGS / "previews.json").read_text())["recordings"]
-    assert previews[12]["id"] == IDENTITY
-    assert previews[12]["recording_sha256"] == catalog[12]["sha256"]
+    assert previews[13]["id"] == IDENTITY
+    assert previews[13]["recording_sha256"] == catalog[13]["sha256"]
     html = (ROOT / "web/worlds.html").read_text()
     assert "30,700 game ticks" in html and "six installed beds" in html
     assert "1,788,513 returned tokens" in html
@@ -370,6 +371,42 @@ def test_checkpoint_772_preserves_recovery_actions_and_menu_deferral():
     for text in ("496,250 total game ticks", "22,152,718 returned tokens", "decision-772 save was freshly reloaded",
                  "Food rose from 75 to 134", "drinks peaked at 170 and ended at 143", "one 1,200-tick request deferred"):
         assert text in html
+
+
+def test_checkpoint_900_retains_development_actions_and_inventory_limits():
+    raw = (RECORDINGS / "astra-keyboard-endurance-v1-837-900.json").read_bytes()
+    assert hashlib.sha256(raw).hexdigest() == "52bf9f1908f968f53eabfe1b41b43e3e36e264862b0cd561d2511dd741778edd"
+    data = json.loads(raw)
+    assert data["audit_sha256"] == "2f4f5f483e49c19c706a7695b68c864888f68a459289076d820b97e1f1799145"
+    previous = json.loads((RECORDINGS / "astra-keyboard-endurance-v1-773-836.json").read_text())
+    frames = data["frames"]
+    assert [frame["decision"] for frame in frames] == list(range(837, 901))
+    assert data["saved_through_decision"] == 900
+    for key in ("source_revision", "control_profile", "model"):
+        assert data[key] == previous[key]
+    assert frames[0]["before"] == {key: previous["frames"][-1]["after"][key] for key in ("year", "tick")}
+    assert frames[-1]["after"] == {"year": 31, "tick": 220251, "population": 19, "ticks_advanced": 0}
+    assert sum(frame["after"]["ticks_advanced"] for frame in frames) == 54400
+    assert sum(frame["action"]["advance_ticks"] for frame in frames) == 56400
+    assert sum(frame["after"]["ticks_advanced"] > 0 for frame in frames) == 28
+    assert all(frame["accepted"] and "shortcut" not in frame["action"] for frame in frames)
+    assert sum(len(frame["action"]["keys"]) for frame in frames) == 309
+    deferred = [frame for frame in frames if frame["after"]["ticks_advanced"] != frame["action"]["advance_ticks"]]
+    assert [(frame["decision"], frame["action"]["advance_ticks"], frame["after"]["ticks_advanced"]) for frame in deferred] == [(869, 2000, 0)]
+    by_decision = {frame["decision"]: frame for frame in frames}
+    assert by_decision[870]["action"]["keys"] == ["SYM:0:ESC", " "]
+    assert by_decision[870]["after"]["ticks_advanced"] == 2000
+    assert by_decision[875]["action"]["keys"] == ["SYM:0:Enter", "SYM:0:ESC", "SYM:0:ESC", " "]
+    for frame in frames:
+        before, after = frame["before"], frame["after"]
+        assert (after["year"] - before["year"]) * 403200 + after["tick"] - before["tick"] == after["ticks_advanced"]
+        assert after["population"] == 19
+    html = (ROOT / "web/worlds.html").read_text()
+    for text in ("606,650 total game ticks", "26,085,530 returned tokens", "decision-900 save was freshly reloaded",
+                 "250 trader-flagged units", "Non-trader food fell from 151 to 138",
+                 "drink ownership was not measured", "operating with workshop development"):
+        assert text in html
+
 
 
 def test_checkpoint_836_preserves_labor_brewing_and_population_actions():
