@@ -14,6 +14,16 @@ cohort below. Long-term self-sufficiency and the full delivery goal remain open.
 
 ## Current experiment summary
 
+The [private single-job brewing fixture](../experiments/evidence/native_production_brew_fixture_candidate_20260913.json)
+is prepared and pushed in draft PR183 at `a06bf4b854aa362fca11ccf1294f7395bd98e702`.
+It adds an optional exact-Still brewing job to the copied-save observation probe,
+retaining the insertion receipt and later item/event boundaries. It never injects
+materials or completes jobs, and uncertain replies stop without another order.
+Its 206 focused checks and exact-head full local suite (5,936 passed, ten skipped,
+eight warnings) passed. This is offline preparation, not native brewing,
+production attribution, sustainability acceptance or an active campaign change.
+The current endurance coordinator retains sole ownership of the native runtime.
+
 The [current delivery audit](YEAR_TWO_DELIVERY_AUDIT.md#current-controls-study-and-delivery-checkpoint)
 supersedes the historical capture-time statements below. All six frozen
 selected-workshop v2 attempts have completed native decision-128 audits and

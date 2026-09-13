@@ -1,0 +1,99 @@
+{
+  "schema_version": "fortgym.native-production-brew-fixture-candidate/v1",
+  "date_utc": "2026-09-13",
+  "source_revision": "a06bf4b854aa362fca11ccf1294f7395bd98e702",
+  "base_revision": "909e0eb43a1757de027ca7e90f75bc21027b4acb",
+  "branch": "codex/native-production-observer",
+  "draft_pr": 183,
+  "pushed": true,
+  "source_sha256": {
+    "fort_gym/bench/production_brew_fixture.py": "8535b1ea5153f1d428c71156708e98b9d7fdc23007d13d6b5efd5ceda5eb3d1a",
+    "scripts/campaign_production_probe.py": "51a86532664236caf5f4c1a5ecfb31e107a17d328d2c7ae8b8e402975bf80e1b",
+    "tests/test_production_brew_fixture.py": "9d4dc3d04c358d9079d707b3aa7d1cae52ba628b3efc4b339f4c152744a21be6",
+    "tests/test_campaign_production_probe.py": "03f0a9d4373a2496f8d811bee0c3e3360e9c33213cc585d67893ab685a1ef67c",
+    "docs/PRIVATE_PRODUCTION_OBSERVER.md": "674b4c1288885193bd4dc37d58152e8a864cf613c6265717ef80832c9da31727"
+  },
+  "implementation": {
+    "default_mode": "passive_native_interval",
+    "optional_mode": "controlled_brew",
+    "option": "--brew-workshop-id",
+    "workshop_id_explicit": true,
+    "requires_completed_still_with_empty_queue": true,
+    "reaction": "BREW_DRINK_FROM_PLANT",
+    "jobs_declared": 1,
+    "native_reagent_filters": true,
+    "native_job_id_assignment": true,
+    "requires_active_observer_owner": true,
+    "exact_paused_root_save_calendar_binding": true,
+    "one_mutation_attempt_per_observer_owner": true,
+    "raw_and_parsed_rpc_receipts_retained": true,
+    "timeout_or_partial_mutation_jobs_count": null,
+    "queue_retries": 0,
+    "manual_material_or_completion_injection": false,
+    "job_to_reaction_attribution": false,
+    "original_checkpoint_revalidated": true,
+    "outer_vm_launcher_or_admission_added": false
+  },
+  "verification": {
+    "focused": {
+      "passed": 206,
+      "skipped": 0,
+      "warnings": 2
+    },
+    "full_local": {
+      "passed": 5936,
+      "skipped": 10,
+      "warnings": 8,
+      "exact_source_revision": "a06bf4b854aa362fca11ccf1294f7395bd98e702",
+      "source_frozen_during_run": true,
+      "report_sha256": "9844b3327602755fa534444b2e86b86881bb73d9726f0287afca3faacba30a1f"
+    },
+    "scoped_ruff": "passed",
+    "scoped_mypy": "passed",
+    "format": "passed",
+    "diff_check": "passed",
+    "cli_help": "passed",
+    "ci": {
+      "run": 34739709956,
+      "job": 103677222095,
+      "status_at_capture": "in_progress",
+      "conclusion_at_capture": null,
+      "source_revision": "a06bf4b854aa362fca11ccf1294f7395bd98e702",
+      "lua_install_passed": true
+    }
+  },
+  "native_fixture_executed": false,
+  "native_coverage_validated": false,
+  "production_coverage": "inconclusive",
+  "independent_production_oracle": false,
+  "complete_flow_attribution": false,
+  "checkpoint_binding": false,
+  "agent_observation_changed": false,
+  "active_source_or_image_changed": false,
+  "website_changed": false,
+  "active_campaign": {
+    "last_verified_saved_decision": 452,
+    "saved_elapsed_ticks": 301050,
+    "current_window_at_capture": "453-516",
+    "last_observed_live_decision": 516,
+    "last_observed_at_unix": 1789276581,
+    "current_window_final_save_verified": false,
+    "coordinator_sole_runtime_owner": true,
+    "frozen_source_revision": "4b526b5636e6f568a4cae1a1227d746d9c6922c3",
+    "coordinator_source_revision": "4ce541fbe0cc20556744cd381298c31f1fb580a2",
+    "both_source_worktrees_clean": true
+  },
+  "native_jobs_queued_this_preparation": 0,
+  "model_calls_by_fixture": 0,
+  "new_cloud_vms": 0,
+  "main_merged": false,
+  "full_goal_complete": false,
+  "remaining": [
+    "Native fixture run after coordinator releases sole local runtime",
+    "Independent brewing outcome verification and target-job/reaction binding",
+    "Cancellation, built-in production and multi-output coverage",
+    "Observer-free noninterference and overhead control",
+    "Checkpoint/reload measurement binding",
+    "Production, consumption and other flow attribution"
+  ]
+}

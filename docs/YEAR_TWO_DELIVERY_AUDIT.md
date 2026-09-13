@@ -153,7 +153,21 @@ eight-event prefix is retained. Third and fourth handoffs are recorded above;
 subsequent handoffs and the full sequence remain unverified.
 Export is not publication.
 
-The [private native-observer probe candidate](../experiments/evidence/native_production_observer_probe_candidate_20260913.json)
+The [private single-job brewing fixture candidate](../experiments/evidence/native_production_brew_fixture_candidate_20260913.json)
+is pushed in draft PR183 at `a06bf4b854aa362fca11ccf1294f7395bd98e702`.
+It extends the passive probe with an explicit `--brew-workshop-id` option for
+exactly one normal native plant-brewing job at a completed, empty-queue Still in
+the copied save. It retains the original reagent filters, native-assigned job ID,
+queue counts and paused boundaries, without item injection or instant completion.
+The active observer owner permits one mutation attempt; ambiguous replies remain
+unknown and are not retried. The default remains passive. All 206 focused tests
+passed, alongside scoped Ruff, mypy, format, diff and CLI checks. The exact-head
+full local suite passed 5,936 tests with ten skips and eight warnings. This candidate
+has not run natively. An independent production oracle, target-job/reaction
+binding, cancellation, observer-free control and full attribution remain open.
+Neither the active campaign source/image nor its coordinator was changed.
+
+The preceding [private native-observer probe candidate](../experiments/evidence/native_production_observer_probe_candidate_20260913.json)
 is pushed in draft PR183 at `909e0eb43a1757de027ca7e90f75bc21027b4acb`.
 It prepares a provider-free passive interval on a copied save, with direct RPC,
 unique observer ownership, hashed item/event boundaries, exact clock receipts,
