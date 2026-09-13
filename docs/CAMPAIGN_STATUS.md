@@ -53,6 +53,23 @@ files remained unchanged. No browser visual QA, runtime change, restart, new VM
 or main merge was part of this static release. Its publication helpers are
 consumed. The combined release snapshot remains separate and unchanged.
 
+An isolated [batch-scheduling fix and offline review](../experiments/evidence/dfhack_job_serialization_review_20260913.json)
+is pushed at `5957c4890ad05905bdea7c3519a71a096f73efef` on
+`codex/dfhack-job-serialization`. Two independent DFHack batch requests could
+previously enter the shared game concurrently; a failing regression reproduced
+that gap. A registry-wide callback lock now preserves mock concurrency and
+polling, releases on failure, and keeps each batch's completion accounting.
+All 31 focused tests, 20 repetitions of the six new cases, and the full local
+suite passed (5,876 passed, ten skipped, 58 warnings). Scoped Ruff/mypy passed;
+full-tree Ruff retains nine inherited findings and mypy retains 465 errors.
+This is a registry-local batch guard, not a lease for other API processes,
+direct runs or manual controls. The frozen native implementation, sole running
+coordinator and public website were not changed. GitHub rejected draft creation
+through both the connector and CLI; read-backs found no PR, so hosted CI and
+remote review remain pending. The source is pushed, not merged or deployed.
+The earlier combined candidate's 32-recording snapshot must still receive the
+newer public assets before eventual combined promotion.
+
 The previous verified [checkpoint708 and actual reload](../experiments/evidence/astra_keyboard_endurance_708_20260913.json) retained:
 447,050 elapsed ticks, eighteen living dwarves, one recorded death, nine beds,
 four workshops, three farms, 75 food and 93 drinks. Food rose from 66 to 75,

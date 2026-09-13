@@ -1,0 +1,116 @@
+{
+  "schema_version": "fortgym.dfhack-job-serialization-review/v1",
+  "captured_date_utc": "2026-09-13",
+  "source_base": "617bf4ce51e8162f0f31a5b27c54a762fb2e4021",
+  "source_revision": "5957c4890ad05905bdea7c3519a71a096f73efef",
+  "branch": "codex/dfhack-job-serialization",
+  "remote": "https://github.com/lemoz/fort-gym.git",
+  "remote_head_verified": true,
+  "source_file_hashes": {
+    "fort_gym/bench/run/jobs.py": "abb49720e10f6febaebb9a287ea601e184c79e83969b3202edd24ac0c940df09",
+    "tests/test_job_native_serialization.py": "6d401bf7036558f2f2b7fee9aefcad5a1c66987a033bb880c03ef8e16dc6c0b4",
+    "tests/test_job_native_serialization_api.py": "a1adeb6bb992016b9cf287f02e5d12f992ab6c3dbf1137d223fd7d5d27fc0030",
+    "docs/DFHACK_JOB_SERIALIZATION.md": "d254877f6de68125eb79b4b90b1665872fdb7c56bd7b97fe7d8f26a1e80e6728"
+  },
+  "reproduction": {
+    "test": "test_distinct_dfhack_batches_do_not_overlap_shared_game",
+    "pre_fix_result": "failed",
+    "failure": "Separate batches entered the same game concurrently",
+    "offline_only": true
+  },
+  "implementation": {
+    "scope": "DFHack callbacks across batches within the same JobRegistry",
+    "locks_separate_from_metadata": true,
+    "releases_after_exception": true,
+    "releases_after_missing_run_id": true,
+    "mock_concurrency_preserved": true,
+    "api_two_request_regression": true,
+    "distributed_lease": false,
+    "does_not_coordinate": [
+      "independent registries",
+      "separate server processes",
+      "direct /runs",
+      "CLI runs",
+      "manual controls"
+    ]
+  },
+  "local_tests": {
+    "passed": 5876,
+    "skipped": 10,
+    "warnings": 58,
+    "duration_seconds": 301.11,
+    "focused_passed": 31,
+    "focused_warnings": 55,
+    "stress_repetitions": 20,
+    "stress_cases_per_repetition": 6,
+    "stress_failures": 0,
+    "scoped_ruff": "passed",
+    "scoped_mypy": "passed",
+    "full_ruff_findings": 9,
+    "inherited_mypy_errors": 465,
+    "inherited_mypy_files": 27,
+    "mypy_checked_files": 181
+  },
+  "full_local_junit": {
+    "path": "fort_gym/artifacts/dfhack-job-serialization-review/full-local.xml",
+    "sha256": "892241739e444a90f1bc02555a5c4b3609af145e83701f62cbb848e6e5b5ce4d"
+  },
+  "warning_note": "New polling regressions repeatedly exercise existing Pydantic copy deprecations. Original warnings are preserved; no global warning filter was added.",
+  "review": {
+    "kind": "local source review and offline regression verification",
+    "independent_human_review": false,
+    "source_diff_paths": 4,
+    "source_runtime_modules_changed": 1,
+    "git_diff_check": "passed",
+    "scope_limits_documented": true,
+    "live_native_acceptance_for_new_scheduler": false
+  },
+  "pull_request": {
+    "created": false,
+    "attempts": 2,
+    "connector_error": "Internal error",
+    "cli_error": "GraphQL: Something went wrong while executing your query",
+    "cli_error_utc": "2026-09-13T09:21:34Z",
+    "cli_request_id": "C7D8:1BB2FC:1F5DB19:6594D95:6AA66B1A",
+    "readback_after_each": {
+      "after_connector": [],
+      "after_cli": []
+    },
+    "hosted_ci": "not_started_no_pr",
+    "retry_policy": "No identical retry without changed external state"
+  },
+  "preserved_native": {
+    "source_revision": "4b526b5636e6f568a4cae1a1227d746d9c6922c3",
+    "coordinator_revision": "4ce541fbe0cc20556744cd381298c31f1fb580a2",
+    "coordinator_script_sha256": "f1368e1e31f1afc786371345b4c860293a67f004c0701707b0598f9726386ec8",
+    "run_continue_sha256": "938887dfb05c02961e3d855d540697014a61dfc492c30f8f3c77525d9f7034d3",
+    "relay_sha256": "4227d8ef97ab8d802b869a9b2f7db71cc0a75998f9bab1f9032169ecc55ec512",
+    "sequence_plan_sha256": "265a7902df85ca2fa79c05db507881bc78a0eb351e1a179912191e971b43ebb1",
+    "frozen_worktrees_clean": true,
+    "coordinator_session": 23270,
+    "checkpoint_saved_at_last_observation": 772,
+    "active_window": [
+      773,
+      836
+    ],
+    "latest_observed_relay_decision": 834,
+    "latest_observed_relay_unix": 1789291343,
+    "sole_coordinator_existing": true
+  },
+  "preserved_website": {
+    "source_revision": "1cc292acf1584c10b6eb0d6929207aa8d7d32dca",
+    "assets_changed": false,
+    "existing_public_recordings": 35,
+    "candidate_inherited_recordings": 32,
+    "later_combined_promotion_must_preserve_newer_public_assets": true
+  },
+  "native_condition_changed": false,
+  "gameplay_rescue": false,
+  "new_vm_created": false,
+  "paid_model_fallback": false,
+  "server_restarted": false,
+  "database_mutated": false,
+  "website_deployed": false,
+  "main_merged": false,
+  "full_goal_complete": false
+}
