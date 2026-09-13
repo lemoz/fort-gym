@@ -1,0 +1,97 @@
+{
+  "schema_version": "fortgym.controls-panel-combined-release-review/v1",
+  "date_utc": "2026-09-13",
+  "candidate": {
+    "revision": "c6573a99d8857605dae61703be55bd81f34ed718",
+    "base_revision": "26edd37c0f5946bfb4f0a98d30ae432d8d590e7f",
+    "branch": "codex/year-two-release-outcomes",
+    "changed_files": 9,
+    "source_manifest": "experiments/evidence/controls_panel_release_source_20260913.json",
+    "source_manifest_sha256": "f0a45649df5dc249bf2b41e1944af06a5990a39481ed5cb7905e726c5d648df7"
+  },
+  "publication": {
+    "existing_website_revision": "2cdfee3131d3792b5cde8c6fadaeef742940f12e",
+    "published_url": "https://fortgym.live/results#controls-comparison",
+    "fresh_https_results_and_summary_reverified": true,
+    "new_website_deployment": false,
+    "previous_publication_receipt_imported_unchanged": true
+  },
+  "source_review": {
+    "reviewer": "implementer",
+    "independent_approval": false,
+    "all_nine_increment_files_reviewed": true,
+    "public_panel_exact": true,
+    "only_existing_campaign_navigation_difference_on_results": true,
+    "all_prior_results_content_recovered_exactly_after_removing_panel_and_css": true,
+    "summary_identical_to_original_reproducible_study": true,
+    "current_guide_publication_status_corrected": true,
+    "files": 83,
+    "exact": 80,
+    "compatibility_differences": [
+      "web/landing.html",
+      "web/protocols.html",
+      "web/results.html"
+    ],
+    "protected_native_files": 263,
+    "retained_harness_assets": 13,
+    "original_source_evidence": 16
+  },
+  "tests": {
+    "focused": {
+      "passed": 153,
+      "warnings": 3,
+      "seconds": 4.17,
+      "junit_sha256": "e8893ca44b96b185d03f1889d2f0a39eb6003e3ef4428c87bb82e0fc61e65d0d"
+    },
+    "local": {
+      "passed": 5959,
+      "skipped": 10,
+      "warnings": 56,
+      "seconds": 302.14,
+      "junit_artifact": "fort_gym/artifacts/release-controls-panel-review/full-local.xml",
+      "junit_sha256": "cdf618012cd4aedb515e895e10f8f5df01362bf455085b633989f53af4c9429c"
+    },
+    "scoped_ruff_passed": true,
+    "global_static_baseline_rerun": false,
+    "hosted": {
+      "passed": 5796,
+      "skipped": 173,
+      "warnings": 57,
+      "seconds": 400.43,
+      "ci_run": 34762509041,
+      "ci_job": 103737687646,
+      "summary_utc": "2026-09-13T14:30:14.3196244Z",
+      "source_revision": "c6573a99d8857605dae61703be55bd81f34ed718",
+      "conclusion": "success"
+    }
+  },
+  "review_follow_up": {
+    "production_files_relative_to_main": 149,
+    "exact_matches_in_two_earlier_review_inventories": 112,
+    "files_needing_later_review_reconciliation": 37,
+    "partial_coverage_artifact": "fort_gym/artifacts/release-controls-panel-review/coverage.json",
+    "partial_coverage_sha256": "6e06f3aa0ce7e394883b0fbb1161f02c7e17b6eba86e4a9d7cb4b69f34a44ed4",
+    "note": "Only the earlier PR176 final inventory and native job-serialization review were reconciled. Unmatched files may have later reviews; this is not a finding that all 37 are unreviewed or defective."
+  },
+  "remote": {
+    "pr": 186,
+    "url": "https://github.com/lemoz/fort-gym/pull/186",
+    "draft": true,
+    "exact_pushed_head_verified": true,
+    "main_revision_observed": "f1aa05f429c189b67891cf2629e8e00329222aca",
+    "main_merged": false
+  },
+  "boundaries": {
+    "native_or_conditions_changed": false,
+    "original_results_recordings_or_outcomes_changed": false,
+    "gameplay_actions": 0,
+    "model_calls": 0,
+    "vm_starts": 0,
+    "service_restarts": 0,
+    "database_mutations": 0,
+    "browser_visual_qa": false,
+    "combined_application_deployed": false,
+    "full_goal_complete": false
+  },
+  "sites_skill_effect": "Reused the existing architecture, published panel and existing navigation. No new Site, dependency, preview server or public redeployment."
+}

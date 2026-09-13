@@ -36,8 +36,25 @@ seven warnings. Public checks verified the table, download, nine source files
 and six replay hashes; service identities, database counts and all eleven
 protected public routes were unchanged. All 39 recordings, 3,048 frames and
 seven saved endpoints remain. No browser visual QA, service restart, native
-input, model call or main merge occurred. Next is this panel's combined-release
-integration, then the remaining review and permitted merged delivery.
+input, model call or main merge occurred.
+
+The [combined-panel review](../experiments/evidence/controls_panel_release_review_20260913.json)
+is now complete at `c6573a99d8857605dae61703be55bd81f34ed718`, pushed in draft
+PR #186. It retains the exact published table and data alongside the combined
+app's Campaigns navigation. All 83 public files were compared: 80 are identical,
+with only the three existing navigation/protocol differences. The 263 protected
+native/configuration files, thirteen harness assets and sixteen earlier source
+receipts are unchanged. Full local validation passed 5,959 tests with ten skips
+and 56 warnings; hosted CI passed 5,796 with 173 skips and 57 warnings. The 153
+focused tests and scoped Ruff passed. Current guide text and bundled website
+delivery evidence now agree; no new public deployment was performed.
+
+Next is the broader exact-source review reconciliation, then permitted merged
+delivery. The earlier PR176 and serialization inventories match 112 of 149
+changed production files exactly; 37 newer versions need later-review matching
+or fresh source/delta inspection. That partial inventory is not a defect claim
+or a declaration that all 37 were never reviewed. Main is still unmerged, and
+the earlier denied promotion is not retried or bypassed.
 
 The declared endurance run is complete at **1,028 decisions and 765,895 elapsed
 ticks (1.90 game years)**. The [final save](../experiments/evidence/astra_keyboard_endurance_1028_save_20260913.json),

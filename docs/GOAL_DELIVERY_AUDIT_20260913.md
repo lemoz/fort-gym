@@ -12,7 +12,7 @@ their requirements or declare the entire goal complete.
 | Persistent campaigns | Checkpoint lineage preserves game state, memory, history, usage and action cursor. The final checkpoint has a separate successful native reload. | Keep the save-only receipt and failed first reload comparison unchanged; the later successful reload is separate evidence. |
 | Configuration-driven model comparison | Sol Medium, Terra Medium and Astra Medium each have two attempts under declared native-keyboard conditions. Offline commands reproduce both published comparison reports. | The 128-response extension has two Sol infrastructure failures and a declared storage difference. No strong model ranking is justified. |
 | Standard input versus optional shortcuts | Three paired Astra Medium attempts from one starting save, with all six terminal 128-response results and original replay records. The aggregate and six replay links are now public on Results. | These are preliminary, single-seed comparisons. Queue insertion is not completed production. |
-| Public inspection | The verified public snapshot contains 39 recordings, 3,048 frames, seven saved endpoints, model comparisons, paired-controls outcomes and source-linked evidence. The live feed correctly reports the completed run as stopped. | The paired-controls panel still needs consolidation into the combined release. No currently running game is claimed. |
+| Public inspection | The verified public snapshot contains 39 recordings, 3,048 frames, seven saved endpoints, model comparisons, paired-controls outcomes and source-linked evidence. The live feed correctly reports the completed run as stopped. The paired panel is also integrated into the combined candidate. | No currently running game is claimed. Public delivery is separate from main-branch promotion. |
 | Usage and costs | Result records retain returned-token counts and unknown reported charges explicitly. | Subscription usage is not a measured dollar charge. Unknown charges must not become zero-dollar claims. |
 | Remote delivery | The combined candidate and evidence are pushed to draft PR #186, with testing tied to individual heads. | Reviewed and merged delivery remains an original requirement. Main has not been merged; a draft branch is not that outcome. |
 
@@ -40,9 +40,9 @@ in the combined checkout. This integration is not a new native experiment.
 
 ## Next work
 
-1. Consolidate the published paired-controls Results panel into the combined
-   candidate, retaining navigation compatibility and keeping evidence immutable.
-2. Verify the exact combined release and finish its remaining source review.
+1. Reconcile the exact combined source against its prior reviews and inspect
+   later changes that those earlier reviews do not cover.
+2. Finish the remaining exact-source review and requirement-level delivery audit.
 3. Finish the remaining review and merged-delivery requirement through the
    permitted workflow. Do not retry or bypass the previously denied main merge.
 
@@ -56,6 +56,7 @@ would be a new experiment, not a substitute for closing the delivery gaps above.
 - [Final gameplay assessment](../experiments/evidence/astra_keyboard_endurance_1028_gameplay_review_20260913.json)
 - [Public final replay acceptance](../experiments/evidence/astra_keyboard_endurance_1028_website_20260913.json)
 - [Public paired-controls comparison acceptance](../experiments/evidence/controls_study_website_20260913.json)
+- [Combined paired-controls integration review](../experiments/evidence/controls_panel_release_review_20260913.json)
 - [Previous combined-release review](../experiments/evidence/year_two_release_checkpoint1028_review_20260913.json)
 - [Paired-controls declaration](../experiments/evidence/selected_workshop_runtime_v2_declaration_20260912.json)
 - [Paired-controls summary](../experiments/evidence/selected_workshop_v2_cohort_20260912.json)
@@ -73,3 +74,21 @@ That deployment freshly checked and preserved service identities, database count
 host-local files, existing comparison assets and the stopped live feed. It did
 not perform browser visual QA or change the native harness. The site retains its
 existing architecture and styling; no replacement Sites project was created.
+
+That panel is now integrated at `c6573a99d8857605dae61703be55bd81f34ed718` in
+draft PR #186. Four imported files retain their exact published bytes; the
+Results panel is identical while the combined app retains its Campaigns links.
+All 83 public website files were compared: 80 match exactly and the three
+existing navigation/protocol differences remain. The 263 protected native and
+configuration files, thirteen harness assets and sixteen prior evidence files
+are unchanged. The current controls guide now reflects actual public delivery.
+The 153 focused checks passed; the full local suite passed 5,959 with ten skips,
+and exact-head hosted CI passed 5,796 with 173 skips. The site was not redeployed.
+
+A partial review-coverage reconciliation found 149 production Python, Lua and
+browser-script files changed from main. Of those, 112 exactly match the earlier
+PR176 inventory or the native job-serialization review. The remaining 37 need
+comparison with later review records or fresh delta/source inspection. This
+does not establish that those files are defective or wholly unreviewed; only two
+earlier review inventories were checked. Supporting templates, configuration,
+tests and evidence have separate integration records.
