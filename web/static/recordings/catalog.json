@@ -3,6 +3,22 @@
   "recordings": [
     {
       "schema_version": "fortgym.watch-recording/v1",
+      "id": "astra-keyboard-endurance-v1-837-900",
+      "title": "Astra keyboard endurance · decisions 837–900",
+      "model": "gpt-6-astra",
+      "control_profile": "native_keyboard_bindings/v1",
+      "first_decision": 837,
+      "last_decision": 900,
+      "saved_through_decision": 900,
+      "audit_sha256": "2f4f5f483e49c19c706a7695b68c864888f68a459289076d820b97e1f1799145",
+      "source_revision": "4b526b5636e6f568a4cae1a1227d746d9c6922c3",
+      "recording_status": "saved",
+      "window": "837–900",
+      "frame_count": 64,
+      "sha256": "52bf9f1908f968f53eabfe1b41b43e3e36e264862b0cd561d2511dd741778edd"
+    },
+    {
+      "schema_version": "fortgym.watch-recording/v1",
       "id": "astra-keyboard-endurance-v1-773-836",
       "title": "Astra keyboard endurance · decisions 773–836",
       "model": "gpt-6-astra",

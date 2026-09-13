@@ -15,6 +15,21 @@ const fields = ['recording_id','recording_sha256','source_recording_id','campaig
   'fresh_reload_verified','human_gameplay_rescue','functioning_assessment',
   'sustainability_proven','result','review'];
 
+function validInventoryScope(value) {
+  const scope=value.inventory_scope;
+  if (scope === undefined) return value.functioning_assessment !== 'operating_with_workshop_development';
+  return scope && typeof scope === 'object' && !Array.isArray(scope)
+    && Object.keys(scope).sort().join(',') === ['schema_version','food_trader_flagged_units',
+      'food_nontrader_units','food_nontrader_start_units','drink_trader_flagged_units',
+      'ownership_and_accessibility_proven'].sort().join(',')
+    && scope.schema_version === 'fortgym.watch-inventory-scope/v1'
+    && ['food_trader_flagged_units','food_nontrader_units','food_nontrader_start_units']
+      .every(key=>integer(scope[key]))
+    && scope.food_trader_flagged_units + scope.food_nontrader_units === value.saved_metrics?.food_stock
+    && scope.drink_trader_flagged_units === null
+    && scope.ownership_and_accessibility_proven === false;
+}
+
 export function validateSavedOutcomes(data) {
   if (!data || data.schema_version !== 'fortgym.watch-saved-outcomes/v1'
       || Object.keys(data).sort().join(',') !== 'outcomes,schema_version'
@@ -36,7 +51,9 @@ export function savedOutcome(data, recording, catalog) {
   const countFields = ['saved_decision','saved_elapsed_ticks','saved_year',
     'saved_year_tick','origin_year','origin_year_tick','ticks_per_year',
     'total_responses','total_tokens'];
-  if (Object.keys(value).sort().join(',') !== [...fields].sort().join(',')
+  const expectedFields=value.inventory_scope === undefined ? fields : [...fields,'inventory_scope'];
+  if (Object.keys(value).sort().join(',') !== [...expectedFields].sort().join(',')
+      || !validInventoryScope(value)
       || !row || !previous || previous.id === row.id
       || !identity(value.campaign_id) || !identity(value.source_recording_id)
       || !hash(value.recording_sha256) || value.recording_sha256 !== row.sha256
@@ -63,7 +80,7 @@ export function savedOutcome(data, recording, catalog) {
       || (value.saved_year - value.origin_year) * value.ticks_per_year
         + value.saved_year_tick - value.origin_year_tick !== value.saved_elapsed_ticks
       || value.fresh_reload_verified !== true || value.human_gameplay_rescue !== false
-      || !['operating_but_fragile','operating_with_adaptive_supply_recovery'].includes(value.functioning_assessment)
+      || !['operating_but_fragile','operating_with_adaptive_supply_recovery','operating_with_workshop_development'].includes(value.functioning_assessment)
       || value.sustainability_proven !== false
       || value.saved_elapsed_ticks < 403200
       || value.reported_model_charge_usd !== null
@@ -80,15 +97,24 @@ export function savedOutcomeSummary(value) {
   const m = value.saved_metrics;
   const assessment = value.functioning_assessment === 'operating_with_adaptive_supply_recovery'
     ? 'Operating with adaptive supply recovery at this saved endpoint. Long-term sustainability remains unproven.'
+    : value.functioning_assessment === 'operating_with_workshop_development'
+    ? 'Operating with workshop development at this saved endpoint. Supply recovery and long-term sustainability remain unproven.'
     : 'Operating but fragile at this saved endpoint.';
+  const i=value.inventory_scope;
+  const inventory=i
+    ? 'Recorded inventory: ' + i.food_nontrader_units + ' non-trader food units and '
+      + i.food_trader_flagged_units + ' trader-flagged food units (' + m.food_stock + ' total). '
+      + 'Non-trader food at the previous save: ' + i.food_nontrader_start_units + '. '
+      + 'Drink inventory: ' + m.drink_stock + ' units. Drink ownership was not measured. '
+      + 'These counts do not prove accessible fortress supplies. '
+    : 'Supplies: ' + m.food_stock + ' food units and ' + m.drink_stock + ' drinks. ';
   return value.model + ' · Medium · standard keyboard input. '
     + (value.saved_elapsed_ticks / 403200).toFixed(3) + ' elapsed game years · '
     + (value.saved_elapsed_ticks - 403200).toLocaleString() + ' ticks into Year Two. '
     + m.population + ' living dwarves · ' + m.recorded_dead_citizens + ' recorded death'
     + (m.recorded_dead_citizens === 1 ? '' : 's') + ' · '
     + m.completed_beds + ' beds · ' + m.completed_workshops + ' workshops · '
-    + m.completed_farms + ' farms. Supplies: ' + m.food_stock + ' food units and '
-    + m.drink_stock + ' drinks. Saved checkpoint ' + value.saved_decision
+    + m.completed_farms + ' farms. ' + inventory + 'Saved checkpoint ' + value.saved_decision
     + ' was verified in a fresh game process. ' + assessment;
 }
 
