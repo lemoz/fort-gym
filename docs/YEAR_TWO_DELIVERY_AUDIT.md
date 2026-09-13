@@ -9,6 +9,36 @@ Requirements come from [the approved goal](YEAR_TWO_CAMPAIGNS.md),
 
 ## Current controls-study and delivery checkpoint
 
+The current endurance campaign has a verified [checkpoint708 and actual reload](../experiments/evidence/astra_keyboard_endurance_708_20260913.json):
+447,050 elapsed ticks, eighteen living dwarves, one recorded death, nine beds,
+four workshops, three farms, 75 food and 93 drinks. Food rose from 66 to 75,
+but drinks fell from 112 to 93. The native incident identifies drowning, first
+observed at decision662; this is not inferred from hunger or thirst counters.
+The [saved-window gameplay review](ENDURANCE_GAMEPLAY_REVIEW_20260913.md)
+finds continued operation with mortality and drink decline: fishing, food
+preparation, harvesting, gathering and hauling were observed, while the old
+brewing job remained unstaffed. Thirteen of sixteen labor-eligible dwarves were
+idle at the save. These observations are not completed-product counts.
+There were 63 accepted actions and one rejected PageUp request at decision669;
+464 keys were confirmed and all 24,000 requested ticks advanced without
+timeouts or deferrals. Returned usage totals 20,492,446 tokens, including
+1,232,669 new tokens. Actual subscription charges remain unknown.
+
+The [eighth automatic handoff](../experiments/evidence/astra_keyboard_endurance_sequence_handoff_708_20260913.json)
+preserved the original plan and first twenty-three event lines, verified
+stopped-state/closed-disk teardown, and restored whole agent state, native
+clock/metrics and trace/usage prefixes before 709–772. Guest poweroff returned
+1 with exit status255; the following VM stop returned 0 and reported not running.
+Original command outcomes are preserved. Decision709 confirmed one key and zero
+ticks; public frame710 matched its original screen and chosen action.
+The coordinator remains the sole native owner; no human gameplay rescue,
+model/prompt/control change or new budget extension occurred.
+The 645–708 replay is prepared separately at
+`284fb8206c7685d27aafe8969b303134fc02682a`, not yet published at this capture.
+All 29 focused Python, 66 Node, 25 importer and the all-64-frame player test
+passed; the rejected frame remains rejected. The candidate preserves all 33
+older recordings and would bring the public catalog to 34 recordings/2,728 frames.
+
 The [comparison reproducibility repair](../experiments/evidence/year_two_reproducibility_review_20260913.json)
 is pushed separately as [draft PR185](https://github.com/lemoz/fort-gym/pull/185)
 at `617bf4ce51e8162f0f31a5b27c54a762fb2e4021`, based on PR184.

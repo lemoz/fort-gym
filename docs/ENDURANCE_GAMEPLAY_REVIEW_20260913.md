@@ -1,6 +1,44 @@
 # Astra endurance: operation after the first anniversary
 
-## Latest assessment: saved Year-Two endpoint at decision644
+## Latest assessment: saved Year-Two endpoint at decision708
+
+The [completed 645–708 review](../experiments/evidence/astra_keyboard_endurance_708_gameplay_review_20260913.json)
+finds continued operation with one drowning and declining drink supplies.
+Checkpoint708 contains 447,050 elapsed ticks and was actually reloaded before
+play continued. Eighteen dwarves remain alive, with nine beds, four workshops,
+three farms, 75 food and 93 drinks.
+
+| Boundary | Elapsed ticks | Living / recorded dead | Food / drink |
+| --- | ---: | ---: | ---: |
+| Saved decision644 | 423,050 | 19 / 0 | 66 / 112 |
+| Saved decision708 | 447,050 | 18 / 1 | 75 / 93 |
+
+The native incident record identifies drowning, first observed at decision662.
+The helper verifies the incident's victim against the unit before reading its
+death cause. This is not an inference from hunger or thirst counters, nor an
+attribution to a particular player action. One attempted PageUp command at
+decision669 was rejected; the two requested keys were not sent.
+
+Twelve decisions advanced time, adding 24,000 ticks. Fishing, raw-fish
+preparation, plant harvesting, gathering, barrel-making and hauling were
+observed as assigned worker jobs. These are citizen-boundary samples, not
+completed products. Food recovered, but drink stocks fell from 112 to 93.
+The older brewing job remained unstaffed in every sample, with cached walk
+connectivity unknown at the first boundary and disconnected afterward.
+Five old harvest jobs remained unstaffed and cache-disconnected at the save,
+even though other harvest work was observed during the window.
+
+Thirteen of sixteen labor-eligible dwarves were idle at the endpoint. The final
+twelve-entry world-job list was complete; earlier capped lists remain limited.
+Input counts and cached connectivity do not establish ingredient accessibility
+or the precise cause of a stalled job.
+
+The qualified assessment remains operating but fragile, now with a recorded
+death and continued drink decline. It does not establish indefinite
+self-sufficiency or a strong model ranking. Keep the autonomous condition
+unchanged and supply no gameplay hints.
+
+## Earlier saved Year-Two endpoint at decision644
 
 The [completed saved-window review](../experiments/evidence/astra_keyboard_endurance_644_gameplay_review_20260913.json)
 supports a qualified **operating, but fragile** assessment. This is no longer
