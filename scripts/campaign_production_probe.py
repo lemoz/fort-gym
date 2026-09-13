@@ -15,6 +15,7 @@ import sys
 import uuid
 from pathlib import Path
 
+from fort_gym.bench.production_brew_evidence import summarize_brew_evidence
 from fort_gym.bench.production_brew_fixture import (
     queue_brew,
     validate_brew_receipt,
@@ -95,12 +96,13 @@ def worker(args: argparse.Namespace) -> dict:
         write_result(path, value)
         result["artifacts"][name] = file_digest(path)
 
-    def capture(index: int, state: dict) -> None:
+    def capture(index: int, state: dict) -> dict:
         value = observer.command("capture")
         retain(
             f"boundary-{index:02}.json", value
         )  # Preserve incomplete reads before validation.
         validate_boundary(value, state, runtime, observer.owner)
+        return value
 
     try:
         environment = NativeCampaignEnvironment(
@@ -113,7 +115,8 @@ def worker(args: argparse.Namespace) -> dict:
         retain("start.json", started)
         if started.get("installed") is not True:
             raise ValueError("Observer installation not confirmed")
-        capture(0, state)
+        baseline = capture(0, state)
+        queued = None
         if args.brew_workshop_id is not None:
             result["brew_queue_attempted"] = True
             # A timeout or malformed reply can follow a real insertion. Never
@@ -151,7 +154,12 @@ def worker(args: argparse.Namespace) -> dict:
             if not 0 <= actual <= args.ticks or receipt.get("ticks_advanced") != actual:
                 raise ValueError("Native interval receipt and calendar disagree")
             result["ticks_advanced"] += actual
-            capture(index, after)
+            observed = capture(index, after)
+            if queued is not None:
+                retain(
+                    f"brew-evidence-{index:02}.json",
+                    summarize_brew_evidence(queued, baseline, observed),
+                )
             if receipt.get("ok") is not True or actual != args.ticks:
                 result.update(
                     status="interrupted", stop_reason="native_interval_incomplete"

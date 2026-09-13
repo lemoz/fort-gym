@@ -47,6 +47,11 @@ def worker_fixture(tmp_path, monkeypatch):
                 raise TimeoutError(f"{operation} timed out")
             if operation == "capture":
                 value = boundary(runtime, self.owner, state["year_tick"])
+                origin = boundary(runtime, self.owner, 100)["events"]["start"]
+                if settings["capture"] == "changed_origin" and state["year_tick"] > 100:
+                    origin = boundary(runtime, self.owner, 101)["events"]["start"]
+                value["events"].update(start=origin, events=[])
+                value["inventory"].update(observer_start=origin, items=[])
                 if settings["capture"] == "incomplete":
                     value["inventory"]["complete"] = False
                 return value
@@ -259,6 +264,13 @@ def test_controlled_brew_queues_once_after_baseline_and_retains_receipt(worker_f
     assert calls.count("queue_brew") == 1
     assert "brew-queue.json" in result["artifacts"]
     assert "brew-queue-response.json" in result["artifacts"]
+    for index in (1, 2):
+        name = f"brew-evidence-{index:02}.json"
+        assert name in result["artifacts"]
+        summary = json.loads((args.output / name).read_text())
+        assert summary["matching_reaction_sequences"] == []
+        assert summary["production_quantity"] is None
+        assert summary["native_binding_validated"] is False
     assert result["production_coverage"] == "inconclusive"
     assert result["independent_production_oracle"] is False
 
@@ -286,6 +298,23 @@ def test_bad_workshop_id_rejected_before_start_or_output(worker_fixture):
     with pytest.raises(ValueError):
         probe.worker(args)
     assert not args.output.exists() and calls == []
+
+
+def test_brew_summary_failure_retains_native_boundary_and_does_not_retry(
+    worker_fixture,
+):
+    args, calls, settings = worker_fixture
+    args.brew_workshop_id = 7
+    settings["capture"] = "changed_origin"
+    with pytest.raises(ValueError, match="origin"):
+        probe.worker(args)
+    result = json.loads((args.output / "result.json").read_text())
+    assert result["status"] == "failed" and result["brew_queue_confirmed"]
+    assert result["ticks_advanced"] == 250
+    assert calls.count("queue_brew") == calls.count("advance") == 1
+    assert calls[-2:] == ["stop", "close"]
+    assert "boundary-01.json" in result["artifacts"]
+    assert "brew-evidence-01.json" not in result["artifacts"]
 
 
 def test_launcher_retains_owned_cleanup_on_worker_failure(

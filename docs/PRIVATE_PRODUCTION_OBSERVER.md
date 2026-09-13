@@ -52,7 +52,18 @@ not contain agent memory, prompts, model responses or a gameplay action.
 An item-creation observation is not attributed to a recipe or worker. Reaction
 observations preserve a cumulative vector of food, drink and nonfood outputs,
 mark quantities `not_totalled`, and report duplicate item identities within a
-vector. Job quantity is explicitly unmeasured. Production, consumption, trade
+vector. Reaction records also retain the callback worker's current job identity,
+job type and reaction name, its building holder and assigned worker. These are
+read-only corroborating fields, not an independent production oracle. The pinned
+[job implementation](https://github.com/DFHack/dfhack/blob/0.47.05-r8/library/modules/Job.cpp#L259-L274)
+reads holder/worker references, and its
+[Lua binding](https://github.com/DFHack/dfhack/blob/0.47.05-r8/library/LuaApi.cpp#L1635-L1642)
+exposes those reads. Missing workers/jobs remain explicit. Unreadable context is
+reported as `read_failed`, retaining the output items but making collector
+completeness false through a separate context-read-failure count. The callback
+does not change the job or its references.
+
+Job quantity is explicitly unmeasured. Production, consumption, trade
 and loss statuses remain `not_measured`; no zero-valued quantities replace
 missing measurements.
 
@@ -177,11 +188,39 @@ process and verifies the retained checkpoint is unchanged.
 
 A confirmed insertion is not a completed brew. The later inventory boundaries,
 job notifications and reaction output vectors are retained separately for native
-inspection. The probe does not automatically bind a reaction to this target job,
-sum overlapping output vectors, infer production from stock differences or turn
-a completed interval into a passed production test. Those relationships, an
-independent outcome check, cancellation and observer-free controls still need
-real native acceptance after the endurance coordinator releases its runtime.
+inspection. A prepared evidence report now correlates those native fields to the
+declared target, but this is not yet native-validated attribution. It never sums
+overlapping output vectors, infers production from stock differences or turns a
+completed interval into a passed production test. An independent outcome check,
+cancellation and observer-free controls still need real native acceptance after
+the endurance coordinator releases its runtime.
+
+## Prepared job-to-output evidence report
+
+`fort_gym/bench/production_brew_evidence.py` consumes the confirmed queue receipt
+and retained baseline/endpoint snapshots. It checks ownership, insertion boundary,
+unchanged observer origin, complete bounded inventories and cumulative event
+prefixes. In controlled mode, each successful paused capture writes a hashed
+`brew-evidence-NN.json` alongside its raw boundary. This is a cumulative report:
+do not add its observations to the next interval's report.
+
+A matching reaction must name the queued job ID, `CustomReaction`, the exact
+plant-brewing reaction and declared Still, with the assigned worker matching the
+callback worker. Other brewing callbacks remain listed as unmatched. Completed-job
+notifications are listed separately and never substitute for output evidence.
+Malformed or incomplete evidence fails the probe after retaining its original
+boundary; it does not retry an order or advance again.
+
+Output item IDs group every retained sighting, including repeated IDs within one
+callback and overlapping cumulative vectors across callbacks. Each sighting keeps
+its own observed resource and stack units. Baseline/endpoint inventory membership
+is reported without labeling absence as consumption or loss. Previously present
+items, nonfood outputs, zero units and changes to a later observed stack remain
+visible. No quantity is totalled and no rate or coverage is inferred.
+
+`matching_native_fields_observed` describes these comparisons only.
+`native_binding_validated` and `independent_production_oracle` stay false,
+`production_quantity` stays null, and native acceptance is still required.
 
 ## Native acceptance still required
 

@@ -30,6 +30,7 @@ local function new_production_observer(df, dfhack, eventful, config)
     local key = 'fortgym_production_observer_v1'
     local events, sequence, dropped, read_failures = {}, 0, 0, 0
     local retained_item_records = 0
+    local job_context_read_failures = 0
     local installed, started, stop_reason = false, false, nil
     local origin, last_clock
     local callbacks_seen = {job = 0, item = 0, reaction = 0}
@@ -141,6 +142,34 @@ local function new_production_observer(df, dfhack, eventful, config)
             return record
         end)
     end
+    local function worker_job_context(unit)
+        -- Read-only corroborating identities, not an independent production oracle.
+        -- Context failure must not discard the output-item evidence itself.
+        local ok, context = pcall(function()
+            if unit == nil then return {status='no_worker'} end
+            if unit.job == nil or unit.job.current_job == nil then
+                return {status='no_current_job'}
+            end
+            local job = unit.job.current_job
+            assert(integer(job.id) and integer(job.job_type), 'invalid current job')
+            local name = df.job_type[job.job_type]
+            assert(type(name)=='string' and #name>0 and #name<=128
+                and not name:find('%c'), 'invalid current job type')
+            local reaction = job.reaction_name
+            assert(type(reaction)=='string' and #reaction<=128
+                and not reaction:find('%c'), 'invalid current job reaction')
+            local holder, assigned = dfhack.job.getHolder(job), dfhack.job.getWorker(job)
+            if holder ~= nil then assert(integer(holder.id), 'invalid job holder') end
+            if assigned ~= nil then assert(integer(assigned.id), 'invalid assigned worker') end
+            return {status='observed', job_id=job.id, job_type=name,
+                reaction_name=reaction~='' and reaction or false,
+                building_holder_id=holder~=nil and holder.id or false,
+                assigned_worker_id=assigned~=nil and assigned.id or false}
+        end)
+        if ok then return context end
+        job_context_read_failures = job_context_read_failures + 1
+        return {status='read_failed'}
+    end
     local function on_reaction(reaction, _product, unit, _inputs, _reagents, outputs)
         capture('reaction', function()
             local code = reaction.code
@@ -166,7 +195,8 @@ local function new_production_observer(df, dfhack, eventful, config)
             -- The plugin passes the whole output vector, not only this product's
             -- newly appended suffix. Preserve identities; never total this as yield.
             return {kind = 'reaction_output_observation', reaction_code = code,
-                worker_id = worker_id, output_items = records,
+                worker_id = worker_id, worker_job = worker_job_context(unit),
+                output_items = records,
                 vector_scope = 'cumulative_outputs_at_callback',
                 duplicate_output_id_records = duplicates,
                 production_quantity_status = 'not_totalled'}
@@ -319,8 +349,10 @@ local function new_production_observer(df, dfhack, eventful, config)
             max_item_records = config.max_events, max_reaction_output_items = 32,
             retained_item_records = retained_item_records,
             retained_events = #events, dropped_events = dropped, read_failures = read_failures,
+            job_context_read_failures = job_context_read_failures,
             callbacks_seen = copy(callbacks_seen), events = copy(events),
             collector_records_complete = ok and read_failures == 0 and dropped == 0
+                and job_context_read_failures == 0
                 and (installed or stop_reason == 'explicit_stop'),
             native_coverage_validated = false,
             flow_measurement = {production='not_measured', consumption='not_measured',
