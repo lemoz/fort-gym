@@ -1,10 +1,12 @@
-import {decodeScreen, frameIndex, liveState, validateRecording, renderCapturedScreen, initialRecording, recoverySummary, readLiveStatus, campaignSummary, campaignHistory} from './home-watch-model.mjs?v=20260911-year-two';
+import {decodeScreen, frameIndex, liveState, validateRecording, renderCapturedScreen, initialRecording, recoverySummary, readLiveStatus, campaignSummary, campaignHistory, shortcutLabel, actionExecutionLabel} from './home-watch-model.mjs?v=20260912-workshop';
+import {validateSavedOutcomes, savedOutcome, savedOutcomeSummary, savedOutcomeHistory} from './saved-outcomes.mjs?v=20260913-checkpoint1028';
 const $ = id => document.getElementById('watch-' + id);
 const root = $('root');
 if (root) {
   let recording = null, catalog = [], index = 0, playing = null, generation = 0;
   let latestLive = null, mode = 'replay', autoLive = true, liveFrames = [], liveRun = null;
   let loading = false, pollBusy = false;
+  let savedOutcomes = null, outcomeUnavailable = false;
   const cache = new Map(), canvas = $('canvas');
   const text = (id, value) => { $(id).textContent = value; };
   async function json(url) {
@@ -47,15 +49,12 @@ if (root) {
     text('intent', frame.action?.intent || 'Waiting for a completed model response.');
     text('intent-label', 'Model’s stated intent');
     $('keys').replaceChildren();
-    for (const key of frame.action?.keys || []) {
+    const shortcut = shortcutLabel(frame.action);
+    for (const key of shortcut ? [shortcut] : frame.action?.keys || []) {
       const chip = document.createElement('code'); chip.textContent = key === ' ' ? 'SPACE' : key;
       $('keys').append(chip);
     }
-    text('execution', live ? frame.action_status === 'rejected'
-      ? 'Model command rejected. No keys were sent to the game.'
-      : 'Chosen keys. This feed does not yet verify their execution.'
-      : frame.accepted ? 'Key command accepted by the harness. Acceptance does not prove the intended outcome.'
-      : 'Key command was not accepted.');
+    text('execution', actionExecutionLabel(frame, live));
     text('population', live ? '—' : String(frame.after.population));
     text('advance', live ? '—' : frame.after.ticks_advanced.toLocaleString());
     text('clock', live ? 'Screen captured ' + new Date(frame.captured_at_unix * 1000).toLocaleTimeString()
@@ -65,16 +64,27 @@ if (root) {
         ? 'UNSAVED TAIL · observed actions after checkpoint ' + recording.saved_through_decision + '. The final save failed.'
         : 'This decision precedes or reaches saved checkpoint ' + recording.saved_through_decision + '.');
     $('boundary').className = 'watch-note' + (!live && frame.decision > recording.saved_through_decision ? ' watch-error' : '');
-    const recovered = !live && Boolean(recording.recovery), outcome = !live && Boolean(recording.campaign);
+    let saved = null, invalidOutcome = false;
+    if (!live && !recording.campaign && savedOutcomes) {
+      try { saved = savedOutcome(savedOutcomes, recording, catalog); }
+      catch (_) { invalidOutcome = true; }
+    }
+    const recovered = !live && Boolean(recording.recovery);
+    const outcome = !live && Boolean(recording.campaign || saved);
+    $('outcome-status').hidden = live || Boolean(recording.campaign) || !(outcomeUnavailable || invalidOutcome);
+    text('outcome-status', 'Saved outcome details unavailable. The recording is still playable.');
     $('recovery').hidden = $('prior').hidden = !(recovered || outcome);
-    text('recovery', outcome ? campaignHistory(recording) : recovered ? recoverySummary(recording) : '');
-    const prior = outcome ? recording.campaign.source_recording_id : recovered ? recording.recovery.source_recording_id : null;
+    text('recovery', saved ? savedOutcomeHistory(saved, recording) : outcome ? campaignHistory(recording) : recovered ? recoverySummary(recording) : '');
+    const prior = saved ? saved.source_recording_id : outcome ? recording.campaign.source_recording_id : recovered ? recording.recovery.source_recording_id : null;
     $('prior').href = prior ? '/?recording=' + encodeURIComponent(prior) + '#watch-root' : '#watch-root';
     text('prior', outcome ? 'View the preceding continuation →' : 'View the earlier failed window →');
     $('outcome').hidden = !outcome;
-    text('outcome-summary', outcome ? campaignSummary(recording) : '');
-    $('result').href = outcome ? recording.campaign.result_url : '#watch-root';
-    $('reload').href = outcome ? recording.campaign.reload_url : '#watch-root';
+    text('outcome-summary', saved ? savedOutcomeSummary(saved) : outcome ? campaignSummary(recording) : '');
+    $('result').href = saved ? saved.result.url : outcome ? recording.campaign.result_url : '#watch-root';
+    $('reload').href = saved ? saved.review.url : outcome ? recording.campaign.reload_url : '#watch-root';
+    text('reload', saved ? 'Inspect the gameplay assessment →' : 'Inspect the later reload check →');
+    $('fresh-reload').hidden = !saved?.reload;
+    $('fresh-reload').href = saved?.reload?.url || '#watch-root';
     $('range').max = String(frames.length - 1); $('range').value = String(index);
     $('range').setAttribute('aria-valuetext', 'Decision ' + frame.decision);
     $('range').disabled = loading;
@@ -195,6 +205,10 @@ if (root) {
       const initial = initialRecording(catalog, globalThis.location?.search || '');
       await select(initial.id,initial.explicit);
     } catch (_) { text('load-status','Recordings unavailable. Try reloading or opening Runs.'); }
+    // Optional evidence must never delay first playback or block live polling.
+    json('/static/saved-outcomes.json').then(data => {
+      savedOutcomes = validateSavedOutcomes(data); outcomeUnavailable = false; render();
+    }).catch(() => { outcomeUnavailable = true; render(); });
     await poll();
   }
   setInterval(poll,10000);

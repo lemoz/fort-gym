@@ -1,0 +1,263 @@
+import assert from 'node:assert/strict';
+import test from 'node:test';
+import fs from 'node:fs';
+import crypto from 'node:crypto';
+import {validateSavedOutcomes, savedOutcome, savedOutcomeSummary, savedOutcomeHistory} from '../web/static/saved-outcomes.mjs';
+
+const index = JSON.parse(fs.readFileSync('web/static/saved-outcomes.json'));
+const catalog = JSON.parse(fs.readFileSync('web/static/recordings/catalog.json')).recordings;
+const replay = id => JSON.parse(fs.readFileSync('web/static/recordings/'+id+'.json'));
+const newest = index.outcomes[0].recording_id;
+const incidentId='astra-keyboard-endurance-v1-901-964';
+const incidentPosition=index.outcomes.findIndex(value=>value.recording_id===incidentId);
+
+test('saved outcomes bind original recordings, native clocks, metrics and evidence links', () => {
+  for (const value of index.outcomes) {
+    const raw = fs.readFileSync('web/static/recordings/'+value.recording_id+'.json');
+    assert.equal(crypto.createHash('sha256').update(raw).digest('hex'),value.recording_sha256);
+    const recording = JSON.parse(raw);
+    assert.equal(savedOutcome(index,recording,catalog),value);
+    assert.match(savedOutcomeSummary(value),/standard keyboard input.*elapsed game years/);
+    assert.match(savedOutcomeSummary(value),value.functioning_assessment === 'operating_with_adaptive_supply_recovery'
+      ? /Operating with adaptive supply recovery/ : value.functioning_assessment === 'operating_with_workshop_development'
+      ? /Operating with workshop development/ : value.functioning_assessment === 'operating_with_incident_recovery'
+      ? /Operating with incident recovery/ : value.functioning_assessment === 'operating_at_declared_boundary_with_production_gaps'
+      ? /Surviving at the declared stopping point/ : /Operating but fragile/);
+    assert.match(savedOutcomeHistory(value,recording),/dollar charges were not reported/);
+    assert.match(savedOutcomeHistory(value,recording),/not an independent trial/);
+    assert.equal(recording.campaign,undefined);
+  }
+  assert.match(savedOutcomeSummary(index.outcomes[0]),/19 living dwarves · 1 recorded death ·/);
+  assert.equal(savedOutcome(index,replay('astra-matched-r1-1-64'),catalog),null);
+});
+
+test('the new adaptation assessment does not relabel earlier saved endpoints', () => {
+  const adapted=index.outcomes.find(value=>value.saved_decision===836);
+  assert.equal(adapted.functioning_assessment,'operating_with_adaptive_supply_recovery');
+  assert.match(savedOutcomeSummary(adapted),/Long-term sustainability remains unproven/);
+  for (const value of index.outcomes.filter(value=>value.saved_decision<=772)) {
+    assert.equal(value.functioning_assessment,'operating_but_fragile');
+    assert.match(savedOutcomeSummary(value),/Operating but fragile/);
+    assert.doesNotMatch(savedOutcomeSummary(value),/Operating with adaptive supply recovery/);
+  }
+});
+
+test('workshop development does not turn trader inventory into a production claim', () => {
+  const value=savedOutcome(index,replay('astra-keyboard-endurance-v1-837-900'),catalog),text=savedOutcomeSummary(value);
+  assert.equal(value.functioning_assessment,'operating_with_workshop_development');
+  assert.match(text,/138 non-trader food units and 250 trader-flagged food units \(388 total\)/);
+  assert.match(text,/previous save: 151/);
+  assert.match(text,/Drink inventory: 560 units. Drink ownership was not measured/);
+  assert.match(text,/do not prove accessible fortress supplies/);
+  assert.doesNotMatch(text,/Operating with adaptive supply recovery|Supplies: 388/);
+  for (const older of index.outcomes.filter(value=>value.saved_decision<900)) assert.equal(older.inventory_scope,undefined);
+});
+
+for (const [key,value] of [
+  ['schema_version','unknown'],['food_trader_flagged_units',1],
+  ['food_trader_flagged_units',-1],['food_trader_flagged_units',true],
+  ['food_nontrader_units',388],['food_nontrader_units',138.5],
+  ['food_nontrader_start_units',-1],['food_nontrader_start_units',null],
+  ['drink_trader_flagged_units',0],['ownership_and_accessibility_proven',true],
+  ['private_memory','DO_NOT_EXPORT'],
+]) test('rejects forged inventory scope: '+key+'='+value,()=>{
+  const changed=structuredClone(index);changed.outcomes[0].inventory_scope[key]=value;
+  assert.throws(()=>savedOutcome(changed,replay(newest),catalog));
+});
+test('qualified outcome cannot omit its inventory qualification',()=>{
+  for (const scope of [undefined,null,[],{},'unknown']) {
+    const changed=structuredClone(index);
+    if(scope===undefined)delete changed.outcomes[0].inventory_scope;
+    else changed.outcomes[0].inventory_scope=scope;
+    assert.throws(()=>savedOutcome(changed,replay(newest),catalog));
+  }
+});
+
+for (const [field,value] of [
+  ['recording_sha256','0'.repeat(64)],['source_recording_id','astra-matched-r1-1-64'],
+  ['campaign_id','another-campaign'],['source_revision','0'.repeat(40)],['model','another-model'],
+  ['reasoning_effort','high'],['control_profile','shortcut'],['saved_decision',644],
+  ['saved_elapsed_ticks',403200],['saved_elapsed_ticks',true],['origin_year',29],
+  ['origin_year_tick',0],['ticks_per_year',400000],['saved_year',30],['saved_year_tick',0],
+  ['total_responses',64],['total_tokens',-1],['total_tokens',true],
+  ['reported_model_charge_usd',0],['checkpoint_sha256','invalid'],
+  ['native_audit_sha256','0'.repeat(64)],['fresh_reload_verified',false],
+  ['human_gameplay_rescue',true],['sustainability_proven',true],
+  ['functioning_assessment','self_sufficient'],['private_memory','DO_NOT_EXPORT'],
+]) test('rejects relabelled saved evidence: '+field, () => {
+  const changed=structuredClone(index); changed.outcomes[0][field]=value;
+  assert.throws(()=>savedOutcome(changed,replay(newest),catalog));
+});
+
+for (const field of ['result','review','reload']) test('rejects unsafe or incomplete '+field+' links', () => {
+  for (const value of [null,{url:'javascript:alert(1)',sha256:'a'.repeat(64)},
+    {...index.outcomes[0][field],url:index.outcomes[0][field].url.replace('github.com','github.com.evil.test')},
+    {...index.outcomes[0][field],sha256:'wrong'}, {...index.outcomes[0][field],private:'leak'}]) {
+    const changed=structuredClone(index); changed.outcomes[0][field]=value;
+    assert.throws(()=>savedOutcome(changed,replay(newest),catalog));
+  }
+});
+test('invalid population, duplicate identities, and missing predecessor stay invalid', () => {
+  const changed=structuredClone(index); changed.outcomes[0].saved_metrics.population=20;
+  assert.throws(()=>savedOutcome(changed,replay(newest),catalog));
+  assert.throws(()=>validateSavedOutcomes({...index,outcomes:[index.outcomes[0],index.outcomes[0]]}));
+  assert.throws(()=>validateSavedOutcomes({...index,private:'leak'}));
+  assert.throws(()=>savedOutcome(index,replay(newest),catalog.filter(row=>row.id!==index.outcomes[0].source_recording_id)));
+});
+test('an invalid different entry does not invalidate an unrelated verified outcome', () => {
+  const changed=structuredClone(index); changed.outcomes[1].saved_decision=-1;
+  assert.equal(savedOutcome(changed,replay(newest),catalog),changed.outcomes[0]);
+});
+
+class Element {
+  constructor(id) { this.id=id; this.listeners={}; this.children=[]; this.dataset={}; this.attributes={}; this.value='1'; this.hidden=false; this.disabled=false; this.textContent=''; }
+  setAttribute(key,value) { this.attributes[key]=value; }
+  addEventListener(key,fn) { (this.listeners[key] ||= []).push(fn); }
+  append(...items) { this.children.push(...items); }
+  replaceChildren(...items) { this.children=items; }
+  querySelectorAll() { return this.children.filter(node=>node.dataset.recording); }
+  getContext() { return {fillRect(){},fillText(){}}; }
+  async emit(type) { for (const fn of this.listeners[type] || []) await fn({target:this}); }
+}
+const settle=async()=>{for(let n=0;n<10;n++)await new Promise(resolve=>setImmediate(resolve));};
+test('final outcome preserves its separate reload proof and declared stop',()=>{
+  const value=savedOutcome(index,replay(newest),catalog);
+  assert.equal(value.saved_decision,1028);
+  assert.equal(value.functioning_assessment,'operating_at_declared_boundary_with_production_gaps');
+  assert.match(savedOutcomeSummary(value),/Surviving at the declared stopping point/);
+  assert.match(savedOutcomeSummary(value),/Long-term sustainability remains unproven/);
+  assert.match(savedOutcomeHistory(value,replay(newest)),/not a fortress collapse/);
+  assert.equal(value.reload.sha256,'b9399c10b2da2ca8e62f0307b0d0f37c861e06c50aa92712c05f73478fac3756');
+  assert(index.outcomes.slice(1).every(row=>row.reload===undefined && row.termination===undefined));
+});
+for(const [key,value] of [
+  ['schema_version','unknown'],['reason','gameplay_collapse'],['response_limit',1029],
+  ['response_limit',1027],['response_limit',true],['next_decision_dispatched',true],
+  ['private_memory','DO_NOT_EXPORT'],
+])test('rejects forged terminal boundary: '+key,()=>{
+  const changed=structuredClone(index);changed.outcomes[0].termination[key]=value;
+  assert.throws(()=>savedOutcome(changed,replay(newest),catalog));
+});
+for(const field of ['termination','reload'])test('final outcome requires '+field,()=>{
+  for(const value of [undefined,null,[],{},'unknown']) {
+    const changed=structuredClone(index);
+    if(value===undefined)delete changed.outcomes[0][field];else changed.outcomes[0][field]=value;
+    assert.throws(()=>savedOutcome(changed,replay(newest),catalog));
+  }
+});
+test('final reload reference cannot masquerade as either existing evidence link',()=>{
+  for(const field of ['result','review']) {
+    const changed=structuredClone(index);changed.outcomes[0].reload=changed.outcomes[0][field];
+    assert.throws(()=>savedOutcome(changed,replay(newest),catalog));
+  }
+});
+
+test('incident recovery is bound to the native announcement, not the action intent',()=>{
+  const value=savedOutcome(index,replay(incidentId),catalog);
+  assert.equal(value.functioning_assessment,'operating_with_incident_recovery');
+  assert.equal(value.incident_recovery.before_decision,954);
+  assert.match(savedOutcomeSummary(value),/Avuz Kàsfikod, Ghostly Mason has been put to rest/);
+  assert.match(savedOutcomeSummary(value),/139 non-trader food units/);
+  assert.match(savedOutcomeSummary(value),/Drink inventory: 531 units/);
+  assert.match(savedOutcomeSummary(value),/Long-term sustainability remains unproven/);
+  assert(index.outcomes.filter(value=>value.recording_id!==incidentId).every(value=>value.incident_recovery===undefined));
+  const changed=replay(incidentId);
+  changed.frames.find(frame=>frame.decision===954).screen=changed.frames[0].screen;
+  assert.throws(()=>savedOutcome(index,changed,catalog));
+});
+for (const [key,value] of [
+  ['schema_version','unknown'],['kind','victory'],['before_decision',953],
+  ['before_decision',965],['before_decision',true],['announcement',''],
+  ['announcement','Another Ghostly Mason has been put to rest.'],['private_memory','DO_NOT_EXPORT'],
+]) test('rejects unsupported incident claim: '+key+'='+value,()=>{
+  const changed=structuredClone(index); changed.outcomes[incidentPosition].incident_recovery[key]=value;
+  assert.throws(()=>savedOutcome(changed,replay(incidentId),catalog));
+});
+test('incident label requires captured evidence and cannot relabel an earlier outcome',()=>{
+  for(const incident of [undefined,null,[],{},'unknown']) {
+    const changed=structuredClone(index);
+    if(incident===undefined)delete changed.outcomes[incidentPosition].incident_recovery;
+    else changed.outcomes[incidentPosition].incident_recovery=incident;
+    assert.throws(()=>savedOutcome(changed,replay(incidentId),catalog));
+  }
+  const changed=structuredClone(index);
+  const earlier=changed.outcomes.find(value=>value.saved_decision===900);
+  earlier.incident_recovery=index.outcomes[incidentPosition].incident_recovery;
+  assert.throws(()=>savedOutcome(changed,replay(earlier.recording_id),catalog));
+});
+
+for (const mode of ['valid','unavailable','invalid','invalid-inventory','invalid-termination','delayed']) test('real player preserves replay and evidence state: '+mode,async()=>{
+  const originals=Object.fromEntries(['document','fetch','location','setInterval','clearInterval'].map(key=>[key,globalThis[key]]));
+  const elements=new Map(), timers=[];
+  for(const match of fs.readFileSync('web/landing.html','utf8').matchAll(/id="(watch-[^"]+)"/g))
+    elements.set(match[1],new Element(match[1]));
+  const get=id=>elements.get('watch-'+id);
+  let resolveIndex, live={schema_version:'fortgym.watch-live/v1',status:'not_connected'};
+  try {
+    globalThis.location={search:'?recording='+newest};
+    globalThis.document={hidden:false,getElementById:id=>elements.get(id),createElement:tag=>new Element(tag),addEventListener(){}};
+    globalThis.setInterval=(fn,delay)=>{timers.push({fn,delay});return timers.length;};
+    globalThis.clearInterval=()=>{};
+    globalThis.fetch=async url=>{
+      if(url==='/static/saved-outcomes.json') {
+        if(mode==='unavailable') throw Error('offline');
+        if(mode==='delayed') return new Promise(resolve=>{resolveIndex=resolve;});
+        const value=structuredClone(index);
+        if(mode==='invalid') value.outcomes[0].recording_sha256='0'.repeat(64);
+        if(mode==='invalid-inventory') value.outcomes[0].inventory_scope.food_nontrader_units=388;
+        if(mode==='invalid-termination') value.outcomes[0].termination.reason='gameplay_collapse';
+        return {ok:true,json:async()=>value};
+      }
+      return {ok:true,json:async()=>url.includes('watch-active') ? live : JSON.parse(fs.readFileSync('web'+url))};
+    };
+    await import('../web/static/home-watch.mjs?saved-outcome-test='+mode); await settle();
+    assert.equal(get('decision').textContent,'Decision 965 / 1028');
+    assert.equal(get('play').disabled,false);
+    if(mode==='delayed') {
+      assert.equal(get('outcome').hidden,true);
+      await get('runs').children.find(node=>node.dataset.recording==='astra-matched-r1-1-64').emit('click'); await settle();
+      resolveIndex({ok:true,json:async()=>index}); await settle();
+      assert.equal(get('outcome').hidden,true);
+      assert.equal(get('decision').textContent,'Decision 1 / 64');
+      await get('runs').children.find(node=>node.dataset.recording===newest).emit('click'); await settle();
+    }
+    if(mode==='valid'||mode==='delayed') {
+      assert.equal(get('outcome').hidden,false);
+      assert.equal(get('outcome-status').hidden,true);
+      assert.match(get('outcome-summary').textContent,/19 living dwarves.*172 non-trader food units/);
+      assert.match(get('outcome-summary').textContent,/0 trader-flagged/);
+      assert.equal(get('result').href,index.outcomes[0].result.url);
+      assert.equal(get('reload').href,index.outcomes[0].review.url);
+      assert.equal(get('fresh-reload').href,index.outcomes[0].reload.url);
+      assert.equal(get('fresh-reload').hidden,false);
+      assert.match(get('recovery').textContent,/Stopped at the declared limit of 1,028 responses, not a fortress collapse/);
+      assert.equal(get('reload').textContent,'Inspect the gameplay assessment →');
+      assert.equal(get('prior').href,'/?recording=astra-keyboard-endurance-v1-901-964#watch-root');
+      get('range').value='5'; await get('range').emit('input');
+      assert.equal(get('decision').textContent,'Decision 970 / 1028');
+      assert.equal(get('execution').textContent,'Key command accepted by the harness. Acceptance does not prove the intended outcome.');
+      // The previous replay retains its rejected input and its own endpoint links.
+      await get('runs').children.find(node=>node.dataset.recording==='astra-keyboard-endurance-v1-645-708').emit('click'); await settle();
+      assert.equal(get('result').href,index.outcomes.find(row=>row.recording_id==='astra-keyboard-endurance-v1-645-708').result.url);
+      assert.match(get('outcome-summary').textContent,/75 food units and 93 drinks/);
+      assert.equal(get('fresh-reload').hidden,true);
+      get('range').value='24'; await get('range').emit('input');
+      assert.equal(get('decision').textContent,'Decision 669 / 708');
+      assert.equal(get('execution').textContent,'Key command was not accepted.');
+      assert.equal(get('outcome').hidden,false);
+    } else {
+      assert.equal(get('outcome').hidden,true);
+      assert.equal(get('outcome-status').hidden,false);
+      await get('next').emit('click');
+      assert.equal(get('decision').textContent,'Decision 966 / 1028');
+    }
+    live={schema_version:'fortgym.watch-live/v1',status:'running',run_id:'current',model:'gpt-6-astra',
+      observed_at_unix:Math.floor(Date.now()/1000),fresh_for_seconds:30,
+      frame:{...replay(newest).frames[0],captured_at_unix:Math.floor(Date.now()/1000),action_status:'chosen_not_execution_verified'}};
+    await timers.find(timer=>timer.delay===10000).fn(); await get('live').emit('click');
+    assert.equal(get('outcome').hidden,true);
+    assert.equal(get('outcome-status').hidden,true);
+    assert.equal(get('prior').hidden,true);
+    assert.equal(get('fresh-reload').hidden,true);
+  } finally { Object.assign(globalThis,originals); }
+});
