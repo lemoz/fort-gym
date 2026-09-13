@@ -1,0 +1,159 @@
+{
+  "schema_version": "year-two-release-checkpoint1028-review/v1",
+  "date_utc": "2026-09-13",
+  "candidate": {
+    "revision": "5e7f0fddb475bcb8e6c3943f4d42e2817188689f",
+    "branch": "codex/year-two-release-outcomes",
+    "base_revision": "f3d3a3d2020ea20086806fd5363d7bad08c64bec",
+    "changed_files": 37,
+    "source_manifest": "experiments/evidence/year_two_release_checkpoint1028_source_20260913.json",
+    "source_manifest_sha256": "e04428b0d00966a31502fd3dae2b0d603244f4ad295c4c5f61f62096d776a902",
+    "consumed_importer_sha256": "5577de45933dc0783bbb4feb97cb454600a54c6ff3823bc2e01d720792958d6c",
+    "all64_player_test_sha256": "1d728e8968467994aba1cd70b05883021f619de2a42a644cb441f1c5d015b2f7"
+  },
+  "published_website_revision": "62427fce64590b0b958e4618c36aab31586c41c2",
+  "evidence_scope": {
+    "recordings": 39,
+    "frames": 3048,
+    "saved_outcome_endpoints": [
+      1028,
+      964,
+      900,
+      836,
+      772,
+      708,
+      644
+    ],
+    "exact_published_imports": 21,
+    "compatibility_adjusted_files": 2,
+    "protected_source_files": 263,
+    "retained_harness_assets": 13,
+    "bundled_source_evidence_files": 16,
+    "bundled_saved_outcome_references": 15,
+    "prior_source_manifests_unchanged": true,
+    "all_prior_recording_bytes_unchanged": true,
+    "old_outcome_entries_unchanged": true,
+    "prior_rejection_and_lost_tail_preserved": true,
+    "active_condition_changed": false,
+    "final_assessment": "operating_at_declared_boundary_with_production_gaps",
+    "final_response_boundary": 1028,
+    "next_decision_dispatched": false,
+    "quickstart_updated_to_actual_snapshot": true
+  },
+  "public_source_comparison": {
+    "publicFiles": 82,
+    "exactPublishedFiles": 79,
+    "compatibilityDifferences": [
+      "web/landing.html",
+      "web/protocols.html",
+      "web/results.html"
+    ],
+    "protectedNativeFiles": 263,
+    "retainedHarnessAssets": 13,
+    "bundledSourceEvidence": 16,
+    "protectedImplementationUnchanged": true,
+    "manifestSha256": "e04428b0d00966a31502fd3dae2b0d603244f4ad295c4c5f61f62096d776a902"
+  },
+  "local_tests": {
+    "focused": {
+      "passed": 123,
+      "warnings": 8,
+      "seconds": 11.32,
+      "node": 139,
+      "scopedRuff": true,
+      "nativeSerializationPassed": 6,
+      "nativeSerializationWarnings": 53,
+      "all64PlayerPassed": 1
+    },
+    "full": {
+      "passed": 5896,
+      "skipped": 10,
+      "warnings": 57,
+      "seconds": 293.89,
+      "junitArtifact": "fort_gym/artifacts/release-checkpoint1028-review/full-local.xml"
+    },
+    "junit_sha256": "d708c16d840a58f0c10bb64740f03ce2b92c45e730d3e683cc243a393f64140b"
+  },
+  "static_checks": {
+    "scoped_ruff_passed": true,
+    "full_tree_baseline": {
+      "ruffFindings": 9,
+      "mypyErrors": 465,
+      "mypyErrorFiles": 27
+    },
+    "mypy": {
+      "exit_code": 1,
+      "error_count": 465,
+      "error_files": [
+        "fort_gym/bench/agent/base.py",
+        "fort_gym/bench/agent/governed.py",
+        "fort_gym/bench/agent/governed_llm.py",
+        "fort_gym/bench/agent/llm_anthropic.py",
+        "fort_gym/bench/agent/llm_openrouter.py",
+        "fort_gym/bench/agent/minimap_render.py",
+        "fort_gym/bench/api/campaign_keyboard_resumed.py",
+        "fort_gym/bench/api/routes_step.py",
+        "fort_gym/bench/api/server.py",
+        "fort_gym/bench/api/social_cards.py",
+        "fort_gym/bench/cli.py",
+        "fort_gym/bench/dfhack_backend.py",
+        "fort_gym/bench/env/actions.py",
+        "fort_gym/bench/env/dfhack_client.py",
+        "fort_gym/bench/env/encoder.py",
+        "fort_gym/bench/eval/analyzer.py",
+        "fort_gym/bench/eval/fort_eval_easy_p1.py",
+        "fort_gym/bench/eval/gates.py",
+        "fort_gym/bench/eval/metrics.py",
+        "fort_gym/bench/eval/public_protocols.py",
+        "fort_gym/bench/eval/rubric.py",
+        "fort_gym/bench/eval/summary.py",
+        "fort_gym/bench/experiment/config.py",
+        "fort_gym/bench/experiment/runner.py",
+        "fort_gym/bench/run/runner.py",
+        "fort_gym/bench/run/storage.py",
+        "fort_gym/bench/tick_controller.py"
+      ],
+      "summary": [
+        "Found 465 errors in 27 files (checked 181 source files)"
+      ],
+      "stdout_sha256": "ecace04ae1e076658e9810e320aab89d76455b880a5a11fd4a46fc5aec44ad25",
+      "stderr": ""
+    },
+    "checked_python_source_files": 181,
+    "native_source_changed": false,
+    "baseline_clean": false
+  },
+  "remote_review": {
+    "pr": 186,
+    "url": "https://github.com/lemoz/fort-gym/pull/186",
+    "draft": true,
+    "pushed_exact_head_verified": true,
+    "head": "5e7f0fddb475bcb8e6c3943f4d42e2817188689f",
+    "base_branch": "codex/dfhack-job-serialization"
+  },
+  "no_model_calls_from_integration": true,
+  "no_vm_creation": true,
+  "no_publication_from_integration": true,
+  "no_service_restart": true,
+  "no_database_mutation": true,
+  "native_campaign_stopped_at_declared_limit": true,
+  "retained_native_revision": "4b526b5636e6f568a4cae1a1227d746d9c6922c3",
+  "retained_coordinator_revision": "4ce541fbe0cc20556744cd381298c31f1fb580a2",
+  "browser_visual_qa": false,
+  "sites_architecture_preserved": true,
+  "main_merged": false,
+  "combined_application_deployed": false,
+  "full_goal_complete": false,
+  "hosted_tests": {
+    "passed": 5733,
+    "skipped": 173,
+    "warnings": 58,
+    "seconds": 365.44,
+    "ci_run": 34759648585,
+    "ci_job": 103730084013,
+    "summary_utc": "2026-09-13T13:28:32.2548165Z",
+    "source_revision": "5e7f0fddb475bcb8e6c3943f4d42e2817188689f",
+    "conclusion": "success"
+  },
+  "remote_main_revision_observed": "f1aa05f429c189b67891cf2629e8e00329222aca"
+}

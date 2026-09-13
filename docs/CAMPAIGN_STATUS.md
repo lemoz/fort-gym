@@ -58,8 +58,30 @@ QA, service restart, new VM, model call, gameplay input or main merge belongs
 to this static-only release. Its import and publication helpers are consumed.
 
 Cumulative accounting is 30,125,676 returned tokens; subscription charges remain
-unreported. There is no additional budget window or decision1029. Next are
-release consolidation and cross-model results, not a gameplay extension.
+unreported. There is no additional budget window or decision1029.
+
+The [final combined-release review](../experiments/evidence/year_two_release_checkpoint1028_review_20260913.json)
+is complete at `5e7f0fddb475bcb8e6c3943f4d42e2817188689f`, pushed to the existing
+[draft PR #186](https://github.com/lemoz/fort-gym/pull/186). It carries all 39
+recordings, 3,048 frames and seven saved outcomes. Fifteen linked native evidence
+records and the final website receipt are now bundled for offline inspection;
+the quickstart reflects the actual snapshot. All earlier captures/outcomes and
+263 protected native/configuration files are unchanged. Of 82 public website
+files, 79 match exactly; the three existing navigation/protocol differences remain.
+
+The complete local suite passed 5,896 tests with ten skips and 57 warnings.
+Exact-head hosted CI passed 5,733 tests with 173 skips and 58 warnings. The
+123 focused checks, six scheduler regressions, 139 Node checks and all 64 final
+player frames passed. Both offline comparison reports remain byte-identical to
+their bundled public reports. Scoped Ruff passed; the full-tree baseline remains
+nine Ruff findings and 465 mypy errors in 27 unchanged files, not a clean claim.
+
+This consolidation made no model calls, native changes, VM starts, service
+restarts or website deployment. Main remains unmerged at
+`f1aa05f429c189b67891cf2629e8e00329222aca`; the combined application is still a
+development candidate. Next is the remaining goal/release audit and main-branch
+delivery, not a gameplay extension. Original source and review receipts remain
+unchanged, and the final mechanical importer is consumed.
 
 ### Earlier preparation and checkpoint964 evidence
 

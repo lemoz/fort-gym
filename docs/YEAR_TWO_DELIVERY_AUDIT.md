@@ -39,8 +39,20 @@ and all 64 final player frames passed. Public HTTPS verified every recording
 and fifteen source receipts. The stopped feed, service identities, database
 counts and host-local files were preserved. No service restart, native action,
 new VM, browser visual QA or main merge was part of this static release.
-The combined candidate still needs final-endpoint consolidation; public website
-delivery does not complete the broader cross-model or remote-integration goal.
+The [final combined-release consolidation](../experiments/evidence/year_two_release_checkpoint1028_review_20260913.json)
+is now pushed at `5e7f0fddb475bcb8e6c3943f4d42e2817188689f` in draft PR186.
+It bundles all final replay/outcome assets, fifteen linked native evidence
+records and the website receipt, and corrects the stale quickstart snapshot.
+All 263 protected native/configuration files and thirteen campaign assets remain
+unchanged. Seventy-nine of 82 public web files match the published source exactly;
+the three retained navigation/protocol differences are unchanged in purpose.
+Local verification passed 5,896 tests with ten skips; hosted CI passed 5,733 with
+173 skips. All 139 Node checks, 123 focused checks, six scheduler regressions and
+the final all-64-frame player test passed. Both comparison reports still reproduce
+exactly. Inherited static debt remains nine Ruff findings and 465 mypy errors.
+No new native/public deployment, model call or main merge occurred. Main still
+points to `f1aa05f429c189b67891cf2629e8e00329222aca`. Public website delivery and
+this tested development candidate do not establish completed merged delivery.
 
 ## Earlier controls-study and delivery checkpoint at 708
 
