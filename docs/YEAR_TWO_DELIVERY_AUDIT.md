@@ -9,6 +9,42 @@ Requirements come from [the approved goal](YEAR_TWO_CAMPAIGNS.md),
 
 ## Current controls-study and delivery checkpoint
 
+The [separate combined release candidate](../experiments/evidence/year_two_release_candidate_20260913.json)
+is pushed as [draft PR184](https://github.com/lemoz/fort-gym/pull/184) at
+`e8a4c48065c3391f06a9605900b1294f742142e6`. It combines the unchanged current
+native harness/coordinator with the published spectator assets and all 32
+recordings, preserving campaign navigation and supported protocol links.
+The corrected exact-head full local suite passed 5,850 tests with ten skips and
+seven warnings, after one historical fifteen-recording assertion was made an
+explicit hash-pinned subset. All 66 Node tests passed. Ruff's ten findings and
+mypy's 465 errors match the inherited baseline exactly; these checks remain
+non-green. Hosted CI is pending at this capture. The source is on the remote,
+not merged into main or deployed, and does not change the running campaign.
+PR176 is unchanged.
+
+The current endurance campaign now has a verified [Year-Two save and actual reload](../experiments/evidence/astra_keyboard_endurance_644_20260913.json)
+at decision644: 423,050 elapsed ticks, nineteen living dwarves, zero recorded
+deaths, nine beds, four workshops, three farms, 66 food and 112 drinks.
+This save is 19,850 ticks past the first anniversary. The window added 20,000
+actual ticks with 64 accepted actions and all 266 keys confirmed, without
+timeouts or deferrals. Food declined from 73 to 66 and drinks from 130 to 112;
+these changes do not by themselves establish completed production.
+Cumulative returned usage is 19,259,777 tokens, including 1,561,374 in this
+window. Actual subscription charges remain unknown; the inherited limits and
+single budget extension are unchanged.
+
+The [seventh automatic handoff](../experiments/evidence/astra_keyboard_endurance_sequence_handoff_644_20260913.json)
+preserved the prior twenty event lines and the original plan. Guest poweroff
+succeeded; the following VM-stop command returned 1 because the VM was already
+Stopped. Both stopped-state and closed-disk checks passed before the coordinator
+alone launched 645–708. Actual reload restored the whole agent state, native
+clock/metrics, trace/usage prefixes and loss history. Decision645 confirmed one
+key and zero actual ticks; public frame646 matched its original screen and
+chosen action. The save is inside Year Two, but the earlier evidence of fragile
+operation still warrants continued observation. No human gameplay rescue or
+condition change occurred. The new 64-frame replay is exported, not yet
+published; the public site remains at 32 recordings through decision580.
+
 The [bounded gameplay review through decision600](ENDURANCE_GAMEPLAY_REVIEW_20260913.md)
 finds partial drink-supply recovery and fragile ongoing operation. Accepted
 keyboard brewing at another still was followed by an assigned native brewing
@@ -18,14 +54,15 @@ retain nineteen living dwarves and zero recorded deaths, ending at 413,050 ticks
 sample, fifteen of seventeen labor-eligible dwarves were idle; an older brewing
 job and five harvest jobs had no worker and reported disconnected cached walk
 groups. These observations are not full-path guarantees, completed-job counts or
-flow attribution. Checkpoint644 remains the next saved endpoint to verify.
+flow attribution. Checkpoint644 was pending at that review; its later saved
+verification is recorded above.
 No hints were sent to the model and no live condition changed.
 
 This summary supersedes the capture-time running/preparation statements in the
 historical sections below. Original result manifests and earlier evidence are
 unchanged. The full Year-Two/cross-model goal is still active.
 
-The latest [endurance save and actual reload](../experiments/evidence/astra_keyboard_endurance_580_20260913.json)
+The preceding [endurance save and actual reload](../experiments/evidence/astra_keyboard_endurance_580_20260913.json)
 are verified through decision580: 403,050 elapsed ticks, nineteen living dwarves,
 nine beds, four workshops, three farms, 73 food and 130 drinks, with no recorded
 deaths. All 64 actions and 216 keys were accepted/confirmed, and all 58,000
@@ -55,7 +92,7 @@ live campaign at decision594. Services, database, host-local files and the
 homepage/results renderers were preserved. No restart, new VM or main merge
 occurred. The new card separates this pre-anniversary save from the subsequent
 running-window milestone.
-The post-anniversary save and functioning-fortress assessment remain open.
+At that earlier capture, the post-anniversary save was still pending.
 
 
 The preceding [endurance save and actual reload](../experiments/evidence/astra_keyboard_endurance_516_20260913.json)

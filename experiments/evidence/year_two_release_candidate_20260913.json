@@ -1,0 +1,95 @@
+{
+  "schema_version": "fortgym.year-two-release-candidate/v1",
+  "date_utc": "2026-09-13",
+  "candidate_revision": "e8a4c48065c3391f06a9605900b1294f742142e6",
+  "candidate_branch": "codex/year-two-release-20260913",
+  "native_coordinator_revision": "4ce541fbe0cc20556744cd381298c31f1fb580a2",
+  "active_native_revision": "4b526b5636e6f568a4cae1a1227d746d9c6922c3",
+  "website_source_revision": "3016ab690190affd1435e93bf6e3ff2c12370b37",
+  "source_manifest_sha256": "477cefadb9c3d8d9c1e2fbddbc34e5b8270d1706507e766883c4b74a323e4d0a",
+  "pull_request": {
+    "number": 184,
+    "url": "https://github.com/lemoz/fort-gym/pull/184",
+    "draft": true,
+    "base": "codex/endurance-sequence",
+    "remote_head_verified": true
+  },
+  "published_asset_files": 73,
+  "byte_identical_published_assets": 70,
+  "retained_harness_assets": 13,
+  "compatibility_exceptions": {
+    "web/landing.html": "Keep existing desktop and mobile Campaigns links",
+    "web/results.html": "Keep existing desktop and mobile Campaigns links",
+    "web/protocols.html": "Keep harness protocol catalog G7-v3 footer link"
+  },
+  "recordings": 32,
+  "frames": 2600,
+  "saved_recording_boundary": 580,
+  "native_implementation_changes": [],
+  "native_script_changes": [],
+  "experiment_configuration_changes": [],
+  "focused_tests": {
+    "focused": 107,
+    "surface_and_landing": 20,
+    "node": 66,
+    "warnings": 3
+  },
+  "historical_replay_correction_focused": {
+    "passed": 41,
+    "warnings": 3
+  },
+  "initial_full_suite": {
+    "head": "06dc600f35bbf855eee4a6f95619335b78260a9e",
+    "passed": 5849,
+    "failed": 1,
+    "skipped": 10,
+    "warnings": 7,
+    "reason": "Historical test still required exactly fifteen total recordings",
+    "junit": "/Users/cdossman/Documents/Open Source Projects/fort-gym-environment-layer/fort_gym/artifacts/selected-workshop-study-20260912/astra-keyboard-endurance-runtime/year-two-release-full-suite-20260913.xml",
+    "junit_sha256": "e328ec7fa92b31bb18bb5616b8e05ac02eed93c3204d592edeb78009ef4534d9"
+  },
+  "final_full_suite": {
+    "head": "e8a4c48065c3391f06a9605900b1294f742142e6",
+    "passed": 5850,
+    "skipped": 10,
+    "warnings": 7,
+    "failed": 0,
+    "junit": "/Users/cdossman/Documents/Open Source Projects/fort-gym-environment-layer/fort_gym/artifacts/selected-workshop-study-20260912/astra-keyboard-endurance-runtime/year-two-release-full-final-20260913.xml",
+    "junit_sha256": "0fe47b54dd4b820daa5420765030dcccd67df7ee036bba21154a2f2404c9da6b"
+  },
+  "quality": {
+    "ruff": {
+      "exit_code": 1,
+      "findings": 10,
+      "baseline_findings": 10,
+      "identical_to_baseline": true,
+      "new_or_changed_test_findings": 0
+    },
+    "mypy": {
+      "exit_code": 1,
+      "errors": 465,
+      "files_with_errors": 27,
+      "files_checked": 181,
+      "identical_to_baseline": true,
+      "output_sha256": "ecace04ae1e076658e9810e320aab89d76455b880a5a11fd4a46fc5aec44ad25"
+    }
+  },
+  "hosted_ci": {
+    "run_id": 34743865486,
+    "job_id": 103688047889,
+    "status": "in_progress",
+    "conclusion": null,
+    "head_revision": "e8a4c48065c3391f06a9605900b1294f742142e6"
+  },
+  "native_runtime_rerun": false,
+  "browser_visual_acceptance": false,
+  "live_experiment_changed": false,
+  "public_host_changed": false,
+  "private_observer_included": false,
+  "main_merged": false,
+  "combined_application_deployed": false,
+  "model_calls_for_integration": 0,
+  "new_cloud_vms": 0,
+  "new_budget_extension": false,
+  "full_goal_complete": false
+}
