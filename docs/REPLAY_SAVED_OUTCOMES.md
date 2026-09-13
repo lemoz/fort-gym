@@ -1,5 +1,34 @@
 # Saved outcomes in the replay player
 
+## Final declared boundary at checkpoint1028
+
+The final replay adds decisions 965–1028 without changing any previous recording,
+catalog row, preview or saved outcome. The site now exposes 39 recordings and
+3,048 captured frames, with seven reviewed saved endpoints.
+
+The final fortress reached 765,895 elapsed ticks, 1.90 game years, with nineteen
+living dwarves and one earlier recorded death. The 1,028-response limit ended the
+run, not a native collapse. Non-trader food rose from 139 to 172 as merchant stock
+left the measured inventory. Drink stock declined; brewing was not observed in
+captured workers and the still queues were empty at the save. The assessment is
+operating at the declared boundary with unresolved production gaps, not proven
+self-sufficiency.
+
+The new optional terminal record binds the declared response limit to the saved
+cursor and response count. It requires a separate reload evidence reference.
+The player exposes that third link alongside the unchanged save and gameplay
+assessment links, and hides it for older recordings, invalid metadata and live
+mode. No older endpoint is relabelled. The separate reload restored full agent,
+usage/history and native state without another model turn, tick or save.
+
+The source records are pinned to
+`2264121ab02c693092d3cfbf378cacaf728f3bd5`: the final save, separate reload,
+and gameplay review under `experiments/evidence/astra_keyboard_endurance_1028_*`.
+Static module cache keys advance to checkpoint1028. This does not alter native
+services, database state, model conditions or gameplay. Public verification
+must still bind the tested deployment head, all 39 original recording hashes,
+all 15 public source references, and preserved service/database identities.
+
 The existing player previously exposed outcome and evidence links only for the
 older exploratory recording carrying legacy `campaign` metadata. The newer
 endurance recordings deliberately remained byte-identical to their native
@@ -80,3 +109,35 @@ Checkpoint 900 result/review references pin
 2,920 frames. Player module cache keys advance for the new renderer; player logic,
 Results, active native source, model, controls and budgets remain unchanged.
 This is a website-only update, not promotion of the combined native candidate.
+
+
+## Checkpoint 964: independently captured incident recovery
+
+The sixth outcome and unchanged 901–964 replay bring the catalog to 38
+recordings and 2,984 frames. All previous recordings, preview/catalog rows and
+five outcomes remain unchanged. The new result/review pin
+`62d31fdd8efd36f54b8c3a2caa3d04653faf566e`.
+
+At 639,895 elapsed ticks the fort has 19 living dwarves, one earlier death,
+nine beds, seven workshops and three farms. Astra placed a memorial using normal
+keyboard menus. The native screen before decision 954 announces that Avuz
+Kàsfikod, Ghostly Mason, has been put to rest. A staffed slab job and queued
+engraving job are observed; engraving's worker assignment and a direct ghost
+flag were not sampled. The `operating_with_incident_recovery` label requires a
+strict `fortgym.watch-incident-recovery/v1` object whose complete announcement
+is present in the declared frame's decoded native screen. An intent string is
+not accepted as outcome evidence. Invalid incident metadata hides the outcome,
+not the replay. Earlier classifications are not rewritten.
+
+Inventory qualification remains mandatory: 389 raw food units include 250
+trader-flagged and 139 non-trader units (previously 138 non-trader). Drinks fell
+from 560 to 531; ownership and accessible reserves remain unknown. This is not
+proven long-term self-sufficiency. Seven game-menu interruptions account for
+33,245 actual versus 45,200 requested ticks; they are not timeout failures.
+The save was freshly reloaded with memory and usage retained. Cumulative usage
+is 28,011,285 returned tokens, with dollar charges unreported.
+
+Module cache keys advance to checkpoint964. This static-only update changes no
+native condition, runtime, services, database, main branch or combined release.
+The Sites compatibility workflow preserves the existing hosting architecture;
+browser-only preview and handoff are skipped in this background continuation.

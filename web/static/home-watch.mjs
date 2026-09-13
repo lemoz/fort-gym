@@ -1,5 +1,5 @@
 import {decodeScreen, frameIndex, liveState, validateRecording, renderCapturedScreen, initialRecording, recoverySummary, readLiveStatus, campaignSummary, campaignHistory, shortcutLabel, actionExecutionLabel} from './home-watch-model.mjs?v=20260912-workshop';
-import {validateSavedOutcomes, savedOutcome, savedOutcomeSummary, savedOutcomeHistory} from './saved-outcomes.mjs?v=20260913-checkpoint900';
+import {validateSavedOutcomes, savedOutcome, savedOutcomeSummary, savedOutcomeHistory} from './saved-outcomes.mjs?v=20260913-checkpoint1028';
 const $ = id => document.getElementById('watch-' + id);
 const root = $('root');
 if (root) {
@@ -83,6 +83,8 @@ if (root) {
     $('result').href = saved ? saved.result.url : outcome ? recording.campaign.result_url : '#watch-root';
     $('reload').href = saved ? saved.review.url : outcome ? recording.campaign.reload_url : '#watch-root';
     text('reload', saved ? 'Inspect the gameplay assessment →' : 'Inspect the later reload check →');
+    $('fresh-reload').hidden = !saved?.reload;
+    $('fresh-reload').href = saved?.reload?.url || '#watch-root';
     $('range').max = String(frames.length - 1); $('range').value = String(index);
     $('range').setAttribute('aria-valuetext', 'Decision ' + frame.decision);
     $('range').disabled = loading;

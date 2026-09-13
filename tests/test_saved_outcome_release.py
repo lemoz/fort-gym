@@ -8,28 +8,57 @@ from fastapi.testclient import TestClient
 
 ROOT = Path(__file__).resolve().parents[1]
 
+def test_final_outcome_has_a_distinct_reload_receipt_and_no_later_turn():
+    latest = json.loads((ROOT / "web/static/saved-outcomes.json").read_text())["outcomes"][0]
+    assert latest["saved_decision"] == latest["total_responses"] == 1028
+    assert latest["total_tokens"] == 30125676
+    assert latest["saved_elapsed_ticks"] == 765895
+    assert latest["saved_metrics"]["food_stock"] == 172
+    assert latest["saved_metrics"]["drink_stock"] == 348
+    assert latest["inventory_scope"] == {
+        "schema_version": "fortgym.watch-inventory-scope/v1",
+        "food_trader_flagged_units": 0, "food_nontrader_units": 172,
+        "food_nontrader_start_units": 139, "drink_trader_flagged_units": None,
+        "ownership_and_accessibility_proven": False,
+    }
+    assert latest["termination"] == {
+        "schema_version": "fortgym.watch-terminal-boundary/v1",
+        "reason": "declared_response_boundary_reached", "response_limit": 1028,
+        "next_decision_dispatched": False,
+    }
+    assert latest["reload"]["sha256"] == "b9399c10b2da2ca8e62f0307b0d0f37c861e06c50aa92712c05f73478fac3756"
+    assert len({latest[field]["url"] for field in ("result", "review", "reload")}) == 3
+    assert latest["result"]["url"].endswith("astra_keyboard_endurance_1028_save_20260913.json")
+    assert latest["reload"]["url"].endswith("astra_keyboard_endurance_1028_reload_20260913.json")
+    assert 'id="watch-fresh-reload"' in (ROOT / "web/landing.html").read_text()
 
-def test_saved_metadata_is_the_reviewed_five_endpoint_projection():
+
+
+def test_saved_metadata_is_the_reviewed_seven_endpoint_projection():
     raw = (ROOT / "web/static/saved-outcomes.json").read_bytes()
     assert hashlib.sha256(raw).hexdigest() == (
-        "6314e0eba7433694d5f759d4a737bbc9b3b904d5ae4fa5ac071255f451f080a5"
+        "bbd6ff27dee0b0a96ca9e47ca82f1b26e9420593dfcd6eb0be521e70ac4480d8"
     )
     data = json.loads(raw)
-    assert [value["saved_decision"] for value in data["outcomes"]] == [900, 836, 772, 708, 644]
+    assert [value["saved_decision"] for value in data["outcomes"]] == [1028, 964, 900, 836, 772, 708, 644]
     previous = json.dumps(data["outcomes"][1:], separators=(",", ":")).encode()
     assert hashlib.sha256(previous).hexdigest() == (
-        "20dabc6b9f54234b635908082ed9c52bc427da07dbe76607b1a57fb5f6a7e4b0"
+        "ebe48bbc549955f98e302223e2a71d2dbf11311952756648c60cb05f2be1a5ab"
     )
     for value in data["outcomes"]:
         assert value["reported_model_charge_usd"] is None
         assert value["fresh_reload_verified"] is True
         assert value["human_gameplay_rescue"] is value["sustainability_proven"] is False
         expected = {
+            1028: "operating_at_declared_boundary_with_production_gaps",
+            964: "operating_with_incident_recovery",
             900: "operating_with_workshop_development",
             836: "operating_with_adaptive_supply_recovery",
         }.get(value["saved_decision"], "operating_but_fragile")
         assert value["functioning_assessment"] == expected
         source = (
+            "2264121ab02c693092d3cfbf378cacaf728f3bd5" if value["saved_decision"] == 1028 else
+            "62d31fdd8efd36f54b8c3a2caa3d04653faf566e" if value["saved_decision"] == 964 else
             "bae881829d615dd3afd2e6b9357ad3b8f299ee8f" if value["saved_decision"] == 900 else
             "77f3f7227b79d41e6856fc0c3b142bc19b4e3a0a" if value["saved_decision"] == 836 else
             "e1b4e76c3f48e87fa3222b4e425ff6fa9d4492c6" if value["saved_decision"] == 772
@@ -42,19 +71,19 @@ def test_saved_metadata_is_the_reviewed_five_endpoint_projection():
 def test_all_existing_recording_and_catalog_bytes_are_preserved():
     directory = ROOT / "web/static/recordings"
     for name, digest in {
-        "catalog": "0219a9f02cc6da81ce6f04bf5389524af41c4dc151fd3a2d2c29c87fb119786b",
-        "previews": "a348d12eb023b72cd269d060e0f5eba57d3f05569c8c29c044698d2c58fa8539",
+        "catalog": "37a13b8c2ca05c447fde0720862e896514152d7c93ea3f438d0351af6cca8e87",
+        "previews": "aace49ecf68b4c79bd7811bcb0e30799eea1c218d9a5acceaff7cd6ee12b55b9",
     }.items():
         assert hashlib.sha256((directory / f"{name}.json").read_bytes()).hexdigest() == digest
     catalog = json.loads((directory / "catalog.json").read_text())["recordings"]
-    assert len(catalog) == 37
-    assert sum(row["frame_count"] for row in catalog) == 2920
+    assert len(catalog) == 39
+    assert sum(row["frame_count"] for row in catalog) == 3048
     for name, digest in {
-        "catalog": "6002123dd78873c8ebd6aabae45c2be677cc34190d5129a9701cbb91d0ea6688",
-        "previews": "62ebbf957ce00730b85a4233c1ff17170c52556d2234021a4acef1f8ff676ae7",
+        "catalog": "99a1149f1399cdc1ade65ef7b220d811faf1a913ea78a650d036ec4e9319958c",
+        "previews": "0296051191d9ff8a93ed9bea71f14350ef2181da2dc0c62f86558fad8742e6e5",
     }.items():
         rows = json.loads((directory / f"{name}.json").read_text())["recordings"]
-        assert len(rows[1:]) == 36
+        assert len(rows[1:]) == 38
         assert hashlib.sha256(json.dumps(rows[1:], separators=(",", ":"), ensure_ascii=False).encode()).hexdigest() == digest
     for row in catalog:
         raw = (directory / (row["id"] + ".json")).read_bytes()
@@ -66,8 +95,8 @@ def test_outcome_assets_and_existing_player_are_served_without_native_connection
 
     client = TestClient(app)
     html = client.get("/").text
-    assert "/static/home-watch.mjs?v=20260913-checkpoint900" in html
-    assert "saved-outcomes.mjs?v=20260913-checkpoint900" in (
+    assert "/static/home-watch.mjs?v=20260913-checkpoint1028" in html
+    assert "saved-outcomes.mjs?v=20260913-checkpoint1028" in (
         ROOT / "web/static/home-watch.mjs"
     ).read_text()
     assert 'id="watch-outcome-status" role="status" hidden' in html
@@ -85,15 +114,15 @@ def test_outcome_assets_and_existing_player_are_served_without_native_connection
 
 def test_new_inventory_scope_preserves_raw_totals_and_unknown_drink_ownership():
     data = json.loads((ROOT / "web/static/saved-outcomes.json").read_text())
-    latest = data["outcomes"][0]
-    assert latest["saved_metrics"]["food_stock"] == 388
-    assert latest["saved_metrics"]["drink_stock"] == 560
+    latest = next(value for value in data["outcomes"] if value["saved_decision"] == 964)
+    assert latest["saved_metrics"]["food_stock"] == 389
+    assert latest["saved_metrics"]["drink_stock"] == 531
     assert latest["inventory_scope"] == {
         "schema_version": "fortgym.watch-inventory-scope/v1",
         "food_trader_flagged_units": 250,
-        "food_nontrader_units": 138,
-        "food_nontrader_start_units": 151,
+        "food_nontrader_units": 139,
+        "food_nontrader_start_units": 138,
         "drink_trader_flagged_units": None,
         "ownership_and_accessibility_proven": False,
     }
-    assert all("inventory_scope" not in value for value in data["outcomes"][1:])
+    assert all("inventory_scope" not in value for value in data["outcomes"][3:])

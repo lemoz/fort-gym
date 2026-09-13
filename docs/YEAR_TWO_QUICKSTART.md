@@ -4,7 +4,7 @@ This guide describes the integrated native-keyboard harness and public viewer.
 Older dated documents retain their original proof states; their references to
 "next" or "not yet integrated" do not describe the current experiment queue.
 This branch is an integration candidate, not a new native runtime revision used
-by the ongoing matched cohort and not a claim of deployment or main merge.
+by the recorded matched cohort and not a claim of deployment or main merge.
 
 ## What is available
 
@@ -19,19 +19,24 @@ by the ongoing matched cohort and not a claim of deployment or main merge.
   saved continuations and two Sol infrastructure failures, with the original
   checkpoints preserved. Astra r2's continuation explicitly records a storage-only
   amendment from 32 to 40 GiB; these windows do not have identical VM storage.
-- A homepage player, 32 immutable recording windows containing 2,600 frames,
+- A homepage player, 39 immutable recording windows containing 3,048 frames,
   the Worlds gallery,
   comparison tables, and an optional read-only live observer.
 
 The recording count describes this checkout's release-candidate snapshot through
-`astra-keyboard-endurance-v1-517-580`, not the live website's changing catalog.
-The separate public release already contains the later 581–644 recording; it is
-not silently included here. See the [source snapshot](YEAR_TWO_RELEASE_CANDIDATE_20260913.md).
+`astra-keyboard-endurance-v1-965-1028`. It matches the separately published final
+endurance replay snapshot, not a promise that the live catalog will never change.
+See the [current source snapshot](YEAR_TWO_RELEASE_CHECKPOINT1028_20260913.md).
+Seven saved outcomes link to fifteen immutable save/reload/gameplay records,
+all bundled under `experiments/evidence/` for offline inspection. The final run
+ended at its declared response limit: 1,028 responses and 765,895 elapsed game
+ticks (1.90 years), with nineteen living dwarves and unresolved production gaps.
+The final save and its later provider-free reload remain separate records.
 The offline 64- and 128-response commands below reproduce this checkout's bundled
 comparison reports; a regression test checks both reports byte for byte.
 
 These short matched starts are separate from the exploratory Year-Two run and
-the ongoing standard-input endurance campaign. Their recordings retain their
+the completed standard-input endurance campaign. Their recordings retain their
 own identities and conditions. Inventories and sampled activity
 are not measured production rates or proof of indefinite self-sufficiency.
 
