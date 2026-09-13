@@ -1,0 +1,53 @@
+{
+  "schema_version": "fortgym.endurance-interim-observation/v1",
+  "campaign_id": "astra-keyboard-endurance-v1",
+  "observed_at_unix": 1789257586,
+  "owner_identity_verified_alive": true,
+  "source_revision": "4b526b5636e6f568a4cae1a1227d746d9c6922c3",
+  "through_decision": 49,
+  "trace_prefix_sha256": "d6e756e668a6d4f7de4624bdcb05e535c4f46669975182e3067be24697e06baa",
+  "usage_prefix_sha256": "16525a609b374d6bfc8d162b0ce6ef2487f9d4b35641ddd94d30465506560ba6",
+  "original_checkpoint4_prefixes_preserved": true,
+  "observed_elapsed_ticks": 23500,
+  "observed_metrics": {
+    "population": 7,
+    "food_stock": 50,
+    "drink_stock": 54,
+    "wood_stock": null,
+    "stone_stock": null,
+    "functional_rooms": null,
+    "completed_workshops": 2,
+    "completed_beds": 1,
+    "completed_farms": 1,
+    "recorded_dead_citizens": 0
+  },
+  "usage": {
+    "accounted_responses": 49,
+    "cost_basis": "codex_subscription_charge_unreported/v1",
+    "dispatched_requests": 49,
+    "returned_responses": 49,
+    "total_cost_usd": null,
+    "total_tokens": 1163095
+  },
+  "job_types_observed_with_workers": [
+    "ConstructBed",
+    "Dig",
+    "Drink2",
+    "FellTree",
+    "Fish",
+    "MakeBarrel",
+    "PickupEquipment",
+    "PlantSeeds",
+    "StoreItemInBarrel",
+    "StoreItemInStockpile"
+  ],
+  "complete_private_food_boundaries": 49,
+  "food_production_rate": null,
+  "food_consumption_rate": null,
+  "accessible_reserves": null,
+  "new_checkpoint_verified": false,
+  "terminal_native_audit_performed": false,
+  "gameplay_inputs_by_observer": 0,
+  "model_calls_by_observer": 0,
+  "note": "Read-only capture of complete retained trace rows. These are unsaved sampled observations, not final acceptance, completed-job counts, production flows or proof of self-sufficiency."
+}

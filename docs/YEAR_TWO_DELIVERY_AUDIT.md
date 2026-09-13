@@ -285,27 +285,23 @@ the native result's original unpublished state.
 
 ## Next work toward the full goal
 
-1. Finish the declared six-attempt controls cohort, auditing each own-save chain
-   and publishing its actual replay. Compare all three pairs descriptively;
-   do not choose a control winner from the first pair or hide the drowning.
-2. Return to longer play using the separate PR181 endurance declaration after
-   the six frozen attempts. It is prepared, not launched. The controls
-   limit of 128 decisions at at most 2,000 ticks each cannot cover the 403,200
-   ticks in a full elapsed year. Do not alter these frozen attempts to disguise
-   that limit or count a new window as an independent model trial.
-3. Close the portable-owner endurance-budget gap before extending a controls
-   checkpoint beyond its original ceiling. At source
-   `5ddf1e6718dab2e8351e8dc24a2afe5071cd2592`, the underlying native runner and
-   agent support recorded, checkpoint-bound budget extensions, but the portable
-   window courier and window auditor deliberately reject `budget_extension`.
-   Merely increasing a JSON limit would not establish a valid portable
-   continuation. The isolated PR180 candidate now extends the
-   owner/courier/native/audit path together with local regression coverage;
-   retain the unchanged parent save and cumulative usage, then verify an actual
-   native continuation before claiming this capability. Old-source/image
-   migration remains a separate unimplemented transition. A new
-   fresh campaign with a larger initial declared budget is a different experiment,
-   not recovery of these saves. Do not change the active cohort's source/image.
+1. The six-attempt controls cohort and all six public replays are complete.
+   Retain all three descriptive pairs, including the drowning; these outcomes
+   do not establish a control ranking. Do not extend or rewrite the frozen
+   128-response attempts to manufacture a longer-duration comparison.
+2. Continue the active, separate PR181 Astra endurance campaign through its
+   declared save boundaries. Its initial four-response save and actual own-save
+   reload are verified. Audit the current decision-68 save and teardown when
+   the owner finishes, publish its actual replay, then continue the same save.
+   The 403,200-tick anniversary is a milestone, not the stop condition or proof
+   of a functioning fortress. Each continuation is not an independent trial.
+3. Finish native verification of the portable cumulative-budget path: the
+   checkpoint4-bound append loaded with preserved memory/usage, but the next
+   saved extension and later inherited-limit reload still need actual evidence.
+   Do not append repeatedly, reset accounting, change the condition, migrate
+   old controls saves or replace the running owner to obtain a passing result.
+   The unchanged frozen source `5ddf1e6718dab2e8351e8dc24a2afe5071cd2592`
+   still has its historical narrower portable-budget contract.
 4. Strengthen long-play evaluation with separately versioned measurements of
    completed production, consumption, trade and losses. The current private
    food reader measures inventory at paused native boundaries, not those flows
@@ -317,6 +313,17 @@ the native result's original unpublished state.
    with actual returned usage and unreported dollar charges distinguished.
    Main integration remains a separate promotion decision; no rejected merge
    is retried or bypassed by this documentation or experiment work.
+
+The [decision49 interim observation](../experiments/evidence/astra_keyboard_endurance_interim_49_20260912.json)
+retains 23,500 elapsed ticks, seven living dwarves, no recorded deaths, two
+completed workshops, one bed and one farm. All 49 paused boundaries had complete
+private food scans; the latest stocks were 50 food and 54 drinks. Sampled workers
+were observed planting, hauling, making barrels, constructing a bed and drinking,
+among other jobs. These samples are not completed-job counts or flow rates.
+The exact running owner and original checkpoint4 trace/usage prefixes were
+verified. The 1,163,095 returned tokens are cumulative; subscription charges,
+accessible reserves, production and consumption rates remain unknown. This is
+an unsaved observation, not a new checkpoint or terminal acceptance.
 
 ## Earlier September 12 evidence snapshots
 
