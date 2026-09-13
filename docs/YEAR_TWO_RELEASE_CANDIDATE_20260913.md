@@ -36,6 +36,8 @@ and publication documentation instead of replacing the native implementation.
 - Keep the current server-settings fixture in the spectator endpoint test;
   changing only an environment variable does not replace cached settings.
 - Keep the newer native exporter's rejected-shortcut evidence handling.
+- Keep the original fifteen-replay test as a hash-pinned historical subset;
+  the current catalog tests independently cover all 32 recordings and shortcuts.
 - Import the public pre-action/post-action replay labels, repeated-model
   comparison, shortcut recordings, and endurance recordings unchanged apart
   from the two navigation restorations above.
