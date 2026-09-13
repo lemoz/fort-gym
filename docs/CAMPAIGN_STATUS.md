@@ -14,6 +14,29 @@ cohort below. Long-term self-sufficiency and the full delivery goal remain open.
 
 ## Current experiment summary
 
+The [checkpoint 900 capture and actual reload](../experiments/evidence/astra_keyboard_endurance_900_20260913.json)
+and [detailed gameplay review](../experiments/evidence/astra_keyboard_endurance_900_gameplay_review_20260913.json)
+are now complete. The fort saved at 606,650 elapsed ticks with nineteen living
+dwarves, one earlier death, seven workshops, nine beds and three farms. Astra
+completed mason and craftsdwarf workshops through keyboard menus. The food total
+of 388 includes 250 trader-flagged units: non-trader food is 138, down from 151.
+The simultaneous drink rise from 485 to 560 is not credited to brewing because
+this frozen measurement lacks trader flags. The qualified assessment is operating
+with workshop development, not demonstrated supply recovery or self-sufficiency.
+
+All 64 actions and 309 keys were accepted/confirmed. Twenty-eight decisions added
+54,400 actual ticks; one build-menu deferral retained its original 2,000 requested
+but undispatched ticks. Cumulative returned usage is 26,085,530 tokens, including
+1,936,006 new tokens, with actual subscription charges unreported. The
+[eleventh handoff](../experiments/evidence/astra_keyboard_endurance_sequence_handoff_900_20260913.json)
+preserved the plan and first 32 event lines, whole agent state, native clock and
+metrics, trace/usage prefixes and loss history. Both teardown operations returned
+zero. First continued decision 901 confirmed 24 keys and zero ticks; public
+frame 905 matched the original screen/action and live owner. The sole coordinator
+continues toward 964 under the unchanged 1,028-response/40-million-token ceiling.
+No new extension, native source change, model/prompt change or human rescue was
+introduced. The 837–900 replay is exported but is not yet published by this capture.
+
 The current endurance campaign has a verified [checkpoint836 and actual reload](../experiments/evidence/astra_keyboard_endurance_836_20260913.json):
 552,250 elapsed ticks, nineteen living dwarves, one earlier recorded death,
 nine beds, five workshops, three farms, 151 food and 528 drinks. The

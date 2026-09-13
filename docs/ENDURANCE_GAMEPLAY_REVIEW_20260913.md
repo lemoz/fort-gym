@@ -1,6 +1,49 @@
 # Astra endurance: operation after the first anniversary
 
-## Latest assessment: saved Year-Two endpoint at decision836
+## Latest assessment: workshop development at decision 900
+
+The [837–900 review](../experiments/evidence/astra_keyboard_endurance_900_gameplay_review_20260913.json)
+finds continued operation and two new workshops, with an important inventory
+qualification. The save contains 606,650 elapsed ticks, nineteen living dwarves,
+one earlier recorded death, nine beds, seven workshops and three farms. The
+actual fresh-process reload and first continued action passed.
+
+Astra constructed a mason's workshop, complete at decision 870, and a craftsdwarf
+workshop, complete at decision 875, through ordinary keyboard menus. Its later
+actions explored for stone with a stated intent to make a memorial slab. Both
+new workshop queues are empty at the endpoint; completed slabs or engraving are
+not established by these observations.
+
+The raw food counter rose from 151 to 388, but this is **not a production surge**.
+At decision 897, total food rose from 138 to 388 while trader-flagged food rose
+from zero to 250. Food without that flag stayed at 138, down from 151 at the
+previous save. Non-trader does not itself prove fortress ownership, accessibility
+or nutrition. The literal native-predicate inventory and its flag counts remain
+unchanged in the evidence.
+
+Drinks declined from 528 to 485, then jumped to 560 at that same boundary.
+The frozen drink measurement lacks trader flags. This increase is therefore not
+credited to brewing, and no corrected drink total is invented. No worker-assigned
+brewing was observed at the 64 citizen boundaries; twelve world-job lists were
+capped. The complete endpoint world list and all three still queues contain no
+brewing. Fishing, fish preparation, barrel work, hauling, eating, drinking and
+sleeping remain observed. They are job samples, not completed-product counts.
+
+All 64 actions and 309 requested keys were accepted/confirmed. Twenty-eight
+positive-time decisions advanced 54,400 ticks against 56,400 requested. At
+decision 869, an open build menu deferred 2,000 ticks without dispatching the
+clock; Astra exited at 870 and continued. No timeout, new death, labor change,
+roster change or human gameplay rescue was observed. Returned usage totals
+26,085,530 tokens, including 1,936,006 in this window; charges remain unreported.
+
+The assessment is **operating with workshop development**. The fort has expanded,
+but mixed inventory cannot establish renewed supply recovery. Eleven of sixteen
+labor-eligible dwarves are idle, and five old harvest jobs remain unstaffed and
+cache-disconnected. This is still one campaign, not another replicate, a strong
+ranking, or proof of indefinite self-sufficiency. Earlier assessments and
+original native values remain preserved.
+
+## Earlier saved Year-Two endpoint at decision836
 
 The [773–836 review](../experiments/evidence/astra_keyboard_endurance_836_gameplay_review_20260913.json)
 finds verified labor adaptation and repeated supply recovery. The fort saved at
