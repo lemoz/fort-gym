@@ -37,7 +37,25 @@ continues toward 964 under the unchanged 1,028-response/40-million-token ceiling
 No new extension, native source change, model/prompt change or human rescue was
 introduced. The 837–900 replay is exported but is not yet published by this capture.
 
-The current endurance campaign has a verified [checkpoint836 and actual reload](../experiments/evidence/astra_keyboard_endurance_836_20260913.json):
+The [837–900 replay and inventory-qualified outcome are now publicly verified](../experiments/evidence/astra_keyboard_endurance_900_website_20260913.json)
+at `d8b681e1d8f059d8ac3ee4480aab05778d4cf365`. The site has 37 recordings,
+2,920 captured frames and five reviewed saved endpoints. All 36 prior recordings,
+catalog/preview rows and four outcome entries remain unchanged. The new panel
+distinguishes 138 non-trader food units from 250 trader-flagged units and leaves
+drink ownership unknown. It does not credit the inventory jump to production.
+
+All 36 focused Python, 116 Node, 25 importer and all-64-frame player checks passed.
+Local and hosted full suites each passed 1,324 tests with five skips and seven
+warnings; hosted run `34752955742` matches the exact release head. All ten public
+result/review references and all 37 recording hashes were verified over HTTPS.
+The live session continued through decision 941 during publication. Results and
+the screen-rendering model were unchanged; homepage/player imports received only
+cache-version changes. Service identities, database counts and host-local files
+were preserved. No native condition change, model call, new VM, service restart,
+main merge or browser visual QA was part of this static update. Its import and
+publication helpers are consumed. The original native capture remains immutable.
+
+The prior verified [checkpoint836 and actual reload](../experiments/evidence/astra_keyboard_endurance_836_20260913.json) retained:
 552,250 elapsed ticks, nineteen living dwarves, one earlier recorded death,
 nine beds, five workshops, three farms, 151 food and 528 drinks. The
 [gameplay review](ENDURANCE_GAMEPLAY_REVIEW_20260913.md) verifies brewing labor
@@ -60,7 +78,7 @@ new budget extension, runtime/model/prompt/control change or human rescue was
 introduced. The original capture's publication flag is preserved as a snapshot.
 
 The [773–836 replay and reviewed outcome are now publicly verified](../experiments/evidence/astra_keyboard_endurance_836_website_20260913.json)
-at `d5af4339a936a908e0caf34ecbdaa6a4ec5837cd`. The site now has 36 recordings and
+at `d5af4339a936a908e0caf34ecbdaa6a4ec5837cd`. That publication carried 36 recordings and
 2,856 captured frames, with saved-outcome panels for 644, 708, 772 and 836.
 The new summary says operating with adaptive supply recovery; earlier labels
 and all 35 prior recording files, catalog rows, previews and three outcome
@@ -78,7 +96,7 @@ separate from this delivered static website update.
 The [refreshed combined release and source review](../experiments/evidence/year_two_release_outcomes_review_20260913.json)
 is pushed at `90e4c977cb49b1efbefda295b4bd27ec806ae98f` on
 `codex/year-two-release-outcomes`, with draft [PR #186](https://github.com/lemoz/fort-gym/pull/186).
-It now carries all 36 published recordings, 2,856 frames and four saved-outcome
+It carries the earlier 36-recording snapshot, 2,856 frames and four saved-outcome
 summaries while retaining the native harness, comparison reproducibility repair,
 batch-job guard, Campaigns navigation and supported protocol links. All 79 public
 web assets were compared; only three documented navigation/protocol differences
