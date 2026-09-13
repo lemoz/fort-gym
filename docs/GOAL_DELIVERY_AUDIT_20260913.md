@@ -40,11 +40,19 @@ in the combined checkout. This integration is not a new native experiment.
 
 ## Next work
 
-1. Reconcile the exact combined source against its prior reviews and inspect
-   later changes that those earlier reviews do not cover.
-2. Finish the remaining exact-source review and requirement-level delivery audit.
-3. Finish the remaining review and merged-delivery requirement through the
-   permitted workflow. Do not retry or bypass the previously denied main merge.
+The exact-source review is complete at
+`c6573a99d8857605dae61703be55bd81f34ed718`. The remaining delivery requirement is
+owner-authorized promotion of this combined source to main. Do not retry or
+bypass the previously denied main merge. No additional experiment or source
+review cycle is needed merely to wait for that authorization.
+
+The existing stack is #176 → #177 → #178 → #179 → #180 → #181 → #182 → #184 →
+#185 → #187 → #186. Every head is an ancestor of the reviewed candidate.
+PR #186 is currently based on `codex/dfhack-job-serialization`, not main.
+After authorization, promote the combined reviewed release through the repository
+workflow, verify the resulting main source and CI, and retain the separate public
+website/runtime evidence. This audit does not retarget PRs, merge the stack or
+authorize a new deployment.
 
 No additional native gameplay window is part of this audit. Extending gameplay
 would be a new experiment, not a substitute for closing the delivery gaps above.
@@ -57,6 +65,7 @@ would be a new experiment, not a substitute for closing the delivery gaps above.
 - [Public final replay acceptance](../experiments/evidence/astra_keyboard_endurance_1028_website_20260913.json)
 - [Public paired-controls comparison acceptance](../experiments/evidence/controls_study_website_20260913.json)
 - [Combined paired-controls integration review](../experiments/evidence/controls_panel_release_review_20260913.json)
+- [Completed exact-source review](../experiments/evidence/year_two_final_source_review_20260913.json)
 - [Previous combined-release review](../experiments/evidence/year_two_release_checkpoint1028_review_20260913.json)
 - [Paired-controls declaration](../experiments/evidence/selected_workshop_runtime_v2_declaration_20260912.json)
 - [Paired-controls summary](../experiments/evidence/selected_workshop_v2_cohort_20260912.json)
@@ -85,10 +94,19 @@ are unchanged. The current controls guide now reflects actual public delivery.
 The 153 focused checks passed; the full local suite passed 5,959 with ten skips,
 and exact-head hosted CI passed 5,796 with 173 skips. The site was not redeployed.
 
-A partial review-coverage reconciliation found 149 production Python, Lua and
-browser-script files changed from main. Of those, 112 exactly match the earlier
-PR176 inventory or the native job-serialization review. The remaining 37 need
-comparison with later review records or fresh delta/source inspection. This
-does not establish that those files are defective or wholly unreviewed; only two
-earlier review inventories were checked. Supporting templates, configuration,
-tests and evidence have separate integration records.
+The completed reconciliation covers all 149 production Python, Lua and
+browser-script files changed from main: 112 exact prior-review matches, 27 fresh
+delta reviews against the fully reviewed PR176 source, and ten full new-file
+reads. No new release-blocking defect was found. The review preserves the earlier
+partial inventory unchanged and records each current hash and review method.
+Supporting templates, configuration, tests and evidence retain their separate
+source-pinned integration records. This is implementer review, not independent
+approval or fresh gameplay acceptance.
+
+The final focused suite passed 720 tests with three warnings. The three
+browser-module suites passed another 128 checks, and scoped Ruff passed for all
+Python files among the 37 newer versions. The candidate is unchanged, so the
+full suites above were not repeated. GitHub again confirms successful CI on the
+exact candidate and an unchanged main at
+`f1aa05f429c189b67891cf2629e8e00329222aca`. The historical global static baseline
+remains separate; no all-repository lint/type-check success is claimed.

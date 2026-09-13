@@ -1,0 +1,1142 @@
+{
+  "schema_version": "fortgym.year-two-final-source-review/v1",
+  "date_utc": "2026-09-13",
+  "candidate": {
+    "revision": "c6573a99d8857605dae61703be55bd81f34ed718",
+    "branch": "codex/year-two-release-outcomes",
+    "main_revision": "f1aa05f429c189b67891cf2629e8e00329222aca",
+    "incremental_review_base": "0547261450262c8d0b59486b566a2404e02895f9",
+    "product_source_changed_during_review": false
+  },
+  "review": {
+    "reviewer": "implementer",
+    "independent_approval": false,
+    "scope": "Production Python, Lua and browser-script files changed from main under fort_gym, scripts, hook and web; artifact directories excluded.",
+    "production_files": 149,
+    "exact_prior_review_matches": 112,
+    "delta_reviews_against_reviewed_base": 27,
+    "full_new_file_reads": 10,
+    "unresolved_production_coverage": 0,
+    "blocking_findings": [],
+    "prior_review_records": {
+      "experiments/evidence/keyboard_integration_final_review_176_20260912.json": "e56d32768df5e2533ca599715558f13786815ec606f182d817157e2d5ffb3c82",
+      "experiments/evidence/dfhack_job_serialization_review_20260913.json": "7125437b32374ded73ee3d495b0196494ace5c2178ebddbdd5a97ddce956aa55"
+    },
+    "conclusions": [
+      "Keyboard-only and selected-workshop conditions keep distinct schemas, prompt profiles and pinned binding identities; historical controls cannot silently dispatch a workshop shortcut.",
+      "The workshop helper requires a selected completed workshop, uses native job definitions and ordinary labor/material processing, and reports queue insertion rather than completed production. Partial or unknown mutation is not retried.",
+      "The empty-key native probe always records and validates a paused boundary with a nonempty save name before a successful return; the workshop executor's boundary lookup is supported by its caller contract.",
+      "V2 continuation limits bind to the exact parent checkpoint, preserve original configuration and memory/usage history, and append explicit increases once. Offline planning is not spending or execution authority.",
+      "Per-window recording export verifies internal segment lineage and binds the next window to its first segment, preserving cumulative saved state without counting inherited frames twice.",
+      "The fixed endurance coordinator verifies retained operators, runtime source and settled owner receipts, audits each window, and stops at the declared decision ceiling without a new window.",
+      "Public action projection excludes private memory. Live choice, verified recorded execution, queued work, completed production and qualified saved outcomes remain distinct.",
+      "The descriptive comparison retains missing values, infrastructure failures, unknown subscription charges, single-seed limits and the explicitly declared storage amendment; it does not create a ranking."
+    ],
+    "limitations": [
+      "This is implementer review with focused offline regression tests, not independent approval or new native gameplay acceptance.",
+      "Supporting HTML, CSS, configurations, fixtures and versioned evidence are covered by the prior source-pinned integration/publication records; the 149 count is not an inventory of every repository file.",
+      "The historical global static-analysis baseline remains nine Ruff findings and 465 mypy errors in 27 files. That baseline was not rerun here; only the changed Python review scope passed Ruff. No Black check is claimed.",
+      "No additional browser visual review, website deployment or service identity inspection was performed in this source-only review."
+    ]
+  },
+  "coverage": [
+    {
+      "path": "fort_gym/bench/agent/campaign_budget.py",
+      "sha256": "724d62caa309918988c5994ef69717b8683842e61af3721a4a91d18e8d417502",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json"
+    },
+    {
+      "path": "fort_gym/bench/agent/campaign_keyboard.py",
+      "sha256": "6ba060aefc3d2ea52c526906720926fd6502f0198f3261a52d201e3912d54b8a",
+      "method": "delta_plus_reviewed_base",
+      "reviewed_base": "0547261450262c8d0b59486b566a2404e02895f9",
+      "base_sha256": "9c2cb3bbed52c2da6c3d817cfccd1fa1d2eba98626c27c42e8eab12b95bcdfcb"
+    },
+    {
+      "path": "fort_gym/bench/agent/codex_allowance.py",
+      "sha256": "571b398e0d755166a78403f5245c30ea6588519a7ccca7a53a35e2c5cc8aa7ab",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json"
+    },
+    {
+      "path": "fort_gym/bench/agent/codex_protocol.py",
+      "sha256": "8687fdd235f3c624e3dff201bc874f68fd0c553303d52e797521300c6b759d87",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json"
+    },
+    {
+      "path": "fort_gym/bench/agent/codex_selection.py",
+      "sha256": "04c7d19319939e13ac8fbc0f291a4450f175053a111b5ed4e1a09dc99a334bab",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json"
+    },
+    {
+      "path": "fort_gym/bench/agent/codex_transport.py",
+      "sha256": "c023aa5723cc1f1f46ca04f36711fa0e57fd394dc6487555a8fb842d5b7ab4d5",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json"
+    },
+    {
+      "path": "fort_gym/bench/agent/keyboard_courier.py",
+      "sha256": "f154fcb6d9de243493d5615dcf2aafb51159e18b14f1d3a43cff2baef88a2297",
+      "method": "delta_plus_reviewed_base",
+      "reviewed_base": "0547261450262c8d0b59486b566a2404e02895f9",
+      "base_sha256": "37cc727a3f8744f37b4b48ea0da2d395d001ce9c066581f2d688514ca14ff48a"
+    },
+    {
+      "path": "fort_gym/bench/agent/keyboard_decision.py",
+      "sha256": "025c3f532dbe09a98fb9eebafa3eb6080d6fa7510dc5851337f2504154b91eb8",
+      "method": "delta_plus_reviewed_base",
+      "reviewed_base": "0547261450262c8d0b59486b566a2404e02895f9",
+      "base_sha256": "dda24a3bf50a276a36695ee3092b408ed8f8677e90683aa391827712c72af55e"
+    },
+    {
+      "path": "fort_gym/bench/agent/keyboard_exchange.py",
+      "sha256": "b7878321e1787a8fb33e408912a257dfa176ad7f3710b798917e40e16413e7eb",
+      "method": "delta_plus_reviewed_base",
+      "reviewed_base": "0547261450262c8d0b59486b566a2404e02895f9",
+      "base_sha256": "c3fddd865aaa84a908b5a2455b2ded5f8da969bf7cddd1fe04e7004ef7958bfb"
+    },
+    {
+      "path": "fort_gym/bench/agent/keyboard_observation.py",
+      "sha256": "c97245701ce1bc123b34c9f89d57e503295de625e2eac136041acb7f5ccf4991",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json"
+    },
+    {
+      "path": "fort_gym/bench/agent/keyboard_prompt.py",
+      "sha256": "a477549dea6b2820225fc26472e8c5203a95c1e30514bb65448b7c69f51eb0b5",
+      "method": "delta_plus_reviewed_base",
+      "reviewed_base": "0547261450262c8d0b59486b566a2404e02895f9",
+      "base_sha256": "406c3b91e93f9dfeac6a5b40edcefbee7a1d5a578524bc65d71a5b2a0681e68a"
+    },
+    {
+      "path": "fort_gym/bench/agent/keyboard_rejection.py",
+      "sha256": "dc55085f1f50066d13e594b02a2ad8d726747e11ae228faa42ece38fa8a86b3a",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json"
+    },
+    {
+      "path": "fort_gym/bench/agent/standard_input.py",
+      "sha256": "9b2b57403443fd19dba9e5f790e1bcfefffc107bf46b0168765639bf1811faff",
+      "method": "delta_plus_reviewed_base",
+      "reviewed_base": "0547261450262c8d0b59486b566a2404e02895f9",
+      "base_sha256": "b115bf278e1b066a00ced9e7fe6d9d38be526df3e03308a1fbfb375f9e534281"
+    },
+    {
+      "path": "fort_gym/bench/agent/workshop_input.py",
+      "sha256": "86521a7c4e27b00b368a94db7492df093a66d211d2f8abcb49cfe621882d1d0b",
+      "method": "full_new_file_read",
+      "reviewed_base": "0547261450262c8d0b59486b566a2404e02895f9",
+      "base_sha256": null
+    },
+    {
+      "path": "fort_gym/bench/api/campaign_food_outcomes.py",
+      "sha256": "06755ef10ac9c30480ff802d5c955148ab9a731bc56b3789d4d377e2608584e1",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json"
+    },
+    {
+      "path": "fort_gym/bench/api/campaign_keyboard_checkpoints.py",
+      "sha256": "8ac68d8cf3b840c798cb933fe922380818b87ddbd935650e5be7dd418c629e41",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json"
+    },
+    {
+      "path": "fort_gym/bench/api/campaign_keyboard_continuations.py",
+      "sha256": "c5597f1d58480d9347c05e84b203f273d97f12887bf79196f402b84fb5e6ca32",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json"
+    },
+    {
+      "path": "fort_gym/bench/api/campaign_keyboard_modal_trials.py",
+      "sha256": "d3e7fb26e2a97dc47489b35dea88b7111fbbc9631a2c46ccf2556e96d241225f",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json"
+    },
+    {
+      "path": "fort_gym/bench/api/campaign_keyboard_oom.py",
+      "sha256": "62ac37567ad51f164f2d0b671a2c718fcfca4ff21dccf16fb033bd74d76bcf01",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json"
+    },
+    {
+      "path": "fort_gym/bench/api/campaign_keyboard_partial.py",
+      "sha256": "ed3ca894228798fcf89994aa6fe597a4498c3f4348c91ca0455ac7c48cf2d97a",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json"
+    },
+    {
+      "path": "fort_gym/bench/api/campaign_keyboard_paused.py",
+      "sha256": "d497a58f5ad839d062e392412148e9195a5d30ca5b575a97745cdfd47fd9257a",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json"
+    },
+    {
+      "path": "fort_gym/bench/api/campaign_keyboard_presave.py",
+      "sha256": "4bb81e475a726f151c658add65f498c7f4bc7487aaf9ea93e74793cf41c99916",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json"
+    },
+    {
+      "path": "fort_gym/bench/api/campaign_keyboard_records.py",
+      "sha256": "67c857863222e7d7b47e5234dd32cb49c6c6c00a87c4bae8c2c98fbe856ad5a6",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json"
+    },
+    {
+      "path": "fort_gym/bench/api/campaign_keyboard_reloads.py",
+      "sha256": "388592c3b7654e512c467d46a3f6d706fddf1e8df921e748dc630b22fd0db6c3",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json"
+    },
+    {
+      "path": "fort_gym/bench/api/campaign_keyboard_restarts.py",
+      "sha256": "09633bb35790c65d2fe69ae6dbacf1e964796cb99aa1539e4c741f78b0d88f87",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json"
+    },
+    {
+      "path": "fort_gym/bench/api/campaign_keyboard_resumed.py",
+      "sha256": "36dbd9e469a839bfd6c188f4f52ab12eca564ed47e0bc7f67625f237d54ffe45",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json"
+    },
+    {
+      "path": "fort_gym/bench/api/campaign_keyboard_saved_segments.py",
+      "sha256": "9cf58d55b7a9949d6c9bf6a49eb5abd03b0fb80a9b60467a03c71252028542a9",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json"
+    },
+    {
+      "path": "fort_gym/bench/api/campaign_keyboard_tails.py",
+      "sha256": "e680b32201fe94a771216506cd63ab92195c05a91a029083e4f40796917296ff",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json"
+    },
+    {
+      "path": "fort_gym/bench/api/campaign_keyboard_trials.py",
+      "sha256": "3a150e0b412a45db80a981d38bb1ed5e3beda220fc74d576a0b3367b5111597f",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json"
+    },
+    {
+      "path": "fort_gym/bench/api/campaign_keyboard_window_sequence.py",
+      "sha256": "699eedded3dfb4db6b51915481f54714b16324eee15c5220947afd67f8e7ad29",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json"
+    },
+    {
+      "path": "fort_gym/bench/api/campaign_keyboard_windows.py",
+      "sha256": "c6bceb99df105a4719ce0442f5e4be811868bf9b79804e6f300b5b6853cdabef",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json"
+    },
+    {
+      "path": "fort_gym/bench/api/keyboard_admission.py",
+      "sha256": "58f2859620f24115bc80e5332cbb6e2313f5d60a769dcd3c63a308b8dadcaf31",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json"
+    },
+    {
+      "path": "fort_gym/bench/api/keyboard_cohort.py",
+      "sha256": "d922736f3b54ccb207725253b6068c3a114085d6f0082188cb5b3d15144a7f42",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json"
+    },
+    {
+      "path": "fort_gym/bench/api/keyboard_cohort_live.py",
+      "sha256": "7c766de2eb19bd3fbef83285f2a2bd65e0329afd946b664e01bfb4827cffe0d5",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json"
+    },
+    {
+      "path": "fort_gym/bench/api/keyboard_continuation_live.py",
+      "sha256": "94e50af1a9ae55664a3312c8aa75cea8525e698172d715bc2d71d0f7a58cc5fc",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json"
+    },
+    {
+      "path": "fort_gym/bench/api/keyboard_continuations.py",
+      "sha256": "488a2606ed32c946a11e7c34b635b6ffa66c9123e22a93f878e96cd19092cccd",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json"
+    },
+    {
+      "path": "fort_gym/bench/api/keyboard_endurance_live.py",
+      "sha256": "f70c31b9b4e8b05469606d6521d6883b701456575bc46ca626bf9e7a57d00bf0",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json"
+    },
+    {
+      "path": "fort_gym/bench/api/keyboard_endurance_records.py",
+      "sha256": "083334fe0a3fee25c9f5175098da3867925621e09b16cc7787c45f8e3169a631",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json"
+    },
+    {
+      "path": "fort_gym/bench/api/keyboard_live.py",
+      "sha256": "1e54a6629a27be4c19bc1939d3eff74b17a0b19bb617498ddbeeb2828039089e",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json"
+    },
+    {
+      "path": "fort_gym/bench/api/server.py",
+      "sha256": "a54814681ebacd860c05b29e217c54632a83ef0aad00500eebeded359563d710",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json"
+    },
+    {
+      "path": "fort_gym/bench/api/watch.py",
+      "sha256": "065565c910561d15cb2564f03b630a11c42ee70b0df8b90d5a420fad163f1f03",
+      "method": "delta_plus_reviewed_base",
+      "reviewed_base": "0547261450262c8d0b59486b566a2404e02895f9",
+      "base_sha256": "5b9e092d17201318ea635e4b6cb426ae37531a02bf428e98c60daf14422eab14"
+    },
+    {
+      "path": "fort_gym/bench/env/campaign_binding_keys.py",
+      "sha256": "684f26d0865c6ef2a16228af38f5219370498561cb86e7f16355e6fc50786556",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json"
+    },
+    {
+      "path": "fort_gym/bench/env/campaign_keyboard.py",
+      "sha256": "8aedf129dc55cc4df9eae15e67ac6de6d655afb7952b9ad5d4f7bad1574396fa",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json"
+    },
+    {
+      "path": "fort_gym/bench/env/campaign_workshop_jobs.py",
+      "sha256": "8c7132de5a5ae9f31f66b1b0181031e483e9a9957af0c4dd4cc237aff8861a94",
+      "method": "full_new_file_read",
+      "reviewed_base": "0547261450262c8d0b59486b566a2404e02895f9",
+      "base_sha256": null
+    },
+    {
+      "path": "fort_gym/bench/env/display_key_catalog.py",
+      "sha256": "82b496ab1bf109757c67e81aa56c1efca723840d17a090c3d6dfe0d4b8cca170",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json"
+    },
+    {
+      "path": "fort_gym/bench/env/keyboard_bindings.py",
+      "sha256": "3e0ec9b6fd95db1a014abf2b173c03ff096224be9dcb3fdf86eff2e184579456",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json"
+    },
+    {
+      "path": "fort_gym/bench/env/native_key_catalog.py",
+      "sha256": "b60832e7e7ff4f8329872264b6c25bf28a5402434ce75dd697099e55658fd216",
+      "method": "delta_plus_reviewed_base",
+      "reviewed_base": "0547261450262c8d0b59486b566a2404e02895f9",
+      "base_sha256": "78c1f9baa2e3f5d6060e5c9f52e8fbc94f6fdfbce346524777fa4d6aabb80288"
+    },
+    {
+      "path": "fort_gym/bench/env/screen_observation.py",
+      "sha256": "9fcb8c0969e087e49e465690a456df99fa41f904f4cdf5f0e581c442eae0388d",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json"
+    },
+    {
+      "path": "fort_gym/bench/env/workshop_job_profile.py",
+      "sha256": "8d74afb52067b6f7845a32a092514c165748af628986a5a67b2f18bb2a6526ec",
+      "method": "full_new_file_read",
+      "reviewed_base": "0547261450262c8d0b59486b566a2404e02895f9",
+      "base_sha256": null
+    },
+    {
+      "path": "fort_gym/bench/eval/campaign.py",
+      "sha256": "d1e38c50d1fcfa99867029c8642e32df1607db07b7248882db8e7cd07e94340d",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json"
+    },
+    {
+      "path": "fort_gym/bench/eval/campaign_profile.py",
+      "sha256": "252d6331ffb7c5c5e9ff08644d5b0b266c69907867d102cac844dfd0972693b4",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json"
+    },
+    {
+      "path": "fort_gym/bench/eval/displayed_key_comparison.py",
+      "sha256": "05f73fab4398291e2714ee00aff7900c10a274b675c6555d74ca58f07c4aa675",
+      "method": "delta_plus_reviewed_base",
+      "reviewed_base": "0547261450262c8d0b59486b566a2404e02895f9",
+      "base_sha256": "cb3bc510ba95d36d087a043dc62357110f45ae8fe8f8ca03aad9788ee9b16631"
+    },
+    {
+      "path": "fort_gym/bench/food_inventory.py",
+      "sha256": "28b5e54621725968752757b13a25e582a9161464fe65eedd80acdcdc065315d7",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json"
+    },
+    {
+      "path": "fort_gym/bench/run/campaign_checkpoint.py",
+      "sha256": "2f3a2d46a37aaf95f7fbca199385339ca0b0ab00865c202886b3c6c08aec5b8a",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json"
+    },
+    {
+      "path": "fort_gym/bench/run/campaign_environment.py",
+      "sha256": "686ae3fabb12fb0b6ed8836a9b4db1d9f4b8414f9c7bb0da71337dfc1e0191c3",
+      "method": "delta_plus_reviewed_base",
+      "reviewed_base": "0547261450262c8d0b59486b566a2404e02895f9",
+      "base_sha256": "fb6915c8ff4126e5b723cb57962247e1dac5f034639a7140f6fd50734f75a900"
+    },
+    {
+      "path": "fort_gym/bench/run/campaign_food.py",
+      "sha256": "97e3d91f3c262899d8ccd966fb8a0a152d7288ed4b4357cc31840d548840e3cc",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json"
+    },
+    {
+      "path": "fort_gym/bench/run/campaign_loop.py",
+      "sha256": "c4251915691441fb8146898fd88902618e639b19785251e0e9e2b3941da468bb",
+      "method": "delta_plus_reviewed_base",
+      "reviewed_base": "0547261450262c8d0b59486b566a2404e02895f9",
+      "base_sha256": "9f650fe70b4d7d31359721c7d2e3da82bee8e4404764e0b938b0c28b73aee2ca"
+    },
+    {
+      "path": "fort_gym/bench/run/campaign_resources.py",
+      "sha256": "711f9a9c75343f23de7e5f3004c8f56e65baae1735b40d854d0b13219e0f527d",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json"
+    },
+    {
+      "path": "fort_gym/bench/run/campaign_save.py",
+      "sha256": "3d9561c1524b838456d3e47ffa1862c0eb555a1a080e9c1bb7ebf52ee7dfe743",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json"
+    },
+    {
+      "path": "fort_gym/bench/run/displayed_key_window.py",
+      "sha256": "fb662ff1af54d6e93fe272a29f373e9a4662e1a25d87b956bc1d2a562d29bebf",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json"
+    },
+    {
+      "path": "fort_gym/bench/run/jobs.py",
+      "sha256": "abb49720e10f6febaebb9a287ea601e184c79e83969b3202edd24ac0c940df09",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/dfhack_job_serialization_review_20260913.json"
+    },
+    {
+      "path": "fort_gym/bench/run/keyboard_checkpoint_recovery.py",
+      "sha256": "1f0a1cd9b78f443e815e3d99a920d8b29a1abab18ad21c78a6883209561e6505",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json"
+    },
+    {
+      "path": "fort_gym/bench/run/keyboard_clock.py",
+      "sha256": "401fe43c4e27dcbebe359f2e4229bf8a125879e063da5d33d14adf1527a20a51",
+      "method": "delta_plus_reviewed_base",
+      "reviewed_base": "0547261450262c8d0b59486b566a2404e02895f9",
+      "base_sha256": "d190cef63c982d41327bb40678561f82a6f1ab4abb81292a1afc110e71aa5db9"
+    },
+    {
+      "path": "fort_gym/bench/run/keyboard_clock_timeout.py",
+      "sha256": "2c1697be56c84af517216ce72709943433804f756eb30f4859904a557c3d0c49",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json"
+    },
+    {
+      "path": "fort_gym/bench/run/keyboard_config.py",
+      "sha256": "4d9554f87a8ccd08a6171a6a86be9c6d726bc597157e8346d32399e236c4a804",
+      "method": "delta_plus_reviewed_base",
+      "reviewed_base": "0547261450262c8d0b59486b566a2404e02895f9",
+      "base_sha256": "dd9fef730d5e7867bc18d2f340702b25f3a63f1c0cd354c03f7b90082622576b"
+    },
+    {
+      "path": "fort_gym/bench/run/keyboard_docker_audit.py",
+      "sha256": "eaab744bee855051300cf16b15d2aa18114ab078ab4b9ee72c131c33ca28c3bc",
+      "method": "delta_plus_reviewed_base",
+      "reviewed_base": "0547261450262c8d0b59486b566a2404e02895f9",
+      "base_sha256": "a2bf33a20d3cf17b1633d9db97bc2539b8fbcce6b4252977145aae5c7d316e6e"
+    },
+    {
+      "path": "fort_gym/bench/run/keyboard_docker_audit_contract.py",
+      "sha256": "4c37f929edb56a83b925203cd4a6ac3b9cfa43cfdc8b078701f33d556ac1e169",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json"
+    },
+    {
+      "path": "fort_gym/bench/run/keyboard_docker_native_audit.py",
+      "sha256": "4e3799d3f4ad90c58b4d2a6f3513c2becb19d272445528ee4a04e3eed938a1f0",
+      "method": "delta_plus_reviewed_base",
+      "reviewed_base": "0547261450262c8d0b59486b566a2404e02895f9",
+      "base_sha256": "51bf549900dd38113e82142b7993c02dadb57426f14245f1864c91913dbe330c"
+    },
+    {
+      "path": "fort_gym/bench/run/keyboard_docker_owner.py",
+      "sha256": "6ab5636d7c12fe87d9b3ef2e2c7e6aa3808ca488a0c0330ed93df0e6b3386bc2",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json"
+    },
+    {
+      "path": "fort_gym/bench/run/keyboard_docker_plan.py",
+      "sha256": "5053ed59e5442b8a581c192aa9a1d410816953de063d50ea1d8866a3d9f318d8",
+      "method": "delta_plus_reviewed_base",
+      "reviewed_base": "0547261450262c8d0b59486b566a2404e02895f9",
+      "base_sha256": "9fbf4e3658f6cd2a06c41d1676f036e07a7bcd58a309338fd1c2a4c55c84b360"
+    },
+    {
+      "path": "fort_gym/bench/run/keyboard_docker_recording.py",
+      "sha256": "3dbd5a1c9174a24377e7a69b552aabca225ebdf96d71ecc933fe25d0f0102261",
+      "method": "delta_plus_reviewed_base",
+      "reviewed_base": "0547261450262c8d0b59486b566a2404e02895f9",
+      "base_sha256": "de4cb09d36c9345725a55123542bd0b0773afbc493b305677cb71d88247180ed"
+    },
+    {
+      "path": "fort_gym/bench/run/keyboard_docker_watch.py",
+      "sha256": "f189589d0e93944c3facee7e39506c8190fe958890a9620ff262f19d7e68ef8f",
+      "method": "delta_plus_reviewed_base",
+      "reviewed_base": "0547261450262c8d0b59486b566a2404e02895f9",
+      "base_sha256": "e5e34eec5e89d9931fbcc5981f13b17429466fa2994c1cc07b74d5c6b270af61"
+    },
+    {
+      "path": "fort_gym/bench/run/keyboard_endurance_window.py",
+      "sha256": "14ff54b376fca7d5e98779670886f13588d0e3778ca6ba48ec7d66d3c6f7a699",
+      "method": "full_new_file_read",
+      "reviewed_base": "0547261450262c8d0b59486b566a2404e02895f9",
+      "base_sha256": null
+    },
+    {
+      "path": "fort_gym/bench/run/keyboard_image_context.py",
+      "sha256": "638439364faec084cdb216d4cd6b0a27adc98365506a6eeff2c460f2075ec12f",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json"
+    },
+    {
+      "path": "fort_gym/bench/run/keyboard_modal_restart.py",
+      "sha256": "2926f0b359204525602d24ce51dccad4d903fd1df40f89c41fd05de17d6b3926",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json"
+    },
+    {
+      "path": "fort_gym/bench/run/keyboard_owner_process.py",
+      "sha256": "2e2e34036c4ed56b194931dd54c6af25f694603506ecc85674495be0bc959dff",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json"
+    },
+    {
+      "path": "fort_gym/bench/run/keyboard_partial_restart.py",
+      "sha256": "7ad9641c68fe7530dbd2d820f2be096b65466306b9d3935eddaabf325e6c02b9",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json"
+    },
+    {
+      "path": "fort_gym/bench/run/keyboard_recovery.py",
+      "sha256": "e850d29dd0af3ddda9b18a17a82d665be5fc53a766c7a5d65be2c16b1673ecb1",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json"
+    },
+    {
+      "path": "fort_gym/bench/run/keyboard_recovery_source.py",
+      "sha256": "2f7d4d41f1fb64d103c49e523769130e928792d9eb5c47c481c111353708ced6",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json"
+    },
+    {
+      "path": "fort_gym/bench/run/keyboard_rejection.py",
+      "sha256": "9c716898720d383dfb370641b220247a00fecc94b1675716024f818d59ffe0fc",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json"
+    },
+    {
+      "path": "fort_gym/bench/run/keyboard_rejection_journal.py",
+      "sha256": "935d68f89d362cb3b2ccb4b186da6c34adb2b451f3545ffd59c33f0ded855f44",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json"
+    },
+    {
+      "path": "fort_gym/bench/run/keyboard_rejection_recovery.py",
+      "sha256": "80c8e8cfe9f8a3a89c5de15752859ca9501fd5f96dc29aba7b68ec1da08be64f",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json"
+    },
+    {
+      "path": "fort_gym/bench/run/keyboard_restart.py",
+      "sha256": "a85668ceb0e4493e5ab93c084d5369e857d46a2ca3fc607f88f62218dda63689",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json"
+    },
+    {
+      "path": "fort_gym/bench/run/keyboard_restart_prompt.py",
+      "sha256": "7d017a434b7f8aace7dd833e9abf5c5120db581f50c640dc4f0f60da44649300",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json"
+    },
+    {
+      "path": "fort_gym/bench/run/keyboard_save.py",
+      "sha256": "ad4f5d80c858072ef9f2f04673d9147af7c908ea567185635600e8b9b9832363",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json"
+    },
+    {
+      "path": "fort_gym/bench/run/keyboard_save_lua.py",
+      "sha256": "724e1b3f2bb076226e884c0fcc2aebd88f23497fb9bb451e176f49085c64eb1f",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json"
+    },
+    {
+      "path": "fort_gym/bench/run/keyboard_save_probe.py",
+      "sha256": "b354293cfb018fb65a99805f838c87605bd032dfeeb5cd37623e9705a6ec63f0",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json"
+    },
+    {
+      "path": "fort_gym/bench/run/keyboard_save_screens.py",
+      "sha256": "a8837b5bb7b7afdc9a632cd7f6a4e6dd30984a05b7a06bfb58b0b878e2372f01",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json"
+    },
+    {
+      "path": "fort_gym/bench/run/keyboard_seccomp.py",
+      "sha256": "afdd5e93ba38ddb1be67fa7b45309958d6a37c6f27157309594b349f3d90a619",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json"
+    },
+    {
+      "path": "fort_gym/bench/run/keyboard_segment.py",
+      "sha256": "795e6b79e7d4c66024d5d9df0a27ef4e038116e810f0e087cb8b2ee9cfef0068",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json"
+    },
+    {
+      "path": "fort_gym/bench/run/keyboard_segment_audit.py",
+      "sha256": "2259f5d24ffe5aa99108850163c9340f482005c54859a2201e65c42b2a59a5d6",
+      "method": "delta_plus_reviewed_base",
+      "reviewed_base": "0547261450262c8d0b59486b566a2404e02895f9",
+      "base_sha256": "c2abc0b596e90da1cb76e2ad57749645eaab7715f4eb2e0ad310e66413b35eda"
+    },
+    {
+      "path": "fort_gym/bench/run/keyboard_terminated_restart.py",
+      "sha256": "d1c6079fd08d35384729fe6aa83875a10db60ac40067bb9736f5ea58e351383c",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json"
+    },
+    {
+      "path": "fort_gym/bench/run/keyboard_trial.py",
+      "sha256": "e89d57e66de88f8734dcc62dbb28258b20740ad7f9c802a5315eacaed7bdc0be",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json"
+    },
+    {
+      "path": "fort_gym/bench/run/keyboard_trial_config.py",
+      "sha256": "d4f6b0406616ae828bc48d588762e5a1410cc67598d0003d3c9bf4ba579098de",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json"
+    },
+    {
+      "path": "fort_gym/bench/run/keyboard_unavailable_restart.py",
+      "sha256": "c04e1266d129943084e16c6db93880e7b8c1224c180a590c3361569f20312568",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json"
+    },
+    {
+      "path": "fort_gym/bench/run/keyboard_window_audit.py",
+      "sha256": "5ba8aea22faa0e627d69cc6ec2a574e6778c31ca276f664b137e59459f0254da",
+      "method": "delta_plus_reviewed_base",
+      "reviewed_base": "0547261450262c8d0b59486b566a2404e02895f9",
+      "base_sha256": "e68557aad166dfecefc56045b27476a9195491c7369548f45e09a9c3474674ce"
+    },
+    {
+      "path": "fort_gym/bench/run/keyboard_window_budget.py",
+      "sha256": "7c78ec6166b28bef3e505d8774094a7997e054062a844e0fb333cc9ed1944207",
+      "method": "full_new_file_read",
+      "reviewed_base": "0547261450262c8d0b59486b566a2404e02895f9",
+      "base_sha256": null
+    },
+    {
+      "path": "fort_gym/bench/run/keyboard_window_checkpoint_audit.py",
+      "sha256": "86965488fdd5bed5dfb49b5a761a70e50c33eec486f4de5c853c6722f1e51782",
+      "method": "delta_plus_reviewed_base",
+      "reviewed_base": "0547261450262c8d0b59486b566a2404e02895f9",
+      "base_sha256": "a819e75ac03d74543c2035e81fcf653ee96a50aa7f8caa63bc09255ccbbcbf02"
+    },
+    {
+      "path": "fort_gym/bench/run/keyboard_window_courier.py",
+      "sha256": "25b337a18723a548c7cd4694843027a43da6c9ef6baaeddb397e6a3de986725e",
+      "method": "delta_plus_reviewed_base",
+      "reviewed_base": "0547261450262c8d0b59486b566a2404e02895f9",
+      "base_sha256": "ec70f69f81b1f57f4fbc460cc780baeffd185d7aadf51660bb4a8c3cee73f2ff"
+    },
+    {
+      "path": "fort_gym/bench/run/keyboard_window_projection.py",
+      "sha256": "c17443c22529d6000fda1a5314ec4a2dfb0f5ab0674946e36616a58e6db08f37",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json"
+    },
+    {
+      "path": "fort_gym/bench/run/keyboard_window_receipts.py",
+      "sha256": "e11608583d41d613142ade37f21e6859913df6737300a40c96248b41a5f4f351",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json"
+    },
+    {
+      "path": "fort_gym/bench/run/matched_endurance.py",
+      "sha256": "fd94c030267f364b9b2c2470ce707132d211f3aa981958ba78d61bd8cff75308",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json"
+    },
+    {
+      "path": "fort_gym/bench/run/matched_result_chain.py",
+      "sha256": "18166c3e07bad8b76ce53d5bc628ed786e632d71c5f43ef8bf7c7d833d67fb0a",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json"
+    },
+    {
+      "path": "hook/campaign_binding_set_v1.lua",
+      "sha256": "01bbb10711a8a87cea310e6d6e388bfeb63c23563db7e386c32440bda09659c7",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json"
+    },
+    {
+      "path": "hook/campaign_job_metrics_v1.lua",
+      "sha256": "a5e592f0550a19a735bf77707a8f92c2fd4d6f63fb350f33c70ac86a03d68c2f",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json"
+    },
+    {
+      "path": "hook/campaign_keyboard_v1.lua",
+      "sha256": "d0018d1c482050aee3ca27c08965ffe29b91363d2727e40a99cca3df15cbef32",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json"
+    },
+    {
+      "path": "hook/campaign_selected_workshop_job_v1.lua",
+      "sha256": "d87431a442e7fa4ac3c54d3faf31cebd63fc3f5f3f8b0606d6b5d1debd8acf67",
+      "method": "full_new_file_read",
+      "reviewed_base": "0547261450262c8d0b59486b566a2404e02895f9",
+      "base_sha256": null
+    },
+    {
+      "path": "scripts/campaign_continuation_observe.py",
+      "sha256": "d6e5d197fae790162690de88d2ecff962a3f3f62a28acdaacab35cbb3fbe7824",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json"
+    },
+    {
+      "path": "scripts/campaign_displayed_key_comparison.py",
+      "sha256": "499c78ddb04cb7f0cd700b5850ad3f5a667f780ff4a034244278b72f3bf619ad",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json"
+    },
+    {
+      "path": "scripts/campaign_displayed_key_window.py",
+      "sha256": "0e9d68aea6ac012fd2b5da7cdbf70c969de7b75ae2aa08bbeb1ac47860d11ee8",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json"
+    },
+    {
+      "path": "scripts/campaign_endurance_observe.py",
+      "sha256": "3d3399a76f0308ecd921c8fa97adeb30332e5d96c8b4d035a348d43e3b1f0445",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json"
+    },
+    {
+      "path": "scripts/campaign_keyboard_boundaries.py",
+      "sha256": "8c444ac61debdab62b4f9ddde9087de372c6d8ec6df9ba1d93d4e8bdfa77a71d",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json"
+    },
+    {
+      "path": "scripts/campaign_keyboard_docker.py",
+      "sha256": "3e918e97f5c76653e893a52d4df1d74406923d611de4f97e2996e9941dc95925",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json"
+    },
+    {
+      "path": "scripts/campaign_keyboard_docker_audit.py",
+      "sha256": "7d0f71d3a7ea24cadeeaa0e708606cae9745a300ddb030d86ae2e932fa427991",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json"
+    },
+    {
+      "path": "scripts/campaign_keyboard_docker_observe.py",
+      "sha256": "03126ef73bd0991242d0cdab3a3b9469abd977532407709d2e5bfd6f0a378461",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json"
+    },
+    {
+      "path": "scripts/campaign_keyboard_endurance_sequence.py",
+      "sha256": "f1368e1e31f1afc786371345b4c860293a67f004c0701707b0598f9726386ec8",
+      "method": "full_new_file_read",
+      "reviewed_base": "0547261450262c8d0b59486b566a2404e02895f9",
+      "base_sha256": null
+    },
+    {
+      "path": "scripts/campaign_keyboard_image.py",
+      "sha256": "e1b801b804d9eed2d6105c6c86c701fce5803a8f47f14e88f1250889649582ce",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json"
+    },
+    {
+      "path": "scripts/campaign_keyboard_native.py",
+      "sha256": "ed04b5cb25e0619c2f472aebdad5cf2b25804977cd5dd56ccabf1e928d2fc80a",
+      "method": "delta_plus_reviewed_base",
+      "reviewed_base": "0547261450262c8d0b59486b566a2404e02895f9",
+      "base_sha256": "c31ddf05d63d2c5482d5fc4816082eb14481d5cbd6d8a00d102a2c65bc594999"
+    },
+    {
+      "path": "scripts/campaign_keyboard_observe.py",
+      "sha256": "143917fd636096edbdd668ddfdd33a962ea2194cc13f121b57dbd7e119682f17",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json"
+    },
+    {
+      "path": "scripts/campaign_keyboard_trial.py",
+      "sha256": "84b66df8d17e255e268c2b2da9c3e6b8c5d07d447f70de9c468c5551b38128cc",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json"
+    },
+    {
+      "path": "scripts/campaign_load_smoke.py",
+      "sha256": "4f3789cc01133709278b4064adeda3095afbe8039ffa0749dcb40d8eb45889ca",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json"
+    },
+    {
+      "path": "scripts/campaign_matched_endurance_window.py",
+      "sha256": "4af1005f91e07241502a8ce56546a3f910ac6f6a80baee0b2a2ac22da7954a84",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json"
+    },
+    {
+      "path": "scripts/campaign_matched_observe.py",
+      "sha256": "a153e23d025798ae422368f26a6c01d19eccf041786d33f635ffbf4d3311fa28",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json"
+    },
+    {
+      "path": "scripts/campaign_matched_window.py",
+      "sha256": "e9ea7b84f041a61ad0f4fd3642f4bc187e412f7b75d3c0d8ed47ec353a508a3d",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json"
+    },
+    {
+      "path": "scripts/campaign_rpc_probe.py",
+      "sha256": "6401ae60ab08891f5431f6b5054c7c46a5675fc02b9e0382395d295b9cafd399",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json"
+    },
+    {
+      "path": "scripts/campaign_trace_summary.py",
+      "sha256": "5492a8c7e80ff3cf2af1a816b7836eeefa89395354b6e407e004f6a2459ec3cc",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json"
+    },
+    {
+      "path": "scripts/campaign_watch_observe.py",
+      "sha256": "8e422e30c7a6e83db47ca61a27e64f95a95ad781aac41eb2bc9f10fc75f12119",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json"
+    },
+    {
+      "path": "scripts/export_displayed_key_recording.py",
+      "sha256": "20ad6bd85b86f576b3c577602c88c7bf957e9e84c32b9fa80a6d5e41c5b7f13c",
+      "method": "delta_plus_reviewed_base",
+      "reviewed_base": "0547261450262c8d0b59486b566a2404e02895f9",
+      "base_sha256": "0c6d16a3f08a18957bde475440b0b9442408309588fd4765963383b21765085b"
+    },
+    {
+      "path": "scripts/export_home_recording.py",
+      "sha256": "ce9a4d3e3982142372a6b4aae96b3bbd8758bb7342a8fa62a00f81108e98a5f7",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json"
+    },
+    {
+      "path": "scripts/export_keyboard_docker_recording.py",
+      "sha256": "82c6765a7f02b27da1c59fc744ad62dd155dbad3899fae752f7c81b740481516",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json"
+    },
+    {
+      "path": "scripts/prepare_keyboard_endurance_window.py",
+      "sha256": "e2ae682f63265a8c2511d9e37cb1f7e9e4806623bc0b7644d36555a27e55971b",
+      "method": "full_new_file_read",
+      "reviewed_base": "0547261450262c8d0b59486b566a2404e02895f9",
+      "base_sha256": null
+    },
+    {
+      "path": "scripts/receive_watch_relay.py",
+      "sha256": "96f0777a476460e3df207d219b4f28df8b1f01eb4f1085c549ae69c74c2cbd2b",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json"
+    },
+    {
+      "path": "scripts/relay_watch.py",
+      "sha256": "bd1e3e4b3c7e5a7fbb874b4edfc69a05dc296e07901c373a3d62ae367093ee21",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json"
+    },
+    {
+      "path": "scripts/summarize_selected_workshop_cohort.py",
+      "sha256": "c7a2cef6a6172c48496c1e75168af83c427a407e00ba52227e527cb7cd5e74de",
+      "method": "full_new_file_read",
+      "reviewed_base": "0547261450262c8d0b59486b566a2404e02895f9",
+      "base_sha256": null
+    },
+    {
+      "path": "web/static/campaign-continuation-live.js",
+      "sha256": "887cbd3da3f7e4ea492b1bc6b6287edacc35d23f8fe5b74e2bfc6700f1568777",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json"
+    },
+    {
+      "path": "web/static/campaign-continuation-records.js",
+      "sha256": "de4debdc1420c1cebdb9e4aefb91198736b983e8160ee0ebbf684738f19ec978",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json"
+    },
+    {
+      "path": "web/static/campaign-endurance-live.js",
+      "sha256": "7bd6fb2622e522609ec21b1625a5cf20e7607c8386a0d6ed533d46586d14f334",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json"
+    },
+    {
+      "path": "web/static/campaign-endurance-records.js",
+      "sha256": "303f47cddd686d9c45e9afd42b3f9f23165c104da7805fd9fd46661def82056c",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json"
+    },
+    {
+      "path": "web/static/campaign-keyboard-admission.js",
+      "sha256": "f69a72f4099a0f0695141211de151c0c3d4f74f9a98a0dfafdd703ec02d77eae",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json"
+    },
+    {
+      "path": "web/static/campaign-keyboard-live.js",
+      "sha256": "6f47f086a46c84ac98156b1ecf6f81d8f5c739e6943861c1e1afc372bd9959b5",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json"
+    },
+    {
+      "path": "web/static/campaign-keyboard.js",
+      "sha256": "a07776adc9f014b575c623d5e7a643abf99bb12b4b77440cb57520ef2475085b",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json"
+    },
+    {
+      "path": "web/static/campaign-matched-live.js",
+      "sha256": "2661a1e848234386dfa1e4f6eb22438e3aec0a081dd930ff4d7d84a658040359",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json"
+    },
+    {
+      "path": "web/static/campaign-matched.js",
+      "sha256": "bc5348624d53ab208bcff5d750f711acb07de1e5f604e32199280e800048e4f0",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json"
+    },
+    {
+      "path": "web/static/displayed-key-comparison.mjs",
+      "sha256": "4099d1790bde452af261768ce065c5ed7bb637f8086994baad8e013b7708ef9e",
+      "method": "delta_plus_reviewed_base",
+      "reviewed_base": "0547261450262c8d0b59486b566a2404e02895f9",
+      "base_sha256": "9d91360c41731ead6d42048ce93bca4550db9c62ae6eef9659e8fb7c055c8984"
+    },
+    {
+      "path": "web/static/home-watch-model.mjs",
+      "sha256": "9bc89eb35488c0a7be905197cd9a75c878cff93bdfd06cb0d9075100088d1e23",
+      "method": "delta_plus_reviewed_base",
+      "reviewed_base": "0547261450262c8d0b59486b566a2404e02895f9",
+      "base_sha256": "e5ec01d4eae854af5093f734ee97e8b06b47c4d6ec603ee93e3aa4423ac2e88c"
+    },
+    {
+      "path": "web/static/home-watch.mjs",
+      "sha256": "7957c064f5d166a65e794b71008713159f007309c7a4d7a199034de9682d0c14",
+      "method": "delta_plus_reviewed_base",
+      "reviewed_base": "0547261450262c8d0b59486b566a2404e02895f9",
+      "base_sha256": "c2dd096f2f0fb68b2a8746f7594552135151e5ba0f2115d2060a051b4f756b66"
+    },
+    {
+      "path": "web/static/published-recordings.mjs",
+      "sha256": "b1f5ad7f7aad82e1fc23cb98170969d4a28c7adafff572be461d71520583e043",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json"
+    },
+    {
+      "path": "web/static/saved-outcomes.mjs",
+      "sha256": "57642f015636fef3b1a710e8841f7843f5a1b40e657950c9f2053a027e3c4790",
+      "method": "full_new_file_read",
+      "reviewed_base": "0547261450262c8d0b59486b566a2404e02895f9",
+      "base_sha256": null
+    },
+    {
+      "path": "web/static/worlds-recordings.mjs",
+      "sha256": "1af5dbeeeffba48a65c75d1280d8edbb1d43ecb476cc21fd7223442ddaf3e284",
+      "method": "exact_prior_review_match",
+      "review_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json"
+    }
+  ],
+  "validation": {
+    "focused_python": {
+      "command": "python -m pytest -q <27 listed test files> --junitxml=fort_gym/artifacts/release-controls-panel-review/final-source-focused.xml",
+      "test_files": [
+        "tests/test_selected_workshop_executor.py",
+        "tests/test_selected_workshop_courier.py",
+        "tests/test_selected_workshop_profile.py",
+        "tests/test_selected_workshop_lua.py",
+        "tests/test_selected_workshop_spectator.py",
+        "tests/test_selected_workshop_cohort_summary.py",
+        "tests/test_keyboard_endurance_window.py",
+        "tests/test_keyboard_endurance_sequence.py",
+        "tests/test_keyboard_docker_audit.py",
+        "tests/test_keyboard_docker_owner.py",
+        "tests/test_keyboard_docker_spectator.py",
+        "tests/test_keyboard_window_checkpoint_audit.py",
+        "tests/test_keyboard_window_audit.py",
+        "tests/test_keyboard_window_courier.py",
+        "tests/test_keyboard_clock.py",
+        "tests/test_keyboard_clock_timeout.py",
+        "tests/test_keyboard_clock_boundary.py",
+        "tests/test_keyboard_decision.py",
+        "tests/test_campaign_environment.py",
+        "tests/test_campaign_loop.py",
+        "tests/test_endurance_recording.py",
+        "tests/test_home_watch.py",
+        "tests/test_saved_outcome_release.py",
+        "tests/test_displayed_key_comparison_report.py",
+        "tests/test_displayed_key_recording_window.py",
+        "tests/test_displayed_key_rejected_recording.py",
+        "tests/test_campaign_keyboard_window_checkpoints.py"
+      ],
+      "passed": 720,
+      "skipped": 0,
+      "warnings": 3,
+      "seconds": 44.6,
+      "junit_artifact": "fort_gym/artifacts/release-controls-panel-review/final-source-focused.xml",
+      "junit_sha256": "6642056b4b9cb0c4f4fc613f9482bf96a583541158f18a081d58cad855130792"
+    },
+    "browser_module_unit_tests": {
+      "command": "node --test tests/home_watch_client.mjs tests/saved_outcomes_client.mjs tests/displayed_key_comparison_client.mjs",
+      "passed": 128,
+      "failed": 0,
+      "skipped": 0,
+      "browser_visual_qa": false
+    },
+    "scoped_ruff": {
+      "passed": true,
+      "scope": "All Python files among the 37 newer reviewed production versions"
+    },
+    "prior_full_suite": {
+      "source_revision": "c6573a99d8857605dae61703be55bd81f34ed718",
+      "receipt": "experiments/evidence/controls_panel_release_review_20260913.json",
+      "local_passed": 5959,
+      "local_skipped": 10,
+      "hosted_passed": 5796,
+      "hosted_skipped": 173,
+      "full_suite_rerun_this_review": false
+    },
+    "hosted_ci_reverified": {
+      "source_revision": "c6573a99d8857605dae61703be55bd81f34ed718",
+      "run_id": 34762509041,
+      "job_id": 103737687646,
+      "conclusion": "success",
+      "url": "https://github.com/lemoz/fort-gym/actions/runs/34762509041/job/103737687646"
+    }
+  },
+  "delivery": {
+    "pr": 186,
+    "url": "https://github.com/lemoz/fort-gym/pull/186",
+    "draft": true,
+    "remote_candidate_verified": true,
+    "main_revision_reverified": "f1aa05f429c189b67891cf2629e8e00329222aca",
+    "main_merged": false,
+    "release_stack": [
+      {
+        "pr": 186,
+        "head": "c6573a99d8857605dae61703be55bd81f34ed718",
+        "base_branch": "codex/dfhack-job-serialization",
+        "ancestor_of_candidate": true
+      },
+      {
+        "pr": 187,
+        "head": "5957c4890ad05905bdea7c3519a71a096f73efef",
+        "base_branch": "codex/year-two-reproducible-results",
+        "ancestor_of_candidate": true
+      },
+      {
+        "pr": 185,
+        "head": "617bf4ce51e8162f0f31a5b27c54a762fb2e4021",
+        "base_branch": "codex/year-two-release-20260913",
+        "ancestor_of_candidate": true
+      },
+      {
+        "pr": 184,
+        "head": "e8a4c48065c3391f06a9605900b1294f742142e6",
+        "base_branch": "codex/endurance-sequence",
+        "ancestor_of_candidate": true
+      },
+      {
+        "pr": 182,
+        "head": "4ce541fbe0cc20556744cd381298c31f1fb580a2",
+        "base_branch": "codex/astra-keyboard-endurance-v1",
+        "ancestor_of_candidate": true
+      },
+      {
+        "pr": 181,
+        "head": "4b526b5636e6f568a4cae1a1227d746d9c6922c3",
+        "base_branch": "codex/portable-endurance-budget",
+        "ancestor_of_candidate": true
+      },
+      {
+        "pr": 180,
+        "head": "7594b3b2d762195627046baa64091577a7c64d69",
+        "base_branch": "codex/workshop-job-clock-feedback",
+        "ancestor_of_candidate": true
+      },
+      {
+        "pr": 179,
+        "head": "af922cb4c3e0cf33bfe62cf6ba702bdf83363e1a",
+        "base_branch": "codex/selected-workshop-courier-v5",
+        "ancestor_of_candidate": true
+      },
+      {
+        "pr": 178,
+        "head": "5ddf1e6718dab2e8351e8dc24a2afe5071cd2592",
+        "base_branch": "codex/selected-workshop-shortcuts",
+        "ancestor_of_candidate": true
+      },
+      {
+        "pr": 177,
+        "head": "422c915d23bf828371be481d3079a23bbb3e9e94",
+        "base_branch": "codex/year-two-integration",
+        "ancestor_of_candidate": true
+      },
+      {
+        "pr": 176,
+        "head": "0547261450262c8d0b59486b566a2404e02895f9",
+        "base_branch": "main",
+        "ancestor_of_candidate": true
+      }
+    ],
+    "remaining_requirement": "Owner-authorized promotion of the reviewed combined source to main. All eleven open stack heads are ancestors of this candidate; no stack retarget or main merge was performed.",
+    "previous_denial_record": "experiments/evidence/keyboard_integration_final_review_176_20260912.json",
+    "previous_denial": "Main-branch promotion requires explicit owner authorization; the attempted operation was rejected before execution.",
+    "denial_bypassed": false
+  },
+  "goal": {
+    "objective_unchanged": true,
+    "year_two_elapsed_ticks": 765895,
+    "final_decision": 1028,
+    "living_population": 19,
+    "assessment": "operating_at_declared_boundary_with_production_gaps",
+    "sustainability_proven": false,
+    "strong_model_ranking_supported": false,
+    "new_native_acceptance": false,
+    "full_goal_complete": false
+  },
+  "boundaries": {
+    "model_calls": 0,
+    "gameplay_actions": 0,
+    "vm_starts": 0,
+    "service_restarts": 0,
+    "database_mutations": 0,
+    "public_deployments": 0,
+    "main_merges": 0
+  }
+}

@@ -49,12 +49,21 @@ and 56 warnings; hosted CI passed 5,796 with 173 skips and 57 warnings. The 153
 focused tests and scoped Ruff passed. Current guide text and bundled website
 delivery evidence now agree; no new public deployment was performed.
 
-Next is the broader exact-source review reconciliation, then permitted merged
-delivery. The earlier PR176 and serialization inventories match 112 of 149
-changed production files exactly; 37 newer versions need later-review matching
-or fresh source/delta inspection. That partial inventory is not a defect claim
-or a declaration that all 37 were never reviewed. Main is still unmerged, and
-the earlier denied promotion is not retried or bypassed.
+The [exact-source review](../experiments/evidence/year_two_final_source_review_20260913.json)
+is now complete at the same `c6573a99d8857605dae61703be55bd81f34ed718` candidate:
+112 of 149 production files match earlier reviewed hashes, 27 newer versions
+received delta/context review, and ten new files were read in full. No new
+release-blocking defect was found. All 720 focused regression tests and 128
+browser-module checks passed; scoped Ruff passed. The earlier full-suite results
+remain tied to this unchanged candidate, and GitHub CI was reverified successful.
+This is implementer review, not independent approval or new native acceptance.
+
+Remaining delivery work is owner-authorized promotion of the combined release
+to main. All eleven open stack heads are contained in this candidate; the
+[goal audit](GOAL_DELIVERY_AUDIT_20260913.md#next-work) records the path. Main is
+still unmerged at `f1aa05f429c189b67891cf2629e8e00329222aca`. The earlier denied
+promotion is not retried or bypassed. No additional game window, model call,
+public deployment or repeated source-review cycle is needed to await that step.
 
 The declared endurance run is complete at **1,028 decisions and 765,895 elapsed
 ticks (1.90 game years)**. The [final save](../experiments/evidence/astra_keyboard_endurance_1028_save_20260913.json),
