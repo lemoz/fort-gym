@@ -534,3 +534,33 @@ feed, services, database and host-local files. No infrastructure creation,
 service restart, gameplay input or main merge belongs to this release.
 Browser-only preview and visual QA are skipped in this background continuation.
 Local validation, exact-head CI and public HTTPS acceptance remain separate.
+
+## Astra keyboard endurance, checkpoint 324
+
+Start from public revision `67b0ff107abf29dda457705980d3576a29d817cf` and add
+`astra-keyboard-endurance-v1-261-324`. Its 64 frames continue the same campaign
+without duplicating earlier frames. Recording SHA-256:
+`78ff11dcc9deed6ed21e0214b868971b41fd753eea5bc274121837ae9f27eca4`.
+Native audit: `f26641935a00c70bbdf704896d6563f9dcb6bb9ebee848cd5f467a1b3b60a20f`.
+Campaign result `astra_keyboard_endurance_324_20260913.json` has SHA-256
+`06642a08431bd8ba9b6d05783ad9e918bca45bb10fb200ef0df3ec17d2ec4a6c`.
+It binds the completed native save, teardown and actual fresh reload at 324.
+
+The window added 64,000 elapsed ticks, ending at 169,100 with eleven living
+dwarves and no recorded deaths. Population increased from seven to eleven;
+completed workshops increased from three to four. The endpoint retains nine
+beds, three farms, 72 food and 122 drinks. It includes 63 accepted keyboard
+actions and one rejected `PageDown`, with 232 confirmed keys and no clock
+timeouts or menu deferrals. Preserve the rejected input in the replay.
+Cumulative usage is 10,418,341 returned tokens; subscription charges are
+unreported. The second automatic handoff restored the entire saved agent state
+and inherited the original cumulative budget extension. This is a continuation,
+not an independent trial or a Year-Two result. Inventories alone do not establish
+sustainability, and accepted arrows do not prove the intended menu selection.
+
+Preserve all 27 older recording files, catalog rows and previews. The new total
+is 28 recordings and 2,344 captured frames. Preserve the coordinator-owned live
+feed, services, database and host-local files. No infrastructure creation,
+service restart, gameplay input or main merge belongs to this release.
+Browser-only preview and visual QA are skipped in this background continuation.
+Local validation, exact-head CI and public HTTPS acceptance remain separate.
