@@ -98,7 +98,10 @@ reads and bounded scanning. These snapshots support future reconciliation; they
 do not attribute production or consumption or prove accessible supplies.
 Local validation passed 5,827 tests with ten skips and seven warnings, including
 78 executed Lua cases (31 new inventory cases). The CI workflow now installs and
-checks Lua 5.3 instead of skipping its fixtures; exact-head CI is pending.
+checks Lua 5.3 instead of skipping its fixtures. The separately recorded
+[exact-head CI acceptance](../experiments/evidence/native_production_observer_inventory_ci_20260913.json)
+passed 5,828 tests with nine skips and seven warnings under Lua 5.3.6, including
+all 78 collector/inventory cases. The original pending-CI receipt is preserved.
 Native fixture coverage, noninterference, checkpoint binding and complete flow
 attribution remain open. The active campaign was not modified.
 

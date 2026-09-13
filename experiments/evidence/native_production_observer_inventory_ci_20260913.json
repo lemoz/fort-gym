@@ -1,0 +1,41 @@
+{
+  "schema_version": "fortgym.production-observer-ci/v1",
+  "date_utc": "2026-09-13",
+  "source_revision": "fb5688f62e087e5d8dbdd709842214c4f8328f82",
+  "draft_pr": 183,
+  "pr_url": "https://github.com/lemoz/fort-gym/pull/183",
+  "candidate_evidence": "native_production_observer_inventory_candidate_20260913.json",
+  "candidate_evidence_sha256": "94604ecae1d869b3cd835a71de08db8a525f84ed93516a3d84110e6b38f01920",
+  "candidate_evidence_revision": "0bcc43485e3dbe2f0e2aed5d78801e545972aac7",
+  "preserves_original_in_progress_capture": true,
+  "hosted_validation": {
+    "run": 34735274179,
+    "job": 103665471260,
+    "url": "https://github.com/lemoz/fort-gym/actions/runs/34735274179/job/103665471260",
+    "head": "fb5688f62e087e5d8dbdd709842214c4f8328f82",
+    "status": "completed",
+    "conclusion": "success",
+    "passed": 5828,
+    "skipped": 9,
+    "warnings": 7,
+    "summary_utc": "2026-09-13T03:28:09.2998242Z",
+    "lua_version": "5.3.6",
+    "lua_install_step_passed": true,
+    "lua_collector_cases_executed": 78
+  },
+  "local_validation": {
+    "passed": 5827,
+    "skipped": 10,
+    "warnings": 7,
+    "lua_version": "5.5.1",
+    "lua_collector_cases_executed": 78
+  },
+  "native_installed": false,
+  "native_coverage_verified": false,
+  "native_noninterference_verified": false,
+  "checkpoint_binding_implemented": false,
+  "complete_flow_attribution": false,
+  "active_campaign_profile_changed": false,
+  "main_merged": false,
+  "full_goal_complete": false
+}

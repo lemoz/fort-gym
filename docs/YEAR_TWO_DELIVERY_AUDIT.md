@@ -100,7 +100,11 @@ collector start, current event sequence and native boundary. Scan caps, malforme
 reads, duplicates, changed clocks and list changes prevent complete totals.
 Partial records remain inspectable without becoming production or consumption.
 Local validation passed 5,827 tests, ten skips and seven warnings, including 78
-executed Lua cases. CI now installs and verifies Lua 5.3; exact-head CI is pending.
+executed Lua cases. The separately recorded
+[exact-head CI acceptance](../experiments/evidence/native_production_observer_inventory_ci_20260913.json)
+passed 5,828 tests, nine skips and seven warnings with Lua 5.3.6 installed and
+verified. All 78 collector/inventory cases executed, rather than silently skipping.
+The earlier pending-CI evidence is unchanged.
 Scoped lint/format/type checks pass, with the unchanged ten Ruff and 465 mypy
 repository errors. This is still a separate offline candidate: no native fixture,
 profile activation, checkpoint binding, flow attribution or noninterference proof
