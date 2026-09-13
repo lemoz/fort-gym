@@ -1,6 +1,50 @@
 # Astra endurance: operation after the first anniversary
 
-## Latest assessment: saved Year-Two endpoint at decision708
+## Latest assessment: saved Year-Two endpoint at decision772
+
+The [completed 709–772 review](../experiments/evidence/astra_keyboard_endurance_772_gameplay_review_20260913.json)
+shows a useful autonomous adjustment and a recovery in food and drinks. The save
+and actual next-process reload both passed. The fortress retains eighteen living
+dwarves, one earlier recorded death, nine beds, five workshops and three farms
+after 496,250 elapsed ticks, or 93,050 ticks into Year Two.
+
+| Boundary | Elapsed ticks | Living / recorded dead | Workshops | Food / drink |
+| --- | ---: | ---: | ---: | ---: |
+| Saved decision708 | 447,050 | 18 / 1 | 4 | 75 / 93 |
+| Saved decision772 | 496,250 | 18 / 1 | 5 | 134 / 143 |
+
+Astra used ordinary keyboard menus to place another surface still. Native
+building evidence shows still22 under construction at decision714 and complete
+at decision715, at position `[99,97,161]`. It queued repeat plant brewing at
+decision718. Native job3406 at that position had an assigned worker in seven
+boundary samples, decisions720–726, and connected cached walk groups. Drinks
+rose to a native-observed peak of 170 at decision727, then fell to 143 by the
+save. This is evidence of an adaptive brewing recovery, not item-level
+attribution of every drink to that particular job.
+
+After another gathering designation at decision753, food rose from 71 to 120
+at decision763 and 134 at decision765. Gathering, fishing, raw-fish preparation,
+planting, barrel making and hauling were observed. Those are worker assignments
+and stock observations, not completed-product counts or evenly spaced samples.
+The model also attempted labor-menu changes; intent alone is not proof that it
+successfully staffed brewing.
+
+All 64 keyboard actions were accepted and all 289 requested keys were confirmed.
+Twenty-five decisions advanced time, adding 49,200 ticks. One 1,200-tick request
+at decision714 was deferred because the build menu was still open; no clock was
+dispatched. The model left that menu at decision715. Original requested versus
+actual time is retained, with no timeout or human rescue.
+
+The assessment is operating but fragile, with adaptive supply recovery. The new
+still had no queued job at the endpoint, while the old brewing job and five old
+harvest jobs remained unstaffed and cache-disconnected. Ten of sixteen
+labor-eligible dwarves were idle. Thirty-six world-job lists were capped; the
+endpoint twelve-job list and workshop queues were inspected directly. Neither
+cached walk groups nor available input counts prove complete accessibility.
+This window adds no deaths, but it does not establish indefinite
+self-sufficiency or a model ranking. Continue the same condition without hints.
+
+## Earlier saved Year-Two endpoint at decision708
 
 The [completed 645–708 review](../experiments/evidence/astra_keyboard_endurance_708_gameplay_review_20260913.json)
 finds continued operation with one drowning and declining drink supplies.

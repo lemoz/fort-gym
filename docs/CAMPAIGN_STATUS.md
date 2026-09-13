@@ -14,7 +14,38 @@ cohort below. Long-term self-sufficiency and the full delivery goal remain open.
 
 ## Current experiment summary
 
-The current endurance campaign has a verified [checkpoint708 and actual reload](../experiments/evidence/astra_keyboard_endurance_708_20260913.json):
+The current endurance campaign has a verified [checkpoint772 and actual reload](../experiments/evidence/astra_keyboard_endurance_772_20260913.json):
+496,250 elapsed ticks, eighteen living dwarves, one earlier recorded death,
+nine beds, five workshops, three farms, 134 food and 143 drinks. The
+[saved-window gameplay review](ENDURANCE_GAMEPLAY_REVIEW_20260913.md) finds an
+adaptive supply recovery: Astra constructed another surface still with keyboard
+menus, queued brewing, and a native brewing job acquired a worker. Drinks peaked
+at 170 before settling at 143; food rose from 75 to 134. No additional deaths
+were observed. The new still's queue was empty at the endpoint, and older
+brewing/harvest jobs remained unstaffed, so the assessment remains operating but
+fragile rather than indefinitely self-sufficient.
+
+All 64 actions and 289 keys were accepted/confirmed. Twenty-five positive-time
+decisions advanced 49,200 ticks. One 1,200-tick request was deferred by an open
+build menu; the model exited it at the next decision. There were no timeouts.
+Cumulative returned usage is 22,152,718 tokens, including 1,660,272 in this
+window. Actual subscription charges remain unreported, not zero.
+The [ninth automatic handoff](../experiments/evidence/astra_keyboard_endurance_sequence_handoff_772_20260913.json)
+preserved the plan and first twenty-six event lines, verified stopped-state
+teardown and restored complete agent state, native clock/metrics, loss history
+and trace/usage prefixes. Decision773 executed one key and zero ticks; public
+frame775 matched its original screen and chosen action with the owner alive.
+The sole coordinator is continuing toward checkpoint836 under the unchanged
+1,028-response/40-million-token ceiling. No new allowance, model/prompt/control
+change, competing native owner or human rescue was introduced.
+
+The 709–772 replay has been exported and audited, but is not yet public. The
+current public site remains at `e030ccb9c46af539c78b72df1705e50a58033dd6`,
+with 34 recordings/2,728 frames through checkpoint708 and saved-outcome panels
+for checkpoints644 and708. Native completion and website delivery remain
+separate evidence; publish the new replay and its reviewed outcome next.
+
+The previous verified [checkpoint708 and actual reload](../experiments/evidence/astra_keyboard_endurance_708_20260913.json) retained:
 447,050 elapsed ticks, eighteen living dwarves, one recorded death, nine beds,
 four workshops, three farms, 75 food and 93 drinks. Food rose from 66 to 75,
 but drinks fell from 112 to 93. The native incident identifies drowning, first
