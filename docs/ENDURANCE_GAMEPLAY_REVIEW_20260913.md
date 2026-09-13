@@ -1,6 +1,44 @@
 # Astra endurance: operation after the first anniversary
 
-## Latest assessment: incident recovery at decision 964
+## Final assessment: declared boundary at decision 1028
+
+The [965–1028 gameplay review](../experiments/evidence/astra_keyboard_endurance_1028_gameplay_review_20260913.json)
+closes this run at its declared response limit, not a fortress collapse. The
+[final save](../experiments/evidence/astra_keyboard_endurance_1028_save_20260913.json)
+contains 765,895 elapsed ticks (1.90 game years), nineteen living dwarves, one
+earlier recorded death, seven workshops, nine beds and three farms. There were
+no additional deaths, roster changes or labor-assignment changes in this window.
+The [separate provider-free reload](../experiments/evidence/astra_keyboard_endurance_1028_reload_20260913.json)
+restored native and full agent state without another model response or game tick.
+
+Non-trader food rose from 139 to 172. Raw food fell from 389 to 172 while all
+250 trader-flagged food units left the measured inventory; the game screen before
+decision 968 records the merchants departing. Non-trader is not proof of
+ownership or accessibility. Raw drinks declined from 531 to 348, with trader
+ownership unmeasured. Neither inventory change alone establishes production.
+
+Fishing, fish preparation, barrel-making and tree-felling were sampled. The
+screen reported missing raw fish and later missing logs for those workshop jobs.
+No brewing appeared in the captured worker samples; all citizen lists were
+complete, but eight world-job lists were capped. The three still queues were
+empty at the save. All nineteen citizens, including sixteen labor-eligible
+dwarves, were idle. Five harvest jobs remained unstaffed with disconnected
+cached walk groups. These are sampled and endpoint findings, not continuous
+proof that no work occurred between observations.
+
+All 64 actions and 108 keys were confirmed. Sixty-three decisions advanced all
+126,000 requested ticks without interruption, timeout or deferral. Returned
+usage reached 30,125,676 tokens; subscription dollar charges are unreported.
+No decision 1029, new budget window, condition change or human rescue followed.
+
+The assessment is **operating at the declared boundary with production gaps**.
+The run demonstrates autonomous survival into Year Two, not two complete
+elapsed years, long-term self-sufficiency or an independent cross-model replicate.
+The earlier memorial recovery remains verified history, not a new final-window
+achievement. The separate website delivery record, rather than the immutable
+native capture's publication flag, establishes public replay availability.
+
+## Earlier assessment: incident recovery at decision 964
 
 The [901–964 review](../experiments/evidence/astra_keyboard_endurance_964_gameplay_review_20260913.json)
 finds continued operation and a verified memorial outcome. The fort saved at

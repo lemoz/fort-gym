@@ -41,10 +41,24 @@ the ordinary runtime layout fixed the mismatch without changing the comparator,
 game image, condition or saved state. The correction passed 54 tests and real
 native acceptance. Both VMs are stopped and their disks closed.
 
-The final 64-frame recording is exported but **not yet published**. The public
-live feed says stopped at decision1028. Cumulative accounting is 30,125,676
-returned tokens; subscription charges remain unreported. There is no additional
-budget window or decision1029. Next are final replay/outcome publication,
+The [final 64-frame replay and qualified outcome are now publicly verified](../experiments/evidence/astra_keyboard_endurance_1028_website_20260913.json)
+at website revision `62427fce64590b0b958e4618c36aab31586c41c2`.
+The public catalog has 39 recordings, 3,048 frames and seven saved endpoints;
+all 38 older captures, catalog/preview rows and six outcomes are unchanged.
+The final endpoint adds separate save, reload and gameplay evidence links and
+identifies the declared response limit as the stopping reason. The public live
+feed remains stopped at decision1028, with no owner alive.
+
+Local and exact-head hosted suites each passed 1,327 tests with five skips and
+seven warnings. All 139 Node checks, 45 importer checks, two deployment guards
+and an all-64-frame player test passed. Public HTTPS verified all recording
+hashes, current assets and fifteen source references. Services, database,
+host-local files, Results and replay controls were preserved. No browser visual
+QA, service restart, new VM, model call, gameplay input or main merge belongs
+to this static-only release. Its import and publication helpers are consumed.
+
+Cumulative accounting is 30,125,676 returned tokens; subscription charges remain
+unreported. There is no additional budget window or decision1029. Next are
 release consolidation and cross-model results, not a gameplay extension.
 
 ### Earlier preparation and checkpoint964 evidence

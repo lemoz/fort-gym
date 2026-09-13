@@ -7,7 +7,42 @@ Requirements come from [the approved goal](YEAR_TWO_CAMPAIGNS.md),
 [the standard-input phase](ASTRA_STANDARD_INPUT_EXPERIMENTS.md), and the
 [frozen displayed-key cohort](../experiments/keyboard_binding_comparison_20260911/cohort.json).
 
-## Current controls-study and delivery checkpoint
+## Current endpoint: declared run complete at decision 1028
+
+The [final native save](../experiments/evidence/astra_keyboard_endurance_1028_save_20260913.json),
+[separate fresh reload](../experiments/evidence/astra_keyboard_endurance_1028_reload_20260913.json)
+and [gameplay assessment](../experiments/evidence/astra_keyboard_endurance_1028_gameplay_review_20260913.json)
+are verified. The campaign reached 765,895 elapsed ticks (1.90 game years), with
+nineteen living dwarves and one earlier recorded death. Its declared 1,028-response
+limit ended the run, not a native collapse. Seven workshops, nine beds and three
+farms remain. Food without the trader flag rose from 139 to 172, while raw drinks
+declined from 531 to 348 with ownership unmeasured. Brewing was absent from the
+captured worker samples and the still queues were empty at the save. All sixteen
+labor-eligible citizens were idle. This supports survival into Year Two with
+production gaps, not proven self-sufficiency or two complete elapsed years.
+
+The final native reload restored full agent state, usage/history and paused
+calendar without a model call, gameplay input, save or tick. Both local VMs are
+stopped with disks closed. The initial runtime-path comparison failure is
+retained alongside the successful same-layout reload. No decision 1029 or new
+budget window exists. Cumulative returned usage is 30,125,676 tokens; subscription
+charges remain unreported.
+
+The [final replay and outcome publication](../experiments/evidence/astra_keyboard_endurance_1028_website_20260913.json)
+is verified at website revision `62427fce64590b0b958e4618c36aab31586c41c2`:
+39 recordings, 3,048 captured frames and seven reviewed saved endpoints. The
+final player distinguishes the declared stopping point and exposes separate
+save, reload and gameplay-review links. All previous captures and outcome
+entries remain unchanged. Local and hosted full suites each passed 1,327 tests
+with five skips; 139 Node checks, 45 importer contracts, two deployment guards
+and all 64 final player frames passed. Public HTTPS verified every recording
+and fifteen source receipts. The stopped feed, service identities, database
+counts and host-local files were preserved. No service restart, native action,
+new VM, browser visual QA or main merge was part of this static release.
+The combined candidate still needs final-endpoint consolidation; public website
+delivery does not complete the broader cross-model or remote-integration goal.
+
+## Earlier controls-study and delivery checkpoint at 708
 
 The current endurance campaign has a verified [checkpoint708 and actual reload](../experiments/evidence/astra_keyboard_endurance_708_20260913.json):
 447,050 elapsed ticks, eighteen living dwarves, one recorded death, nine beds,
