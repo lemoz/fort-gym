@@ -1,0 +1,94 @@
+{
+  "schema_version": "year-two-release-outcomes-hosted-verification/v1",
+  "verified_at_utc": "2026-09-13T10:24:32Z",
+  "initial_review_receipt": "experiments/evidence/year_two_release_outcomes_review_20260913.json",
+  "initial_review_revision": "9328020131d7f0528772cd464c6c522318c5ae3d",
+  "initial_pending_ci_snapshot_preserved": true,
+  "combined": {
+    "pr": 186,
+    "url": "https://github.com/lemoz/fort-gym/pull/186",
+    "passed": 5724,
+    "skipped": 173,
+    "warnings": 57,
+    "duration_seconds": 386.42,
+    "source": "test Run tests 2026-09-13T10:21:54.7583662Z 5724 passed, 173 skipped, 57 warnings in 386.42s (0:06:26)",
+    "run_id": 34751354318,
+    "job_id": 103708338432,
+    "head": "90e4c977cb49b1efbefda295b4bd27ec806ae98f",
+    "conclusion": "success"
+  },
+  "scheduler": {
+    "pr": 187,
+    "url": "https://github.com/lemoz/fort-gym/pull/187",
+    "passed": 5713,
+    "skipped": 173,
+    "warnings": 55,
+    "duration_seconds": 363.55,
+    "run_id": 34751447851,
+    "job_id": 103708580924,
+    "head": "5957c4890ad05905bdea7c3519a71a096f73efef",
+    "conclusion": "success",
+    "source": "test Run tests 2026-09-13T10:23:38.0021582Z 5713 passed, 173 skipped, 55 warnings in 363.55s (0:06:03)"
+  },
+  "native_coordinator_observation": {
+    "checkpoint_event": {
+      "observed_at_unix": 1789294929,
+      "type": "checkpoint_verified",
+      "decision": 900,
+      "operation": "/Users/cdossman/Documents/Open Source Projects/fort-gym-environment-layer/fort_gym/artifacts/selected-workshop-study-20260912/astra-keyboard-endurance-runtime/continuation-836-900-operation/result.json",
+      "operation_sha256": "1b799e9f134dcd2ef057e4ca6803e802aaeae1248ad56debc3602b61ccb29a1c",
+      "audit": "/Users/cdossman/Documents/Open Source Projects/fort-gym-environment-layer/fort_gym/artifacts/selected-workshop-study-20260912/astra-keyboard-endurance-runtime/sequence-196-1028/audit-837-900.json",
+      "audit_sha256": "2f4f5f483e49c19c706a7695b68c864888f68a459289076d820b97e1f1799145",
+      "recording": "/Users/cdossman/Documents/Open Source Projects/fort-gym-environment-layer/fort_gym/artifacts/selected-workshop-study-20260912/astra-keyboard-endurance-runtime/sequence-196-1028/recording-837-900.json",
+      "recording_sha256": "52bf9f1908f968f53eabfe1b41b43e3e36e264862b0cd561d2511dd741778edd",
+      "checkpoint_sha256": "53a460eb8fc119c06b768d4ae6632f40e45a75d5576e9fa658c9c8f76509f3ec",
+      "saved_elapsed_ticks": 606650,
+      "saved_metrics": {
+        "population": 19,
+        "food_stock": 388,
+        "drink_stock": 560,
+        "wood_stock": null,
+        "stone_stock": null,
+        "functional_rooms": null,
+        "completed_workshops": 7,
+        "completed_beds": 9,
+        "completed_farms": 3,
+        "recorded_dead_citizens": 1
+      },
+      "cumulative_returned_tokens": 26085530,
+      "reported_subscription_charge_usd": null,
+      "budget_extensions": 1,
+      "guest_poweroff_returncode": 0,
+      "vm_stop_returncode": 0,
+      "website_recording_published": false,
+      "full_goal_complete": false
+    },
+    "next_window_event": {
+      "observed_at_unix": 1789294929,
+      "type": "window_started",
+      "target": 964,
+      "supervisor_pid": 5463
+    },
+    "latest_local_relay": {
+      "owner_alive": true,
+      "published": true,
+      "status": "running",
+      "decision": 901,
+      "observed_at_unix": 1789295038
+    },
+    "full_checkpoint_900_reload_capture_performed": false,
+    "detailed_checkpoint_900_gameplay_review_performed": false,
+    "checkpoint_900_website_published": false
+  },
+  "boundaries": {
+    "main_merged": false,
+    "pr176_changed": false,
+    "combined_application_deployed": false,
+    "public_website_revision": "d5af4339a936a908e0caf34ecbdaa6a4ec5837cd",
+    "active_experiment_changed": false,
+    "new_model_calls_by_review": false,
+    "new_vm_launched_by_review": false,
+    "human_gameplay_rescue": false,
+    "full_goal_complete": false
+  }
+}

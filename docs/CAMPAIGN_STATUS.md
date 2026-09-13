@@ -72,6 +72,23 @@ or deployed. The active native/coordinator sources remain clean and unchanged,
 and Astra continued through decision895 toward checkpoint900. This integration
 made no model calls, launched no VM and did not alter the published website.
 
+[Hosted checks subsequently passed](../experiments/evidence/year_two_release_outcomes_ci_20260913.json)
+for the same heads: PR #186 passed 5,724 tests with 173 skips and 57 warnings;
+PR #187 passed 5,713 with 173 skips and 55 warnings. The original pending-CI
+receipt remains unchanged. Both drafts are still development candidates, not
+merged code or a combined-host deployment.
+
+The sole coordinator also verified checkpoint900: 606,650 elapsed ticks,
+nineteen living dwarves, one earlier death, seven workshops, nine beds, three
+farms, 388 food and 560 drinks. Cumulative returned usage is 26,085,530 tokens;
+charges remain unreported. Its 64-response audit passed, both teardown operations
+returned zero, and the next 901–964 window started automatically. The relay
+reported a live owner at decision901 after startup. This is a coordinator-level
+checkpoint observation, not yet the separate full reload capture, detailed
+endpoint gameplay assessment or public replay for checkpoint900. Those are the
+next native-evidence steps; no human gameplay input or new extension was added.
+
+
 
 The previous verified [checkpoint772 and actual reload](../experiments/evidence/astra_keyboard_endurance_772_20260913.json) retained:
 496,250 elapsed ticks, eighteen living dwarves, one earlier recorded death,
