@@ -20,7 +20,9 @@ It adds an optional exact-Still brewing job to the copied-save observation probe
 retaining the insertion receipt and later item/event boundaries. It never injects
 materials or completes jobs, and uncertain replies stop without another order.
 Its 206 focused checks and exact-head full local suite (5,936 passed, ten skipped,
-eight warnings) passed. This is offline preparation, not native brewing,
+eight warnings) passed. [Completed hosted CI](../experiments/evidence/native_production_brew_fixture_ci_20260913.json)
+passed 5,937 tests with nine skips and seven warnings under Lua 5.3.6.
+This is offline preparation, not native brewing,
 production attribution, sustainability acceptance or an active campaign change.
 The current endurance coordinator retains sole ownership of the native runtime.
 

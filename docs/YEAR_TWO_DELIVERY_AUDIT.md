@@ -162,7 +162,10 @@ queue counts and paused boundaries, without item injection or instant completion
 The active observer owner permits one mutation attempt; ambiguous replies remain
 unknown and are not retried. The default remains passive. All 206 focused tests
 passed, alongside scoped Ruff, mypy, format, diff and CLI checks. The exact-head
-full local suite passed 5,936 tests with ten skips and eight warnings. This candidate
+full local suite passed 5,936 tests with ten skips and eight warnings. The
+[completed hosted CI](../experiments/evidence/native_production_brew_fixture_ci_20260913.json)
+passed 5,937 tests, nine skips and seven warnings under Lua 5.3.6; the earlier
+pending candidate capture remains unchanged. This candidate
 has not run natively. An independent production oracle, target-job/reaction
 binding, cancellation, observer-free control and full attribution remain open.
 Neither the active campaign source/image nor its coordinator was changed.
