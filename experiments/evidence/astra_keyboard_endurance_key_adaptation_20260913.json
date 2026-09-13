@@ -1,0 +1,44 @@
+{
+  "schema_version": "fortgym.keyboard-adaptation-observation/v1",
+  "date_utc": "2026-09-13",
+  "campaign_id": "astra-keyboard-endurance-v1",
+  "native_source_revision": "4b526b5636e6f568a4cae1a1227d746d9c6922c3",
+  "saved_through_decision": 132,
+  "native_audit_sha256": "6da9e5563a6a0da28330ee8fea337020163448d64c748db47da9f73b2feb3cc4",
+  "source_trace_sha256": "fc06facbc3baff91807a2e18b7ccdf4be567b548b18658c535429f22ffaae8a9",
+  "rejected_decision": {
+    "decision": 89,
+    "keys": [
+      "SYM:0:KP_8",
+      "SYM:0:KP_8",
+      "SYM:0:KP_8",
+      "SYM:0:KP_8",
+      "SYM:0:KP_4"
+    ],
+    "accepted": false,
+    "reason": "Unsupported native keyboard keys: SYM:0:KP_4, SYM:0:KP_8. Entire response rejected; no keys or simulation ticks were executed.",
+    "keys_sent": 0,
+    "ticks_advanced": 0
+  },
+  "following_decision": {
+    "decision": 90,
+    "keys": [
+      "SYM:0:Left",
+      "SYM:0:Up",
+      "SYM:0:Up",
+      "SYM:0:Up",
+      "SYM:0:Up"
+    ],
+    "accepted": true,
+    "keys_confirmed": 5,
+    "ticks_advanced": 0
+  },
+  "classification": "unsupported_key_alias_followed_by_supported_arrow_input",
+  "desired_cursor_position_verified": false,
+  "semantic_gameplay_goal_verified": false,
+  "control_condition_changed": false,
+  "operator_gameplay_input": false,
+  "private_memory_or_transcript_included": false,
+  "strong_model_ranking_supported": false,
+  "note": "The recorded next action switches to supported arrow symbols after an unsupported keypad alias is rejected. This demonstrates an input-level adjustment, not verified workshop selection or a general recovery success."
+}

@@ -23,15 +23,16 @@ retains seven living dwarves, seven beds, three workshops and one farm after
 46,400 elapsed ticks. The [complete descriptive comparison](../experiments/evidence/selected_workshop_v2_cohort_20260912.json)
 preserves all outcomes without claiming a control ranking or independent worlds.
 
-The separate [Astra Medium endurance campaign has saved and freshly reloaded decision132](../experiments/evidence/astra_keyboard_endurance_132_20260913.json):
-40,700 elapsed ticks, seven living dwarves, seven beds, three workshops, two farms,
-64 food and 53 drinks. Native save, teardown and actual reload checks passed,
+The separate [Astra Medium endurance campaign has saved and freshly reloaded decision196](../experiments/evidence/astra_keyboard_endurance_196_20260913.json):
+73,900 elapsed ticks, seven living dwarves, nine beds, three workshops, two farms,
+60 food and 90 drinks. Native save, teardown and actual reload checks passed,
 preserving the original nonzero guest-poweroff code. The entire saved agent state,
 clock, measured metrics and trace/usage prefixes were restored. Its one cumulative
 budget extension is inherited without another append or accounting reset.
-Astra is playing decisions 133–196, with public live frame140 independently
+Astra is playing decisions 197–260, with public live frame198 independently
 matched to the original screen/chosen action. This new window's final save is
-not yet verified. The [69–132 replay is now public](../experiments/evidence/astra_keyboard_endurance_132_website_20260913.json):
+not yet verified. The 133–196 replay is exported but not yet published.
+The [69–132 replay is now public](../experiments/evidence/astra_keyboard_endurance_132_website_20260913.json):
 25 recordings / 2,152 frames at website revision `2adee475b`. Local and exact-head
 remote CI each passed 1,308 Python tests; 66 local Node checks also passed.
 HTTPS verified all recordings. All 24 earlier recordings, the live feed, service
@@ -48,11 +49,17 @@ preserved. This was a static-only release, not a main-branch merge.
 The full goal remains active; inventories and checkpoint recovery do not by
 themselves establish sustained fortress management.
 
-The [host-only automatic-continuation candidate](../experiments/evidence/astra_keyboard_endurance_sequence_candidate_20260913.json)
-passed local and exact-head remote CI, plus a real checkpoint132 audit/export
-preflight. It has not been activated: the separate supervisor still owns the
-133–196 window. Activation waits for that actual save and mandatory teardown;
-no running game, model, prompt, budget or native image is changed.
+The [host-only automatic coordinator is now active](../experiments/evidence/astra_keyboard_endurance_sequence_activation_20260913.json)
+after local/exact-head CI and real-save preflight passed. It audited checkpoint196
+and launched 197–260 from that save, with no controls, model, prompt, budget or image
+change. It will audit each completed window before serial continuation, retaining
+the existing ceilings and mandatory teardown. Later automatic handoffs remain
+unverified. Do not start a competing manual continuation while it is running.
+
+An [input-level adaptation observation](../experiments/evidence/astra_keyboard_endurance_key_adaptation_20260913.json)
+retains decision89's unsupported keypad aliases and decision90's accepted arrow
+symbols. No operator intervention occurred; this is not proof of the intended
+workshop selection or a general recovery claim.
 
 ## Earlier capture: selected-workshop v2, pair one
 

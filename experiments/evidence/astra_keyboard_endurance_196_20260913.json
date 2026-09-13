@@ -1,0 +1,157 @@
+{
+  "schema_version": "fortgym.endurance-save-and-reload/v1",
+  "date_utc": "2026-09-13",
+  "observed_at_unix": 1789262879,
+  "campaign_id": "astra-keyboard-endurance-v1",
+  "source_revision": "4b526b5636e6f568a4cae1a1227d746d9c6922c3",
+  "image": "sha256:a2f12a74805949b8a2fcf0262b5d63048f4bd3a6f2faf4d8bbc74c261b172ed4",
+  "model": "gpt-6-astra",
+  "reasoning_effort": "medium",
+  "control_profile": "native_keyboard_bindings/v1",
+  "saved_through_decision": 196,
+  "new_model_responses": 64,
+  "cumulative_model_responses": 196,
+  "cumulative_returned_tokens": 5751089,
+  "reported_subscription_charge_usd": null,
+  "new_cloud_spend_usd": 0,
+  "saved_elapsed_ticks": 73900,
+  "saved_metrics": {
+    "population": 7,
+    "food_stock": 60,
+    "drink_stock": 90,
+    "wood_stock": null,
+    "stone_stock": null,
+    "functional_rooms": null,
+    "completed_workshops": 3,
+    "completed_beds": 9,
+    "completed_farms": 2,
+    "recorded_dead_citizens": 0
+  },
+  "checkpoint_verified": true,
+  "checkpoint_manifest_sha256": "60879c83636644823fb01a06e09e2b6a4081d1af967043d0146acfab8d6aaad0",
+  "audit_sha256": "1f91ef6907f37c7a942b2b983bc243b9e9c745a3e5ac09c44bc2b82bdcee7307",
+  "operation_sha256": "d8a05601a63c5c17494fbbdfb691b6b0f1f4334f075a65dcb61f0edcf5867dcf",
+  "saved_agent_sha256": "79c93d25bc5c3a26241d8bf906f02250ff68db0097e61b3fb18fc3fb4ddc8c14",
+  "action_summary_cumulative": {
+    "schema_version": "fortgym.selected-workshop-action-summary/v1",
+    "decisions": 196,
+    "action_routes": {
+      "KEYSTROKE": 196
+    },
+    "accepted_actions": 194,
+    "rejected_actions": 2,
+    "keyboard": {
+      "decisions": 196,
+      "requested_key_presses": 1261,
+      "known_keys_sent": 1255,
+      "records_without_key_count": 0
+    },
+    "workshop": {
+      "decisions": 0,
+      "requested_jobs_by_item": {},
+      "known_jobs_queued_by_item": {},
+      "records_without_queue_count": 0,
+      "completed_products_measured": false
+    },
+    "clock": {
+      "requested_ticks": 78300,
+      "advanced_ticks": 73900,
+      "timeout_requests": 0,
+      "zero_tick_timeout_requests": 0,
+      "deferred_requests": 3
+    },
+    "native_audit_performed": false
+  },
+  "action_summary_this_window": {
+    "schema_version": "fortgym.selected-workshop-action-summary/v1",
+    "decisions": 64,
+    "action_routes": {
+      "KEYSTROKE": 64
+    },
+    "accepted_actions": 63,
+    "rejected_actions": 1,
+    "keyboard": {
+      "decisions": 64,
+      "requested_key_presses": 340,
+      "known_keys_sent": 339,
+      "records_without_key_count": 0
+    },
+    "workshop": {
+      "decisions": 0,
+      "requested_jobs_by_item": {},
+      "known_jobs_queued_by_item": {},
+      "records_without_queue_count": 0,
+      "completed_products_measured": false
+    },
+    "clock": {
+      "requested_ticks": 34400,
+      "advanced_ticks": 33200,
+      "timeout_requests": 0,
+      "zero_tick_timeout_requests": 0,
+      "deferred_requests": 1
+    },
+    "native_audit_performed": false
+  },
+  "teardown_before_continuation": {
+    "both_vms_stopped": true,
+    "configs_unchanged": true,
+    "global_context_unchanged": true,
+    "fg-portable_disk_closed": true,
+    "fg-v2_disk_closed": true,
+    "prior_inventory_preserved": true,
+    "guest_poweroff_returncode": 1,
+    "vm_stop_returncode": 0,
+    "original_return_codes_preserved": true
+  },
+  "fresh_reload": {
+    "decision": 196,
+    "verified": true,
+    "complete_agent_state_equal": true,
+    "native_clock_and_metrics_equal": true,
+    "trace_usage_prefixes_equal": true,
+    "inherited_loss_history_equal": true,
+    "initial_native_sha256": "b19b19af612d8a4b0b791089c8edd14b85cb66b2b60537385c64693b1220c494",
+    "initial_agent_sha256": "497461c76a642299fca7e10a031f829c30d80dc82db6d3dcc653d6cd3fe77c43",
+    "first_new_response_sha256": "1a81049c43adf7786ccd022234524e7b0c0ac2c82324762bb567551ea90c312f",
+    "first_new_response_valid": true
+  },
+  "budget_extensions": 1,
+  "no_new_budget_extension": true,
+  "cumulative_limits": {
+    "max_dispatches": 1028,
+    "max_total_tokens": 40000000
+  },
+  "current_window": {
+    "first_decision": 197,
+    "last_decision": 260,
+    "final_checkpoint_verified": false,
+    "mandatory_teardown": true,
+    "declaration_sha256": "2664102362a1f807694ad0d42c03d6264ac6345d1eb0ce95e41be7872b5ebdd3",
+    "owner_plan_sha256": "86ab4f0c53204ab43b103fcff4c077613064d53f8b545909fcf21acc583f3775"
+  },
+  "public_live": {
+    "status": "running",
+    "decision": 198,
+    "public_https_verified": true,
+    "owner_identity_verified": true,
+    "original_screen_and_chosen_action_verified": true,
+    "payload_sha256": "7c96cbd1b75e65082984db13ed2cc842afde7c8bca80c58a6f1e16cabb97c924",
+    "request_sha256": "138dd30c0b79be8b5749a2cb0f81f5110143c17bc1013c9ea89ae6ae0b998b96",
+    "private_memory_or_transcripts_published": false
+  },
+  "replay": {
+    "id": "astra-keyboard-endurance-v1-133-196",
+    "frames": 64,
+    "sha256": "d5da30777c97f7f4827daee5048f276ce0b843e901c633c9b99628ad8249bcc7",
+    "exported": true,
+    "website_published": false
+  },
+  "year_two_reached": false,
+  "production_rates": null,
+  "consumption_rates": null,
+  "accessible_reserves": null,
+  "functioning_fortress": "not_assessed",
+  "human_gameplay_rescue": false,
+  "main_merged": false,
+  "full_goal_complete": false
+}
