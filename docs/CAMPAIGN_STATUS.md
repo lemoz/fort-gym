@@ -14,6 +14,41 @@ cohort below. Long-term self-sufficiency and the full delivery goal remain open.
 
 ## Current experiment summary
 
+The declared endurance run is complete at **1,028 decisions and 765,895 elapsed
+ticks (1.90 game years)**. The [final save](../experiments/evidence/astra_keyboard_endurance_1028_save_20260913.json),
+[separate native reload](../experiments/evidence/astra_keyboard_endurance_1028_reload_20260913.json)
+and [gameplay assessment](../experiments/evidence/astra_keyboard_endurance_1028_gameplay_review_20260913.json)
+are verified. Nineteen dwarves remain alive, with no new deaths in the final
+window. Seven workshops, nine beds and three farms remain. All 64 final actions
+and 108 keys were confirmed; 63 decisions advanced all 126,000 requested ticks
+without interruption. The response limit, not a gameplay collapse, ended the run.
+
+Non-trader food rose from 139 to 172. Raw food fell from 389 to 172 as 250
+trader-flagged units left the measured inventory; the native screen records the
+merchants departing. Raw drinks fell from 531 to 348, with ownership unmeasured.
+Fishing, fish preparation, barrel-making and tree-felling were observed. No
+brewing appeared in the captured worker samples, and the three still queues
+were empty at the endpoint. All 16 labor-eligible citizens were idle; five
+unstaffed harvest jobs still reported disconnected cached walk groups. This is
+a surviving Year-Two fortress with production gaps, not demonstrated
+self-sufficiency or two complete elapsed years.
+
+The provider-free reload restored the full agent, history, usage and paused
+calendar without another model call, keypress, save or tick. Its first attempt
+loaded correctly but failed comparison because a different internal runtime
+path changed two provenance fields. That failed attempt is retained. Keeping
+the ordinary runtime layout fixed the mismatch without changing the comparator,
+game image, condition or saved state. The correction passed 54 tests and real
+native acceptance. Both VMs are stopped and their disks closed.
+
+The final 64-frame recording is exported but **not yet published**. The public
+live feed says stopped at decision1028. Cumulative accounting is 30,125,676
+returned tokens; subscription charges remain unreported. There is no additional
+budget window or decision1029. Next are final replay/outcome publication,
+release consolidation and cross-model results, not a gameplay extension.
+
+### Earlier preparation and checkpoint964 evidence
+
 The [final checkpoint reload preparation](../experiments/evidence/astra_keyboard_endurance_terminal_reload_preparation_20260913.json)
 now has 107 passing combined checks: 55 terminal contracts, eight restore checks
 using the actual checkpoint964, and 44 synthetic operator contracts. The new
@@ -22,7 +57,7 @@ model calls, gameplay actions, time advance and saves forbidden. It compares the
 complete agent state, history, usage and paused native state. The outer launcher
 requires the actual terminal1028 result and both original owners to have exited;
 it preserves the existing resource/isolation limits and always attempts teardown.
-No reload or new VM has run from this preparation. The sole owner remained live
+At that preparation snapshot no reload or new VM had run. The sole owner remained live
 at public decision1023; checkpoint964 was still the latest verified saved result.
 
 The [final-window capture preparation](../experiments/evidence/astra_keyboard_endurance_terminal_capture_preparation_20260913.json)
@@ -31,9 +66,10 @@ requires the sequence's real terminal result, checkpoint/audit/history bindings,
 settled teardown and unchanged cumulative limits. It cannot load a game, call a
 model or convert the missing final result into acceptance. Checkpoint1028 has no
 following gameplay window, so fresh-reload verification remains a separate step;
-no decision1029 is authorized by this preparation. The live handle and exact
-coordinator/supervisor processes were confirmed, with public decision1004 and no
-terminal result yet. Checkpoint964 remains the latest verified saved endpoint.
+no decision1029 was authorized by that preparation. At that earlier snapshot the
+live handle and exact coordinator/supervisor processes were confirmed, with
+public decision1004 and no terminal result. Checkpoint964 was then the latest
+verified saved endpoint.
 No native source, model, control, budget or existing owner was changed.
 
 The [checkpoint 964 save and actual reload](../experiments/evidence/astra_keyboard_endurance_964_20260913.json)
@@ -58,7 +94,8 @@ preserved the plan and first 35 event lines, complete saved agent state, native
 clock/metrics, trace/usage prefixes and inherited loss history. Both teardown
 operations returned zero. First continued decision 965 sent one key and advanced
 2,000 ticks; public frame 966 matched the original screen and chosen action with
-the owner alive. The sole coordinator is now in its final planned 965–1028 window.
+the owner alive. That handoff launched the final planned 965–1028 window,
+now completed above.
 The same 1,028-response/40-million-token limits remain, with 28,011,285 returned
 tokens accounted at the save and subscription charges unreported. No source,
 model, prompt, control or budget change, new VM or human rescue was introduced.
