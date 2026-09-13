@@ -27,13 +27,16 @@ def test_endurance_recording_preserves_audited_keyboard_actions_and_save_boundar
 
 def test_endurance_card_keeps_the_short_study_and_year_two_claim_separate():
     catalog = json.loads((RECORDINGS / "catalog.json").read_text())["recordings"]
-    assert catalog[0]["id"] == "astra-keyboard-endurance-v1-69-132"
-    assert catalog[1]["id"] == IDENTITY
-    assert catalog[2]["id"] == "controls-v2-p3-keyboard-1-128"
+    assert [row["id"] for row in catalog[:4]] == [
+        "astra-keyboard-endurance-v1-133-196",
+        "astra-keyboard-endurance-v1-69-132",
+        IDENTITY,
+        "controls-v2-p3-keyboard-1-128",
+    ]
     assert len([row for row in catalog if row["id"].startswith("controls-v2-")]) == 6
     previews = json.loads((RECORDINGS / "previews.json").read_text())["recordings"]
-    assert previews[1]["id"] == IDENTITY
-    assert previews[1]["recording_sha256"] == catalog[1]["sha256"]
+    assert previews[2]["id"] == IDENTITY
+    assert previews[2]["recording_sha256"] == catalog[2]["sha256"]
     html = (ROOT / "web/worlds.html").read_text()
     assert "30,700 game ticks" in html and "six installed beds" in html
     assert "1,788,513 returned tokens" in html
@@ -62,3 +65,26 @@ def test_continuation_frames_do_not_duplicate_the_original_recording():
     assert "40,700 total game ticks" in html
     assert "3,799,537 returned tokens" in html
     assert "continuation, not an independent trial" in html
+
+
+def test_checkpoint_196_is_a_nonoverlapping_native_continuation():
+    raw = (RECORDINGS / "astra-keyboard-endurance-v1-133-196.json").read_bytes()
+    assert hashlib.sha256(raw).hexdigest() == "d5da30777c97f7f4827daee5048f276ce0b843e901c633c9b99628ad8249bcc7"
+    data = json.loads(raw)
+    assert data["audit_sha256"] == "1f91ef6907f37c7a942b2b983bc243b9e9c745a3e5ac09c44bc2b82bdcee7307"
+    previous = json.loads((RECORDINGS / "astra-keyboard-endurance-v1-69-132.json").read_text())
+    frames = data["frames"]
+    assert [frame["decision"] for frame in frames] == list(range(133, 197))
+    assert data["saved_through_decision"] == 196
+    assert data["source_revision"] == previous["source_revision"]
+    assert data["control_profile"] == previous["control_profile"]
+    assert frames[0]["before"]["tick"] == previous["frames"][-1]["after"]["tick"]
+    assert sum(frame["after"]["ticks_advanced"] for frame in frames) == 33200
+    assert sum(frame["accepted"] for frame in frames) == 63
+    assert all("shortcut" not in frame["action"] for frame in frames)
+    assert frames[-1]["after"]["population"] == 7
+    html = (ROOT / "web/worlds.html").read_text()
+    assert "73,900 total game ticks" in html
+    assert "5,751,089 returned tokens" in html
+    assert "decision-196 save was freshly reloaded" in html
+    assert "stock counts alone do not establish sustainability" in html

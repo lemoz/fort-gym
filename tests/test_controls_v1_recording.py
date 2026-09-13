@@ -70,5 +70,5 @@ def test_each_gallery_preview_has_the_status_target_used_by_the_client():
 
     gallery = Gallery()
     gallery.feed((ROOT / "web/worlds.html").read_text())
-    assert len(gallery.statuses) == 25
+    assert len(gallery.statuses) == 26
     assert set(gallery.statuses.values()) == {1}

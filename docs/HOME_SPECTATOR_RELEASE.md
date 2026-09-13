@@ -479,3 +479,30 @@ report is preserved separately. The corrected expectation does not alter any
 recording. All 24 older files, rows and previews were compared against the
 previous public revision and remain unchanged. Exact-head CI and public HTTPS
 verification are still separate delivery steps.
+
+## Astra keyboard endurance, checkpoint 196
+
+Start from public revision `2adee475b5c0ddcb1256bd74ff8fdf6f14662377` and add
+`astra-keyboard-endurance-v1-133-196`. Its 64 frames continue the same campaign
+without duplicating earlier frames. Recording SHA-256:
+`d5da30777c97f7f4827daee5048f276ce0b843e901c633c9b99628ad8249bcc7`.
+Native audit: `1f91ef6907f37c7a942b2b983bc243b9e9c745a3e5ac09c44bc2b82bdcee7307`.
+Campaign result `astra_keyboard_endurance_196_20260913.json` has SHA-256
+`8f6bdf6bb08076780e70fcf984ee9d3148c55d18b0c65a1ea386db81556058b7`.
+It binds the completed native save, teardown and actual fresh reload at 196.
+
+Seven dwarves remain alive with no recorded deaths, nine installed beds, three
+workshops, two farms, 60 food and 90 drinks after 73,900 elapsed ticks. This
+window added 33,200 ticks, with 63 accepted keyboard actions and one rejection.
+Cumulative usage is 5,751,089 returned tokens; subscription charges remain
+unreported. This is a continuation, not an independent trial. This campaign has
+not reached its anniversary; inventories alone do not establish sustainability.
+
+The importer passed 23 checks and reads its original catalog fixture from the
+pinned revision, so its tests remain reproducible after import. Preserve all 25
+older recording files, catalog rows and previews. The new total is 26 recordings
+and 2,216 captured frames. Preserve the coordinator-owned live feed and existing
+services, database and host-local files. No infrastructure creation, service
+restart, gameplay input or main merge belongs to this release. Browser-only
+preview and visual QA are skipped in this background goal continuation.
+Local validation, exact-head CI and public HTTPS acceptance remain separate.
