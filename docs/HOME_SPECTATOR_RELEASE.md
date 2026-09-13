@@ -445,3 +445,37 @@ displayed-frame-count assertion and 1,306 passes; its report remains separate.
 The checkpoint and reload occurred September 13 UTC (September 12 local time);
 the campaign branch retains a date-label erratum without changing their bound
 result bytes. Exact-head CI and public delivery remain separate gates.
+
+## Astra keyboard endurance, checkpoint 132
+
+Start from public revision `9195fc2d783c6884be1f1c5b987d05923caf40fe` and add
+`astra-keyboard-endurance-v1-69-132`. Its 64 frames do not overlap the first
+68-frame recording. The new recording SHA-256 is
+`eabd35f654dfd30a1860e2b233e38da38a8adc323720e9f6dd987133bf3a8166` and its
+native audit is `6da9e5563a6a0da28330ee8fea337020163448d64c748db47da9f73b2feb3cc4`.
+The campaign-branch result `astra_keyboard_endurance_132_20260913.json` has
+SHA-256 `f1b74137fa4dbc41edc296793a9c853bad62879178874d3bd57c73c0111bfd41`.
+That result binds the actual native save, completed teardown and fresh reload.
+
+The endpoint retains seven living dwarves, no recorded deaths, seven installed
+beds, three workshops, two farms, 64 food and 53 drinks after 40,700 elapsed ticks.
+This window added 10,000 ticks and has 63 accepted keyboard actions plus one
+rejection. Cumulative returned usage is 3,799,537 tokens; subscription charges
+remain unreported. It is the same campaign and inherited budget, not a new trial.
+It has not reached its anniversary, and inventories do not prove sustainability.
+
+The importer passed 23 in-memory checks before use. Preserve all 24 prior
+recordings, catalog rows and previews; the new total is 25 recordings / 2,152
+frames. Keep the existing live feed, services, database and host-local files
+unchanged. No infrastructure creation, service restart, gameplay input or main
+merge is part of this release. Local validation, exact-head CI and public HTTPS
+acceptance are separate gates. Browser-only preview and visual QA are skipped
+in this background goal continuation.
+
+Local validation for checkpoint132 passed 1,308 Python tests with five skips
+and seven warnings, plus all 66 Node interaction checks. The initial full run
+retained one stale latest-recording expectation and 1,307 passing tests; that
+report is preserved separately. The corrected expectation does not alter any
+recording. All 24 older files, rows and previews were compared against the
+previous public revision and remain unchanged. Exact-head CI and public HTTPS
+verification are still separate delivery steps.
