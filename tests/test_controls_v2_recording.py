@@ -44,6 +44,7 @@ def test_v2_shortcuts_replay_is_exactly_the_audited_two_window_export():
 
 def test_all_six_v2_replays_are_present_without_claiming_a_control_ranking():
     catalog = json.loads((RECORDINGS / "catalog.json").read_text())["recordings"]
+    catalog = [row for row in catalog if not row["id"].startswith("astra-keyboard-endurance-v1-")]
     assert catalog[0]["id"] == "controls-v2-p3-keyboard-1-128"
     assert catalog[1]["id"] == "controls-v2-p3-shortcuts-1-128"
     assert catalog[2]["id"] == "controls-v2-p2-shortcuts-1-128"

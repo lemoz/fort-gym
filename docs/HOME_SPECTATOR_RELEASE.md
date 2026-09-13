@@ -410,3 +410,38 @@ Preserve the active endurance campaign's live relay while publishing this static
 update. No service restart, database mutation, new infrastructure, main merge or
 new model invocation is part of website publication. Browser-only preview/QA is
 skipped in this background goal continuation.
+
+## Astra keyboard endurance, checkpoint 68
+
+Start from public revision `4d4d38fd9f5a3b9418e078bc769e156d327e99d9`.
+Add only `astra-keyboard-endurance-v1-1-68`, the 68-frame audited native export
+with SHA-256 `97cd1ae75d5afa68e6896bcb1868b476ca9cd8430ff59b4fd0975857fdae095c`.
+Its audit is `a21451d867103c29b5786a9338d8829057228f54e9507d3606e71d22a608fe9f`
+on source `4b526b5636e6f568a4cae1a1227d746d9c6922c3`. The terminal result is
+`astra_keyboard_endurance_68_20260912.json` in the campaign development branch,
+SHA-256 `fa7bc9662c07dd6ba2949a641066d1062fbfb16e70548e8634bd8e35d7e1827c`.
+The later `astra_keyboard_endurance_68_reload_20260912.json` records its actual
+fresh reload with the entire saved agent state and existing limits inherited.
+
+The endpoint has 30,700 elapsed ticks, seven living dwarves, no recorded deaths,
+six installed beds, three workshops, one farm, 53 food and 53 drinks. All 68
+accepted actions used keyboard controls and sent 543 keys. Returned usage is
+1,788,513 tokens, with subscription charges unreported. The final guest-poweroff
+command returned one; the subsequent VM stop, stopped states and closed disks
+passed. Keep those original return codes. No sustainability claim follows from
+stock snapshots, and this younger campaign has not reached its anniversary.
+
+The importer passed 25 in-memory checks before use. Preserve all 23 older
+recordings, catalog rows and previews; the new totals are 24 recordings and
+2,088 frames. Keep the active continuation relay and existing services/database
+unchanged. This is static replay delivery, not new gameplay, a service restart,
+infrastructure creation or main merge. Full local checks, exact-head remote CI
+and public HTTPS acceptance remain separate release gates. No browser-only
+preview or visual QA is performed during this background continuation.
+
+Local validation passed 1,307 Python tests (five skips, seven warnings) and all
+66 Node interaction checks. The initial full run retained one outdated
+displayed-frame-count assertion and 1,306 passes; its report remains separate.
+The checkpoint and reload occurred September 13 UTC (September 12 local time);
+the campaign branch retains a date-label erratum without changing their bound
+result bytes. Exact-head CI and public delivery remain separate gates.
