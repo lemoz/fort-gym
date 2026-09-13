@@ -21,7 +21,9 @@ then matches those fields to the queued fixture job in a hashed cumulative repor
 Repeated item IDs retain every observation without becoming extra production.
 Unreadable context preserves output records but marks evidence incomplete.
 All 260 focused tests and the exact-head full local suite (5,990 passed, ten skips,
-eight warnings) passed. This is prepared offline correlation, not native
+eight warnings) passed. [Completed hosted CI](../experiments/evidence/native_production_job_context_ci_20260913.json)
+passed 5,991 tests with nine skips and seven warnings under Lua 5.3.6 at the same
+head. The original pending capture is preserved. This is prepared offline correlation, not native
 production acceptance or an independent oracle. The active campaign is unchanged.
 
 The [private single-job brewing fixture](../experiments/evidence/native_production_brew_fixture_candidate_20260913.json)

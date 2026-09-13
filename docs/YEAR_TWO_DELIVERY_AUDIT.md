@@ -191,7 +191,10 @@ event prefixes and complete bounded evidence. All repeated item sightings and
 their individual stack counts remain inspectable, with no summed quantity or
 consumption/loss claim. Completion notifications stay separate from outputs.
 All 260 focused tests and scoped code checks passed; the exact-head full local
-suite passed 5,990 tests with ten skips and eight warnings. These offline checks do not
+suite passed 5,990 tests with ten skips and eight warnings. The
+[completed hosted CI](../experiments/evidence/native_production_job_context_ci_20260913.json)
+passed 5,991 tests with nine skips and seven warnings under Lua 5.3.6 at the exact
+candidate head; the original pending receipt remains unchanged. These offline checks do not
 validate native attribution, an independent oracle, noninterference or rates;
 the active native source, agent observation, coordinator and website are unchanged.
 

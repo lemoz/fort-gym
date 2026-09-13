@@ -1,0 +1,41 @@
+{
+  "schema_version": "fortgym.native-production-job-context-ci/v1",
+  "date_utc": "2026-09-13",
+  "source_revision": "90600867d87a54f63a291175b2cc47a0ddbd4156",
+  "branch": "codex/native-production-observer",
+  "draft_pr": 183,
+  "prior_candidate_receipt": "native_production_job_context_candidate_20260913.json",
+  "prior_pending_capture_preserved": true,
+  "ci": {
+    "run": 34741147814,
+    "job": 103680952014,
+    "url": "https://github.com/lemoz/fort-gym/actions/runs/34741147814",
+    "status": "completed",
+    "conclusion": "success",
+    "passed": 5991,
+    "skipped": 9,
+    "warnings": 7,
+    "lua_version": "5.3.6",
+    "test_summary_at_utc": "2026-09-13T05:55:54.7776259Z",
+    "job_completed_at_utc": "2026-09-13T05:55:57Z",
+    "exact_head_verified": true
+  },
+  "local": {
+    "passed": 5990,
+    "skipped": 10,
+    "warnings": 8,
+    "exact_source": true,
+    "report_sha256": "acb2d58528dca142608ef3325e65cbd64122418f5f9a27ca5d5930ac3e704d02"
+  },
+  "native_fixture_executed": false,
+  "native_binding_validated": false,
+  "native_coverage_validated": false,
+  "independent_production_oracle": false,
+  "agent_observation_changed": false,
+  "active_source_or_image_changed": false,
+  "website_changed": false,
+  "main_merged": false,
+  "new_cloud_vms": 0,
+  "new_model_calls": 0,
+  "full_goal_complete": false
+}
