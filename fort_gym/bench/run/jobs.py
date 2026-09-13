@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import threading
 import uuid
+from contextlib import nullcontext
 from datetime import datetime
 from typing import Callable, Dict, List, Optional
 
@@ -23,12 +24,18 @@ class JobInfo(BaseModel):
 
 
 class JobRegistry:
-    """Manage job metadata and run scheduling with a concurrency cap."""
+    """Cap each batch and serialize shared DFHack runs across this registry.
+
+    The API uses one registry. This is not a cross-process game ownership lease.
+    """
 
     def __init__(self) -> None:
         self._jobs: Dict[str, JobInfo] = {}
         self._state: Dict[str, Dict[str, int]] = {}
         self._lock = threading.Lock()
+        # Separate from metadata locking so queued native runs do not block
+        # job polling or mock runs. Hold it for the complete native callback.
+        self._dfhack_run_lock = threading.Lock()
 
     def create(self, model: str, backend: str, n: int, parallelism: int) -> JobInfo:
         # There is one live DF instance: parallel dfhack workers would race
@@ -61,7 +68,7 @@ class JobRegistry:
             if job_id not in self._jobs:
                 raise KeyError(job_id)
             job = self._jobs[job_id]
-            state = self._state[job_id]
+            backend = job.backend
             if job.status not in {"pending", "running"}:
                 return
             job.status = "running"
@@ -82,7 +89,8 @@ class JobRegistry:
                 run_id: Optional[str] = None
                 failed = False
                 try:
-                    run_id = make_run()
+                    with self._dfhack_run_lock if backend == "dfhack" else nullcontext():
+                        run_id = make_run()
                 except Exception:
                     failed = True
 
