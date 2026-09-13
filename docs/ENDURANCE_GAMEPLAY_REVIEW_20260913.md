@@ -1,6 +1,50 @@
 # Astra endurance: operation after the first anniversary
 
-## Latest assessment: saved Year-Two endpoint at decision772
+## Latest assessment: saved Year-Two endpoint at decision836
+
+The [773–836 review](../experiments/evidence/astra_keyboard_endurance_836_gameplay_review_20260913.json)
+finds verified labor adaptation and repeated supply recovery. The fort saved at
+552,250 elapsed ticks, 149,050 ticks into Year Two, with nineteen living dwarves,
+one earlier recorded death, nine beds, five workshops, three farms, 151 food and
+528 drinks. The actual next-process reload and first continued action passed.
+
+| Boundary | Elapsed ticks | Living / recorded dead | Food / drink |
+| --- | ---: | ---: | ---: |
+| Saved decision772 | 496,250 | 18 / 1 | 134 / 143 |
+| Saved decision836 | 552,250 | 19 / 1 | 151 / 528 |
+
+Native labor records show that citizen73 gained mining at decision781 while the
+model was trying to reach farming labors, then gained brewing at decision783.
+The extra mining assignment is retained as an observed navigation side effect.
+Unlike the earlier labor-menu attempts, brewing assignment is now independently
+verified. The old unstaffed brewing job181 disappeared after the cancel action
+at decision787; the complete twelve-job list and old still's empty queue agree.
+
+Astra queued brewing through keyboard menus at decisions792 and818. Native
+brew job3769 at surface still22 had a worker in nine samples (792–800), and
+job3910 at surface still11 had a worker in eighteen samples (818–835). All those
+samples had connected cached walk groups. Drinks rose from 143 to 528, with no
+item-level attribution of the exact net increase. Gathering designations were
+followed by observed gathering work and a food peak of 196; food later fell to 151.
+Citizen813 first appears as a baby at decision823. No additional death occurred;
+the earlier drowning incident remains recorded even after corpse counters reset.
+
+All 64 keyboard actions and 226 requested keys were accepted/confirmed. Twenty-eight
+positive-time decisions advanced 56,000 ticks, exactly matching requested time,
+with no timeouts or menu deferrals. No human gameplay input or strategy hint was
+given. Cumulative returned usage is 24,149,524 tokens; subscription charges remain
+unreported, not zero.
+
+The assessment is **operating with adaptive supply recovery**. Long-term
+resilience remains unproven: brewing was absent from the complete final world
+list and all still queues, food was below its within-window peak, eleven of
+sixteen labor-eligible citizens were idle, and five old harvest jobs remained
+unstaffed and cache-disconnected. Eighteen earlier world-job lists were capped.
+Input counts and cached walk groups do not prove accessible reserves or full
+paths. These are limits on the evidence, not a requirement for a perfect fort.
+This remains one continuous campaign, not an independent replicate or ranking.
+
+## Earlier saved Year-Two endpoint at decision772
 
 The [completed 709–772 review](../experiments/evidence/astra_keyboard_endurance_772_gameplay_review_20260913.json)
 shows a useful autonomous adjustment and a recovery in food and drinks. The save

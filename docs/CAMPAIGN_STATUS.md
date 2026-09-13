@@ -14,7 +14,29 @@ cohort below. Long-term self-sufficiency and the full delivery goal remain open.
 
 ## Current experiment summary
 
-The current endurance campaign has a verified [checkpoint772 and actual reload](../experiments/evidence/astra_keyboard_endurance_772_20260913.json):
+The current endurance campaign has a verified [checkpoint836 and actual reload](../experiments/evidence/astra_keyboard_endurance_836_20260913.json):
+552,250 elapsed ticks, nineteen living dwarves, one earlier recorded death,
+nine beds, five workshops, three farms, 151 food and 528 drinks. The
+[gameplay review](ENDURANCE_GAMEPLAY_REVIEW_20260913.md) verifies brewing labor
+enabled through ordinary menus, two worker-assigned surface brewing runs, plant
+gathering and a new baby. Drinks rose from 143 to 528 and food from 134 to 151.
+The assessment is operating with adaptive supply recovery, not proven indefinite
+self-sufficiency. Earlier endpoint assessments remain unchanged.
+
+All 64 actions and 226 keys were accepted/confirmed. Twenty-eight decisions
+advanced 56,000 ticks without timeout or deferral. Returned usage totals 24,149,524
+tokens, including 1,996,806 in this window; subscription charges remain unreported.
+The [tenth automatic handoff](../experiments/evidence/astra_keyboard_endurance_sequence_handoff_836_20260913.json)
+preserved the plan and first 29 event lines, verified stopped-state teardown,
+and restored complete agent state, native clock/metrics, loss history and
+trace/usage prefixes. Both shutdown operations returned 0. Decision837 executed
+one key and advanced 2,000 ticks; public frame839 matched its original screen
+and chosen action with the owner alive. The sole coordinator continues toward
+checkpoint900 under the unchanged 1,028-response/40-million-token ceiling. No
+new budget extension, runtime/model/prompt/control change or human rescue was
+introduced. The new replay is exported; its website publication is still pending.
+
+The previous verified [checkpoint772 and actual reload](../experiments/evidence/astra_keyboard_endurance_772_20260913.json) retained:
 496,250 elapsed ticks, eighteen living dwarves, one earlier recorded death,
 nine beds, five workshops, three farms, 134 food and 143 drinks. The
 [saved-window gameplay review](ENDURANCE_GAMEPLAY_REVIEW_20260913.md) finds an
@@ -35,7 +57,7 @@ preserved the plan and first twenty-six event lines, verified stopped-state
 teardown and restored complete agent state, native clock/metrics, loss history
 and trace/usage prefixes. Decision773 executed one key and zero ticks; public
 frame775 matched its original screen and chosen action with the owner alive.
-The sole coordinator is continuing toward checkpoint836 under the unchanged
+At that boundary the sole coordinator continued toward checkpoint836 under the unchanged
 1,028-response/40-million-token ceiling. No new allowance, model/prompt/control
 change, competing native owner or human rescue was introduced.
 
