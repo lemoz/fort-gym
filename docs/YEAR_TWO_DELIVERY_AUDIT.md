@@ -13,7 +13,29 @@ This summary supersedes the capture-time running/preparation statements in the
 historical sections below. Original result manifests and earlier evidence are
 unchanged. The full Year-Two/cross-model goal is still active.
 
-The latest [endurance save and actual reload](../experiments/evidence/astra_keyboard_endurance_324_20260913.json)
+The latest [endurance save and actual reload](../experiments/evidence/astra_keyboard_endurance_388_20260913.json)
+are verified through decision388: 235,050 elapsed ticks, nineteen living dwarves,
+nine beds, four workshops, three farms, 184 food and 88 drinks, with no recorded
+deaths. The window added 65,950 actual ticks, with 64 accepted actions and 149
+confirmed keys. Seven recorded blocking text/meeting-screen transitions explain
+12,050 requested but unadvanced ticks. All repause checks passed, without clock
+timeouts or safety errors; the last interruption was followed by 19 accepted
+decisions and another 30,000 actual ticks. No human gameplay rescue occurred.
+Cumulative returned usage is 12,096,579 tokens; actual charges remain unknown.
+Save, stopped-state/closed-disk checks and actual reload passed, with both shutdown
+commands returning zero and their original runtime warning retained. The whole
+agent state, clock/metrics and trace/usage prefixes match. The unchanged budget
+history contains one extension. Its
+[third automatic successor handoff](../experiments/evidence/astra_keyboard_endurance_sequence_handoff_388_20260913.json)
+launched 389–452 under the same coordinator. Decision389 has a completed native
+execution row with 2,000 actual ticks; public frame390 independently matches the
+captured screenshot and chosen action. The original plan and first eight event
+lines are unchanged; the eleven-event prefix is retained. The new window's final
+save remains unverified. Its 325–388 replay is exported but not published; the
+public site remains at 28 recordings / 2,344 frames through checkpoint324.
+Production, consumption, accessibility and sustained functioning remain unmeasured.
+
+The preceding [endurance save and actual reload](../experiments/evidence/astra_keyboard_endurance_324_20260913.json)
 are verified through decision324: 169,100 elapsed ticks, eleven living dwarves,
 nine beds, four workshops, three farms and 72 food / 122 drinks, with no recorded
 deaths. Cumulative returned usage is 10,418,341 tokens; subscription charges
@@ -25,7 +47,7 @@ the intended menu selection. No operator gameplay input occurred.
 Guest poweroff and VM stop returned zero. Separate stopped-state and closed-disk
 checks passed before the complete saved agent state, clock/metrics and original
 history were restored. The single budget append is unchanged. Decisions 325–388
-are running, with public frame326 independently matched to its original captured
+were running at that capture, with public frame326 independently matched to its original captured
 screen and chosen action.
 The [261–324 replay is now publicly verified](../experiments/evidence/astra_keyboard_endurance_324_website_20260913.json)
 at website revision `6427600645cdbd29594ff2f41f93a9a6a165d346`: 28 recordings
@@ -37,7 +59,8 @@ at decision294 is retained with its captured action, not removed from the replay
 Public HTTPS verified every recording and the live feed at decision344.
 Service identities, database counts, host-local files, coordinator and native
 runtime were preserved. No new infrastructure, service restart, gameplay input,
-manual continuation or main merge occurred. Checkpoint388 remains unverified.
+manual continuation or main merge occurred. Checkpoint388 was subsequently
+verified in the separate capture above.
 The [197–260 replay is now publicly verified](../experiments/evidence/astra_keyboard_endurance_260_website_20260913.json)
 at website revision `67b0ff107abf29dda457705980d3576a29d817cf`: 27 recordings
 and 2,280 frames. All 26 prior recording files, rows and previews are unchanged.

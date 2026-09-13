@@ -23,7 +23,27 @@ retains seven living dwarves, seven beds, three workshops and one farm after
 46,400 elapsed ticks. The [complete descriptive comparison](../experiments/evidence/selected_workshop_v2_cohort_20260912.json)
 preserves all outcomes without claiming a control ranking or independent worlds.
 
-The separate [Astra Medium endurance campaign has saved and freshly reloaded decision324](../experiments/evidence/astra_keyboard_endurance_324_20260913.json):
+The latest [Astra Medium endurance save and actual reload are verified through decision388](../experiments/evidence/astra_keyboard_endurance_388_20260913.json):
+235,050 elapsed ticks, nineteen living dwarves, nine beds, four workshops,
+three farms, 184 food and 88 drinks, with no recorded deaths. This window added
+65,950 actual ticks and eight living citizens. All 64 keyboard actions were
+accepted, with 149 confirmed keys. Seven blocking text/meeting-screen transitions
+explain 12,050 requested but unadvanced ticks; these were not timeouts or saved
+history loss. After the final interruption, 19 accepted decisions advanced another
+30,000 ticks without human gameplay input. Food/drink changes remain inventories,
+not measured production or consumption. Returned usage totals 12,096,579 tokens;
+subscription charges remain unreported and the single budget append is unchanged.
+The [third automatic handoff](../experiments/evidence/astra_keyboard_endurance_sequence_handoff_388_20260913.json)
+completed save and teardown, with both shutdown commands returning zero and
+separate stopped-state/closed-disk checks passing. The original warning is retained.
+The complete agent state, native clock/metrics and history prefixes matched on
+actual reload. Decision389 has a completed native execution record with 2,000
+actual ticks; public frame390 matched its original screenshot and chosen action.
+The same coordinator now owns decisions 389–452. That window is not yet audited.
+The 325–388 replay is exported, not yet public; the website remains at 28 recordings
+and 2,344 frames through checkpoint324. Year Two and sustainability remain open.
+
+The preceding [decision324 save and reload](../experiments/evidence/astra_keyboard_endurance_324_20260913.json) retained:
 169,100 elapsed ticks, eleven living dwarves, nine beds, four workshops, three
 farms, 72 food and 122 drinks, with no recorded deaths. This window added 64,000
 ticks; population rose from seven to eleven and workshops from three to four.
@@ -34,9 +54,9 @@ Native save, stopped-state/closed-disk checks and actual reload passed. Guest
 poweroff and VM stop both returned zero. The entire saved agent state, clock,
 measured metrics and trace/usage prefixes were restored. Its one cumulative
 budget extension is inherited without another append or accounting reset.
-Astra is playing decisions 325–388, with public live frame326 independently
-matched to the original screen/chosen action. This new window's final save is
-not yet verified.
+At that capture, Astra was playing decisions 325–388, with public live frame326 independently
+matched to the original screen/chosen action. Its final save is now separately
+verified above.
 The [261–324 replay is now public](../experiments/evidence/astra_keyboard_endurance_324_website_20260913.json):
 28 recordings / 2,344 frames at website revision `642760064`. Local and exact-head
 remote suites each passed 1,311 Python tests with five skips; local warnings were
@@ -115,8 +135,8 @@ hosted CI passed 5,586 tests with 220 skips. Native event coverage, noninterfere
 checkpoint binding and complete flow attribution remain unverified or unimplemented.
 The [earlier candidate receipt](../experiments/evidence/native_production_observer_candidate_20260913.json)
 is preserved. Nothing is installed in the active campaign. Its unchanged
-coordinator now owns the 325–388 window, with the actual checkpoint324 reload
-and public frame326 verified separately above.
+coordinator now owns the 389–452 window, with the actual checkpoint388 reload
+and public frame390 verified separately above.
 
 An [input-level adaptation observation](../experiments/evidence/astra_keyboard_endurance_key_adaptation_20260913.json)
 retains decision89's unsupported keypad aliases and decision90's accepted arrow
