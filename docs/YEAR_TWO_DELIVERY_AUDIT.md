@@ -18,9 +18,11 @@ The corrected exact-head full local suite passed 5,850 tests with ten skips and
 seven warnings, after one historical fifteen-recording assertion was made an
 explicit hash-pinned subset. All 66 Node tests passed. Ruff's ten findings and
 mypy's 465 errors match the inherited baseline exactly; these checks remain
-non-green. Hosted CI is pending at this capture. The source is on the remote,
-not merged into main or deployed, and does not change the running campaign.
-PR176 is unchanged.
+non-green. [Hosted CI also passed](../experiments/evidence/year_two_release_candidate_ci_20260913.json):
+5,687 tests, 173 skips, seven warnings at the same head. The source is on the
+remote, not merged into main or deployed, and does not change the running
+campaign. Its explicit 32-recording snapshot must carry forward later public
+replays before combined promotion. PR176 is unchanged.
 
 The current endurance campaign now has a verified [Year-Two save and actual reload](../experiments/evidence/astra_keyboard_endurance_644_20260913.json)
 at decision644: 423,050 elapsed ticks, nineteen living dwarves, zero recorded
@@ -40,12 +42,22 @@ Stopped. Both stopped-state and closed-disk checks passed before the coordinator
 alone launched 645–708. Actual reload restored the whole agent state, native
 clock/metrics, trace/usage prefixes and loss history. Decision645 confirmed one
 key and zero actual ticks; public frame646 matched its original screen and
-chosen action. The save is inside Year Two, but the earlier evidence of fragile
-operation still warrants continued observation. No human gameplay rescue or
-condition change occurred. The new 64-frame replay is exported, not yet
-published; the public site remains at 32 recordings through decision580.
+chosen action. The [saved-window gameplay review](ENDURANCE_GAMEPLAY_REVIEW_20260913.md)
+supports an operating-but-fragile Year-Two endpoint: fishing, raw-fish preparation
+and barrel-making were observed, but supplies declined and fourteen of seventeen
+labor-eligible citizens were idle at the save. Ten decisions advanced time across
+the 64 sampled boundaries. No human gameplay rescue or condition change occurred.
+The [581–644 replay is now publicly verified](../experiments/evidence/astra_keyboard_endurance_644_website_20260913.json)
+at `577c6c1474160e8c1366bedf22596ecb75005891`: 33 recordings and 2,664
+captured decisions, with all 32 older files, catalog rows and previews intact.
+Local and hosted suites each passed 1,316 tests with five skips (eight local
+warnings, seven hosted), plus 28 focused Python, 66 Node, 25 importer and an
+all-64-frame player test. HTTPS verified every replay and the running feed at
+decision669. Existing services, database, host-local files and Home/Results
+renderers stayed unchanged. No restart, new VM, gameplay input or main merge
+belongs to this replay publication.
 
-The [bounded gameplay review through decision600](ENDURANCE_GAMEPLAY_REVIEW_20260913.md)
+The earlier [bounded gameplay review through decision600](ENDURANCE_GAMEPLAY_REVIEW_20260913.md)
 finds partial drink-supply recovery and fragile ongoing operation. Accepted
 keyboard brewing at another still was followed by an assigned native brewing
 job and rising drink stocks. Twenty later, unsaved post-anniversary boundaries

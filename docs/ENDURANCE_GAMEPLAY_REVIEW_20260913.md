@@ -1,5 +1,42 @@
 # Astra endurance: operation after the first anniversary
 
+## Latest assessment: saved Year-Two endpoint at decision644
+
+The [completed saved-window review](../experiments/evidence/astra_keyboard_endurance_644_gameplay_review_20260913.json)
+supports a qualified **operating, but fragile** assessment. This is no longer
+only an unsaved anniversary crossing: checkpoint644 contains 423,050 elapsed
+ticks and was actually reloaded before play continued.
+
+All 64 after-action samples retain nineteen living dwarves and zero recorded
+deaths. Ten decisions advanced time, adding 20,000 ticks. The fortress retained
+nine installed beds, four workshops and three farms. Worker activity included
+fishing, raw-fish preparation, barrel making and throne construction. Those are
+observed job assignments across citizen-boundary samples, not completed-product
+counts or evenly spaced time samples.
+
+| Boundary | Elapsed ticks | Living / recorded dead | Food / drink |
+| --- | ---: | ---: | ---: |
+| Before decisions581–644 | 403,050 | 19 / 0 | 73 / 130 |
+| Saved decision644 | 423,050 | 19 / 0 | 66 / 112 |
+
+There are concrete weaknesses. Fourteen of seventeen labor-eligible citizens
+were idle at the endpoint. The older brew job had no worker and a disconnected
+cached walk group in all 64 samples. Five harvest jobs remained unassigned at
+the endpoint with the same cached-connectivity warning. Two newer planting jobs
+had connected cached walk groups but no worker at that exact boundary.
+Nineteen of the world-job lists were capped; the final twelve-entry list was
+complete. Cached walk groups do not prove full paths, labor eligibility or
+ingredient accessibility.
+
+The fortress is still operating after its first year, but these observations
+do not demonstrate a reliable food/drink production cycle or indefinite
+self-sufficiency. Do not require perfect item-flow accounting to recognize this
+qualified operating endpoint, and do not turn it into a strong model ranking.
+Continue the same autonomous campaign and assess its later saved outcomes;
+send no strategic hints to the screen-only player.
+
+## Earlier review through decision600
+
 Reviewed September 13, 2026. This is a bounded qualitative review, not a model
 ranking or a sustainability score. The [source-bound evidence](../experiments/evidence/astra_keyboard_endurance_600_gameplay_review_20260913.json)
 separates the saved 517–580 replay from unsaved decisions581–600.

@@ -1,0 +1,57 @@
+{
+  "schema_version": "fortgym.year-two-release-candidate-ci/v1",
+  "date_utc": "2026-09-13",
+  "candidate_revision": "e8a4c48065c3391f06a9605900b1294f742142e6",
+  "draft_pr": 184,
+  "hosted": {
+    "head": "e8a4c48065c3391f06a9605900b1294f742142e6",
+    "run": 34743865486,
+    "job": 103688047889,
+    "passed": 5687,
+    "skipped": 173,
+    "warnings": 7,
+    "utc": "2026-09-13T07:00:38.6791637Z"
+  },
+  "local": {
+    "passed": 5850,
+    "skipped": 10,
+    "warnings": 7
+  },
+  "source_manifest_sha256": "477cefadb9c3d8d9c1e2fbddbc34e5b8270d1706507e766883c4b74a323e4d0a",
+  "original_pending_capture": "year_two_release_candidate_20260913.json",
+  "original_pending_capture_preserved": true,
+  "candidate_recording_snapshot": {
+    "recordings": 32,
+    "frames": 2600,
+    "saved_boundary": 580
+  },
+  "later_public_website": {
+    "revision": "577c6c1474160e8c1366bedf22596ecb75005891",
+    "recordings": 33,
+    "frames": 2664,
+    "saved_boundary": 644
+  },
+  "promotion_requirement": "Carry forward later public replay releases before any combined application promotion",
+  "quality": {
+    "ruff": {
+      "exit_code": 1,
+      "findings": 10,
+      "baseline_findings": 10,
+      "identical_to_baseline": true,
+      "new_or_changed_test_findings": 0
+    },
+    "mypy": {
+      "exit_code": 1,
+      "errors": 465,
+      "files_with_errors": 27,
+      "files_checked": 181,
+      "identical_to_baseline": true,
+      "output_sha256": "ecace04ae1e076658e9810e320aab89d76455b880a5a11fd4a46fc5aec44ad25"
+    }
+  },
+  "active_experiment_changed": false,
+  "main_merged": false,
+  "combined_application_deployed": false,
+  "native_gameplay_executed_by_ci": false,
+  "full_goal_complete": false
+}
