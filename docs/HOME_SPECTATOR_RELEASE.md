@@ -734,3 +734,40 @@ database, host-local files, and the separate combined native release candidate.
 No service restart, gameplay input, new infrastructure, or main merge belongs
 to this static update. Browser-only preview and visual QA are skipped in this
 background continuation. Local, hosted, and public HTTPS checks are separate.
+
+## Astra keyboard endurance, checkpoint 708
+
+Start from public revision `577c6c1474160e8c1366bedf22596ecb75005891` and add
+`astra-keyboard-endurance-v1-645-708`. Preserve all 33 prior recordings, catalog
+rows and previews. The new total is 34 recordings and 2,728 frames.
+
+The immutable recording has SHA-256
+`fc4febb01c736109863f9f42a316956a0c66883e8c8883b19edf468ce4286427`,
+bound to audit `bcb79a1b1d2729d1060dc0c4157c7cf4782f9941031832433c2de86ab38557bd`
+and native result `astra_keyboard_endurance_708_20260913.json`, SHA-256
+`aef02757b7e26049f1efcac3793f6d8e74f334e2a155ed61a75f285b948bbc0b`.
+The save contains 447,050 elapsed ticks, eighteen living dwarves, one recorded
+drowning, nine beds, four workshops, three farms, 75 food and 93 drinks.
+Food rose from 66 to 75; drinks fell from 112 to 93. Worker assignments and
+inventories are not attributed production or consumption.
+
+This window has 63 accepted actions and one rejected PageUp command at
+decision669. Its two requested keys were not sent. The other 464 keys were
+confirmed, and all 24,000 requested ticks advanced without timeouts or deferrals.
+The public player must retain the rejected state when scrubbing that frame.
+Cumulative usage is 20,492,446 returned tokens, including 1,232,669 new tokens;
+subscription dollar charges remain unreported.
+
+The eighth automatic handoff verified checkpoint708 and actual reload into
+709–772, preserving whole agent state, native clock, trace/usage prefixes and
+the original budget extension. Guest poweroff returned 1 with exit status 255;
+the following VM stop returned 0 and reported not running. Both stopped-state
+and closed-disk checks passed before the next launch. Decision709 confirmed
+one key and zero actual ticks. Preserve these original outcomes.
+
+This is the same campaign, not another independent trial. It remains operating
+but fragile after the first anniversary, with mortality and drink decline.
+Keep all native sources, controls, images, live feeds, services, database and
+host-local files unchanged. No restart, new infrastructure or main merge.
+This background continuation skips browser-only preview and visual QA; the
+replay is validated with the real player contract and exact public HTTP bytes.
