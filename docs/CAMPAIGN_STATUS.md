@@ -47,9 +47,18 @@ verified save and teardown before launching 517–580 under the same coordinator
 Actual reload restored the complete agent state, native clock/metrics and history
 prefixes. Decision517 confirmed one key with zero requested/actual ticks, and
 public frame523 matched its original screen and chosen action. No new budget
-append, manual relaunch or human gameplay rescue occurred. Its 64-frame replay
-is exported; website publication remains a separate step. Year Two and sustained
-production remain unverified for this campaign.
+append, manual relaunch or human gameplay rescue occurred. Its
+[64-frame replay is now publicly verified](../experiments/evidence/astra_keyboard_endurance_516_website_20260913.json)
+at website revision `e5285642b`: 31 recordings and 2,536 captured frames, with all
+30 earlier recording files, rows and previews unchanged. Local and hosted suites
+each passed 1,314 Python tests (five skips, seven warnings); all 66 Node, 23
+importer and 26 focused Python checks passed. A separate player test scrubbed
+all 64 new frames. The earlier gallery-caption expectation was updated to the
+new total; native evidence remained unchanged. HTTPS verified all 31 recordings
+and the live feed at decision539. Services, database counts, host-local files,
+homepage/results renderers and the coordinator were preserved. No service
+restart or main merge occurred. Year Two and sustained production remain
+unverified for this campaign.
 
 The preceding [Astra Medium endurance save and actual reload are verified through decision452](../experiments/evidence/astra_keyboard_endurance_452_20260913.json):
 301,050 elapsed ticks (about 75% of one game year), nineteen living dwarves,

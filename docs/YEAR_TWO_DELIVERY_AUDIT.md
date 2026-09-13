@@ -26,8 +26,19 @@ Whole agent state, native clock/metrics and trace/usage prefixes matched on actu
 reload. Decision517 confirmed one key and zero ticks; public frame523 matched the
 original screen and chosen action. The first fourteen event lines and the plan
 remain unchanged, with the seventeen-event prefix retained. The 453–516 replay
-is exported, not yet published at this capture. Year Two, functioning-fortress
-assessment and sustainability remain unverified for this campaign.
+was exported but not published at that native capture. The
+[453–516 replay is now publicly verified](../experiments/evidence/astra_keyboard_endurance_516_website_20260913.json)
+at website revision `e5285642b1c0183bba07f2eb844f92e8c895a5ab`: 31 recordings,
+2,536 frames, and all 30 prior recording files, catalog rows and previews intact.
+Local and hosted suites each passed 1,314 tests (five skips, seven warnings).
+All 66 Node, 23 importer and 26 focused Python checks passed, plus a separate
+player test of every new scrub position, action, population and saved boundary.
+One initial expected-caption assertion was updated from 2,472 to 2,536, without
+changing native bytes. HTTPS verified every recording and the live feed at
+decision539. Services, database counts, host-local files and homepage/results
+renderers were unchanged; no restart, new VM, model call or main merge belongs
+to this release. Year Two, functioning-fortress assessment and sustainability
+remain unverified for this campaign.
 
 The preceding [endurance save and actual reload](../experiments/evidence/astra_keyboard_endurance_452_20260913.json)
 are verified through decision452: 301,050 elapsed ticks, nineteen living dwarves,
