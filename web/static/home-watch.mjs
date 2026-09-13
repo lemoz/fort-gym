@@ -1,5 +1,5 @@
 import {decodeScreen, frameIndex, liveState, validateRecording, renderCapturedScreen, initialRecording, recoverySummary, readLiveStatus, campaignSummary, campaignHistory, shortcutLabel, actionExecutionLabel} from './home-watch-model.mjs?v=20260912-workshop';
-import {validateSavedOutcomes, savedOutcome, savedOutcomeSummary, savedOutcomeHistory} from './saved-outcomes.mjs?v=20260913-checkpoint900';
+import {validateSavedOutcomes, savedOutcome, savedOutcomeSummary, savedOutcomeHistory} from './saved-outcomes.mjs?v=20260913-checkpoint964';
 const $ = id => document.getElementById('watch-' + id);
 const root = $('root');
 if (root) {

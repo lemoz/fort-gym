@@ -1,4 +1,5 @@
 // Additive saved-state evidence. Immutable recordings remain untouched.
+import {decodeScreen, glyph} from './home-watch-model.mjs';
 const integer = value => Number.isSafeInteger(value) && value >= 0;
 const hash = value => typeof value === 'string' && /^[a-f0-9]{64}$/.test(value);
 const identity = value => typeof value === 'string' && /^[a-z0-9-]{1,100}$/.test(value);
@@ -17,7 +18,8 @@ const fields = ['recording_id','recording_sha256','source_recording_id','campaig
 
 function validInventoryScope(value) {
   const scope=value.inventory_scope;
-  if (scope === undefined) return value.functioning_assessment !== 'operating_with_workshop_development';
+  if (scope === undefined) return !['operating_with_workshop_development',
+    'operating_with_incident_recovery'].includes(value.functioning_assessment);
   return scope && typeof scope === 'object' && !Array.isArray(scope)
     && Object.keys(scope).sort().join(',') === ['schema_version','food_trader_flagged_units',
       'food_nontrader_units','food_nontrader_start_units','drink_trader_flagged_units',
@@ -28,6 +30,22 @@ function validInventoryScope(value) {
     && scope.food_trader_flagged_units + scope.food_nontrader_units === value.saved_metrics?.food_stock
     && scope.drink_trader_flagged_units === null
     && scope.ownership_and_accessibility_proven === false;
+}
+
+function validIncidentRecovery(value, recording) {
+  const incident=value.incident_recovery;
+  if (incident === undefined) return value.functioning_assessment !== 'operating_with_incident_recovery';
+  if (!incident || value.functioning_assessment !== 'operating_with_incident_recovery'
+      || Object.keys(incident).sort().join(',') !== 'announcement,before_decision,kind,schema_version'
+      || incident.schema_version !== 'fortgym.watch-incident-recovery/v1'
+      || incident.kind !== 'ghost_put_to_rest' || !integer(incident.before_decision)
+      || typeof incident.announcement !== 'string'
+      || !/^[^\r\n]{1,80}, Ghostly [^\r\n]{1,40} has been put to rest\.$/.test(incident.announcement)) return false;
+  const frame=recording.frames.find(frame=>frame.decision===incident.before_decision);
+  if (!frame) return false;
+  const {width,height}=frame.screen, tiles=decodeScreen(frame.screen);
+  return Array.from({length:height},(_,y)=>Array.from({length:width},(_,x)=>
+    glyph(tiles[x*height+y][0])).join('')).some(line=>line.includes(incident.announcement));
 }
 
 export function validateSavedOutcomes(data) {
@@ -51,9 +69,10 @@ export function savedOutcome(data, recording, catalog) {
   const countFields = ['saved_decision','saved_elapsed_ticks','saved_year',
     'saved_year_tick','origin_year','origin_year_tick','ticks_per_year',
     'total_responses','total_tokens'];
-  const expectedFields=value.inventory_scope === undefined ? fields : [...fields,'inventory_scope'];
+  const expectedFields=[...fields, ...['inventory_scope','incident_recovery'].filter(key=>value[key]!==undefined)];
   if (Object.keys(value).sort().join(',') !== [...expectedFields].sort().join(',')
       || !validInventoryScope(value)
+      || !validIncidentRecovery(value, recording)
       || !row || !previous || previous.id === row.id
       || !identity(value.campaign_id) || !identity(value.source_recording_id)
       || !hash(value.recording_sha256) || value.recording_sha256 !== row.sha256
@@ -80,7 +99,7 @@ export function savedOutcome(data, recording, catalog) {
       || (value.saved_year - value.origin_year) * value.ticks_per_year
         + value.saved_year_tick - value.origin_year_tick !== value.saved_elapsed_ticks
       || value.fresh_reload_verified !== true || value.human_gameplay_rescue !== false
-      || !['operating_but_fragile','operating_with_adaptive_supply_recovery','operating_with_workshop_development'].includes(value.functioning_assessment)
+      || !['operating_but_fragile','operating_with_adaptive_supply_recovery','operating_with_workshop_development','operating_with_incident_recovery'].includes(value.functioning_assessment)
       || value.sustainability_proven !== false
       || value.saved_elapsed_ticks < 403200
       || value.reported_model_charge_usd !== null
@@ -97,6 +116,10 @@ export function savedOutcomeSummary(value) {
   const m = value.saved_metrics;
   const assessment = value.functioning_assessment === 'operating_with_adaptive_supply_recovery'
     ? 'Operating with adaptive supply recovery at this saved endpoint. Long-term sustainability remains unproven.'
+    : value.functioning_assessment === 'operating_with_incident_recovery'
+    ? 'Operating with incident recovery at this saved endpoint. Captured game announcement before decision '
+      + value.incident_recovery.before_decision + ': “' + value.incident_recovery.announcement
+      + '” Long-term sustainability remains unproven.'
     : value.functioning_assessment === 'operating_with_workshop_development'
     ? 'Operating with workshop development at this saved endpoint. Supply recovery and long-term sustainability remain unproven.'
     : 'Operating but fragile at this saved endpoint.';

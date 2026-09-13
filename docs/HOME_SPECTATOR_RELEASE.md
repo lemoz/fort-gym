@@ -865,3 +865,35 @@ background update has no browser-only preview, visual QA, hosting migration,
 service restart, database mutation, new VM, native change or main merge.
 Publication requires exact-source tests, public evidence links and HTTPS byte
 verification. Local preparation alone is not a delivered website.
+
+
+## Checkpoint 964: independently captured incident recovery
+
+The sixth outcome and unchanged 901–964 replay bring the catalog to 38
+recordings and 2,984 frames. All previous recordings, preview/catalog rows and
+five outcomes remain unchanged. The new result/review pin
+`62d31fdd8efd36f54b8c3a2caa3d04653faf566e`.
+
+At 639,895 elapsed ticks the fort has 19 living dwarves, one earlier death,
+nine beds, seven workshops and three farms. Astra placed a memorial using normal
+keyboard menus. The native screen before decision 954 announces that Avuz
+Kàsfikod, Ghostly Mason, has been put to rest. A staffed slab job and queued
+engraving job are observed; engraving's worker assignment and a direct ghost
+flag were not sampled. The `operating_with_incident_recovery` label requires a
+strict `fortgym.watch-incident-recovery/v1` object whose complete announcement
+is present in the declared frame's decoded native screen. An intent string is
+not accepted as outcome evidence. Invalid incident metadata hides the outcome,
+not the replay. Earlier classifications are not rewritten.
+
+Inventory qualification remains mandatory: 389 raw food units include 250
+trader-flagged and 139 non-trader units (previously 138 non-trader). Drinks fell
+from 560 to 531; ownership and accessible reserves remain unknown. This is not
+proven long-term self-sufficiency. Seven game-menu interruptions account for
+33,245 actual versus 45,200 requested ticks; they are not timeout failures.
+The save was freshly reloaded with memory and usage retained. Cumulative usage
+is 28,011,285 returned tokens, with dollar charges unreported.
+
+Module cache keys advance to checkpoint964. This static-only update changes no
+native condition, runtime, services, database, main branch or combined release.
+The Sites compatibility workflow preserves the existing hosting architecture;
+browser-only preview and handoff are skipped in this background continuation.
