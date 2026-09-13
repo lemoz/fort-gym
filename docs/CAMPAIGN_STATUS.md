@@ -40,8 +40,16 @@ The complete agent state, native clock/metrics and history prefixes matched on
 actual reload. Decision389 has a completed native execution record with 2,000
 actual ticks; public frame390 matched its original screenshot and chosen action.
 The same coordinator now owns decisions 389–452. That window is not yet audited.
-The 325–388 replay is exported, not yet public; the website remains at 28 recordings
-and 2,344 frames through checkpoint324. Year Two and sustainability remain open.
+The [325–388 replay is now public](../experiments/evidence/astra_keyboard_endurance_388_website_20260913.json):
+29 recordings / 2,408 frames at website revision `5b2ed3510`. Local and exact-head
+remote suites each passed 1,312 Python tests with five skips and seven warnings.
+All 66 Node, 23 importer and 24 focused Python checks passed. The initial importer
+test caught an old result filename; it was fixed before importing the unchanged
+native replay. HTTPS verified every recording and the live feed at decision406.
+All 28 earlier recording files, rows and previews, service identities, database
+counts and host-local files were preserved. The coordinator and native runtime
+were unchanged. This was a static-only release, not a main-branch merge.
+Year Two and sustainability remain open.
 
 The preceding [decision324 save and reload](../experiments/evidence/astra_keyboard_endurance_324_20260913.json) retained:
 169,100 elapsed ticks, eleven living dwarves, nine beds, four workshops, three

@@ -31,8 +31,16 @@ launched 389–452 under the same coordinator. Decision389 has a completed nativ
 execution row with 2,000 actual ticks; public frame390 independently matches the
 captured screenshot and chosen action. The original plan and first eight event
 lines are unchanged; the eleven-event prefix is retained. The new window's final
-save remains unverified. Its 325–388 replay is exported but not published; the
-public site remains at 28 recordings / 2,344 frames through checkpoint324.
+save remains unverified. The [325–388 replay is now publicly verified](../experiments/evidence/astra_keyboard_endurance_388_website_20260913.json)
+at website revision `5b2ed351032dd9a139e3caa38746c710cf291f9d`: 29 recordings
+and 2,408 frames. All 28 earlier recording files, catalog rows and previews are
+unchanged. Local and exact-head CI each passed 1,312 Python tests with five skips
+and seven warnings; 66 Node, 23 importer and 24 focused Python checks passed.
+The first importer test identified a prior-result filename, corrected before
+import; the original native recording was not edited. Public HTTPS verified
+all recordings and the live feed at decision406. Services, database, host-local
+files, coordinator and frozen native runtime were preserved. No service restart,
+new infrastructure, gameplay input, manual continuation or main merge occurred.
 Production, consumption, accessibility and sustained functioning remain unmeasured.
 
 The preceding [endurance save and actual reload](../experiments/evidence/astra_keyboard_endurance_324_20260913.json)
