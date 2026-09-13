@@ -93,8 +93,21 @@ verified. The original plan and first five event lines are unchanged; the new
 eight-event prefix is retained. Later handoffs and the full sequence remain
 unverified. Export is not publication.
 
-The [private production-observer reaction candidate](../experiments/evidence/native_production_observer_reaction_candidate_20260913.json)
-is draft PR183 at `7cfae8e13c83cd82d9c306ab56fec72b6d2fe41a`. Its 47 Lua
+The [private inventory-observer candidate](../experiments/evidence/native_production_observer_inventory_candidate_20260913.json)
+is draft PR183 at `fb5688f62e087e5d8dbdd709842214c4f8328f82`. Paused inventory
+snapshots retain actual food/drink IDs, stack units and flags, tied to the
+collector start, current event sequence and native boundary. Scan caps, malformed
+reads, duplicates, changed clocks and list changes prevent complete totals.
+Partial records remain inspectable without becoming production or consumption.
+Local validation passed 5,827 tests, ten skips and seven warnings, including 78
+executed Lua cases. CI now installs and verifies Lua 5.3; exact-head CI is pending.
+Scoped lint/format/type checks pass, with the unchanged ten Ruff and 465 mypy
+repository errors. This is still a separate offline candidate: no native fixture,
+profile activation, checkpoint binding, flow attribution or noninterference proof
+is claimed. The frozen native campaign and coordinator are unchanged.
+
+The [preceding private production-observer reaction candidate](../experiments/evidence/native_production_observer_reaction_candidate_20260913.json)
+was draft PR183 at `7cfae8e13c83cd82d9c306ab56fec72b6d2fe41a`. Its 47 Lua
 collector cases execute locally, including 19 new reaction cases. The full local
 suite passed 5,796 tests with ten skips and seven warnings. Exact-head hosted CI
 passed 5,586 tests, with 220 skips and seven warnings; Lua execution is local proof.

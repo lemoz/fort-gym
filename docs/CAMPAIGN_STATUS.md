@@ -91,8 +91,19 @@ launched 325–388 with the exact saved state. The original plan and earlier eve
 prefix remain unchanged. Later handoffs remain unverified. Do not start a
 competing manual continuation while it is running.
 
-A [separate private production-observer candidate](../experiments/evidence/native_production_observer_reaction_candidate_20260913.json)
-is pushed in draft PR183 at `7cfae8e13`. It now preserves cumulative reaction
+The [private inventory-observer candidate](../experiments/evidence/native_production_observer_inventory_candidate_20260913.json)
+is pushed in draft PR183 at `fb5688f62`. It adds paused food/drink item identities,
+stack sizes and flags at collector/event boundaries, with explicit incomplete
+reads and bounded scanning. These snapshots support future reconciliation; they
+do not attribute production or consumption or prove accessible supplies.
+Local validation passed 5,827 tests with ten skips and seven warnings, including
+78 executed Lua cases (31 new inventory cases). The CI workflow now installs and
+checks Lua 5.3 instead of skipping its fixtures; exact-head CI is pending.
+Native fixture coverage, noninterference, checkpoint binding and complete flow
+attribution remain open. The active campaign was not modified.
+
+The [preceding private production-observer candidate](../experiments/evidence/native_production_observer_reaction_candidate_20260913.json)
+was pushed in draft PR183 at `7cfae8e13`. It preserves cumulative reaction
 output vectors and repeated item identities without counting them as extra
 production. Job notifications, item creation and reaction observations remain
 separate, with bounded event/item retention and explicit missing flow attribution.
