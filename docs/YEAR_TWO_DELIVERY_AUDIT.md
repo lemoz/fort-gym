@@ -22,10 +22,24 @@ keyboard actions and one rejection. Original outcomes are retained. Native
 teardown passed before the next window restored the complete saved agent state,
 native clock/metrics and original history. The single budget append is unchanged.
 Decisions 133–196 are running, with public frame140 independently verified.
-The new nonoverlapping 64-frame replay is exported but not yet published; the
-public catalog remains at the separately verified 24 recordings / 2,088 frames.
+The [new nonoverlapping 64-frame replay is publicly verified](../experiments/evidence/astra_keyboard_endurance_132_website_20260913.json)
+at revision `2adee475b5c0ddcb1256bd74ff8fdf6f14662377`: 25 recordings / 2,152
+frames. All 24 prior recordings, rows and previews are unchanged. Local and
+exact-head CI each passed 1,308 Python tests, with five skips and seven warnings;
+66 local Node checks passed. The initial stale latest-recording assertion is
+retained in its original failed report. HTTPS checks verified all public bytes,
+and the live campaign at decision174, services, database and host-local files
+were preserved. No service restart, new infrastructure or main merge occurred.
 Later final save and sustained functioning remain unproven. Earlier captures
 below retain their original boundaries.
+
+The [host-side sequencing candidate](../experiments/evidence/astra_keyboard_endurance_sequence_candidate_20260913.json)
+is ready at `4ce541fbe0cc20556744cd381298c31f1fb580a2` (draft PR182): local
+5,797-pass and hosted 5,634-pass suites, scoped Ruff/mypy and an actual retained
+checkpoint132 audit/export preflight passed. Native source/image, controls,
+model, prompt and cumulative limits are unchanged. The coordinator has not yet
+been activated; the current independent supervisor must finish 133–196 and
+verify its actual save/teardown first. Exported replay does not imply publication.
 
 All six declared v2 attempts have terminal native audits at decision
 128. All six freshly reloaded their own decision-64 save; none of these final

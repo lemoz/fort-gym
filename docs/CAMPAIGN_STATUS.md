@@ -31,7 +31,11 @@ clock, measured metrics and trace/usage prefixes were restored. Its one cumulati
 budget extension is inherited without another append or accounting reset.
 Astra is playing decisions 133–196, with public live frame140 independently
 matched to the original screen/chosen action. This new window's final save is
-not yet verified. The new 69–132 replay is exported but not yet published. The
+not yet verified. The [69–132 replay is now public](../experiments/evidence/astra_keyboard_endurance_132_website_20260913.json):
+25 recordings / 2,152 frames at website revision `2adee475b`. Local and exact-head
+remote CI each passed 1,308 Python tests; 66 local Node checks also passed.
+HTTPS verified all recordings. All 24 earlier recordings, the live feed, service
+identities and database counts were preserved. The
 [first 68-frame endurance replay is now public](../experiments/evidence/astra_keyboard_endurance_68_website_20260913.json),
 with 24 recordings and 2,088 frames verified across the website at revision
 `9195fc2d7`. Exact-head CI and public HTTPS checks passed; the live continuation,
@@ -43,6 +47,12 @@ with the earlier 22 recordings, live endurance feed, services and database
 preserved. This was a static-only release, not a main-branch merge.
 The full goal remains active; inventories and checkpoint recovery do not by
 themselves establish sustained fortress management.
+
+The [host-only automatic-continuation candidate](../experiments/evidence/astra_keyboard_endurance_sequence_candidate_20260913.json)
+passed local and exact-head remote CI, plus a real checkpoint132 audit/export
+preflight. It has not been activated: the separate supervisor still owns the
+133–196 window. Activation waits for that actual save and mandatory teardown;
+no running game, model, prompt, budget or native image is changed.
 
 ## Earlier capture: selected-workshop v2, pair one
 
