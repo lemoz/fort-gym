@@ -27,7 +27,8 @@ def test_endurance_recording_preserves_audited_keyboard_actions_and_save_boundar
 
 def test_endurance_card_keeps_the_short_study_and_year_two_claim_separate():
     catalog = json.loads((RECORDINGS / "catalog.json").read_text())["recordings"]
-    assert [row["id"] for row in catalog[:7]] == [
+    assert [row["id"] for row in catalog[:8]] == [
+        "astra-keyboard-endurance-v1-389-452",
         "astra-keyboard-endurance-v1-325-388",
         "astra-keyboard-endurance-v1-261-324",
         "astra-keyboard-endurance-v1-197-260",
@@ -38,8 +39,8 @@ def test_endurance_card_keeps_the_short_study_and_year_two_claim_separate():
     ]
     assert len([row for row in catalog if row["id"].startswith("controls-v2-")]) == 6
     previews = json.loads((RECORDINGS / "previews.json").read_text())["recordings"]
-    assert previews[5]["id"] == IDENTITY
-    assert previews[5]["recording_sha256"] == catalog[5]["sha256"]
+    assert previews[6]["id"] == IDENTITY
+    assert previews[6]["recording_sha256"] == catalog[6]["sha256"]
     html = (ROOT / "web/worlds.html").read_text()
     assert "30,700 game ticks" in html and "six installed beds" in html
     assert "1,788,513 returned tokens" in html
@@ -174,4 +175,30 @@ def test_checkpoint_388_keeps_growth_and_interrupted_native_time_visible():
     assert "decision-388 save was freshly reloaded" in html
     assert "grew from eleven to nineteen living dwarves" in html
     assert "Seven meeting or text screens interrupted time advancement" in html
+    assert "stock counts alone do not establish sustainability" in html
+
+
+def test_checkpoint_452_preserves_native_continuity_and_declining_supplies():
+    raw = (RECORDINGS / "astra-keyboard-endurance-v1-389-452.json").read_bytes()
+    assert hashlib.sha256(raw).hexdigest() == "c64ee2c324d0a343fb6f0ee80991a515dff035c97c2c8a127728194f2b678860"
+    data = json.loads(raw)
+    assert data["audit_sha256"] == "4d2cea9669cbe40ef04cc9984c65ada1a8b83d5bc7ca43ab7498fedeaaf4d2b6"
+    previous = json.loads((RECORDINGS / "astra-keyboard-endurance-v1-325-388.json").read_text())
+    frames = data["frames"]
+    assert [frame["decision"] for frame in frames] == list(range(389, 453))
+    assert data["saved_through_decision"] == 452
+    assert data["source_revision"] == previous["source_revision"]
+    assert data["control_profile"] == previous["control_profile"]
+    assert frames[0]["before"]["tick"] == previous["frames"][-1]["after"]["tick"]
+    assert sum(frame["after"]["ticks_advanced"] for frame in frames) == 66000
+    assert sum(frame["action"]["advance_ticks"] for frame in frames) == 66000
+    assert all(frame["after"]["ticks_advanced"] == frame["action"]["advance_ticks"] for frame in frames)
+    assert all(frame["accepted"] and "shortcut" not in frame["action"] for frame in frames)
+    assert sum(len(frame["action"]["keys"]) for frame in frames) == 235
+    assert previous["frames"][-1]["after"]["population"] == frames[-1]["after"]["population"] == 19
+    html = (ROOT / "web/worlds.html").read_text()
+    assert "301,050 total game ticks" in html
+    assert "14,136,731 returned tokens" in html
+    assert "decision-452 save was freshly reloaded" in html
+    assert "Food fell from 184 to 134 and drinks from 88 to 29" in html
     assert "stock counts alone do not establish sustainability" in html
