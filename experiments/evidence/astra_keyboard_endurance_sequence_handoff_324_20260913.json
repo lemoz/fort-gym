@@ -1,0 +1,61 @@
+{
+  "schema_version": "fortgym.endurance-sequence-handoff/v1",
+  "date_utc": "2026-09-13",
+  "campaign_id": "astra-keyboard-endurance-v1",
+  "sequence_revision": "4ce541fbe0cc20556744cd381298c31f1fb580a2",
+  "sequence_sha256": "f1368e1e31f1afc786371345b4c860293a67f004c0701707b0598f9726386ec8",
+  "sequence_plan_sha256": "265a7902df85ca2fa79c05db507881bc78a0eb351e1a179912191e971b43ebb1",
+  "event_prefix_lines": 8,
+  "event_prefix_sha256": "8fc0313efb22626fc1762d7c422f7b375de5800a46269b596af748e2e0f95d98",
+  "previous_event_prefix_lines": 5,
+  "previous_event_prefix_sha256": "9edc309283af5f3a58a56373dad7f294110455eecdadcc785745b78eec527168",
+  "previous_prefix_unchanged": true,
+  "completed_window": {
+    "first_decision": 261,
+    "last_decision": 324,
+    "supervisor_returncode": 0,
+    "relay_returncode": 0,
+    "operation_sha256": "4b72574c63e1af9ccabdbe46fca804a04961518c5e070fa8efb8f08a5f22ede1",
+    "audit_sha256": "f26641935a00c70bbdf704896d6563f9dcb6bb9ebee848cd5f467a1b3b60a20f"
+  },
+  "next_window": {
+    "first_decision": 325,
+    "last_decision": 388,
+    "supervisor_pid": 64795,
+    "coordinator_pid": 38257,
+    "parent_child_process_relationship_verified": true,
+    "actual_reload_verified": true,
+    "first_new_response_valid": true,
+    "final_save_verified": false
+  },
+  "automatic_successor_handoff_verified": true,
+  "automatic_successor_handoff_number": 2,
+  "manual_continuation_launches": 0,
+  "gameplay_inputs": 0,
+  "started_windows": 3,
+  "completed_windows": 2,
+  "maximum_new_windows": 13,
+  "terminal_and_reload_result": "astra_keyboard_endurance_324_20260913.json",
+  "terminal_and_reload_result_sha256": "06642a08431bd8ba9b6d05783ad9e918bca45bb10fb200ef0df3ec17d2ec4a6c",
+  "capture_helper_sha256": "1cef8456cade801d0a77f54a2d953e45f3d2cd8808d01d64ee5cfac696f38b6d",
+  "teardown": {
+    "guest_poweroff_returncode": 0,
+    "vm_stop_returncode": 0,
+    "both_vms_stopped_and_disks_closed_before_successor": true,
+    "vm_stop_log_sha256": "f074a41578d1291c07799cb430123c4d49da0fb05be67593de143dc7d9fa89bc",
+    "vm_stop_log_explanation": "Both shutdown commands returned zero. The original runtime warning remains in the log; independent stopped-state and closed-disk checks passed before the successor."
+  },
+  "inherited_cumulative_limits": {
+    "max_dispatches": 1028,
+    "max_total_tokens": 40000000
+  },
+  "budget_extensions": 1,
+  "new_budget_extensions": 0,
+  "reset_usage": false,
+  "reset_memory": false,
+  "public_live_verified_decision": 326,
+  "source_image_and_controls_unchanged": true,
+  "production_observer_candidate_installed": false,
+  "sequence_finished": false,
+  "full_goal_complete": false
+}

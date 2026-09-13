@@ -23,16 +23,20 @@ retains seven living dwarves, seven beds, three workshops and one farm after
 46,400 elapsed ticks. The [complete descriptive comparison](../experiments/evidence/selected_workshop_v2_cohort_20260912.json)
 preserves all outcomes without claiming a control ranking or independent worlds.
 
-The separate [Astra Medium endurance campaign has saved and freshly reloaded decision260](../experiments/evidence/astra_keyboard_endurance_260_20260913.json):
-105,100 elapsed ticks, seven living dwarves, nine beds, three workshops, three farms,
-69 food and 134 drinks. Native save, stopped-state/closed-disk checks and actual reload passed.
-Guest poweroff returned zero; VM stop returned one because the tool found an
-already Stopped VM. The original code and log are preserved. The entire saved agent state,
-clock, measured metrics and trace/usage prefixes were restored. Its one cumulative
+The separate [Astra Medium endurance campaign has saved and freshly reloaded decision324](../experiments/evidence/astra_keyboard_endurance_324_20260913.json):
+169,100 elapsed ticks, eleven living dwarves, nine beds, four workshops, three
+farms, 72 food and 122 drinks, with no recorded deaths. This window added 64,000
+ticks; population rose from seven to eleven and workshops from three to four.
+It had 63 accepted keyboard actions and one rejection, with no clock timeouts
+or menu deferrals. Cumulative usage is 10,418,341 returned tokens; charges are
+unreported. Inventory changes are not production or consumption rates.
+Native save, stopped-state/closed-disk checks and actual reload passed. Guest
+poweroff and VM stop both returned zero. The entire saved agent state, clock,
+measured metrics and trace/usage prefixes were restored. Its one cumulative
 budget extension is inherited without another append or accounting reset.
-Astra is playing decisions 261–324, with public live frame263 independently
+Astra is playing decisions 325–388, with public live frame326 independently
 matched to the original screen/chosen action. This new window's final save is
-not yet verified.
+not yet verified. The 261–324 replay is exported, not yet published.
 The [197–260 replay is now public](../experiments/evidence/astra_keyboard_endurance_260_website_20260913.json):
 27 recordings / 2,280 frames at website revision `67b0ff107`. Local and exact-head
 remote suites each passed 1,310 Python tests with five skips and seven warnings;
@@ -72,8 +76,12 @@ change. It will audit each completed window before serial continuation, retainin
 the existing ceilings and mandatory teardown.
 The [first actual successor handoff is now verified](../experiments/evidence/astra_keyboard_endurance_sequence_handoff_260_20260913.json):
 the same coordinator finished 197–260, audited and exported the save, then launched
-261–324 and restored the exact state without a manual relaunch. Later handoffs
-remain unverified. Do not start a competing manual continuation while it is running.
+261–324 and restored the exact state without a manual relaunch. The
+[second actual successor handoff is also verified](../experiments/evidence/astra_keyboard_endurance_sequence_handoff_324_20260913.json):
+the same coordinator finished 261–324, audited and exported checkpoint324, then
+launched 325–388 with the exact saved state. The original plan and earlier event
+prefix remain unchanged. Later handoffs remain unverified. Do not start a
+competing manual continuation while it is running.
 
 A [separate private production-observer candidate](../experiments/evidence/native_production_observer_reaction_candidate_20260913.json)
 is pushed in draft PR183 at `7cfae8e13`. It now preserves cumulative reaction
@@ -85,8 +93,8 @@ hosted CI passed 5,586 tests with 220 skips. Native event coverage, noninterfere
 checkpoint binding and complete flow attribution remain unverified or unimplemented.
 The [earlier candidate receipt](../experiments/evidence/native_production_observer_candidate_20260913.json)
 is preserved. Nothing is installed in the active campaign. Its unchanged
-coordinator still owns the 261–324 window; the relay reports decision295 running,
-not a new completed checkpoint or an independently reverified public frame.
+coordinator now owns the 325–388 window, with the actual checkpoint324 reload
+and public frame326 verified separately above.
 
 An [input-level adaptation observation](../experiments/evidence/astra_keyboard_endurance_key_adaptation_20260913.json)
 retains decision89's unsupported keypad aliases and decision90's accepted arrow

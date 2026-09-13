@@ -13,17 +13,20 @@ This summary supersedes the capture-time running/preparation statements in the
 historical sections below. Original result manifests and earlier evidence are
 unchanged. The full Year-Two/cross-model goal is still active.
 
-The latest [endurance save and actual reload](../experiments/evidence/astra_keyboard_endurance_260_20260913.json)
-are verified through decision260: 105,100 elapsed ticks, seven living dwarves,
-nine beds, three workshops, three farms and 69 food / 134 drinks. Cumulative
-returned usage is 8,141,754 tokens; subscription charges remain unreported.
-The 197–260 window added 31,200 actual ticks with no clock timeouts, menu
-deferrals or rejected actions: 64 keyboard actions and 459 confirmed keys.
-The guest powered off with code zero; VM stop returned one and reported that
-the VM was already Stopped. Separate stopped-state and closed-disk checks passed.
-Original outcomes and logs are retained before the next window restored the complete saved agent state,
-native clock/metrics and original history. The single budget append is unchanged.
-Decisions 261–324 are running, with public frame263 independently verified.
+The latest [endurance save and actual reload](../experiments/evidence/astra_keyboard_endurance_324_20260913.json)
+are verified through decision324: 169,100 elapsed ticks, eleven living dwarves,
+nine beds, four workshops, three farms and 72 food / 122 drinks, with no recorded
+deaths. Cumulative returned usage is 10,418,341 tokens; subscription charges
+remain unreported. The 261–324 window added 64,000 actual ticks with no clock
+timeouts or menu deferrals: 63 accepted keyboard actions, one rejection and
+232 confirmed keys. A repeated unsupported `PageDown` symbol at decision294
+was followed by accepted arrows at 295; that is input acceptance, not proof of
+the intended menu selection. No operator gameplay input occurred.
+Guest poweroff and VM stop returned zero. Separate stopped-state and closed-disk
+checks passed before the complete saved agent state, clock/metrics and original
+history were restored. The single budget append is unchanged. Decisions 325–388
+are running, with public frame326 independently matched to its original captured
+screen and chosen action. The 261–324 replay is exported, not yet published.
 The [197–260 replay is now publicly verified](../experiments/evidence/astra_keyboard_endurance_260_website_20260913.json)
 at website revision `67b0ff107abf29dda457705980d3576a29d817cf`: 27 recordings
 and 2,280 frames. All 26 prior recording files, rows and previews are unchanged.
@@ -34,7 +37,8 @@ verified new total, all 22 focused tests passed. Recording bytes were unchanged.
 Public HTTPS verified every recording and the live feed at decision314.
 Service identities, database counts, host-local files, coordinator and native
 runtime were preserved. No new infrastructure, service restart, gameplay input,
-manual continuation or main merge occurred. Checkpoint324 is still unverified.
+manual continuation or main merge occurred. That release predates checkpoint324;
+its separately verified save/reload is described above.
 The [133–196 replay is now publicly verified](../experiments/evidence/astra_keyboard_endurance_196_website_20260913.json)
 at website revision `a0bf019b7eec2cb9144ae34d7cae638dd2f7dd8f`: 26 recordings
 and 2,216 frames. All 25 prior recording files, rows and previews are unchanged.
@@ -71,7 +75,12 @@ teardown after each window; do not launch a competing manual owner.
 Its [first automatic successor handoff](../experiments/evidence/astra_keyboard_endurance_sequence_handoff_260_20260913.json)
 finished and audited checkpoint260, exported the new replay, and launched
 261–324 under the same coordinator. Actual reload and new autonomous decisions
-are verified. Later handoffs and the full sequence remain unverified. Export is not publication.
+are verified. The [second actual successor handoff](../experiments/evidence/astra_keyboard_endurance_sequence_handoff_324_20260913.json)
+then finished and audited checkpoint324, exported its replay and launched
+325–388 under the same coordinator. Actual reload and public frame326 are
+verified. The original plan and first five event lines are unchanged; the new
+eight-event prefix is retained. Later handoffs and the full sequence remain
+unverified. Export is not publication.
 
 The [private production-observer reaction candidate](../experiments/evidence/native_production_observer_reaction_candidate_20260913.json)
 is draft PR183 at `7cfae8e13c83cd82d9c306ab56fec72b6d2fe41a`. Its 47 Lua
@@ -86,8 +95,9 @@ consumption, trade and losses remain unmeasured. Native coverage and
 noninterference still require a separately declared fixture, then checkpoint
 binding and opt-in integration. The active runtime and agent inputs are unchanged.
 The [previous candidate receipt](../experiments/evidence/native_production_observer_candidate_20260913.json)
-is retained. The existing coordinator's relay reports decision295 running;
-checkpoint324 and an updated public-frame match are not claimed by this receipt.
+is retained. That candidate receipt's older decision295 observation is not a
+current runtime claim; checkpoint324 and public frame326 are separately verified
+by the native save/reload evidence above.
 
 All six declared v2 attempts have terminal native audits at decision
 128. All six freshly reloaded their own decision-64 save; none of these final
