@@ -10,7 +10,7 @@ from fort_gym.bench.production_observer_lua import PRODUCTION_OBSERVER_LUA
 LUA = shutil.which("lua")
 PRELUDE = r"""
 local callbacks = {JOB_COMPLETED=1, ITEM_CREATED=2, UNLOAD=3}
-local eventful = {onJobCompleted={}, onItemCreated={}, onUnload={},
+local eventful = {onJobCompleted={}, onItemCreated={}, onUnload={}, onReactionComplete={},
     eventType=callbacks, enabled={}}
 eventful.enableEvent = function(kind, frequency) eventful.enabled[kind] = frequency end
 local loaded = true
@@ -46,6 +46,122 @@ end
 @pytest.mark.parametrize(
     "scenario",
     [
+        """
+local observer = new_production_observer(df, dfhack, eventful, config)
+observer.start()
+local reaction, worker, product = {code='BREW_TEST'}, {id=7}, {quantity=999}
+local a, b = item(17, 5, 6), item(18, 1, 7, false)
+local inputs = {item(19, 8, 7, true)}
+eventful.onReactionComplete[key](reaction, product, worker, inputs, {}, {a})
+eventful.onReactionComplete[key](reaction, product, worker, inputs, {}, {a, b})
+local r = observer.snapshot()
+assert(#r.events == 2 and r.callbacks_seen.reaction == 2)
+assert(r.events[1].kind == 'reaction_output_observation')
+assert(r.events[2].vector_scope == 'cumulative_outputs_at_callback')
+assert(r.events[2].output_items[1].item_id == r.events[1].output_items[1].item_id)
+assert(r.events[2].output_items[1].units_at_observation == 5)
+assert(r.events[2].output_items[2].resource == 'other')
+assert(r.events[2].worker_id == 7 and r.events[2].reaction_code == 'BREW_TEST')
+assert(r.events[2].production_quantity_status == 'not_totalled')
+assert(r.flow_measurement.production == 'not_measured')
+assert(r.flow_measurement.consumption == 'not_measured')
+assert(product.quantity == 999 and inputs[1]:getStackSize() == 8)
+r.events[1].output_items[1].flags.rotten = true
+assert(not observer.snapshot().events[1].output_items[1].flags.rotten)
+assert(not a.flags.rotten and not r.native_coverage_validated)
+""",
+        """
+local observer = new_production_observer(df, dfhack, eventful, config)
+observer.start()
+local a = item(17, 3, 7, true)
+eventful.onReactionComplete[key]({code='FOOD_TEST'}, {}, nil, {}, {}, {a, a})
+local r = observer.snapshot()
+assert(r.events[1].duplicate_output_id_records == 1)
+assert(r.events[1].worker_id == false)
+assert(r.events[1].output_items[1].resource == 'food')
+assert(r.events[1].production_quantity_status == 'not_totalled')
+assert(r.retained_item_records == 2)
+""",
+        """
+config.max_events = 3
+local observer = new_production_observer(df, dfhack, eventful, config)
+observer.start()
+local outputs = {item(17, 3, 6), item(18, 1, 7, false)}
+eventful.onReactionComplete[key]({code='TEST'}, {}, nil, {}, {}, outputs)
+eventful.onReactionComplete[key]({code='TEST'}, {}, nil, {}, {}, outputs)
+eventful.onJobCompleted[key](job())
+local r = observer.snapshot()
+assert(r.max_item_records == 3 and r.retained_item_records == 2)
+assert(#r.events == 2 and r.observed_events == 3 and r.dropped_events == 1)
+assert(not r.collector_records_complete)
+""",
+        """
+local observer = new_production_observer(df, dfhack, eventful, config)
+observer.start()
+local other = function() end
+eventful.onReactionComplete.other = other
+local retained_callback = eventful.onReactionComplete[key]
+observer.stop()
+assert(eventful.onReactionComplete[key] == nil and eventful.onReactionComplete.other == other)
+retained_callback({code='TEST'}, {}, nil, {}, {}, {item(17, 3, 6)})
+assert(observer.snapshot().callbacks_seen.reaction == 0)
+""",
+        """
+local observer = new_production_observer(df, dfhack, eventful, config)
+observer.start()
+local other = function() end
+eventful.onReactionComplete[key] = other
+observer.stop()
+assert(eventful.onReactionComplete[key] == other)
+""",
+        """
+local observer = new_production_observer(df, dfhack, eventful, config)
+observer.start()
+loaded = false
+eventful.onUnload[key]()
+assert(eventful.onReactionComplete[key] == nil)
+""",
+        """
+eventful.onReactionComplete[key] = function() end
+local observer = new_production_observer(df, dfhack, eventful, config)
+assert(not pcall(observer.start))
+assert(eventful.onJobCompleted[key] == nil)
+""",
+        """
+local original = function() end
+eventful.onReactionCompleting = {other=original}
+local observer = new_production_observer(df, dfhack, eventful, config)
+observer.start()
+eventful.onReactionComplete[key]({code='TEST'}, {}, {id=1}, {}, {}, {item(17, 0, 6)})
+assert(observer.snapshot().events[1].output_items[1].units_at_observation == 0)
+assert(eventful.onReactionCompleting.other == original)
+assert(eventful.onReactionCompleting[key] == nil)
+""",
+        *[
+            f"""
+local observer = new_production_observer(df, dfhack, eventful, config)
+observer.start()
+local reaction, worker, outputs = {{code='TEST'}}, {{id=7}}, {{item(17, 3, 6)}}
+{change}
+eventful.onReactionComplete[key](reaction, {{}}, worker, {{}}, {{}}, outputs)
+local r = observer.snapshot()
+assert(#r.events == 0 and r.read_failures == 1 and not r.collector_records_complete)
+assert(r.flow_measurement.production == 'not_measured')
+"""
+            for change in (
+                "reaction.code = ''",
+                "reaction.code = string.rep('A', 129)",
+                "reaction.code = 'BAD' .. string.char(10)",
+                "worker.id = false",
+                "outputs = {}",
+                "outputs = nil",
+                "for i=2,33 do outputs[i] = item(i+100, 3, 6) end",
+                "outputs[1].flags.hidden = nil",
+                "outputs[1].getStackSize = function() return math.huge end",
+                "outputs[2] = {id=18}",
+                "df.global.world.cur_savegame.save_dir = 'elsewhere'",
+            )
+        ],
         """
 local observer = new_production_observer(df, dfhack, eventful, config)
 config.max_events = 0

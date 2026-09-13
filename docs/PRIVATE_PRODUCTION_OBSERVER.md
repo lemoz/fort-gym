@@ -21,6 +21,13 @@ The [eventful implementation](https://github.com/DFHack/dfhack/blob/0.47.05-r8/p
 passes those notifications to Lua; its polling-frequency API can reduce the
 shared frequency but cannot restore a previous higher frequency.
 
+Its reaction-complete hook passes the cumulative output-item vector after a
+product appends items. Later callbacks can therefore repeat earlier outputs.
+The collector preserves reaction code, worker identity and every output-item
+identity, including overlap, without treating recipe quantities or repeated
+vectors as newly produced units. Coverage of ordinary built-in workshop jobs
+still needs native verification; this hook is not a complete production meter.
+
 Therefore record job notifications and item observations separately, retain
 uncertainty, and validate native coverage before assigning quantities or causes.
 Do not sum item observations into a production claim or subtract inventories to
@@ -35,20 +42,28 @@ construct it with its real `df`, `dfhack`, `plugins.eventful` and a declaration:
 - campaign identity, segment identity, exact root and a 1–8,192 event capacity;
 - DF v0.47.05 linux64 / DFHack 0.47.05-r8;
 - paused start and snapshot boundaries, monotonic native calendar and frames;
-- zero-frequency job and item notifications, read-only item methods, and an
-  unload listener that removes only this observer's own callbacks.
+- zero-frequency job and item notifications, reaction-complete callbacks,
+  read-only item methods, and an unload listener that removes only this
+  observer's own callbacks.
 
 Events contain a sequence, native clock, job type/identity or item identity,
 food/drink classification, stack units at observation and item flags. They do
 not contain agent memory, prompts, model responses or a gameplay action.
-An item observation is not attributed to a recipe or worker. Job quantity is
-explicitly unmeasured. Production, consumption, trade and loss statuses remain
-`not_measured`; no zero-valued quantities replace missing measurements.
+An item-creation observation is not attributed to a recipe or worker. Reaction
+observations preserve a cumulative vector of food, drink and nonfood outputs,
+mark quantities `not_totalled`, and report duplicate item identities within a
+vector. Job quantity is explicitly unmeasured. Production, consumption, trade
+and loss statuses remain `not_measured`; no zero-valued quantities replace
+missing measurements.
 
 Snapshots copy the buffer without consuming it. Read failures, missing items,
 clock/save changes and overflow stay visible. The memory bound retains the first
-events and reports how many later events were dropped. Failed installation
-consumes the observer identity and cannot appear complete. A caller cannot mutate
+events and reports how many later events were dropped. Event count and total
+retained item records each have the declared capacity; a reaction vector over
+32 items is a read failure, and an event that exceeds retained capacity is
+dropped whole. Inputs, reagents and the reaction pre-completion hook are never
+modified. Failed installation consumes the observer identity and cannot appear
+complete. A caller cannot mutate
 the declaration or a returned snapshot to change retained observations.
 `collector_records_complete` describes only collector retention/read success.
 `native_coverage_validated` remains false, including in passing unit tests.
@@ -66,6 +81,8 @@ that overhead. Never install this candidate into the current frozen campaign.
 2. Capture independently verifiable single and repeated workshop completions,
    cancellation at relevant timer boundaries, actual product item identities and
    stacks, edible non-drink production and irrelevant/nonfood item creation.
+   Include multi-product reactions whose callbacks share a cumulative vector,
+   and distinguish those from built-in jobs that may bypass the reaction hook.
 3. Check trade/migrant arrivals, splitting/merging stacks, disappearance before a
    callback, consumption and spoilage. If the event interface cannot identify
    a cause, retain it as unattributed and add a separately tested native hook.

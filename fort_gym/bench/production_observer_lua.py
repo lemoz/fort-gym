@@ -24,9 +24,10 @@ local function new_production_observer(df, dfhack, eventful, config)
     assert(dfhack.getDFHackVersion() == '0.47.05-r8')
     local key = 'fortgym_production_observer_v1'
     local events, sequence, dropped, read_failures = {}, 0, 0, 0
+    local retained_item_records = 0
     local installed, started, stop_reason = false, false, nil
     local origin, last_clock
-    local callbacks_seen = {job = 0, item = 0}
+    local callbacks_seen = {job = 0, item = 0, reaction = 0}
     local function copy(value)
         if type(value) ~= 'table' then return value end
         local result = {}
@@ -58,8 +59,12 @@ local function new_production_observer(df, dfhack, eventful, config)
     local function append(event)
         sequence = sequence + 1
         event.sequence = sequence
-        if #events < config.max_events then
+        local item_count = event.output_items and #event.output_items
+            or (event.item_id and 1 or 0)
+        if #events < config.max_events
+            and retained_item_records + item_count <= config.max_events then
             events[#events + 1] = event
+            retained_item_records = retained_item_records + item_count
         else
             dropped = dropped + 1
         end
@@ -92,33 +97,74 @@ local function new_production_observer(df, dfhack, eventful, config)
                 product_quantity_status = 'not_measured'}
         end)
     end
+    local function read_item(item, include_nonfood)
+        local id = item.id
+        assert(integer(id), 'invalid item id')
+        local kind = item:getType()
+        assert(integer(kind), 'invalid item type')
+        local resource
+        if kind == df.item_type.DRINK then
+            resource = 'drink'
+        else
+            local edible = item:isEdibleRaw(0)
+            assert(type(edible) == 'boolean', 'invalid food predicate')
+            if not edible and not include_nonfood then return nil end
+            resource = edible and 'food' or 'other'
+        end
+        local units = item:getStackSize()
+        assert(integer(units), 'invalid stack size')
+        local flags = {}
+        for _, name in ipairs({'removed', 'garbage_collect', 'foreign',
+            'trader', 'owned', 'spider_web', 'rotten', 'forbid', 'in_job', 'hidden'}) do
+            assert(type(item.flags[name]) == 'boolean', 'missing item flag')
+            flags[name] = item.flags[name]
+        end
+        assert(not flags.removed and not flags.garbage_collect, 'item unavailable')
+        return {item_id = id, resource = resource, item_type = kind,
+            units_at_observation = units, flags = flags}
+    end
     local function on_item(id)
         capture('item', function()
             assert(integer(id), 'invalid item id')
             local item = assert(df.item.find(id), 'created item disappeared')
             assert(item.id == id, 'item identity differs')
-            local kind = item:getType()
-            assert(integer(kind), 'invalid item type')
-            local resource
-            if kind == df.item_type.DRINK then
-                resource = 'drink'
-            else
-                local edible = item:isEdibleRaw(0)
-                assert(type(edible) == 'boolean', 'invalid food predicate')
-                if not edible then return nil end
-                resource = 'food'
+            local record = read_item(item, false)
+            if record then
+                record.kind = 'item_creation_observation'
+                record.attribution = 'unattributed'
             end
-            local units = item:getStackSize()
-            assert(integer(units), 'invalid stack size')
-            local flags = {}
-            for _, name in ipairs({'removed', 'garbage_collect', 'foreign',
-                'trader', 'owned', 'spider_web', 'rotten', 'forbid', 'in_job', 'hidden'}) do
-                assert(type(item.flags[name]) == 'boolean', 'missing item flag')
-                flags[name] = item.flags[name]
+            return record
+        end)
+    end
+    local function on_reaction(reaction, _product, unit, _inputs, _reagents, outputs)
+        capture('reaction', function()
+            local code = reaction.code
+            assert(type(code) == 'string' and #code > 0 and #code <= 128
+                and not code:find('%c'), 'invalid reaction code')
+            local worker_id = false
+            if unit ~= nil then
+                assert(integer(unit.id), 'invalid reaction worker')
+                worker_id = unit.id
             end
-            assert(not flags.removed and not flags.garbage_collect, 'item unavailable')
-            return {kind = 'item_creation_observation', item_id = id, resource = resource,
-                units_at_observation = units, flags = flags, attribution = 'unattributed'}
+            local count = #outputs
+            assert(integer(count) and count >= 1 and count <= 32,
+                'reaction output vector unavailable or over limit')
+            local records, seen, duplicates = {}, {}, 0
+            for _, item in ipairs(outputs) do
+                assert(#records < count, 'reaction vector grew')
+                local record = read_item(item, true)
+                records[#records + 1] = record
+                if seen[record.item_id] then duplicates = duplicates + 1 end
+                seen[record.item_id] = true
+            end
+            assert(#records == count and #outputs == count, 'reaction vector changed')
+            -- The plugin passes the whole output vector, not only this product's
+            -- newly appended suffix. Preserve identities; never total this as yield.
+            return {kind = 'reaction_output_observation', reaction_code = code,
+                worker_id = worker_id, output_items = records,
+                vector_scope = 'cumulative_outputs_at_callback',
+                duplicate_output_id_records = duplicates,
+                production_quantity_status = 'not_totalled'}
         end)
     end
     local function stop(reason)
@@ -129,6 +175,9 @@ local function new_production_observer(df, dfhack, eventful, config)
             end
             if eventful.onItemCreated[key] == on_item then
                 eventful.onItemCreated[key] = nil
+            end
+            if eventful.onReactionComplete[key] == on_reaction then
+                eventful.onReactionComplete[key] = nil
             end
             installed = false
         end
@@ -143,6 +192,7 @@ local function new_production_observer(df, dfhack, eventful, config)
         assert(not started, 'collector identity already consumed')
         assert(eventful.onJobCompleted[key] == nil
             and eventful.onItemCreated[key] == nil
+            and eventful.onReactionComplete[key] == nil
             and eventful.onUnload[key] == nil, 'observer listener collision')
         origin = boundary(true)
         last_clock = origin.year * 403200 + origin.year_tick
@@ -160,6 +210,7 @@ local function new_production_observer(df, dfhack, eventful, config)
         end
         eventful.onJobCompleted[key] = on_job
         eventful.onItemCreated[key] = on_item
+        eventful.onReactionComplete[key] = on_reaction
         eventful.onUnload[key] = on_unload
         installed = true
     end
@@ -177,6 +228,8 @@ local function new_production_observer(df, dfhack, eventful, config)
             start = copy(origin), endpoint = ok and endpoint or false,
             installed = installed, stop_reason = stop_reason or false,
             max_events = config.max_events, observed_events = sequence,
+            max_item_records = config.max_events, max_reaction_output_items = 32,
+            retained_item_records = retained_item_records,
             retained_events = #events, dropped_events = dropped, read_failures = read_failures,
             callbacks_seen = copy(callbacks_seen), events = copy(events),
             collector_records_complete = ok and read_failures == 0 and dropped == 0
