@@ -13,6 +13,20 @@ This summary supersedes the capture-time running/preparation statements in the
 historical sections below. Original result manifests and earlier evidence are
 unchanged. The full Year-Two/cross-model goal is still active.
 
+The latest [endurance save and actual reload](../experiments/evidence/astra_keyboard_endurance_132_20260913.json)
+are verified through decision132: 40,700 elapsed ticks, seven living dwarves,
+seven beds, three workshops, two farms and 64 food / 53 drinks. Cumulative
+returned usage is 3,799,537 tokens; subscription charges remain unreported.
+The 69–132 window added 10,000 actual ticks with no clock timeouts, 63 accepted
+keyboard actions and one rejection. Original outcomes are retained. Native
+teardown passed before the next window restored the complete saved agent state,
+native clock/metrics and original history. The single budget append is unchanged.
+Decisions 133–196 are running, with public frame140 independently verified.
+The new nonoverlapping 64-frame replay is exported but not yet published; the
+public catalog remains at the separately verified 24 recordings / 2,088 frames.
+Later final save and sustained functioning remain unproven. Earlier captures
+below retain their original boundaries.
+
 All six declared v2 attempts have terminal native audits at decision
 128. All six freshly reloaded their own decision-64 save; none of these final
 128 saves has had a separate fresh-reload check. The source/image, original
