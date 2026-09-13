@@ -14,6 +14,16 @@ cohort below. Long-term self-sufficiency and the full delivery goal remain open.
 
 ## Current experiment summary
 
+The [decision453–516 gameplay review](../experiments/evidence/astra_keyboard_endurance_516_gameplay_review_20260913.json)
+finds observable adaptation attempts, not a demonstrated solution to drink supply.
+Recorded screens show inactive plant brewing, a fruit-brewing task later assigned
+to a worker, gathering work and a later fruit-brewing ingredient cancellation.
+Accepted keyboard actions inspected labor settings, tried fruit brewing and
+designated gathering. Drink stocks started and ended at 29; the endpoint still
+has nineteen living dwarves and zero recorded deaths. Neither stock totals nor
+assigned jobs establish completed production or accessible reserves. This
+retrospective review changes no live condition and supplies no hints to Astra.
+
 The [private job-to-output evidence candidate](../experiments/evidence/native_production_job_context_candidate_20260913.json)
 is pushed in draft PR183 at `90600867d87a54f63a291175b2cc47a0ddbd4156`.
 It records a reaction worker's current job, workshop holder and assigned worker,

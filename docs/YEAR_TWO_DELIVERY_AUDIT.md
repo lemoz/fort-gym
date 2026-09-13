@@ -571,21 +571,31 @@ the native result's original unpublished state.
 
 ## Next work toward the full goal
 
+The [latest saved-window gameplay review](../experiments/evidence/astra_keyboard_endurance_516_gameplay_review_20260913.json)
+is grounded in seven hashed replay frames and eight accepted adjustment actions.
+It records brewing investigation, switching to fruit brewing and plant-gathering
+designations. A worker assignment is visible, followed later by an ingredient
+cancellation; inactive plant brewing is still visible at decision512. This
+supports adaptation attempts, not completed brewing or a resolved supply problem.
+The initial and endpoint drink stocks both equal 29. Nineteen surviving citizens
+and no recorded deaths are useful endurance evidence, not proof of accessible
+reserves or self-sufficiency. No hints were sent to the model.
+
 1. The six-attempt controls cohort and all six public replays are complete.
    Retain all three descriptive pairs, including the drowning; these outcomes
    do not establish a control ranking. Do not extend or rewrite the frozen
    128-response attempts to manufacture a longer-duration comparison.
 2. Continue the active, separate PR181 Astra endurance campaign through its
    declared save boundaries. Its initial four-response save and actual own-save
-   reload are verified, and checkpoint260 has now saved and freshly reloaded.
-   The automatic coordinator now owns the 261–324 window and later serial
+   reload are verified, and checkpoint516 has now saved and freshly reloaded.
+   The automatic coordinator now owns the 517–580 window and later serial
    handoffs under the existing limits. Observe that same coordinator; do not
    manually relaunch a window. Publish actual replay batches after their audits.
    The 403,200-tick anniversary is a milestone, not the stop condition or proof
    of a functioning fortress. Each continuation is not an independent trial.
 3. The portable cumulative-budget path now has an actual append, saved extension
-   at checkpoint260 and inherited-limit fresh reload, with memory/usage preserved.
-   Verify the current inherited-budget window's final save at decision324 next.
+   through checkpoint516 and inherited-limit fresh reload, with memory/usage preserved.
+   Verify the current inherited-budget window's final save at decision580 next.
    Do not append repeatedly, reset accounting, change the condition, migrate
    old controls saves or replace the running owner to obtain a passing result.
    The unchanged frozen source `5ddf1e6718dab2e8351e8dc24a2afe5071cd2592`
@@ -596,7 +606,11 @@ the native result's original unpublished state.
    or accessibility. Retain unknowns and keep private evaluation data out of a
    screen-only model condition. The earlier exploratory Year-Two milestone
    remains valid with its disclosed save loss; it is not indefinite
-   self-sufficiency or a matched control/model ranking.
+   self-sufficiency or a matched control/model ranking. The new observer's first
+   bounded native fixture must wait for release of the shared runtime. Do not
+   make complete item-flow attribution a prerequisite for honestly qualified
+   gameplay assessment or keep extending offline preparation instead of testing
+   the prepared observer and evaluating actual play.
 5. Deliver model/configuration comparisons and evidence links on the website,
    with actual returned usage and unreported dollar charges distinguished.
    Main integration remains a separate promotion decision; no rejected merge

@@ -1,0 +1,246 @@
+{
+  "schema_version": "fortgym.endurance-gameplay-review/v1",
+  "date_utc": "2026-09-13",
+  "campaign_id": "astra-keyboard-endurance-v1",
+  "source_revision": "4b526b5636e6f568a4cae1a1227d746d9c6922c3",
+  "first_decision": 453,
+  "last_decision": 516,
+  "scope": "Retrospective review of already audited native snapshots and publicly recorded screens and actions",
+  "audit_sha256": "4bf53a6e6086e3636076a67bf944746d4ff2d035d20ae0c34a75aaccb0081d25",
+  "recording_sha256": "36982b8e7703c0ddaaec1d38f11209c95fca23159819fe2441a2171e3f210231",
+  "frame_hash_encoding": "SHA256 of UTF-8 JSON.stringify(parsed frame), preserving parsed property order",
+  "screen_text_projection": "ASCII characters retained; other glyphs replaced with spaces; column-major source; no OCR",
+  "initial_metrics": {
+    "population": 19,
+    "food_stock": 134,
+    "drink_stock": 29,
+    "wood_stock": null,
+    "stone_stock": null,
+    "functional_rooms": null,
+    "completed_workshops": 4,
+    "completed_beds": 9,
+    "completed_farms": 3,
+    "recorded_dead_citizens": 0
+  },
+  "saved_metrics": {
+    "population": 19,
+    "food_stock": 170,
+    "drink_stock": 29,
+    "wood_stock": null,
+    "stone_stock": null,
+    "functional_rooms": null,
+    "completed_workshops": 4,
+    "completed_beds": 9,
+    "completed_farms": 3,
+    "recorded_dead_citizens": 0
+  },
+  "saved_elapsed_ticks": 345050,
+  "evidence": [
+    {
+      "decision": 458,
+      "screen_ascii_excerpt": [
+        "  Brew drink from plant/R                         Inactive                                          Still"
+      ],
+      "note": "Inactive plant-brewing queue entry",
+      "frame_sha256": "1a861f2f3f6f2c2ffd68b1267c21bcbe355667dadb4440d9cfad82d1d68c6743"
+    },
+    {
+      "decision": 473,
+      "screen_ascii_excerpt": [
+        "              Rain Snow      Oddom Zedotd shmab, Miner cancels Give Water: No water source.            H:0/0/19/0/0/0/0"
+      ],
+      "note": "Water-delivery cancellation visible; cause beyond displayed message unverified",
+      "frame_sha256": "72965c05e661d96307fda81ca0be6b414d9066741a00a98bfab353293b933df8"
+    },
+    {
+      "decision": 489,
+      "screen_ascii_excerpt": [
+        " `  \"' .'',\"  ` .\",\"\",'.`  `',\".  `...',. .''`'.,. `,'`,`,\"',.\"O  Brew drink from fruit"
+      ],
+      "note": "Fruit-brewing task visible after keyboard order",
+      "frame_sha256": "9a48281d646e36b2bfe67a5a7bd7bccfbdc3d8d886aa51b2d693ed285837184d"
+    },
+    {
+      "decision": 500,
+      "screen_ascii_excerpt": [
+        "  Gather Plants                                   Sibrek Tunmokez, Gem Cutter",
+        "  Gather Plants                                   Endok Oslankosh, Herbalist",
+        "  Brew drink from fruit/R                         Urvad Stuk ndoren, Stoneworker                    Still"
+      ],
+      "note": "Workers assigned to gathering and fruit brewing at this captured instant",
+      "frame_sha256": "4d1e1c04684266ce5fd74e57f70b4d9b9af11f2153f517428a9881cade732b4f"
+    },
+    {
+      "decision": 504,
+      "screen_ascii_excerpt": [
+        "         UrvadSnowk ndoren, Stoneworker cancels Brew drink from fruit: Needs unrotten DRINK_MAT-produciH:0/0/19/0/0/0/0"
+      ],
+      "note": "Fruit-brewing cancellation and ingredient requirement visible",
+      "frame_sha256": "30712148b93f3e31d524a5abea134d57c028ce308476ccaf919304403448e6f9"
+    },
+    {
+      "decision": 506,
+      "screen_ascii_excerpt": [
+        "  Apples                                                               2                      Cook Brew",
+        "  Plump helmets                                                        10                     Cook Brew",
+        "  Rat weed                                                             30?                    Cook Brew"
+      ],
+      "note": "Kitchen lists ingredients and permissions; accessibility not established",
+      "frame_sha256": "321e59fc46c25d85af5c0e9cbec569494934f1e364c49e6d3d25c4ee394eb57d"
+    },
+    {
+      "decision": 512,
+      "screen_ascii_excerpt": [
+        "  Brew drink from plant/R                         Inactive                                          Still"
+      ],
+      "note": "Plant-brewing job still inactive later",
+      "frame_sha256": "de0308c0dadd932382602872d015ccc5db6a67c86d62916867b333c7cc62170e"
+    }
+  ],
+  "accepted_adjustment_actions": [
+    {
+      "decision": 463,
+      "declared_intent": "Inspect Urvad's labor assignments to resolve inactive brewing.",
+      "keys": [
+        "z",
+        "v",
+        "p",
+        "l"
+      ],
+      "accepted": true,
+      "actual_ticks": 0
+    },
+    {
+      "decision": 464,
+      "declared_intent": "Inspect Urvad's farming labors to enable brewing.",
+      "keys": [
+        "SYM:0:Down",
+        "SYM:0:Down",
+        "SYM:0:Down",
+        "SYM:0:Down",
+        "SYM:0:Down",
+        "SYM:0:Enter"
+      ],
+      "accepted": true,
+      "actual_ticks": 0
+    },
+    {
+      "decision": 465,
+      "declared_intent": "Open Urvad's Farming/Related labor options using menu scrolling.",
+      "keys": [
+        "+",
+        "+",
+        "+",
+        "+",
+        "+",
+        "SYM:0:Enter"
+      ],
+      "accepted": true,
+      "actual_ticks": 0
+    },
+    {
+      "decision": 486,
+      "declared_intent": "Queue brewing at the surface still and inspect whether the job is accepted.",
+      "keys": [
+        "b"
+      ],
+      "accepted": true,
+      "actual_ticks": 0
+    },
+    {
+      "decision": 488,
+      "declared_intent": "Queue brewing from available fruit and inspect the resulting job.",
+      "keys": [
+        "f"
+      ],
+      "accepted": true,
+      "actual_ticks": 0
+    },
+    {
+      "decision": 489,
+      "declared_intent": "Repeat fruit brewing and allow production to proceed.",
+      "keys": [
+        "r",
+        "SYM:0:ESC",
+        " "
+      ],
+      "accepted": true,
+      "actual_ticks": 2000
+    },
+    {
+      "decision": 493,
+      "declared_intent": "Designate a broad patch of surface plants for gathering to supply food and brewing ingredients.",
+      "keys": [
+        "SYM:0:ESC",
+        "d",
+        "p",
+        "SYM:1:Left",
+        "SYM:1:Left",
+        "SYM:1:Left",
+        "SYM:1:Up",
+        "SYM:0:Enter",
+        "SYM:1:Right",
+        "SYM:1:Right",
+        "SYM:1:Right",
+        "SYM:1:Right",
+        "SYM:1:Down",
+        "SYM:1:Down",
+        "SYM:0:Enter",
+        "SYM:0:ESC",
+        " "
+      ],
+      "accepted": true,
+      "actual_ticks": 2000
+    },
+    {
+      "decision": 498,
+      "declared_intent": "Designate a broad area near the workshops for plant gathering, then let workers gather brewing ingredients.",
+      "keys": [
+        "SYM:1:Left",
+        "SYM:1:Left",
+        "SYM:1:Left",
+        "SYM:1:Up",
+        "SYM:1:Up",
+        "SYM:0:Enter",
+        "SYM:1:Right",
+        "SYM:1:Right",
+        "SYM:1:Right",
+        "SYM:1:Down",
+        "SYM:1:Down",
+        "SYM:1:Down",
+        "SYM:0:Enter",
+        "SYM:0:ESC",
+        " "
+      ],
+      "accepted": true,
+      "actual_ticks": 2000
+    }
+  ],
+  "assessment": {
+    "population_survived_window": true,
+    "adaptation_attempts_observed": true,
+    "supply_problem_resolved": false,
+    "supply_problem_resolution_status": "not_demonstrated",
+    "identified_primary_cause": null,
+    "brewing_completed_products": null,
+    "food_or_drink_production_rate": null,
+    "accessible_reserves": null,
+    "functioning_fortress": "not_assessed",
+    "classification": "observed investigation and strategy adjustments without demonstrated resolution of drink supply",
+    "limits": [
+      "Declared action intent is not proof that its semantic objective was achieved",
+      "Assigned jobs are instantaneous observations, not completion counts",
+      "A later cancellation does not prove every prior brew attempt failed",
+      "Stock changes are not attributed to production or consumption",
+      "No recorded deaths does not establish adequate water, drink access or indefinite self-sufficiency",
+      "This is one window of one campaign, not an independent repeat or a model ranking"
+    ]
+  },
+  "runtime_changed": false,
+  "agent_prompt_or_observation_changed": false,
+  "human_gameplay_rescue": false,
+  "new_model_calls": 0,
+  "new_vms": 0,
+  "website_changed": false,
+  "full_goal_complete": false
+}
