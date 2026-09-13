@@ -102,6 +102,53 @@ new item with a reaction callback, deduplicating cumulative output vectors and
 accounting for stack changes need a separately verified reconciliation layer.
 Native coverage, accessibility and reload/checkpoint binding remain unproven.
 
+## Prepared native binding probe
+
+`scripts/campaign_production_probe.py` now provides a provider-free, passive
+native-interval probe. It is prepared and offline-tested, not native-accepted.
+It does not queue production jobs or provide an independent production oracle.
+
+The `run` command belongs **inside a caller-owned, admitted Linux runtime**.
+It does not provision or own a VM, choose a source image, or perform host-level
+admission. Do not run it while the active endurance coordinator owns the sole
+local runtime. Its inner process owner copies a verified checkpoint, loads it
+paused, and tears down only its owned game process. It verifies the original
+checkpoint contents again after the run, including on failure. It cannot run
+directly on the development Mac.
+
+The explicit inputs are `--source` (retained native runtime), `--checkpoint`,
+`--revision` (the clean candidate checkout), and a new `--output` directory.
+`--port` defaults to 5610. `--intervals` defaults to 4, bounded at 32, and
+`--ticks` defaults to 250 per interval, bounded at 2,000. Thus the maximum
+declared advance is 64,000 ticks, with a separate 600-second worker deadline.
+No API/model credentials are forwarded by the isolated-process launcher.
+
+The worker uses direct local RPC with CLI fallback forbidden. It checks its
+expected copied-runtime path and creates an unpredictable observer ownership
+identity. Start, read and stop operations guard the exact runtime and owner;
+collisions never remove another observer's slot. Cleanup is attempted even if
+the start RPC times out, because it may already have installed the observer.
+The event capacity is 256 retained events/item records and the inventory scan
+capacity is 8,192 entries; reaching either limit remains incomplete evidence.
+
+Each paused boundary retains separate item inventory and cumulative event
+snapshots in a hashed JSON artifact. It must match the adapter's actual calendar,
+save identity, event sequence and observer origin. Tick receipts and before/after
+clocks are retained before validation, including incomplete intervals. A native
+interruption stops the probe; it never dismisses a dialog, presses keys, retries
+a tick timeout, places an order, injects items or creates a continuation save.
+Worker errors and stop failures are retained, and the outer result binds worker
+and game-process cleanup receipts by hash.
+
+Even a `completed` probe reports `production_coverage: inconclusive`,
+`native_coverage_validated: false`, and `flow_attribution: not_measured`.
+`completed` only means its declared observation intervals finished. Natural
+callbacks may provide examples to investigate, but item arrivals or completed-job
+notifications are not independent proof of a particular production quantity.
+Controlled brewing/cooking, cancellation, multi-output and observer-free control
+fixtures below remain separate acceptance work. No active campaign profile or
+website metric has been changed.
+
 ## Native acceptance still required
 
 1. Pin source/image and the measurement profile in a new fixture declaration.
