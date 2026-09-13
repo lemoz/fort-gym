@@ -63,15 +63,21 @@ finished and audited checkpoint260, exported the new replay, and launched
 261–324 under the same coordinator. Actual reload and new autonomous decisions
 are verified. Later handoffs and the full sequence remain unverified. Export is not publication.
 
-The [private production-observer candidate](../experiments/evidence/native_production_observer_candidate_20260913.json)
-is draft PR183 at `5eb29281ccb2d164b9366aec402715c617fbb6f1`. Its 28 Lua
-collector cases execute locally; the full local suite passed 5,777 tests with
-ten skips and seven warnings. Exact-head hosted CI passed 5,586 tests, with 201
-skips and seven warnings. Scoped lint/type checks passed; unrelated repository
-baselines remain ten Ruff and 465 mypy errors. Job notifications and item
-observations are not complete production attribution. Native coverage and
+The [private production-observer reaction candidate](../experiments/evidence/native_production_observer_reaction_candidate_20260913.json)
+is draft PR183 at `7cfae8e13c83cd82d9c306ab56fec72b6d2fe41a`. Its 47 Lua
+collector cases execute locally, including 19 new reaction cases. The full local
+suite passed 5,796 tests with ten skips and seven warnings. Exact-head hosted CI
+passed 5,586 tests, with 220 skips and seven warnings; Lua execution is local proof.
+Scoped lint, formatting and type checks passed; unrelated repository baselines
+remain ten Ruff and 465 mypy errors. The collector preserves cumulative reaction
+outputs and duplicate identities without interpreting repeated vectors as yield.
+Event and item-record caps retain explicit overflow/read failures. Production,
+consumption, trade and losses remain unmeasured. Native coverage and
 noninterference still require a separately declared fixture, then checkpoint
 binding and opt-in integration. The active runtime and agent inputs are unchanged.
+The [previous candidate receipt](../experiments/evidence/native_production_observer_candidate_20260913.json)
+is retained. The existing coordinator's relay reports decision295 running;
+checkpoint324 and an updated public-frame match are not claimed by this receipt.
 
 All six declared v2 attempts have terminal native audits at decision
 128. All six freshly reloaded their own decision-64 save; none of these final

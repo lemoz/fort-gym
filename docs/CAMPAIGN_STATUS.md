@@ -67,13 +67,18 @@ the same coordinator finished 197–260, audited and exported the save, then lau
 261–324 and restored the exact state without a manual relaunch. Later handoffs
 remain unverified. Do not start a competing manual continuation while it is running.
 
-A [separate private production-observer candidate](../experiments/evidence/native_production_observer_candidate_20260913.json)
-is pushed in draft PR183. It retains job notifications and item observations
-separately, with bounded retention and explicit missing flow attribution. Local
-validation passed 5,777 tests including 28 executed Lua cases; exact-head hosted
-CI passed 5,586 tests with 201 skips. Native event coverage, noninterference,
+A [separate private production-observer candidate](../experiments/evidence/native_production_observer_reaction_candidate_20260913.json)
+is pushed in draft PR183 at `7cfae8e13`. It now preserves cumulative reaction
+output vectors and repeated item identities without counting them as extra
+production. Job notifications, item creation and reaction observations remain
+separate, with bounded event/item retention and explicit missing flow attribution.
+Local validation passed 5,796 tests including 47 executed Lua cases; exact-head
+hosted CI passed 5,586 tests with 220 skips. Native event coverage, noninterference,
 checkpoint binding and complete flow attribution remain unverified or unimplemented.
-Nothing from this candidate is installed in the active campaign.
+The [earlier candidate receipt](../experiments/evidence/native_production_observer_candidate_20260913.json)
+is preserved. Nothing is installed in the active campaign. Its unchanged
+coordinator still owns the 261–324 window; the relay reports decision295 running,
+not a new completed checkpoint or an independently reverified public frame.
 
 An [input-level adaptation observation](../experiments/evidence/astra_keyboard_endurance_key_adaptation_20260913.json)
 retains decision89's unsupported keypad aliases and decision90's accepted arrow
