@@ -15,15 +15,24 @@ by the ongoing matched cohort and not a claim of deployment or main merge.
   the same control bindings and budgets, and two attempts per model.
 - Six audited fresh 64-response results and their own-save continuation windows.
   Read the result index for settled 128-response outcomes; absence of a result
-  does not report live status. Three continuations are saved, while both Sol
-  starts failed infrastructure gates with their original checkpoints preserved.
-  Astra r2 has no 128-response result; the latest known guest capacity shortage
-  prevents its launch without changing storage conditions.
-- A homepage player, fifteen immutable recording windows, the Worlds gallery,
+  does not report live status. All six 128-response outcomes are indexed: four
+  saved continuations and two Sol infrastructure failures, with the original
+  checkpoints preserved. Astra r2's continuation explicitly records a storage-only
+  amendment from 32 to 40 GiB; these windows do not have identical VM storage.
+- A homepage player, 32 immutable recording windows containing 2,600 frames,
+  the Worlds gallery,
   comparison tables, and an optional read-only live observer.
 
-These short matched starts are not the earlier exploratory Astra Year-Two run.
-The latter's recording is retained separately. Inventories and sampled activity
+The recording count describes this checkout's release-candidate snapshot through
+`astra-keyboard-endurance-v1-517-580`, not the live website's changing catalog.
+The separate public release already contains the later 581–644 recording; it is
+not silently included here. See the [source snapshot](YEAR_TWO_RELEASE_CANDIDATE_20260913.md).
+The offline 64- and 128-response commands below reproduce this checkout's bundled
+comparison reports; a regression test checks both reports byte for byte.
+
+These short matched starts are separate from the exploratory Year-Two run and
+the ongoing standard-input endurance campaign. Their recordings retain their
+own identities and conditions. Inventories and sampled activity
 are not measured production rates or proof of indefinite self-sufficiency.
 
 ## Install and inspect without a model or game
@@ -44,7 +53,11 @@ python3 -m venv .venv
   --campaign-id bindings-comparison-20260911-astra-r1
 ```
 
-The comparison reader verifies exact declaration/configuration/result digests.
+The comparison reader verifies exact declaration/configuration/result digests,
+including the storage amendment attached only to Astra r2's later window.
+It needs no VM, provider credentials, private operator files, or model calls.
+Both reports include all six attempts. The 128-response report retains both
+infrastructure failures and the unequal-storage note, not a strong model ranking.
 The final command only describes an own-save continuation. It cannot load the
 game, start a VM, make a model call or rerun an existing identity.
 
@@ -109,6 +122,10 @@ A [public Docker owner](KEYBOARD_DOCKER_OWNER.md) now composes fresh starts and
 unchanged own-save continuations with explicit image, source and container paths.
 Its check command verifies local inputs without contacting Docker or a model;
 run uses an already available local engine and owns stopping one container.
+Use that public owner for a new installation. The
+[host-side endurance coordinator](KEYBOARD_ENDURANCE_SEQUENCE.md) intentionally
+pins one existing campaign and private operator paths; it is not a portable
+launcher or an instruction to rerun the published experiment.
 The public owner passed a real two-decision Astra fresh run and two-decision
 own-save continuation at source `40b106b95f483b534a738622e75c4147a1270a96`.
 [The immutable acceptance result](https://github.com/lemoz/fort-gym/blob/7fe87fb6addc031a95f421ef985f139375fe8920/experiments/evidence/keyboard_portable_owner_acceptance_20260912.json)
@@ -152,6 +169,7 @@ Audited portable-owner outputs can be projected by
 `scripts.campaign_keyboard_docker_observe`; see
 [their commands and proof boundaries](KEYBOARD_DOCKER_OWNER.md#spectator-output).
 The [four-decision save/resume replay](https://fortgym.live/?recording=astra-portable-acceptance-1-4#watch-root)
-is published separately from the model comparison. Actual portable live follow
-still needs verification during the next otherwise-needed game; stopped
-capture and synthetic lifecycle tests do not claim live native broadcasting.
+is published separately from the model comparison. That four-decision acceptance
+did not verify live follow: stopped capture and synthetic lifecycle tests do not
+claim live native broadcasting. Later campaign and website receipts have their
+own source and runtime boundaries.
