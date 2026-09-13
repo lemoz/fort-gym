@@ -1,0 +1,57 @@
+{
+  "schema_version": "fortgym.endurance-sequence-handoff/v1",
+  "date_utc": "2026-09-13",
+  "campaign_id": "astra-keyboard-endurance-v1",
+  "sequence_revision": "4ce541fbe0cc20556744cd381298c31f1fb580a2",
+  "sequence_sha256": "f1368e1e31f1afc786371345b4c860293a67f004c0701707b0598f9726386ec8",
+  "sequence_plan_sha256": "265a7902df85ca2fa79c05db507881bc78a0eb351e1a179912191e971b43ebb1",
+  "event_prefix_lines": 5,
+  "event_prefix_sha256": "9edc309283af5f3a58a56373dad7f294110455eecdadcc785745b78eec527168",
+  "completed_window": {
+    "first_decision": 197,
+    "last_decision": 260,
+    "supervisor_returncode": 0,
+    "relay_returncode": 0,
+    "operation_sha256": "c847aad8342c506b10ec390d05dda1f69ec6d7327b16febcec784d367cb74833",
+    "audit_sha256": "6c6636e95b01963d4b222c97e984cca4c37936546258c87b091a800cae609920"
+  },
+  "next_window": {
+    "first_decision": 261,
+    "last_decision": 324,
+    "supervisor_pid": 50081,
+    "coordinator_pid": 38257,
+    "parent_child_process_relationship_verified": true,
+    "actual_reload_verified": true,
+    "first_new_response_valid": true,
+    "final_save_verified": false
+  },
+  "automatic_successor_handoff_verified": true,
+  "manual_continuation_launches": 0,
+  "gameplay_inputs": 0,
+  "started_windows": 2,
+  "completed_windows": 1,
+  "maximum_new_windows": 13,
+  "terminal_and_reload_result": "astra_keyboard_endurance_260_20260913.json",
+  "terminal_and_reload_result_sha256": "e72fd9a26ae734d357b8a9df12d6eabd149a2ea0de3a17180e3c9a3378559995",
+  "capture_helper_sha256": "d871e6e0acbb580deb3db9513a688813d142a0355544529d9ae59af7a7b3bf3f",
+  "teardown": {
+    "guest_poweroff_returncode": 0,
+    "vm_stop_returncode": 1,
+    "both_vms_stopped_and_disks_closed_before_successor": true,
+    "vm_stop_log_sha256": "d6e56f465529e3ab1cbb9f9b9862c4f3e910c6b2248239de493270a0e2d46aac",
+    "vm_stop_log_explanation": "The command reported that it expected Running but found Stopped. Original nonzero status is preserved; separate state and closed-disk checks passed."
+  },
+  "inherited_cumulative_limits": {
+    "max_dispatches": 1028,
+    "max_total_tokens": 40000000
+  },
+  "budget_extensions": 1,
+  "new_budget_extensions": 0,
+  "reset_usage": false,
+  "reset_memory": false,
+  "public_live_verified_decision": 263,
+  "source_image_and_controls_unchanged": true,
+  "production_observer_candidate_installed": false,
+  "sequence_finished": false,
+  "full_goal_complete": false
+}

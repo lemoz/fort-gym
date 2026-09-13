@@ -1,0 +1,73 @@
+{
+  "schema_version": "fortgym.production-observer-candidate/v1",
+  "date_utc": "2026-09-13",
+  "source_revision": "5eb29281ccb2d164b9366aec402715c617fbb6f1",
+  "base_revision": "4b526b5636e6f568a4cae1a1227d746d9c6922c3",
+  "branch": "codex/native-production-observer",
+  "draft_pr": 183,
+  "pr_url": "https://github.com/lemoz/fort-gym/pull/183",
+  "source_files": {
+    "fort_gym/bench/production_observer_lua.py": "d2436eb1c8b2282371258c111a99319f07a30b3f988010bd567b50d076e805fc",
+    "tests/test_production_observer_lua.py": "294c8056f51b8d30cdf5adeba6d8fec613ac3a374baee251e6f344436271c079",
+    "docs/PRIVATE_PRODUCTION_OBSERVER.md": "ad3375702bfdde4ecc63e7d90a3c500d9557aaf418abc85de826e15508ff4392"
+  },
+  "local_validation": {
+    "executed_lua_collector_cases": 28,
+    "related_regressions_passed": 254,
+    "related_warnings": 3,
+    "full_suite_passed": 5777,
+    "full_suite_skipped": 10,
+    "full_suite_warnings": 7,
+    "junit_sha256": "0b10357489f7bb844936ebd029b6622cbd0afb7989f8728e83f1fcbde2a263ea"
+  },
+  "hosted_validation": {
+    "run": 34731911460,
+    "job": 103656134739,
+    "head": "5eb29281ccb2d164b9366aec402715c617fbb6f1",
+    "status": "completed",
+    "conclusion": "success",
+    "passed": 5586,
+    "skipped": 201,
+    "warnings": 7,
+    "summary_utc": "2026-09-13T02:06:06.9310544Z"
+  },
+  "scoped_ruff_passed": true,
+  "scoped_mypy_passed": true,
+  "repository_ruff_errors": 10,
+  "repository_mypy_errors": 465,
+  "repository_mypy_files_with_errors": 27,
+  "repository_mypy_files_checked": 182,
+  "unrelated_lint_or_type_repairs": false,
+  "observation_contract": {
+    "private_only": true,
+    "pinned_df_version": "v0.47.05 linux64",
+    "pinned_dfhack_version": "0.47.05-r8",
+    "max_events": 8192,
+    "job_notifications_and_item_observations_separate": true,
+    "item_observations_not_production_attribution": true,
+    "flow_quantities_unmeasured": [
+      "production",
+      "consumption",
+      "trade",
+      "losses"
+    ],
+    "record_overflow_and_read_failures": true,
+    "shared_event_polling_not_restorable_via_lua": true
+  },
+  "upstream_references": [
+    "https://github.com/DFHack/dfhack/blob/0.47.05-r8/library/modules/EventManager.cpp",
+    "https://github.com/DFHack/dfhack/blob/0.47.05-r8/plugins/eventful.cpp"
+  ],
+  "native_installed": false,
+  "native_coverage_verified": false,
+  "native_noninterference_verified": false,
+  "complete_flow_attribution": false,
+  "checkpoint_binding_implemented": false,
+  "active_campaign_profile_changed": false,
+  "model_calls": 0,
+  "gameplay_inputs": 0,
+  "vm_created": false,
+  "website_deployed": false,
+  "main_merged": false,
+  "full_goal_complete": false
+}

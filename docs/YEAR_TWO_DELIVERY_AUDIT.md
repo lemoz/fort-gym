@@ -13,15 +13,18 @@ This summary supersedes the capture-time running/preparation statements in the
 historical sections below. Original result manifests and earlier evidence are
 unchanged. The full Year-Two/cross-model goal is still active.
 
-The latest [endurance save and actual reload](../experiments/evidence/astra_keyboard_endurance_196_20260913.json)
-are verified through decision196: 73,900 elapsed ticks, seven living dwarves,
-nine beds, three workshops, two farms and 60 food / 90 drinks. Cumulative
-returned usage is 5,751,089 tokens; subscription charges remain unreported.
-The 133–196 window added 33,200 actual ticks with no clock timeouts, one menu
-deferral, 63 accepted keyboard actions and one rejection. Original outcomes are retained. Native
-teardown passed before the next window restored the complete saved agent state,
+The latest [endurance save and actual reload](../experiments/evidence/astra_keyboard_endurance_260_20260913.json)
+are verified through decision260: 105,100 elapsed ticks, seven living dwarves,
+nine beds, three workshops, three farms and 69 food / 134 drinks. Cumulative
+returned usage is 8,141,754 tokens; subscription charges remain unreported.
+The 197–260 window added 31,200 actual ticks with no clock timeouts, menu
+deferrals or rejected actions: 64 keyboard actions and 459 confirmed keys.
+The guest powered off with code zero; VM stop returned one and reported that
+the VM was already Stopped. Separate stopped-state and closed-disk checks passed.
+Original outcomes and logs are retained before the next window restored the complete saved agent state,
 native clock/metrics and original history. The single budget append is unchanged.
-Decisions 197–260 are running, with public frame198 independently verified.
+Decisions 261–324 are running, with public frame263 independently verified.
+The 197–260 replay is exported but not yet published.
 The [133–196 replay is now publicly verified](../experiments/evidence/astra_keyboard_endurance_196_website_20260913.json)
 at website revision `a0bf019b7eec2cb9144ae34d7cae638dd2f7dd8f`: 26 recordings
 and 2,216 frames. All 25 prior recording files, rows and previews are unchanged.
@@ -54,8 +57,21 @@ model, prompt and cumulative limits are unchanged. Its
 audited and exported checkpoint196 after the earlier owner finished teardown,
 then launched the 197–260 window. The actual fresh reload is verified. It owns
 serial continuation through the unchanged declared limits, with mandatory
-teardown after each window; do not launch a competing manual owner. Later
-automatic handoffs and the full sequence remain unverified. Export is not publication.
+teardown after each window; do not launch a competing manual owner.
+Its [first automatic successor handoff](../experiments/evidence/astra_keyboard_endurance_sequence_handoff_260_20260913.json)
+finished and audited checkpoint260, exported the new replay, and launched
+261–324 under the same coordinator. Actual reload and new autonomous decisions
+are verified. Later handoffs and the full sequence remain unverified. Export is not publication.
+
+The [private production-observer candidate](../experiments/evidence/native_production_observer_candidate_20260913.json)
+is draft PR183 at `5eb29281ccb2d164b9366aec402715c617fbb6f1`. Its 28 Lua
+collector cases execute locally; the full local suite passed 5,777 tests with
+ten skips and seven warnings. Exact-head hosted CI passed 5,586 tests, with 201
+skips and seven warnings. Scoped lint/type checks passed; unrelated repository
+baselines remain ten Ruff and 465 mypy errors. Job notifications and item
+observations are not complete production attribution. Native coverage and
+noninterference still require a separately declared fixture, then checkpoint
+binding and opt-in integration. The active runtime and agent inputs are unchanged.
 
 All six declared v2 attempts have terminal native audits at decision
 128. All six freshly reloaded their own decision-64 save; none of these final
@@ -363,15 +379,15 @@ the native result's original unpublished state.
    128-response attempts to manufacture a longer-duration comparison.
 2. Continue the active, separate PR181 Astra endurance campaign through its
    declared save boundaries. Its initial four-response save and actual own-save
-   reload are verified, and checkpoint196 has now saved and freshly reloaded.
-   The automatic coordinator now owns the 197–260 window and later serial
+   reload are verified, and checkpoint260 has now saved and freshly reloaded.
+   The automatic coordinator now owns the 261–324 window and later serial
    handoffs under the existing limits. Observe that same coordinator; do not
    manually relaunch a window. Publish actual replay batches after their audits.
    The 403,200-tick anniversary is a milestone, not the stop condition or proof
    of a functioning fortress. Each continuation is not an independent trial.
 3. The portable cumulative-budget path now has an actual append, saved extension
-   at checkpoint196 and inherited-limit fresh reload, with memory/usage preserved.
-   Verify the current inherited-budget window's final save at decision260 next.
+   at checkpoint260 and inherited-limit fresh reload, with memory/usage preserved.
+   Verify the current inherited-budget window's final save at decision324 next.
    Do not append repeatedly, reset accounting, change the condition, migrate
    old controls saves or replace the running owner to obtain a passing result.
    The unchanged frozen source `5ddf1e6718dab2e8351e8dc24a2afe5071cd2592`

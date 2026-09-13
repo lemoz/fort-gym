@@ -23,15 +23,17 @@ retains seven living dwarves, seven beds, three workshops and one farm after
 46,400 elapsed ticks. The [complete descriptive comparison](../experiments/evidence/selected_workshop_v2_cohort_20260912.json)
 preserves all outcomes without claiming a control ranking or independent worlds.
 
-The separate [Astra Medium endurance campaign has saved and freshly reloaded decision196](../experiments/evidence/astra_keyboard_endurance_196_20260913.json):
-73,900 elapsed ticks, seven living dwarves, nine beds, three workshops, two farms,
-60 food and 90 drinks. Native save, teardown and actual reload checks passed,
-preserving the original nonzero guest-poweroff code. The entire saved agent state,
+The separate [Astra Medium endurance campaign has saved and freshly reloaded decision260](../experiments/evidence/astra_keyboard_endurance_260_20260913.json):
+105,100 elapsed ticks, seven living dwarves, nine beds, three workshops, three farms,
+69 food and 134 drinks. Native save, stopped-state/closed-disk checks and actual reload passed.
+Guest poweroff returned zero; VM stop returned one because the tool found an
+already Stopped VM. The original code and log are preserved. The entire saved agent state,
 clock, measured metrics and trace/usage prefixes were restored. Its one cumulative
 budget extension is inherited without another append or accounting reset.
-Astra is playing decisions 197–260, with public live frame198 independently
+Astra is playing decisions 261–324, with public live frame263 independently
 matched to the original screen/chosen action. This new window's final save is
-not yet verified. The [133–196 replay is now public](../experiments/evidence/astra_keyboard_endurance_196_website_20260913.json):
+not yet verified. The 197–260 replay is exported, not yet published.
+The [133–196 replay is now public](../experiments/evidence/astra_keyboard_endurance_196_website_20260913.json):
 26 recordings / 2,216 frames at website revision `a0bf019b7`. Local and exact-head
 remote suites each passed 1,309 Python tests with five skips; 66 Node checks passed.
 HTTPS verified all recording bytes and the current live feed at decision233.
@@ -59,8 +61,19 @@ The [host-only automatic coordinator is now active](../experiments/evidence/astr
 after local/exact-head CI and real-save preflight passed. It audited checkpoint196
 and launched 197–260 from that save, with no controls, model, prompt, budget or image
 change. It will audit each completed window before serial continuation, retaining
-the existing ceilings and mandatory teardown. Later automatic handoffs remain
-unverified. Do not start a competing manual continuation while it is running.
+the existing ceilings and mandatory teardown.
+The [first actual successor handoff is now verified](../experiments/evidence/astra_keyboard_endurance_sequence_handoff_260_20260913.json):
+the same coordinator finished 197–260, audited and exported the save, then launched
+261–324 and restored the exact state without a manual relaunch. Later handoffs
+remain unverified. Do not start a competing manual continuation while it is running.
+
+A [separate private production-observer candidate](../experiments/evidence/native_production_observer_candidate_20260913.json)
+is pushed in draft PR183. It retains job notifications and item observations
+separately, with bounded retention and explicit missing flow attribution. Local
+validation passed 5,777 tests including 28 executed Lua cases; exact-head hosted
+CI passed 5,586 tests with 201 skips. Native event coverage, noninterference,
+checkpoint binding and complete flow attribution remain unverified or unimplemented.
+Nothing from this candidate is installed in the active campaign.
 
 An [input-level adaptation observation](../experiments/evidence/astra_keyboard_endurance_key_adaptation_20260913.json)
 retains decision89's unsupported keypad aliases and decision90's accepted arrow
