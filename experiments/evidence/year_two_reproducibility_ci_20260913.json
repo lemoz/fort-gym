@@ -1,0 +1,27 @@
+{
+  "schema_version": "fortgym.year-two-reproducibility-ci/v1",
+  "source_revision": "617bf4ce51e8162f0f31a5b27c54a762fb2e4021",
+  "draft_pr": "https://github.com/lemoz/fort-gym/pull/185",
+  "prior_capture": "experiments/evidence/year_two_reproducibility_review_20260913.json",
+  "prior_capture_preserved": true,
+  "ci_run": 34745349677,
+  "ci_job": 103692175583,
+  "conclusion": "success",
+  "tests": {
+    "passed": 5707,
+    "skipped": 173,
+    "warnings": 7,
+    "summary_utc": "2026-09-13T07:35:54.4653766Z"
+  },
+  "local_tests": {
+    "passed": 5870,
+    "skipped": 10,
+    "warnings": 7,
+    "head": "617bf4ce51e8162f0f31a5b27c54a762fb2e4021"
+  },
+  "native_condition_changed": false,
+  "website_changed": false,
+  "deployed": false,
+  "main_merged": false,
+  "full_goal_complete": false
+}

@@ -25,7 +25,10 @@ infrastructure failures are retained. The quickstart identifies the checkout's
 the generic portable owner from this campaign's pinned coordinator.
 All 77 focused checks and the full local suite passed: 5,870 tests, ten skips,
 seven warnings. Scoped Ruff is green; full Ruff and mypy remain at the inherited
-ten-diagnostic and 465-error baselines. Hosted CI is still pending at this capture.
+ten-diagnostic and 465-error baselines.
+[Hosted CI passed](../experiments/evidence/year_two_reproducibility_ci_20260913.json)
+at the same head: 5,707 tests, 173 skips and seven warnings. The initial
+pending-CI capture is retained unchanged.
 The isolated worktree is `fort_gym/artifacts/worktrees/year-two-reproducible-results`.
 No website bytes, active runtime, native condition, original result, or protected
 worktree changed. This is development delivery, not a main merge or deployment.
