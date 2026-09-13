@@ -1,0 +1,687 @@
+{
+  "schema_version": "year-two-release-source/v1",
+  "native_source_revision": "4ce541fbe0cc20556744cd381298c31f1fb580a2",
+  "published_website_revision": "3016ab690190affd1435e93bf6e3ff2c12370b37",
+  "active_native_revision": "4b526b5636e6f568a4cae1a1227d746d9c6922c3",
+  "native_source_changes": [],
+  "protected_git_objects": {
+    "fort_gym": "c304953f0e35e30b0c40b61217cf2f643bfe9631",
+    "hook": "171223927fab7d2d2a30f8ef37325af5f570d44a",
+    "scripts": "cc1be9d7ea9a8d27f34093b662aad52ee6c2d1ed",
+    "experiments": "59aaad7876532f9b259f872bd56951c0a7b370c4",
+    ".github": "8660f414826b29780c1718ff0dd77e843844e743",
+    "pyproject.toml": "ba3915724879480708744e200716ab3eca4e401d"
+  },
+  "public_assets": [
+    {
+      "path": "web/admin.html",
+      "published_sha256": "7a66c3b2b7d1095a5899b0d215a82395dbadbbd25005bc44f2f7109b25daa571",
+      "candidate_sha256": "7a66c3b2b7d1095a5899b0d215a82395dbadbbd25005bc44f2f7109b25daa571",
+      "unchanged": true
+    },
+    {
+      "path": "web/findings.html",
+      "published_sha256": "9ae9e147526787a038e1340d45f96a342ff792ac1c59df057af2544f3d5ab31b",
+      "candidate_sha256": "9ae9e147526787a038e1340d45f96a342ff792ac1c59df057af2544f3d5ab31b",
+      "unchanged": true
+    },
+    {
+      "path": "web/index.html",
+      "published_sha256": "ab7b60bddd502eb7488f094f178998c7758aa6f48b9122c36e18b1a7ca708146",
+      "candidate_sha256": "ab7b60bddd502eb7488f094f178998c7758aa6f48b9122c36e18b1a7ca708146",
+      "unchanged": true
+    },
+    {
+      "path": "web/landing.html",
+      "published_sha256": "722a058301e1e994cb0ac3ef0ea6d253b2154b467e2efbc2c90c1905c0b83bf9",
+      "candidate_sha256": "f60caeb32ccd167849f714525e12079e1cc2620fc847df3a2f73d5a4ade3270e",
+      "unchanged": false
+    },
+    {
+      "path": "web/leaderboard.html",
+      "published_sha256": "27967ff529ed879b087c2bf1e132a4eaf81367e0dcb89030853b17aecb2698b7",
+      "candidate_sha256": "27967ff529ed879b087c2bf1e132a4eaf81367e0dcb89030853b17aecb2698b7",
+      "unchanged": true
+    },
+    {
+      "path": "web/protocols.html",
+      "published_sha256": "b3f2a13103ac6e50245bc88e29326c20e699860a3bb4c96f5538207f9d94fb38",
+      "candidate_sha256": "9f72c43f021fd550d43f524cfb0aa7515aa1423f9a8a36978fd7c63b5c4aecd4",
+      "unchanged": false
+    },
+    {
+      "path": "web/results.html",
+      "published_sha256": "cc95ac8034dd517719cdf2d329f44690cf6c09618a04e477c609645f3d373a45",
+      "candidate_sha256": "e7cdd4f02421e221b47736a3b58d4e8c2c0f1c52a7531196d248a6c0921bdc12",
+      "unchanged": false
+    },
+    {
+      "path": "web/static/brand/apple-touch-icon.png",
+      "published_sha256": "7e8de09f3b80de79e2eb9337f5956b05509d308e0c067ff2b65c4fc8b96e5913",
+      "candidate_sha256": "7e8de09f3b80de79e2eb9337f5956b05509d308e0c067ff2b65c4fc8b96e5913",
+      "unchanged": true
+    },
+    {
+      "path": "web/static/brand/favicon-32.png",
+      "published_sha256": "38962e3c251f7c8b988c19bebe50242779b7ea2d237dc178ada09e46630a57b3",
+      "candidate_sha256": "38962e3c251f7c8b988c19bebe50242779b7ea2d237dc178ada09e46630a57b3",
+      "unchanged": true
+    },
+    {
+      "path": "web/static/brand/favicon.svg",
+      "published_sha256": "8d3fead7389da71703220aa8b11a2a82290def4928633e189fbc45c51c5ef525",
+      "candidate_sha256": "8d3fead7389da71703220aa8b11a2a82290def4928633e189fbc45c51c5ef525",
+      "unchanged": true
+    },
+    {
+      "path": "web/static/displayed-key-comparison-128.json",
+      "published_sha256": "f8e26272d9ef4e297c560212a5928edfaf92f0b3f3cb3472d8f8335292ab87e2",
+      "candidate_sha256": "f8e26272d9ef4e297c560212a5928edfaf92f0b3f3cb3472d8f8335292ab87e2",
+      "unchanged": true
+    },
+    {
+      "path": "web/static/displayed-key-comparison.css",
+      "published_sha256": "decfaf9fccc28662aa65ef1d23fa1e06a9c95b9f708945b347806eec43fb07c8",
+      "candidate_sha256": "decfaf9fccc28662aa65ef1d23fa1e06a9c95b9f708945b347806eec43fb07c8",
+      "unchanged": true
+    },
+    {
+      "path": "web/static/displayed-key-comparison.json",
+      "published_sha256": "323eb178749f324791ff0b384c069d667af2132e81770c11ff937a656aa1398d",
+      "candidate_sha256": "323eb178749f324791ff0b384c069d667af2132e81770c11ff937a656aa1398d",
+      "unchanged": true
+    },
+    {
+      "path": "web/static/displayed-key-comparison.mjs",
+      "published_sha256": "4099d1790bde452af261768ce065c5ed7bb637f8086994baad8e013b7708ef9e",
+      "candidate_sha256": "4099d1790bde452af261768ce065c5ed7bb637f8086994baad8e013b7708ef9e",
+      "unchanged": true
+    },
+    {
+      "path": "web/static/findings-v1.json",
+      "published_sha256": "85e8196ac37a97b0bb73d2738e7696dc54609b20dc9b18d6b5ca588b191b6e9e",
+      "candidate_sha256": "85e8196ac37a97b0bb73d2738e7696dc54609b20dc9b18d6b5ca588b191b6e9e",
+      "unchanged": true
+    },
+    {
+      "path": "web/static/fort-labs.css",
+      "published_sha256": "8c533e3bf71f62d3116d2ed48c643837c7cb540dde77a69534410baccd5812b5",
+      "candidate_sha256": "8c533e3bf71f62d3116d2ed48c643837c7cb540dde77a69534410baccd5812b5",
+      "unchanged": true
+    },
+    {
+      "path": "web/static/fort-labs.js",
+      "published_sha256": "1a2f1e4259519f0febc64496c7a3c30001d272c0251e1581e8463c2cef8d0575",
+      "candidate_sha256": "1a2f1e4259519f0febc64496c7a3c30001d272c0251e1581e8463c2cef8d0575",
+      "unchanged": true
+    },
+    {
+      "path": "web/static/home-watch-model.mjs",
+      "published_sha256": "9bc89eb35488c0a7be905197cd9a75c878cff93bdfd06cb0d9075100088d1e23",
+      "candidate_sha256": "9bc89eb35488c0a7be905197cd9a75c878cff93bdfd06cb0d9075100088d1e23",
+      "unchanged": true
+    },
+    {
+      "path": "web/static/home-watch.css",
+      "published_sha256": "d37ec81595cd1f7d4dd4ae979b68755c6331fee3fde7a794dec2a1d5eb4b2a7d",
+      "candidate_sha256": "d37ec81595cd1f7d4dd4ae979b68755c6331fee3fde7a794dec2a1d5eb4b2a7d",
+      "unchanged": true
+    },
+    {
+      "path": "web/static/home-watch.mjs",
+      "published_sha256": "e85cef71b7e2c09abee4159cd3474d58b8c041a5396a4fd9bd6ad3abf52af4ed",
+      "candidate_sha256": "e85cef71b7e2c09abee4159cd3474d58b8c041a5396a4fd9bd6ad3abf52af4ed",
+      "unchanged": true
+    },
+    {
+      "path": "web/static/published-recordings.mjs",
+      "published_sha256": "b1f5ad7f7aad82e1fc23cb98170969d4a28c7adafff572be461d71520583e043",
+      "candidate_sha256": "b1f5ad7f7aad82e1fc23cb98170969d4a28c7adafff572be461d71520583e043",
+      "unchanged": true
+    },
+    {
+      "path": "web/static/recordings/astra-97-256.json",
+      "published_sha256": "5627f83eec939aa7b86603e9aa5d18d2eb7a839560ae3a5ff3354ab8d52a4ee0",
+      "candidate_sha256": "5627f83eec939aa7b86603e9aa5d18d2eb7a839560ae3a5ff3354ab8d52a4ee0",
+      "unchanged": true
+    },
+    {
+      "path": "web/static/recordings/astra-keyboard-endurance-v1-1-68.json",
+      "published_sha256": "97cd1ae75d5afa68e6896bcb1868b476ca9cd8430ff59b4fd0975857fdae095c",
+      "candidate_sha256": "97cd1ae75d5afa68e6896bcb1868b476ca9cd8430ff59b4fd0975857fdae095c",
+      "unchanged": true
+    },
+    {
+      "path": "web/static/recordings/astra-keyboard-endurance-v1-133-196.json",
+      "published_sha256": "d5da30777c97f7f4827daee5048f276ce0b843e901c633c9b99628ad8249bcc7",
+      "candidate_sha256": "d5da30777c97f7f4827daee5048f276ce0b843e901c633c9b99628ad8249bcc7",
+      "unchanged": true
+    },
+    {
+      "path": "web/static/recordings/astra-keyboard-endurance-v1-197-260.json",
+      "published_sha256": "c67e515a936bee675d6563dcd18e5be094d06c22bc6c4560d8725111cd9b21eb",
+      "candidate_sha256": "c67e515a936bee675d6563dcd18e5be094d06c22bc6c4560d8725111cd9b21eb",
+      "unchanged": true
+    },
+    {
+      "path": "web/static/recordings/astra-keyboard-endurance-v1-261-324.json",
+      "published_sha256": "78ff11dcc9deed6ed21e0214b868971b41fd753eea5bc274121837ae9f27eca4",
+      "candidate_sha256": "78ff11dcc9deed6ed21e0214b868971b41fd753eea5bc274121837ae9f27eca4",
+      "unchanged": true
+    },
+    {
+      "path": "web/static/recordings/astra-keyboard-endurance-v1-325-388.json",
+      "published_sha256": "0049b28cc0e13fbb1ae2143b51eac5e6fef8bc26faf44fc5dc0d9282d340612f",
+      "candidate_sha256": "0049b28cc0e13fbb1ae2143b51eac5e6fef8bc26faf44fc5dc0d9282d340612f",
+      "unchanged": true
+    },
+    {
+      "path": "web/static/recordings/astra-keyboard-endurance-v1-389-452.json",
+      "published_sha256": "c64ee2c324d0a343fb6f0ee80991a515dff035c97c2c8a127728194f2b678860",
+      "candidate_sha256": "c64ee2c324d0a343fb6f0ee80991a515dff035c97c2c8a127728194f2b678860",
+      "unchanged": true
+    },
+    {
+      "path": "web/static/recordings/astra-keyboard-endurance-v1-453-516.json",
+      "published_sha256": "36982b8e7703c0ddaaec1d38f11209c95fca23159819fe2441a2171e3f210231",
+      "candidate_sha256": "36982b8e7703c0ddaaec1d38f11209c95fca23159819fe2441a2171e3f210231",
+      "unchanged": true
+    },
+    {
+      "path": "web/static/recordings/astra-keyboard-endurance-v1-517-580.json",
+      "published_sha256": "016da429b0dc5829a4618980a62ac733d166c08bc911d28dc6b5f1605db876b6",
+      "candidate_sha256": "016da429b0dc5829a4618980a62ac733d166c08bc911d28dc6b5f1605db876b6",
+      "unchanged": true
+    },
+    {
+      "path": "web/static/recordings/astra-keyboard-endurance-v1-69-132.json",
+      "published_sha256": "eabd35f654dfd30a1860e2b233e38da38a8adc323720e9f6dd987133bf3a8166",
+      "candidate_sha256": "eabd35f654dfd30a1860e2b233e38da38a8adc323720e9f6dd987133bf3a8166",
+      "unchanged": true
+    },
+    {
+      "path": "web/static/recordings/astra-matched-r1-1-64.json",
+      "published_sha256": "24380f7d5226ef28633b6eb37776ffa905069ac1cc1006b29ffd92b14950bfcc",
+      "candidate_sha256": "24380f7d5226ef28633b6eb37776ffa905069ac1cc1006b29ffd92b14950bfcc",
+      "unchanged": true
+    },
+    {
+      "path": "web/static/recordings/astra-matched-r1-65-128.json",
+      "published_sha256": "0f32a0439dafeef5d39dc70702bfbda902bd0e95006fe974744f00fc291a0489",
+      "candidate_sha256": "0f32a0439dafeef5d39dc70702bfbda902bd0e95006fe974744f00fc291a0489",
+      "unchanged": true
+    },
+    {
+      "path": "web/static/recordings/astra-matched-r2-1-64.json",
+      "published_sha256": "79ea8da55449f58aca9b9d6a98cd37db56b825d228bff10c6211961a9f2bfc30",
+      "candidate_sha256": "79ea8da55449f58aca9b9d6a98cd37db56b825d228bff10c6211961a9f2bfc30",
+      "unchanged": true
+    },
+    {
+      "path": "web/static/recordings/astra-matched-r2-65-128.json",
+      "published_sha256": "5bdeb2650b4562c3327c7a699ae4e88458052155c507546c138c63a02a809215",
+      "candidate_sha256": "5bdeb2650b4562c3327c7a699ae4e88458052155c507546c138c63a02a809215",
+      "unchanged": true
+    },
+    {
+      "path": "web/static/recordings/astra-portable-acceptance-1-4.json",
+      "published_sha256": "4737508d32fd1a6e27c2c78e1636ec7fb8de91eaca622cd38f8a7d3ab398ddf1",
+      "candidate_sha256": "4737508d32fd1a6e27c2c78e1636ec7fb8de91eaca622cd38f8a7d3ab398ddf1",
+      "unchanged": true
+    },
+    {
+      "path": "web/static/recordings/astra-recovery-225-256.json",
+      "published_sha256": "7aba3fdddea9f44e9a85a42738c93bd275d168692f6d4edbbc579cc70ee4e3f0",
+      "candidate_sha256": "7aba3fdddea9f44e9a85a42738c93bd275d168692f6d4edbbc579cc70ee4e3f0",
+      "unchanged": true
+    },
+    {
+      "path": "web/static/recordings/astra-year-two-257-416.json",
+      "published_sha256": "79a42eeb8501fe7669f134670e9ce6c947a5628eeb5e94506973f1afa78f83d9",
+      "candidate_sha256": "79a42eeb8501fe7669f134670e9ce6c947a5628eeb5e94506973f1afa78f83d9",
+      "unchanged": true
+    },
+    {
+      "path": "web/static/recordings/catalog.json",
+      "published_sha256": "3cf5b3a0cee02cc4bfd9cf70ecc66e266de4d1811451814db54901bf3995160f",
+      "candidate_sha256": "3cf5b3a0cee02cc4bfd9cf70ecc66e266de4d1811451814db54901bf3995160f",
+      "unchanged": true
+    },
+    {
+      "path": "web/static/recordings/controls-p1-keyboard-1-128.json",
+      "published_sha256": "db74af4eb5a3c13297c363aecb9cfc0dad028f708edfdb9db9d7cd353a81e6b8",
+      "candidate_sha256": "db74af4eb5a3c13297c363aecb9cfc0dad028f708edfdb9db9d7cd353a81e6b8",
+      "unchanged": true
+    },
+    {
+      "path": "web/static/recordings/controls-v2-p1-keyboard-1-128.json",
+      "published_sha256": "280e6193242088f0743a000cc84ace5cefa23b82d4c9877f73abf46597c533f5",
+      "candidate_sha256": "280e6193242088f0743a000cc84ace5cefa23b82d4c9877f73abf46597c533f5",
+      "unchanged": true
+    },
+    {
+      "path": "web/static/recordings/controls-v2-p1-shortcuts-1-128.json",
+      "published_sha256": "9063c997563bd5c00eb3726acfff77088a50877dd66aeb12a95662b46c62d17b",
+      "candidate_sha256": "9063c997563bd5c00eb3726acfff77088a50877dd66aeb12a95662b46c62d17b",
+      "unchanged": true
+    },
+    {
+      "path": "web/static/recordings/controls-v2-p2-keyboard-1-128.json",
+      "published_sha256": "9d15f665d816f9ba53f6b332480bc6017c192bcc8f50d73a208c0e067563c76e",
+      "candidate_sha256": "9d15f665d816f9ba53f6b332480bc6017c192bcc8f50d73a208c0e067563c76e",
+      "unchanged": true
+    },
+    {
+      "path": "web/static/recordings/controls-v2-p2-shortcuts-1-128.json",
+      "published_sha256": "4890518b7d6c550a49e25a6c134945141a16c136dc9f50721d605ab0f89db1cd",
+      "candidate_sha256": "4890518b7d6c550a49e25a6c134945141a16c136dc9f50721d605ab0f89db1cd",
+      "unchanged": true
+    },
+    {
+      "path": "web/static/recordings/controls-v2-p3-keyboard-1-128.json",
+      "published_sha256": "337ca3bd834be6f50c2d09afbd3668228eee69d142e65d632f0b013974cdb337",
+      "candidate_sha256": "337ca3bd834be6f50c2d09afbd3668228eee69d142e65d632f0b013974cdb337",
+      "unchanged": true
+    },
+    {
+      "path": "web/static/recordings/controls-v2-p3-shortcuts-1-128.json",
+      "published_sha256": "02b139ad1021de3e560d20a2404944121cfc896b5477180c8c3e3a0dde71226a",
+      "candidate_sha256": "02b139ad1021de3e560d20a2404944121cfc896b5477180c8c3e3a0dde71226a",
+      "unchanged": true
+    },
+    {
+      "path": "web/static/recordings/previews.json",
+      "published_sha256": "68d53de2528b747bd2d2c3112cb3871831e398698edb3bf0b4666536529f5ae5",
+      "candidate_sha256": "68d53de2528b747bd2d2c3112cb3871831e398698edb3bf0b4666536529f5ae5",
+      "unchanged": true
+    },
+    {
+      "path": "web/static/recordings/sol-65-128.json",
+      "published_sha256": "3eb8184e5b9a5f7bffee4ce6c972556c3baf030f74c4c59baf251c9a3100e696",
+      "candidate_sha256": "3eb8184e5b9a5f7bffee4ce6c972556c3baf030f74c4c59baf251c9a3100e696",
+      "unchanged": true
+    },
+    {
+      "path": "web/static/recordings/sol-matched-r1-1-64.json",
+      "published_sha256": "50bc9a2b94b6a0de3fadf1507ec59fbde845c2cc4e5461623d2c26e0dab78741",
+      "candidate_sha256": "50bc9a2b94b6a0de3fadf1507ec59fbde845c2cc4e5461623d2c26e0dab78741",
+      "unchanged": true
+    },
+    {
+      "path": "web/static/recordings/sol-matched-r2-1-64.json",
+      "published_sha256": "30b1aeced4a62c8882aa77004784d3057f84768c8b778c147b0adcc25f517152",
+      "candidate_sha256": "30b1aeced4a62c8882aa77004784d3057f84768c8b778c147b0adcc25f517152",
+      "unchanged": true
+    },
+    {
+      "path": "web/static/recordings/terra-65-128.json",
+      "published_sha256": "37dc8ce0f22df8c9a6b4630743dc443b6fdbac4505ce50ebdad30f38d5df0bfc",
+      "candidate_sha256": "37dc8ce0f22df8c9a6b4630743dc443b6fdbac4505ce50ebdad30f38d5df0bfc",
+      "unchanged": true
+    },
+    {
+      "path": "web/static/recordings/terra-matched-r1-1-64.json",
+      "published_sha256": "3499bc18073141858398ab631389155a2672ded691b3b0324aaf5d26c7d5e6bb",
+      "candidate_sha256": "3499bc18073141858398ab631389155a2672ded691b3b0324aaf5d26c7d5e6bb",
+      "unchanged": true
+    },
+    {
+      "path": "web/static/recordings/terra-matched-r1-65-128.json",
+      "published_sha256": "259ef96059fee1d2ef35e51779fcd27747c7b9c68784579152fbccf848441146",
+      "candidate_sha256": "259ef96059fee1d2ef35e51779fcd27747c7b9c68784579152fbccf848441146",
+      "unchanged": true
+    },
+    {
+      "path": "web/static/recordings/terra-matched-r2-1-64.json",
+      "published_sha256": "d34f451723a40ef11c2cb966b2c568702e44489163b51e79721bffb15aeaeeb1",
+      "candidate_sha256": "d34f451723a40ef11c2cb966b2c568702e44489163b51e79721bffb15aeaeeb1",
+      "unchanged": true
+    },
+    {
+      "path": "web/static/recordings/terra-matched-r2-65-128.json",
+      "published_sha256": "f8fb441bfd5201d7ac9c38f23a10d942fb7adf3ab02c369c8ebc94b287a657a0",
+      "candidate_sha256": "f8fb441bfd5201d7ac9c38f23a10d942fb7adf3ab02c369c8ebc94b287a657a0",
+      "unchanged": true
+    },
+    {
+      "path": "web/static/replay-labs.css",
+      "published_sha256": "d735f8e032670133f4169d34617e16a37d63c947fc9dc16a1e79196166e54130",
+      "candidate_sha256": "d735f8e032670133f4169d34617e16a37d63c947fc9dc16a1e79196166e54130",
+      "unchanged": true
+    },
+    {
+      "path": "web/static/social/README.md",
+      "published_sha256": "86609bbd5c855049bc0614114b98b54a9f1d44ea748eaf7adce371eb979473f4",
+      "candidate_sha256": "86609bbd5c855049bc0614114b98b54a9f1d44ea748eaf7adce371eb979473f4",
+      "unchanged": true
+    },
+    {
+      "path": "web/static/social/archive.png",
+      "published_sha256": "a0cf0270d5c41154b67adfb421b78eee08a1eb922e5862f576061f522b77fa0a",
+      "candidate_sha256": "a0cf0270d5c41154b67adfb421b78eee08a1eb922e5862f576061f522b77fa0a",
+      "unchanged": true
+    },
+    {
+      "path": "web/static/social/findings.png",
+      "published_sha256": "7e1788addad9429116c2e1a871bf2b870b93f24365786fc02d88128e05347f4b",
+      "candidate_sha256": "7e1788addad9429116c2e1a871bf2b870b93f24365786fc02d88128e05347f4b",
+      "unchanged": true
+    },
+    {
+      "path": "web/static/social/first-g4-pass-screen.txt",
+      "published_sha256": "8290546fad45447f8c95ddf78510c87caf0f31771069f44eb9b2c8033d725bce",
+      "candidate_sha256": "8290546fad45447f8c95ddf78510c87caf0f31771069f44eb9b2c8033d725bce",
+      "unchanged": true
+    },
+    {
+      "path": "web/static/social/fort-eval-discovery-v1.png",
+      "published_sha256": "1b51cf008efb6651c412e98fab66017b8aa79181f592583e5e27e1a97bd6b20f",
+      "candidate_sha256": "1b51cf008efb6651c412e98fab66017b8aa79181f592583e5e27e1a97bd6b20f",
+      "unchanged": true
+    },
+    {
+      "path": "web/static/social/fort-eval-easy-v1.png",
+      "published_sha256": "c48ada19a5fe5b926ecf426886311b1d79138a638706342eac20b4ab9747264d",
+      "candidate_sha256": "c48ada19a5fe5b926ecf426886311b1d79138a638706342eac20b4ab9747264d",
+      "unchanged": true
+    },
+    {
+      "path": "web/static/social/fort-eval-hard-v1.png",
+      "published_sha256": "ea0c4912d8071bc02046ad8304cdebc4dab90fc6892186f43e3ec9126fddde0e",
+      "candidate_sha256": "ea0c4912d8071bc02046ad8304cdebc4dab90fc6892186f43e3ec9126fddde0e",
+      "unchanged": true
+    },
+    {
+      "path": "web/static/social/home.png",
+      "published_sha256": "e419cc202472c9df69b8e55ccf3d547a8b70d7eddc144d135f4c75ddd002f0a9",
+      "candidate_sha256": "e419cc202472c9df69b8e55ccf3d547a8b70d7eddc144d135f4c75ddd002f0a9",
+      "unchanged": true
+    },
+    {
+      "path": "web/static/social/live.png",
+      "published_sha256": "0def96ab22775e5277c073ec9c2e4e6620d750713ed0c176476aa471a6b36edc",
+      "candidate_sha256": "0def96ab22775e5277c073ec9c2e4e6620d750713ed0c176476aa471a6b36edc",
+      "unchanged": true
+    },
+    {
+      "path": "web/static/social/protocols.png",
+      "published_sha256": "e859ec63dc5fd9c8e3a7356211571a1145b83a0417a7152696e59a9674d6675e",
+      "candidate_sha256": "e859ec63dc5fd9c8e3a7356211571a1145b83a0417a7152696e59a9674d6675e",
+      "unchanged": true
+    },
+    {
+      "path": "web/static/social/provenance.json",
+      "published_sha256": "7e07c8f5a32aff11a7ed3211d1969771aab5ebc683d21db8b821a43f47a02d84",
+      "candidate_sha256": "7e07c8f5a32aff11a7ed3211d1969771aab5ebc683d21db8b821a43f47a02d84",
+      "unchanged": true
+    },
+    {
+      "path": "web/static/social/results.png",
+      "published_sha256": "b040c889062ccce8eba96ad5eb07ded3298fa17a3fb06ee2cdcbc8ca531db56c",
+      "candidate_sha256": "b040c889062ccce8eba96ad5eb07ded3298fa17a3fb06ee2cdcbc8ca531db56c",
+      "unchanged": true
+    },
+    {
+      "path": "web/static/social/worlds.png",
+      "published_sha256": "2381fc912bce1626494e0de05f4b5e71d6611d97bb739d308678bda737b2cd5b",
+      "candidate_sha256": "2381fc912bce1626494e0de05f4b5e71d6611d97bb739d308678bda737b2cd5b",
+      "unchanged": true
+    },
+    {
+      "path": "web/static/tilesets/README.md",
+      "published_sha256": "a15ff55a04115b4cfdb9c31c06eb687e3e906270e2874cf1c64acb18ddbf3cf4",
+      "candidate_sha256": "a15ff55a04115b4cfdb9c31c06eb687e3e906270e2874cf1c64acb18ddbf3cf4",
+      "unchanged": true
+    },
+    {
+      "path": "web/static/tilesets/oddball-16x16.png",
+      "published_sha256": "9f51c5d866a1a3a406f091dc29c295bd398eb464b4f259dd7e2960d408a99514",
+      "candidate_sha256": "9f51c5d866a1a3a406f091dc29c295bd398eb464b4f259dd7e2960d408a99514",
+      "unchanged": true
+    },
+    {
+      "path": "web/static/worlds-recordings.mjs",
+      "published_sha256": "1af5dbeeeffba48a65c75d1280d8edbb1d43ecb476cc21fd7223442ddaf3e284",
+      "candidate_sha256": "1af5dbeeeffba48a65c75d1280d8edbb1d43ecb476cc21fd7223442ddaf3e284",
+      "unchanged": true
+    },
+    {
+      "path": "web/worlds.html",
+      "published_sha256": "0226fbd1a5c3e5e977b652236334e77603fce026ab908cc4ce985d07c4364b5f",
+      "candidate_sha256": "0226fbd1a5c3e5e977b652236334e77603fce026ab908cc4ce985d07c4364b5f",
+      "unchanged": true
+    }
+  ],
+  "retained_harness_assets": [
+    {
+      "path": "web/campaigns.html",
+      "sha256": "ee09155d9319fff037f5e742f2bb6f430380bf3365ae475b45a846771b799507"
+    },
+    {
+      "path": "web/static/campaign-continuation-live.js",
+      "sha256": "887cbd3da3f7e4ea492b1bc6b6287edacc35d23f8fe5b74e2bfc6700f1568777"
+    },
+    {
+      "path": "web/static/campaign-continuation-records.js",
+      "sha256": "de4debdc1420c1cebdb9e4aefb91198736b983e8160ee0ebbf684738f19ec978"
+    },
+    {
+      "path": "web/static/campaign-endurance-live.js",
+      "sha256": "7bd6fb2622e522609ec21b1625a5cf20e7607c8386a0d6ed533d46586d14f334"
+    },
+    {
+      "path": "web/static/campaign-endurance-records.js",
+      "sha256": "303f47cddd686d9c45e9afd42b3f9f23165c104da7805fd9fd46661def82056c"
+    },
+    {
+      "path": "web/static/campaign-feed.js",
+      "sha256": "a56e1954a3814d0ca2e500b419c18d6cebbed2806172103878c3a277a59f1a44"
+    },
+    {
+      "path": "web/static/campaign-keyboard-admission.js",
+      "sha256": "f69a72f4099a0f0695141211de151c0c3d4f74f9a98a0dfafdd703ec02d77eae"
+    },
+    {
+      "path": "web/static/campaign-keyboard-live.js",
+      "sha256": "6f47f086a46c84ac98156b1ecf6f81d8f5c739e6943861c1e1afc372bd9959b5"
+    },
+    {
+      "path": "web/static/campaign-keyboard.js",
+      "sha256": "a07776adc9f014b575c623d5e7a643abf99bb12b4b77440cb57520ef2475085b"
+    },
+    {
+      "path": "web/static/campaign-matched-live.js",
+      "sha256": "2661a1e848234386dfa1e4f6eb22438e3aec0a081dd930ff4d7d84a658040359"
+    },
+    {
+      "path": "web/static/campaign-matched.js",
+      "sha256": "bc5348624d53ab208bcff5d750f711acb07de1e5f604e32199280e800048e4f0"
+    },
+    {
+      "path": "web/static/campaigns.css",
+      "sha256": "3a370772445da6455ae098b23b90c0cf790da27dbe73e766f31be9277f3a9cc4"
+    },
+    {
+      "path": "web/static/campaigns.js",
+      "sha256": "6ed846f1318c4071126b5399c21a44c39b1e097a666e01bdbc43400eaa9be9ce"
+    }
+  ],
+  "compatibility_exceptions": {
+    "web/landing.html": "Keep existing desktop and mobile Campaigns links",
+    "web/results.html": "Keep existing desktop and mobile Campaigns links",
+    "web/protocols.html": "Keep harness protocol catalog G7-v3 footer link"
+  },
+  "recordings": [
+    {
+      "id": "astra-keyboard-endurance-v1-517-580",
+      "sha256": "016da429b0dc5829a4618980a62ac733d166c08bc911d28dc6b5f1605db876b6",
+      "frames": 64
+    },
+    {
+      "id": "astra-keyboard-endurance-v1-453-516",
+      "sha256": "36982b8e7703c0ddaaec1d38f11209c95fca23159819fe2441a2171e3f210231",
+      "frames": 64
+    },
+    {
+      "id": "astra-keyboard-endurance-v1-389-452",
+      "sha256": "c64ee2c324d0a343fb6f0ee80991a515dff035c97c2c8a127728194f2b678860",
+      "frames": 64
+    },
+    {
+      "id": "astra-keyboard-endurance-v1-325-388",
+      "sha256": "0049b28cc0e13fbb1ae2143b51eac5e6fef8bc26faf44fc5dc0d9282d340612f",
+      "frames": 64
+    },
+    {
+      "id": "astra-keyboard-endurance-v1-261-324",
+      "sha256": "78ff11dcc9deed6ed21e0214b868971b41fd753eea5bc274121837ae9f27eca4",
+      "frames": 64
+    },
+    {
+      "id": "astra-keyboard-endurance-v1-197-260",
+      "sha256": "c67e515a936bee675d6563dcd18e5be094d06c22bc6c4560d8725111cd9b21eb",
+      "frames": 64
+    },
+    {
+      "id": "astra-keyboard-endurance-v1-133-196",
+      "sha256": "d5da30777c97f7f4827daee5048f276ce0b843e901c633c9b99628ad8249bcc7",
+      "frames": 64
+    },
+    {
+      "id": "astra-keyboard-endurance-v1-69-132",
+      "sha256": "eabd35f654dfd30a1860e2b233e38da38a8adc323720e9f6dd987133bf3a8166",
+      "frames": 64
+    },
+    {
+      "id": "astra-keyboard-endurance-v1-1-68",
+      "sha256": "97cd1ae75d5afa68e6896bcb1868b476ca9cd8430ff59b4fd0975857fdae095c",
+      "frames": 68
+    },
+    {
+      "id": "controls-v2-p3-keyboard-1-128",
+      "sha256": "337ca3bd834be6f50c2d09afbd3668228eee69d142e65d632f0b013974cdb337",
+      "frames": 128
+    },
+    {
+      "id": "controls-v2-p3-shortcuts-1-128",
+      "sha256": "02b139ad1021de3e560d20a2404944121cfc896b5477180c8c3e3a0dde71226a",
+      "frames": 128
+    },
+    {
+      "id": "controls-v2-p2-shortcuts-1-128",
+      "sha256": "4890518b7d6c550a49e25a6c134945141a16c136dc9f50721d605ab0f89db1cd",
+      "frames": 128
+    },
+    {
+      "id": "controls-v2-p2-keyboard-1-128",
+      "sha256": "9d15f665d816f9ba53f6b332480bc6017c192bcc8f50d73a208c0e067563c76e",
+      "frames": 128
+    },
+    {
+      "id": "controls-v2-p1-keyboard-1-128",
+      "sha256": "280e6193242088f0743a000cc84ace5cefa23b82d4c9877f73abf46597c533f5",
+      "frames": 128
+    },
+    {
+      "id": "controls-v2-p1-shortcuts-1-128",
+      "sha256": "9063c997563bd5c00eb3726acfff77088a50877dd66aeb12a95662b46c62d17b",
+      "frames": 128
+    },
+    {
+      "id": "controls-p1-keyboard-1-128",
+      "sha256": "db74af4eb5a3c13297c363aecb9cfc0dad028f708edfdb9db9d7cd353a81e6b8",
+      "frames": 128
+    },
+    {
+      "id": "astra-matched-r2-65-128",
+      "sha256": "5bdeb2650b4562c3327c7a699ae4e88458052155c507546c138c63a02a809215",
+      "frames": 64
+    },
+    {
+      "id": "terra-matched-r2-65-128",
+      "sha256": "f8fb441bfd5201d7ac9c38f23a10d942fb7adf3ab02c369c8ebc94b287a657a0",
+      "frames": 64
+    },
+    {
+      "id": "astra-matched-r1-65-128",
+      "sha256": "0f32a0439dafeef5d39dc70702bfbda902bd0e95006fe974744f00fc291a0489",
+      "frames": 64
+    },
+    {
+      "id": "terra-matched-r1-65-128",
+      "sha256": "259ef96059fee1d2ef35e51779fcd27747c7b9c68784579152fbccf848441146",
+      "frames": 64
+    },
+    {
+      "id": "astra-matched-r2-1-64",
+      "sha256": "79ea8da55449f58aca9b9d6a98cd37db56b825d228bff10c6211961a9f2bfc30",
+      "frames": 64
+    },
+    {
+      "id": "sol-matched-r2-1-64",
+      "sha256": "30b1aeced4a62c8882aa77004784d3057f84768c8b778c147b0adcc25f517152",
+      "frames": 64
+    },
+    {
+      "id": "terra-matched-r2-1-64",
+      "sha256": "d34f451723a40ef11c2cb966b2c568702e44489163b51e79721bffb15aeaeeb1",
+      "frames": 64
+    },
+    {
+      "id": "astra-matched-r1-1-64",
+      "sha256": "24380f7d5226ef28633b6eb37776ffa905069ac1cc1006b29ffd92b14950bfcc",
+      "frames": 64
+    },
+    {
+      "id": "terra-matched-r1-1-64",
+      "sha256": "3499bc18073141858398ab631389155a2672ded691b3b0324aaf5d26c7d5e6bb",
+      "frames": 64
+    },
+    {
+      "id": "sol-matched-r1-1-64",
+      "sha256": "50bc9a2b94b6a0de3fadf1507ec59fbde845c2cc4e5461623d2c26e0dab78741",
+      "frames": 64
+    },
+    {
+      "id": "astra-year-two-257-416",
+      "sha256": "79a42eeb8501fe7669f134670e9ce6c947a5628eeb5e94506973f1afa78f83d9",
+      "frames": 160
+    },
+    {
+      "id": "astra-recovery-225-256",
+      "sha256": "7aba3fdddea9f44e9a85a42738c93bd275d168692f6d4edbbc579cc70ee4e3f0",
+      "frames": 32
+    },
+    {
+      "id": "astra-97-256",
+      "sha256": "5627f83eec939aa7b86603e9aa5d18d2eb7a839560ae3a5ff3354ab8d52a4ee0",
+      "frames": 160
+    },
+    {
+      "id": "sol-65-128",
+      "sha256": "3eb8184e5b9a5f7bffee4ce6c972556c3baf030f74c4c59baf251c9a3100e696",
+      "frames": 64
+    },
+    {
+      "id": "terra-65-128",
+      "sha256": "37dc8ce0f22df8c9a6b4630743dc443b6fdbac4505ce50ebdad30f38d5df0bfc",
+      "frames": 64
+    },
+    {
+      "id": "astra-portable-acceptance-1-4",
+      "sha256": "4737508d32fd1a6e27c2c78e1636ec7fb8de91eaca622cd38f8a7d3ab398ddf1",
+      "frames": 4
+    }
+  ],
+  "recording_count": 32,
+  "frame_count": 2600,
+  "latest_saved_decision": 580,
+  "latest_saved_elapsed_ticks": 403050,
+  "active_experiment_changed": false,
+  "main_merged": false,
+  "combined_application_deployed": false,
+  "native_gameplay_executed_by_integration": false,
+  "private_observer_included": false,
+  "verification_kind": "offline_source_and_recording_validation",
+  "full_goal_complete": false
+}

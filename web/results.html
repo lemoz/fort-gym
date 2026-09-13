@@ -13,7 +13,7 @@
 <meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="Results | Fort Labs"><meta name="twitter:description" content="Protocol-scoped Fort-Eval results and the recorded Dwarf Fortress runs behind every comparison."><meta name="twitter:image" content="https://fortgym.live/static/social/results.png?v=1"><meta name="twitter:image:alt" content="Fort-Eval results compared under declared protocols with recorded evidence">
 <link rel="icon" type="image/svg+xml" href="/static/brand/favicon.svg"><link rel="icon" type="image/png" sizes="32x32" href="/static/brand/favicon-32.png"><link rel="apple-touch-icon" sizes="180x180" href="/static/brand/apple-touch-icon.png">
 <link rel="stylesheet" href="/static/fort-labs.css?v=20260911-3">
-<link rel="stylesheet" href="/static/displayed-key-comparison.css?v=20260912-boundaries">
+<link rel="stylesheet" href="/static/displayed-key-comparison.css?v=20260912-astra-repeat">
 <style>
   .results-hero { padding: 58px 0 42px; border-bottom: 1px solid var(--line); }
   .results-hero-grid { display: grid; grid-template-columns: 1.25fr .75fr; gap: 70px; align-items: end; }
@@ -172,7 +172,7 @@
       $('cohort-groups').innerHTML = '<div class="cohort-state"><strong>No published results in this historical field.</strong><p>The current recordings above are a separate exploratory dataset. They have not been added to this benchmark table.</p></div>';
       return;
     }
-    $('cohort-groups').innerHTML = groups.map(group => `<div class="group-block"><div class="group-key">${FL.escapeHtml(keyText(group.comparability))}</div><div class="fl-table-shell"><table class="fl-table"><thead><tr><th>Model</th><th>Verdict</th><th>G7</th><th>Runs</th><th>Mean</th><th>Best</th><th>Gameplay</th></tr></thead><tbody>${(group.model_results || []).map(row => { const label = row.public_label || row.model; const digest = row.model_digest && row.model_digest !== label ? `<div class="fl-mono">${FL.escapeHtml(row.model_digest)}</div>` : ''; const g7 = Object.entries(row.g7_outcomes || {}).map(([outcome, count]) => `${outcome} ${count}`).join(' · ') || 'Not reported'; return `<tr><td><strong>${FL.escapeHtml(label)}</strong>${digest}</td><td class="fl-mono">${FL.escapeHtml(row.task_verdict || 'Not reported')}</td><td class="fl-mono">${FL.escapeHtml(g7)}</td><td class="fl-mono">${FL.escapeHtml(row.run_count)}</td><td class="fl-mono">${FL.escapeHtml(FL.formatNumber(row.mean_score))}</td><td class="fl-mono">${FL.escapeHtml(FL.formatNumber(row.best_score))}</td><td>${row.best_token ? `<a class="fl-link" href="/r/${encodeURIComponent(row.best_token)}">Watch →</a>` : 'Not reported'}</td></tr>`; }).join('')}</tbody></table></div></div>`).join('');
+    $('cohort-groups').innerHTML = groups.map(group => `<div class="group-block"><div class="group-key">${FL.escapeHtml(keyText(group.comparability))}</div><div class="fl-table-shell"><table class="fl-table"><thead><tr><th>Model</th><th>Verdict</th><th>G7</th><th>Runs</th><th>Scalar mean</th><th>Scalar best</th><th>Gameplay</th></tr></thead><tbody>${(group.model_results || []).map(row => { const label = row.public_label || row.model; const digest = row.model_digest && row.model_digest !== label ? `<div class="fl-mono">${FL.escapeHtml(row.model_digest)}</div>` : ''; const g7 = Object.entries(row.g7_outcomes || {}).map(([outcome, count]) => `${outcome} ${count}`).join(' · ') || 'Not reported'; const outcomeVector = row.result_kind === 'outcome_vector'; const token = row.representative_token || row.best_token; return `<tr><td><strong>${FL.escapeHtml(label)}</strong>${digest}</td><td class="fl-mono">${FL.escapeHtml(row.task_verdict || 'Not reported')}</td><td class="fl-mono">${FL.escapeHtml(g7)}</td><td class="fl-mono">${FL.escapeHtml(row.run_count)}</td><td class="fl-mono">${outcomeVector ? 'N/A' : FL.escapeHtml(FL.formatNumber(row.mean_score))}</td><td class="fl-mono">${outcomeVector ? 'N/A' : FL.escapeHtml(FL.formatNumber(row.best_score))}</td><td>${token ? `<a class="fl-link" href="/r/${encodeURIComponent(token)}">Watch →</a>` : 'Not reported'}</td></tr>`; }).join('')}</tbody></table></div></div>`).join('');
   }
 
   function renderEvidence(items) {
@@ -186,7 +186,7 @@
   }
 
   async function loadEvidence(groups) {
-    const tokens = [...new Set(groups.flatMap(group => (group.model_results || []).map(row => row.best_token).filter(Boolean)))].slice(0, 3);
+    const tokens = [...new Set(groups.flatMap(group => (group.model_results || []).map(row => row.representative_token || row.best_token).filter(Boolean)))].slice(0, 3);
     if (!tokens.length) {
       $('run-evidence').innerHTML = '<div class="fl-empty">No replay evidence is listed for this historical protocol. Current recordings are shown above.</div>';
       return;
@@ -211,6 +211,6 @@
 })();
 </script>
 <script type="module" src="/static/published-recordings.mjs?v=20260911-recovery"></script>
-<script type="module" src="/static/displayed-key-comparison.mjs?v=20260912-boundaries"></script>
+<script type="module" src="/static/displayed-key-comparison.mjs?v=20260912-astra-repeat"></script>
 </body>
 </html>

@@ -35,9 +35,9 @@ const recovered = () => ({...record('b'),saved_through_decision:98,recovery:{
   total_responses:130,source_recording_id:'a',source_checkpoint_sha256:'a'.repeat(64),
   uninterrupted_campaign:false,actions_replayed:false}});
 
-test('selected-workshop shortcut is explicit and never claims finished products', () => {
+test('workshop shortcuts remain explicit in recorded, live, and rejected states', () => {
   const data = record('shortcut');
-  const action = {intent:'Make beds',keys:[],advance_ticks:100,
+  const action = {intent:'Queue beds',keys:[],advance_ticks:100,
     shortcut:{type:'WORKSHOP_JOB',item:'bed',quantity:2}};
   data.frames[0].action = action;
   assert.equal(validateRecording(data).frames[0].action,action);
@@ -45,11 +45,12 @@ test('selected-workshop shortcut is explicit and never claims finished products'
   assert.match(actionExecutionLabel(data.frames[0],false),/jobs queued.*products are not yet proved/);
   assert.match(actionExecutionLabel(data.frames[0],true),/does not yet verify execution/);
   assert.match(actionExecutionLabel({...data.frames[0],accepted:false},false),/not accepted/);
-  for (const quantity of [true,0,6,1.5,'2']) {
+  assert.match(actionExecutionLabel({...data.frames[0],action_status:'rejected'},true),/No job was queued/);
+  for (const quantity of [true,false,0,6,1.5,'2',null])
     assert.throws(()=>shortcutLabel({...action,shortcut:{...action.shortcut,quantity}}));
-  }
+  for (const shortcut of [null,{}, {...action.shortcut,item:'unknown'}, {...action.shortcut,workshop_id:99}])
+    assert.throws(()=>shortcutLabel({...action,shortcut}));
   assert.throws(()=>shortcutLabel({...action,keys:['q']}));
-  assert.throws(()=>shortcutLabel({...action,shortcut:{...action.shortcut,workshop_id:99}}));
   assert.equal(shortcutLabel({keys:['q']}),null);
 });
 
@@ -189,8 +190,11 @@ test('homepage controls, replay switching and live disconnect work in memory', a
     assert.equal(element('recovery').hidden,true);
     assert.equal(element('prior').hidden,true);
     assert.match(element('execution').textContent,/does not yet verify/);
-    live.frame={...live.frame,decision:100}; await poll.fn();
+    live.frame={...live.frame,decision:100,action:{intent:'Queue two beds',keys:[],advance_ticks:100,
+      shortcut:{type:'WORKSHOP_JOB',item:'bed',quantity:2}}}; await poll.fn();
     assert.equal(element('decision').textContent,'Decision 100');
+    assert.equal(element('keys').children[0].textContent,'Workshop shortcut: queue 2 × bed');
+    assert.match(element('execution').textContent,/Chosen workshop shortcut.*does not yet verify/);
     await element('prev').emit('click');
     assert.equal(element('decision').textContent,'Decision 99');
     await poll.fn();
@@ -278,7 +282,7 @@ test('Year-Two replay displays its endpoint and hides it for other recordings', 
   } finally { Object.assign(globalThis,originals); }
 });
 
-for (const [model, repeat, first=1, size=64] of [['astra',1], ['terra',1], ['terra',2], ['sol',2], ['astra',2], ['terra',1,65], ['astra',1,65], ['terra',2,65], ['astra','portable',1,4]]) test(model+' '+repeat+' from '+first+' scrubs audited frames', async () => {
+for (const [model, repeat, first=1, size=64] of [['astra',1], ['terra',1], ['terra',2], ['sol',2], ['astra',2], ['terra',1,65], ['astra',1,65], ['terra',2,65], ['astra',2,65], ['astra','portable',1,4]]) test(model+' '+repeat+' from '+first+' scrubs audited frames', async () => {
   const last=first+size-1, id=repeat==='portable'?'astra-portable-acceptance-1-4':model+'-matched-r'+repeat+'-'+first+'-'+last;
   const recording=JSON.parse(fs.readFileSync('web/static/recordings/'+id+'.json'));
   const originals=Object.fromEntries(['document','fetch','location','setInterval','clearInterval'].map(key=>[key,globalThis[key]]));
