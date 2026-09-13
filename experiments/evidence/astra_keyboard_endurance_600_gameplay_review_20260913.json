@@ -1,0 +1,1162 @@
+{
+  "schema_version": "fortgym.endurance-gameplay-review/v2",
+  "date_utc": "2026-09-13",
+  "campaign_id": "astra-keyboard-endurance-v1",
+  "scope": "Saved decisions517-580 and a fixed unsaved prefix through decision600, not the final state of the running window",
+  "source_revision": "4b526b5636e6f568a4cae1a1227d746d9c6922c3",
+  "checkpoint580_receipt_sha256": "bf26bc0a399253cbc092f7fc7c0ee66d27ee7c8d62dcf31a26ee101382f73340",
+  "checkpoint580_manifest_sha256": "f1ffd2afd43b31197da5dac8100a7dd6f5963d2b513b6ce31d267e12a3fd7b1b",
+  "recording_sha256": "016da429b0dc5829a4618980a62ac733d166c08bc911d28dc6b5f1605db876b6",
+  "reader_sha256": "81cdae7dc8c3ac18d94991128866f355f40c5280007be302ce3f98b4a7b6794b",
+  "connectivity_helper_sha256": "a5e592f0550a19a735bf77707a8f92c2fd4d6f63fb350f33c70ac86a03d68c2f",
+  "source_hash_encoding": "SHA256 of UTF-8 JSON with sorted keys, compact comma/colon separators and finite numbers, for each selected native row list",
+  "frame_hash_encoding": "SHA256 of UTF-8 JSON.stringify(parsed frame), preserving parsed property order",
+  "screen_text_projection": "Column-major ASCII characters retained, non-ASCII glyphs replaced with spaces; no OCR",
+  "saved_window": {
+    "first_decision": 517,
+    "last_decision": 580,
+    "actual_ticks_advanced": 58000,
+    "decisions_with_positive_time": 29,
+    "metric_summaries": {
+      "population": {
+        "start": 19,
+        "end": 19,
+        "change": 0,
+        "minimum_observed": 19,
+        "maximum_observed": 19,
+        "observed_samples": 64,
+        "missing_samples": 0,
+        "evidence": "complete"
+      },
+      "food_stock": {
+        "start": 170,
+        "end": 73,
+        "change": -97,
+        "minimum_observed": 73,
+        "maximum_observed": 170,
+        "observed_samples": 64,
+        "missing_samples": 0,
+        "evidence": "complete"
+      },
+      "drink_stock": {
+        "start": 29,
+        "end": 130,
+        "change": 101,
+        "minimum_observed": 29,
+        "maximum_observed": 132,
+        "observed_samples": 64,
+        "missing_samples": 0,
+        "evidence": "complete"
+      },
+      "wood_stock": {
+        "start": null,
+        "end": null,
+        "change": null,
+        "minimum_observed": null,
+        "maximum_observed": null,
+        "observed_samples": 0,
+        "missing_samples": 64,
+        "evidence": "incomplete"
+      },
+      "stone_stock": {
+        "start": null,
+        "end": null,
+        "change": null,
+        "minimum_observed": null,
+        "maximum_observed": null,
+        "observed_samples": 0,
+        "missing_samples": 64,
+        "evidence": "incomplete"
+      },
+      "functional_rooms": {
+        "start": null,
+        "end": null,
+        "change": null,
+        "minimum_observed": null,
+        "maximum_observed": null,
+        "observed_samples": 0,
+        "missing_samples": 64,
+        "evidence": "incomplete"
+      },
+      "completed_workshops": {
+        "start": 4,
+        "end": 4,
+        "change": 0,
+        "minimum_observed": 4,
+        "maximum_observed": 4,
+        "observed_samples": 64,
+        "missing_samples": 0,
+        "evidence": "complete"
+      },
+      "completed_beds": {
+        "start": 9,
+        "end": 9,
+        "change": 0,
+        "minimum_observed": 9,
+        "maximum_observed": 9,
+        "observed_samples": 64,
+        "missing_samples": 0,
+        "evidence": "complete"
+      },
+      "completed_farms": {
+        "start": 3,
+        "end": 3,
+        "change": 0,
+        "minimum_observed": 3,
+        "maximum_observed": 3,
+        "observed_samples": 64,
+        "missing_samples": 0,
+        "evidence": "complete"
+      },
+      "recorded_dead_citizens": {
+        "start": 0,
+        "end": 0,
+        "change": 0,
+        "minimum_observed": 0,
+        "maximum_observed": 0,
+        "observed_samples": 64,
+        "missing_samples": 0,
+        "evidence": "complete"
+      }
+    },
+    "stock_observation_changes": [
+      {
+        "decision": 517,
+        "food_stock": 170,
+        "drink_stock": 29
+      },
+      {
+        "decision": 519,
+        "food_stock": 164,
+        "drink_stock": 29
+      },
+      {
+        "decision": 522,
+        "food_stock": 160,
+        "drink_stock": 29
+      },
+      {
+        "decision": 531,
+        "food_stock": 155,
+        "drink_stock": 54
+      },
+      {
+        "decision": 533,
+        "food_stock": 151,
+        "drink_stock": 66
+      },
+      {
+        "decision": 535,
+        "food_stock": 145,
+        "drink_stock": 84
+      },
+      {
+        "decision": 536,
+        "food_stock": 78,
+        "drink_stock": 104
+      },
+      {
+        "decision": 538,
+        "food_stock": 78,
+        "drink_stock": 99
+      },
+      {
+        "decision": 540,
+        "food_stock": 78,
+        "drink_stock": 98
+      },
+      {
+        "decision": 541,
+        "food_stock": 78,
+        "drink_stock": 97
+      },
+      {
+        "decision": 544,
+        "food_stock": 77,
+        "drink_stock": 97
+      },
+      {
+        "decision": 545,
+        "food_stock": 77,
+        "drink_stock": 96
+      },
+      {
+        "decision": 546,
+        "food_stock": 77,
+        "drink_stock": 92
+      },
+      {
+        "decision": 547,
+        "food_stock": 77,
+        "drink_stock": 86
+      },
+      {
+        "decision": 548,
+        "food_stock": 75,
+        "drink_stock": 82
+      },
+      {
+        "decision": 549,
+        "food_stock": 75,
+        "drink_stock": 81
+      },
+      {
+        "decision": 550,
+        "food_stock": 74,
+        "drink_stock": 79
+      },
+      {
+        "decision": 551,
+        "food_stock": 74,
+        "drink_stock": 78
+      },
+      {
+        "decision": 554,
+        "food_stock": 84,
+        "drink_stock": 78
+      },
+      {
+        "decision": 557,
+        "food_stock": 82,
+        "drink_stock": 78
+      },
+      {
+        "decision": 561,
+        "food_stock": 78,
+        "drink_stock": 98
+      },
+      {
+        "decision": 563,
+        "food_stock": 74,
+        "drink_stock": 96
+      },
+      {
+        "decision": 568,
+        "food_stock": 74,
+        "drink_stock": 117
+      },
+      {
+        "decision": 572,
+        "food_stock": 74,
+        "drink_stock": 114
+      },
+      {
+        "decision": 578,
+        "food_stock": 73,
+        "drink_stock": 132
+      },
+      {
+        "decision": 580,
+        "food_stock": 73,
+        "drink_stock": 130
+      }
+    ],
+    "worker_job_observations": {
+      "CustomReaction": 20,
+      "Drink2": 40,
+      "Eat": 34,
+      "MakeBarrel": 60,
+      "PlantSeeds": 6,
+      "Sleep": 77
+    },
+    "worker_job_observation_unit": "citizen-boundary samples, not unique jobs, completed jobs or time",
+    "endpoint": {
+      "native_year": 31,
+      "native_year_tick": 16651,
+      "elapsed_ticks": 403050,
+      "metrics": {
+        "population": 19,
+        "food_stock": 73,
+        "drink_stock": 130,
+        "wood_stock": null,
+        "stone_stock": null,
+        "functional_rooms": null,
+        "completed_workshops": 4,
+        "completed_beds": 9,
+        "completed_farms": 3,
+        "recorded_dead_citizens": 0
+      },
+      "citizens": {
+        "total": 19,
+        "idle": 14,
+        "labor_eligible": 17,
+        "labor_eligible_idle": 12,
+        "labor_eligibility_complete": true,
+        "labor_state_complete": true
+      },
+      "jobs": {
+        "active_ids": [
+          181,
+          505,
+          510,
+          528,
+          553,
+          574,
+          1798,
+          2222,
+          2223,
+          2229,
+          2230
+        ],
+        "active_ids_truncated": false,
+        "brew_reaction": 1,
+        "construct_building": 0,
+        "construct_building_walk_group_connected": 0,
+        "construct_building_walk_group_disconnected": 0,
+        "construct_building_walk_group_unknown": 0,
+        "dig": 0,
+        "entries": [
+          {
+            "has_worker": false,
+            "id": 181,
+            "pos": [
+              112,
+              104,
+              159
+            ],
+            "reaction": "BREW_DRINK_FROM_PLANT",
+            "suspended": false,
+            "target_walk_group_connectivity": "disconnected",
+            "type": "CustomReaction"
+          },
+          {
+            "has_worker": false,
+            "id": 505,
+            "pos": [
+              111,
+              106,
+              159
+            ],
+            "reaction": false,
+            "suspended": false,
+            "target_walk_group_connectivity": "disconnected",
+            "type": "HarvestPlants"
+          },
+          {
+            "has_worker": false,
+            "id": 510,
+            "pos": [
+              111,
+              107,
+              159
+            ],
+            "reaction": false,
+            "suspended": false,
+            "target_walk_group_connectivity": "disconnected",
+            "type": "HarvestPlants"
+          },
+          {
+            "has_worker": false,
+            "id": 528,
+            "pos": [
+              111,
+              108,
+              159
+            ],
+            "reaction": false,
+            "suspended": false,
+            "target_walk_group_connectivity": "disconnected",
+            "type": "HarvestPlants"
+          },
+          {
+            "has_worker": false,
+            "id": 553,
+            "pos": [
+              112,
+              106,
+              159
+            ],
+            "reaction": false,
+            "suspended": false,
+            "target_walk_group_connectivity": "disconnected",
+            "type": "HarvestPlants"
+          },
+          {
+            "has_worker": false,
+            "id": 574,
+            "pos": [
+              112,
+              107,
+              159
+            ],
+            "reaction": false,
+            "suspended": false,
+            "target_walk_group_connectivity": "disconnected",
+            "type": "HarvestPlants"
+          },
+          {
+            "has_worker": true,
+            "id": 1798,
+            "pos": [
+              102,
+              96,
+              161
+            ],
+            "reaction": false,
+            "suspended": false,
+            "target_walk_group_connectivity": "connected",
+            "type": "MakeBarrel"
+          },
+          {
+            "has_worker": true,
+            "id": 2222,
+            "pos": [
+              85,
+              78,
+              159
+            ],
+            "reaction": false,
+            "suspended": false,
+            "target_walk_group_connectivity": "connected",
+            "type": "Sleep"
+          },
+          {
+            "has_worker": true,
+            "id": 2223,
+            "pos": [
+              87,
+              78,
+              159
+            ],
+            "reaction": false,
+            "suspended": false,
+            "target_walk_group_connectivity": "connected",
+            "type": "Sleep"
+          },
+          {
+            "has_worker": true,
+            "id": 2229,
+            "pos": [
+              89,
+              78,
+              159
+            ],
+            "reaction": false,
+            "suspended": false,
+            "target_walk_group_connectivity": "connected",
+            "type": "Sleep"
+          },
+          {
+            "has_worker": true,
+            "id": 2230,
+            "pos": [
+              89,
+              72,
+              159
+            ],
+            "reaction": false,
+            "suspended": false,
+            "target_walk_group_connectivity": "connected",
+            "type": "Sleep"
+          }
+        ],
+        "order_jobs": [
+          {
+            "id": 181,
+            "item": "brew"
+          },
+          {
+            "id": 1798,
+            "item": "barrel"
+          }
+        ],
+        "order_jobs_truncated": false,
+        "plant_seeds": 0,
+        "suspended": 0,
+        "total": 11,
+        "workshop_task": 2
+      },
+      "production_inputs": {
+        "brewable_plant_read_failures": 0,
+        "brewable_plant_scan_complete": true,
+        "brewable_plant_source": "PLANT material reaction product DRINK_MAT; unassigned stacks",
+        "brewable_plant_stacks": 8,
+        "brewable_plant_stacks_in_jobs": 0,
+        "brewable_plant_units": 19,
+        "empty_barrels": 96,
+        "empty_barrels_in_jobs": 0,
+        "schema_version": "fortgym.campaign-production-inputs/v2",
+        "total_barrels": 114
+      }
+    },
+    "source_records_sha256": "9c6d046d32302b35178974e3c3fe213cde4e103ed903d81f762f2b5e31c2767a"
+  },
+  "running_window": {
+    "first_decision": 581,
+    "last_decision": 600,
+    "actual_ticks_advanced": 10000,
+    "decisions_with_positive_time": 5,
+    "metric_summaries": {
+      "population": {
+        "start": 19,
+        "end": 19,
+        "change": 0,
+        "minimum_observed": 19,
+        "maximum_observed": 19,
+        "observed_samples": 20,
+        "missing_samples": 0,
+        "evidence": "complete"
+      },
+      "food_stock": {
+        "start": 73,
+        "end": 66,
+        "change": -7,
+        "minimum_observed": 66,
+        "maximum_observed": 73,
+        "observed_samples": 20,
+        "missing_samples": 0,
+        "evidence": "complete"
+      },
+      "drink_stock": {
+        "start": 129,
+        "end": 129,
+        "change": 0,
+        "minimum_observed": 129,
+        "maximum_observed": 129,
+        "observed_samples": 20,
+        "missing_samples": 0,
+        "evidence": "complete"
+      },
+      "wood_stock": {
+        "start": null,
+        "end": null,
+        "change": null,
+        "minimum_observed": null,
+        "maximum_observed": null,
+        "observed_samples": 0,
+        "missing_samples": 20,
+        "evidence": "incomplete"
+      },
+      "stone_stock": {
+        "start": null,
+        "end": null,
+        "change": null,
+        "minimum_observed": null,
+        "maximum_observed": null,
+        "observed_samples": 0,
+        "missing_samples": 20,
+        "evidence": "incomplete"
+      },
+      "functional_rooms": {
+        "start": null,
+        "end": null,
+        "change": null,
+        "minimum_observed": null,
+        "maximum_observed": null,
+        "observed_samples": 0,
+        "missing_samples": 20,
+        "evidence": "incomplete"
+      },
+      "completed_workshops": {
+        "start": 4,
+        "end": 4,
+        "change": 0,
+        "minimum_observed": 4,
+        "maximum_observed": 4,
+        "observed_samples": 20,
+        "missing_samples": 0,
+        "evidence": "complete"
+      },
+      "completed_beds": {
+        "start": 9,
+        "end": 9,
+        "change": 0,
+        "minimum_observed": 9,
+        "maximum_observed": 9,
+        "observed_samples": 20,
+        "missing_samples": 0,
+        "evidence": "complete"
+      },
+      "completed_farms": {
+        "start": 3,
+        "end": 3,
+        "change": 0,
+        "minimum_observed": 3,
+        "maximum_observed": 3,
+        "observed_samples": 20,
+        "missing_samples": 0,
+        "evidence": "complete"
+      },
+      "recorded_dead_citizens": {
+        "start": 0,
+        "end": 0,
+        "change": 0,
+        "minimum_observed": 0,
+        "maximum_observed": 0,
+        "observed_samples": 20,
+        "missing_samples": 0,
+        "evidence": "complete"
+      }
+    },
+    "stock_observation_changes": [
+      {
+        "decision": 581,
+        "food_stock": 73,
+        "drink_stock": 129
+      },
+      {
+        "decision": 583,
+        "food_stock": 72,
+        "drink_stock": 129
+      },
+      {
+        "decision": 588,
+        "food_stock": 67,
+        "drink_stock": 129
+      },
+      {
+        "decision": 599,
+        "food_stock": 66,
+        "drink_stock": 129
+      }
+    ],
+    "worker_job_observations": {
+      "Fish": 2,
+      "MakeBarrel": 20
+    },
+    "worker_job_observation_unit": "citizen-boundary samples, not unique jobs, completed jobs or time",
+    "endpoint": {
+      "native_year": 31,
+      "native_year_tick": 26651,
+      "elapsed_ticks": 413050,
+      "metrics": {
+        "population": 19,
+        "food_stock": 66,
+        "drink_stock": 129,
+        "wood_stock": null,
+        "stone_stock": null,
+        "functional_rooms": null,
+        "completed_workshops": 4,
+        "completed_beds": 9,
+        "completed_farms": 3,
+        "recorded_dead_citizens": 0
+      },
+      "citizens": {
+        "total": 19,
+        "idle": 17,
+        "labor_eligible": 17,
+        "labor_eligible_idle": 15,
+        "labor_eligibility_complete": true,
+        "labor_state_complete": true
+      },
+      "jobs": {
+        "active_ids": [
+          181,
+          505,
+          510,
+          528,
+          553,
+          574,
+          1798,
+          2500
+        ],
+        "active_ids_truncated": false,
+        "brew_reaction": 1,
+        "construct_building": 0,
+        "construct_building_walk_group_connected": 0,
+        "construct_building_walk_group_disconnected": 0,
+        "construct_building_walk_group_unknown": 0,
+        "dig": 0,
+        "entries": [
+          {
+            "has_worker": false,
+            "id": 181,
+            "pos": [
+              112,
+              104,
+              159
+            ],
+            "reaction": "BREW_DRINK_FROM_PLANT",
+            "suspended": false,
+            "target_walk_group_connectivity": "disconnected",
+            "type": "CustomReaction"
+          },
+          {
+            "has_worker": false,
+            "id": 505,
+            "pos": [
+              111,
+              106,
+              159
+            ],
+            "reaction": false,
+            "suspended": false,
+            "target_walk_group_connectivity": "disconnected",
+            "type": "HarvestPlants"
+          },
+          {
+            "has_worker": false,
+            "id": 510,
+            "pos": [
+              111,
+              107,
+              159
+            ],
+            "reaction": false,
+            "suspended": false,
+            "target_walk_group_connectivity": "disconnected",
+            "type": "HarvestPlants"
+          },
+          {
+            "has_worker": false,
+            "id": 528,
+            "pos": [
+              111,
+              108,
+              159
+            ],
+            "reaction": false,
+            "suspended": false,
+            "target_walk_group_connectivity": "disconnected",
+            "type": "HarvestPlants"
+          },
+          {
+            "has_worker": false,
+            "id": 553,
+            "pos": [
+              112,
+              106,
+              159
+            ],
+            "reaction": false,
+            "suspended": false,
+            "target_walk_group_connectivity": "disconnected",
+            "type": "HarvestPlants"
+          },
+          {
+            "has_worker": false,
+            "id": 574,
+            "pos": [
+              112,
+              107,
+              159
+            ],
+            "reaction": false,
+            "suspended": false,
+            "target_walk_group_connectivity": "disconnected",
+            "type": "HarvestPlants"
+          },
+          {
+            "has_worker": true,
+            "id": 1798,
+            "pos": [
+              102,
+              96,
+              161
+            ],
+            "reaction": false,
+            "suspended": false,
+            "target_walk_group_connectivity": "connected",
+            "type": "MakeBarrel"
+          },
+          {
+            "has_worker": true,
+            "id": 2500,
+            "pos": [
+              32,
+              5,
+              161
+            ],
+            "reaction": false,
+            "suspended": false,
+            "target_walk_group_connectivity": "connected",
+            "type": "Fish"
+          }
+        ],
+        "order_jobs": [
+          {
+            "id": 181,
+            "item": "brew"
+          },
+          {
+            "id": 1798,
+            "item": "barrel"
+          }
+        ],
+        "order_jobs_truncated": false,
+        "plant_seeds": 0,
+        "suspended": 0,
+        "total": 8,
+        "workshop_task": 2
+      },
+      "production_inputs": {
+        "brewable_plant_read_failures": 0,
+        "brewable_plant_scan_complete": true,
+        "brewable_plant_source": "PLANT material reaction product DRINK_MAT; unassigned stacks",
+        "brewable_plant_stacks": 7,
+        "brewable_plant_stacks_in_jobs": 0,
+        "brewable_plant_units": 18,
+        "empty_barrels": 103,
+        "empty_barrels_in_jobs": 0,
+        "schema_version": "fortgym.campaign-production-inputs/v2",
+        "total_barrels": 121
+      }
+    },
+    "source_records_sha256": "7cb3efce87f60e1a8179d28b22f6f49fa185b18cac320e808e05f263f149bc8d"
+  },
+  "running_trace_saved_prefix_equal": true,
+  "running_window_saved": false,
+  "all_running_samples_after_anniversary": true,
+  "brew_job_state_transitions": [
+    {
+      "decision": 517,
+      "brew_entries": [
+        {
+          "id": 181,
+          "type": "CustomReaction",
+          "reaction": "BREW_DRINK_FROM_PLANT",
+          "pos": [
+            112,
+            104,
+            159
+          ],
+          "has_worker": false,
+          "suspended": false,
+          "target_walk_group_connectivity": "unknown"
+        }
+      ],
+      "entry_list_complete_by_count": true,
+      "sampled_entries": 7,
+      "total_jobs": 7
+    },
+    {
+      "decision": 518,
+      "brew_entries": [
+        {
+          "id": 181,
+          "type": "CustomReaction",
+          "reaction": "BREW_DRINK_FROM_PLANT",
+          "pos": [
+            112,
+            104,
+            159
+          ],
+          "has_worker": false,
+          "suspended": false,
+          "target_walk_group_connectivity": "disconnected"
+        }
+      ],
+      "entry_list_complete_by_count": true,
+      "sampled_entries": 7,
+      "total_jobs": 7
+    },
+    {
+      "decision": 531,
+      "brew_entries": [
+        {
+          "id": 181,
+          "type": "CustomReaction",
+          "reaction": "BREW_DRINK_FROM_PLANT",
+          "pos": [
+            112,
+            104,
+            159
+          ],
+          "has_worker": false,
+          "suspended": false,
+          "target_walk_group_connectivity": "disconnected"
+        },
+        {
+          "id": 2035,
+          "type": "CustomReaction",
+          "reaction": "BREW_DRINK_FROM_PLANT",
+          "pos": [
+            105,
+            95,
+            161
+          ],
+          "has_worker": true,
+          "suspended": false,
+          "target_walk_group_connectivity": "connected"
+        }
+      ],
+      "entry_list_complete_by_count": false,
+      "sampled_entries": 12,
+      "total_jobs": 13
+    },
+    {
+      "decision": 536,
+      "brew_entries": [
+        {
+          "id": 181,
+          "type": "CustomReaction",
+          "reaction": "BREW_DRINK_FROM_PLANT",
+          "pos": [
+            112,
+            104,
+            159
+          ],
+          "has_worker": false,
+          "suspended": false,
+          "target_walk_group_connectivity": "disconnected"
+        }
+      ],
+      "entry_list_complete_by_count": true,
+      "sampled_entries": 9,
+      "total_jobs": 9
+    },
+    {
+      "decision": 561,
+      "brew_entries": [
+        {
+          "id": 181,
+          "type": "CustomReaction",
+          "reaction": "BREW_DRINK_FROM_PLANT",
+          "pos": [
+            112,
+            104,
+            159
+          ],
+          "has_worker": false,
+          "suspended": false,
+          "target_walk_group_connectivity": "disconnected"
+        },
+        {
+          "id": 2120,
+          "type": "CustomReaction",
+          "reaction": "BREW_DRINK_FROM_PLANT",
+          "pos": [
+            105,
+            95,
+            161
+          ],
+          "has_worker": false,
+          "suspended": false,
+          "target_walk_group_connectivity": "connected"
+        }
+      ],
+      "entry_list_complete_by_count": false,
+      "sampled_entries": 12,
+      "total_jobs": 13
+    },
+    {
+      "decision": 563,
+      "brew_entries": [
+        {
+          "id": 181,
+          "type": "CustomReaction",
+          "reaction": "BREW_DRINK_FROM_PLANT",
+          "pos": [
+            112,
+            104,
+            159
+          ],
+          "has_worker": false,
+          "suspended": false,
+          "target_walk_group_connectivity": "disconnected"
+        },
+        {
+          "id": 2120,
+          "type": "CustomReaction",
+          "reaction": "BREW_DRINK_FROM_PLANT",
+          "pos": [
+            105,
+            95,
+            161
+          ],
+          "has_worker": true,
+          "suspended": false,
+          "target_walk_group_connectivity": "connected"
+        }
+      ],
+      "entry_list_complete_by_count": true,
+      "sampled_entries": 10,
+      "total_jobs": 10
+    },
+    {
+      "decision": 578,
+      "brew_entries": [
+        {
+          "id": 181,
+          "type": "CustomReaction",
+          "reaction": "BREW_DRINK_FROM_PLANT",
+          "pos": [
+            112,
+            104,
+            159
+          ],
+          "has_worker": false,
+          "suspended": false,
+          "target_walk_group_connectivity": "disconnected"
+        }
+      ],
+      "entry_list_complete_by_count": false,
+      "sampled_entries": 12,
+      "total_jobs": 14
+    }
+  ],
+  "persistent_brew_job_181": {
+    "samples": 64,
+    "without_worker": 64,
+    "disconnected_cached_group_samples": 63,
+    "unknown_cached_group_samples": 1
+  },
+  "evidence": [
+    {
+      "decision": 531,
+      "frame_sha256": "5bdbb682d29530332242529e1826d84826dd702a89373be5286f153e87316dfe",
+      "screen_ascii_excerpt": [
+        " \"`' , ,,`, ,' ,.`.' ,`  '' `\"\"` , g.`,``..\"    '' ,,  ,`.,..'    Brew drink from plant    (b)"
+      ]
+    },
+    {
+      "decision": 533,
+      "frame_sha256": "9d523a56c039d0d751ceb55ed782c66ac493b8bcd378907e54c59b96e9cb2095",
+      "screen_ascii_excerpt": [
+        "  Brew drink from plant/R                         Inactive                                          Still",
+        "  Brew drink from plant/R                         Endok Oslankosh, Herbalist                        Still"
+      ]
+    },
+    {
+      "decision": 537,
+      "frame_sha256": "acb0cb5f974f3f6b0297feac7eb9f98336a36cb2db99d2d9e3cfde79ba8090f7",
+      "screen_ascii_excerpt": [
+        "          Endok Oslankosh, Herbalist cancels Brew drink from plant: Needs unrotten DRINK_MAT-producing H:0/0/19/0/0/0/0"
+      ]
+    },
+    {
+      "decision": 569,
+      "frame_sha256": "dadd7a504dbbeed89f14d2497bb363e1de9c110318089b066e45a3362f2bbd66",
+      "screen_ascii_excerpt": [
+        "              Rain Snowd Stuk ndoren, Stoneworker cancels Plant Seeds: Needs dimple cup spawn. [MORE]  H:0/0/19/0/0/0/0"
+      ]
+    },
+    {
+      "decision": 572,
+      "frame_sha256": "b3fd01e0f566b32f35126463fe56ba9df3d82a64b60bc156fbb190089607946e",
+      "screen_ascii_excerpt": [
+        "  Dimple cup spawn                                                     5                      Cook ----"
+      ]
+    },
+    {
+      "decision": 573,
+      "frame_sha256": "8b648e852315cb21900c50fe37a98ae018e98cab31a582f4a86e9ed11c1ae976",
+      "screen_ascii_excerpt": [
+        "              Rain Snow Avuz K sfikod, Mason cancels Plant Seeds: Needs dimple cup spawn. [MORE]       H:0/0/19/0/0/0/0"
+      ]
+    },
+    {
+      "decision": 580,
+      "frame_sha256": "9f318d923946b2738b0b3aba84ca5e6fd5aca3128f3645548a0f16910364dcab",
+      "screen_ascii_excerpt": [
+        "  Plant Seeds                                     Inactive                                          Farm Plot",
+        "  Plant Seeds                                     Inactive                                          Farm Plot",
+        "  Plant Seeds                                     Inactive                                          Farm Plot",
+        "  Plant Seeds                                     Inactive                                          Farm Plot",
+        "  Plant Seeds                                     Avuz K sfikod, Mason                              Farm Plot",
+        "  Plant Seeds                                     Endok Oslankosh, Herbalist                        Farm Plot",
+        "  Plant Seeds                                     Urvad Stuk ndoren, Stoneworker                    Farm Plot",
+        "  Harvest Plants                                  Inactive                                          Farm Plot",
+        "  Harvest Plants                                  Inactive                                          Farm Plot",
+        "  Harvest Plants                                  Inactive                                          Farm Plot",
+        "  Harvest Plants                                  Inactive                                          Farm Plot",
+        "  Harvest Plants                                  Inactive                                          Farm Plot",
+        "  Brew drink from plant/R                         Inactive                                          Still"
+      ]
+    }
+  ],
+  "actions": [
+    {
+      "decision": 531,
+      "action": {
+        "intent": "Queue repeating plant brewing in the empty still and allow production time.",
+        "keys": [
+          "b",
+          "r",
+          "SYM:0:ESC",
+          " "
+        ],
+        "advance_ticks": 2000
+      },
+      "accepted": true,
+      "actual_ticks": 2000
+    },
+    {
+      "decision": 554,
+      "action": {
+        "intent": "Designate a broad spring plant-gathering area to replenish brewing supplies, then let dwarves work.",
+        "keys": [
+          "SYM:1:Left",
+          "SYM:1:Left",
+          "SYM:1:Left",
+          "SYM:0:Enter",
+          "SYM:1:Right",
+          "SYM:1:Right",
+          "SYM:1:Right",
+          "SYM:1:Right",
+          "SYM:1:Down",
+          "SYM:1:Down",
+          "SYM:0:Enter",
+          "SYM:0:ESC",
+          " "
+        ],
+        "advance_ticks": 2000
+      },
+      "accepted": true,
+      "actual_ticks": 2000
+    },
+    {
+      "decision": 561,
+      "action": {
+        "intent": "Queue repeat plant brewing and allow production to run.",
+        "keys": [
+          "b",
+          "r",
+          "SYM:0:ESC",
+          " "
+        ],
+        "advance_ticks": 2000
+      },
+      "accepted": true,
+      "actual_ticks": 2000
+    },
+    {
+      "decision": 568,
+      "action": {
+        "intent": "Plant dimple cups across all seasons on this underground plot and let farming and brewing proceed.",
+        "keys": [
+          "SYM:1:Enter",
+          "SYM:0:ESC",
+          " "
+        ],
+        "advance_ticks": 2000
+      },
+      "accepted": true,
+      "actual_ticks": 2000
+    }
+  ],
+  "assessment": {
+    "classification": "partial drink-supply recovery followed by fragile operation",
+    "adaptation_evidence": "Accepted keyboard order at decision531 was followed by an assigned plant-brewing job at another position and rising observed drink stocks",
+    "causal_attribution": "Corroborating temporal and native job evidence, not item-level attribution or an independent production oracle",
+    "functioning_at_observed_boundary": "Qualitative evidence of ongoing operation with substantial idle labor and unresolved food-production risks; not a final saved Year-Two acceptance",
+    "survival": {
+      "living_citizens_minimum": 19,
+      "recorded_deaths_maximum": 0,
+      "post_anniversary_samples": 20
+    },
+    "labor_risk": {
+      "at_decision": 600,
+      "labor_eligible": 17,
+      "labor_eligible_idle": 15
+    },
+    "work_blockage": "At decision600, the retained plant-brewing job and five harvest jobs have no assigned worker and are reported in different cached walk groups from checked citizens",
+    "next_checkpoint_assessment": "Verify the actual post-anniversary save; review food stocks, assigned food-related work, connectivity and new construction over elapsed game time without coaching the model",
+    "limits": [
+      "The 20 post-anniversary decision boundaries contain only five time-advancing actions; these are not independent trials",
+      "All citizen current-job lists in this bounded review were complete, but some world-job entry lists were capped at twelve",
+      "Worker-job counts are citizen-boundary observations, not unique jobs, completed jobs, durations or production totals",
+      "Cached walk-group connectivity is a geometric hint, not a full unit-specific path, permission, labor or ingredient-access guarantee",
+      "Inventory changes and job disappearance are not assigned causes, completed quantities or flow rates",
+      "Empty-barrel and brewable-plant counts do not prove accessibility",
+      "An ingredient cancellation alongside a ledger count does not prove which access or resource constraint caused it",
+      "No post-anniversary checkpoint or final functioning-fortress verdict is claimed"
+    ]
+  },
+  "new_model_calls": 0,
+  "gameplay_inputs": 0,
+  "runtime_changed": false,
+  "agent_visible_observation_changed": false,
+  "website_changed": false,
+  "full_goal_complete": false
+}

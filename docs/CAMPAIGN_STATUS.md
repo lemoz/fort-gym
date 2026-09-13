@@ -14,6 +14,18 @@ cohort below. Long-term self-sufficiency and the full delivery goal remain open.
 
 ## Current experiment summary
 
+The [bounded gameplay review through decision600](ENDURANCE_GAMEPLAY_REVIEW_20260913.md)
+finds partial drink-supply recovery and fragile ongoing operation. Accepted
+keyboard brewing at another still was followed by an assigned native brewing
+job and rising drink stocks. Twenty later, unsaved post-anniversary boundaries
+retain nineteen living dwarves and zero recorded deaths, ending at 413,050 ticks,
+66 food and 129 drinks. Only five of those decisions advanced time. At the last
+sample, fifteen of seventeen labor-eligible dwarves were idle; an older brewing
+job and five harvest jobs had no worker and reported disconnected cached walk
+groups. These observations are not full-path guarantees, completed-job counts or
+flow attribution. Checkpoint644 remains the next saved endpoint to verify.
+No hints were sent to the model and no live condition changed.
+
 The latest [endurance save and actual reload](../experiments/evidence/astra_keyboard_endurance_580_20260913.json)
 are verified through decision580: 403,050 elapsed ticks, nineteen living dwarves,
 nine beds, four workshops, three farms, 73 food and 130 drinks, with no recorded

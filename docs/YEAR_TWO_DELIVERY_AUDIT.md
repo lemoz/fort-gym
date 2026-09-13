@@ -9,6 +9,18 @@ Requirements come from [the approved goal](YEAR_TWO_CAMPAIGNS.md),
 
 ## Current controls-study and delivery checkpoint
 
+The [bounded gameplay review through decision600](ENDURANCE_GAMEPLAY_REVIEW_20260913.md)
+finds partial drink-supply recovery and fragile ongoing operation. Accepted
+keyboard brewing at another still was followed by an assigned native brewing
+job and rising drink stocks. Twenty later, unsaved post-anniversary boundaries
+retain nineteen living dwarves and zero recorded deaths, ending at 413,050 ticks,
+66 food and 129 drinks. Only five of those decisions advanced time. At the last
+sample, fifteen of seventeen labor-eligible dwarves were idle; an older brewing
+job and five harvest jobs had no worker and reported disconnected cached walk
+groups. These observations are not full-path guarantees, completed-job counts or
+flow attribution. Checkpoint644 remains the next saved endpoint to verify.
+No hints were sent to the model and no live condition changed.
+
 This summary supersedes the capture-time running/preparation statements in the
 historical sections below. Original result manifests and earlier evidence are
 unchanged. The full Year-Two/cross-model goal is still active.
