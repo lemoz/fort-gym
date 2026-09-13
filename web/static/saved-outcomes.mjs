@@ -63,7 +63,7 @@ export function savedOutcome(data, recording, catalog) {
       || (value.saved_year - value.origin_year) * value.ticks_per_year
         + value.saved_year_tick - value.origin_year_tick !== value.saved_elapsed_ticks
       || value.fresh_reload_verified !== true || value.human_gameplay_rescue !== false
-      || value.functioning_assessment !== 'operating_but_fragile'
+      || !['operating_but_fragile','operating_with_adaptive_supply_recovery'].includes(value.functioning_assessment)
       || value.sustainability_proven !== false
       || value.saved_elapsed_ticks < 403200
       || value.reported_model_charge_usd !== null
@@ -78,6 +78,9 @@ export function savedOutcome(data, recording, catalog) {
 
 export function savedOutcomeSummary(value) {
   const m = value.saved_metrics;
+  const assessment = value.functioning_assessment === 'operating_with_adaptive_supply_recovery'
+    ? 'Operating with adaptive supply recovery at this saved endpoint. Long-term sustainability remains unproven.'
+    : 'Operating but fragile at this saved endpoint.';
   return value.model + ' · Medium · standard keyboard input. '
     + (value.saved_elapsed_ticks / 403200).toFixed(3) + ' elapsed game years · '
     + (value.saved_elapsed_ticks - 403200).toLocaleString() + ' ticks into Year Two. '
@@ -86,7 +89,7 @@ export function savedOutcomeSummary(value) {
     + m.completed_beds + ' beds · ' + m.completed_workshops + ' workshops · '
     + m.completed_farms + ' farms. Supplies: ' + m.food_stock + ' food units and '
     + m.drink_stock + ' drinks. Saved checkpoint ' + value.saved_decision
-    + ' was verified in a fresh game process. Operating but fragile at this saved endpoint.';
+    + ' was verified in a fresh game process. ' + assessment;
 }
 
 export function savedOutcomeHistory(value, recording) {

@@ -16,13 +16,24 @@ test('saved outcomes bind original recordings, native clocks, metrics and eviden
     const recording = JSON.parse(raw);
     assert.equal(savedOutcome(index,recording,catalog),value);
     assert.match(savedOutcomeSummary(value),/standard keyboard input.*elapsed game years/);
-    assert.match(savedOutcomeSummary(value),/Operating but fragile/);
+    assert.match(savedOutcomeSummary(value),value.functioning_assessment === 'operating_with_adaptive_supply_recovery'
+      ? /Operating with adaptive supply recovery/ : /Operating but fragile/);
     assert.match(savedOutcomeHistory(value,recording),/dollar charges were not reported/);
     assert.match(savedOutcomeHistory(value,recording),/not an independent trial/);
     assert.equal(recording.campaign,undefined);
   }
-  assert.match(savedOutcomeSummary(index.outcomes[0]),/18 living dwarves · 1 recorded death ·/);
+  assert.match(savedOutcomeSummary(index.outcomes[0]),/19 living dwarves · 1 recorded death ·/);
   assert.equal(savedOutcome(index,replay('astra-matched-r1-1-64'),catalog),null);
+});
+
+test('the new adaptation assessment does not relabel earlier saved endpoints', () => {
+  assert.equal(index.outcomes[0].functioning_assessment,'operating_with_adaptive_supply_recovery');
+  assert.match(savedOutcomeSummary(index.outcomes[0]),/Long-term sustainability remains unproven/);
+  for (const value of index.outcomes.slice(1)) {
+    assert.equal(value.functioning_assessment,'operating_but_fragile');
+    assert.match(savedOutcomeSummary(value),/Operating but fragile/);
+    assert.doesNotMatch(savedOutcomeSummary(value),/Operating with adaptive supply recovery/);
+  }
 });
 
 for (const [field,value] of [
@@ -50,7 +61,7 @@ for (const field of ['result','review']) test('rejects unsafe or incomplete '+fi
   }
 });
 test('invalid population, duplicate identities, and missing predecessor stay invalid', () => {
-  const changed=structuredClone(index); changed.outcomes[0].saved_metrics.population=19;
+  const changed=structuredClone(index); changed.outcomes[0].saved_metrics.population=20;
   assert.throws(()=>savedOutcome(changed,replay(newest),catalog));
   assert.throws(()=>validateSavedOutcomes({...index,outcomes:[index.outcomes[0],index.outcomes[0]]}));
   assert.throws(()=>validateSavedOutcomes({...index,private:'leak'}));
@@ -96,7 +107,7 @@ for (const mode of ['valid','unavailable','invalid','delayed']) test('real playe
       return {ok:true,json:async()=>url.includes('watch-active') ? live : JSON.parse(fs.readFileSync('web'+url))};
     };
     await import('../web/static/home-watch.mjs?saved-outcome-test='+mode); await settle();
-    assert.equal(get('decision').textContent,'Decision 709 / 772');
+    assert.equal(get('decision').textContent,'Decision 773 / 836');
     assert.equal(get('play').disabled,false);
     if(mode==='delayed') {
       assert.equal(get('outcome').hidden,true);
@@ -109,17 +120,17 @@ for (const mode of ['valid','unavailable','invalid','delayed']) test('real playe
     if(mode==='valid'||mode==='delayed') {
       assert.equal(get('outcome').hidden,false);
       assert.equal(get('outcome-status').hidden,true);
-      assert.match(get('outcome-summary').textContent,/18 living dwarves.*134 food units and 143 drinks/);
+      assert.match(get('outcome-summary').textContent,/19 living dwarves.*151 food units and 528 drinks/);
       assert.equal(get('result').href,index.outcomes[0].result.url);
       assert.equal(get('reload').href,index.outcomes[0].review.url);
       assert.equal(get('reload').textContent,'Inspect the gameplay assessment →');
-      assert.equal(get('prior').href,'/?recording=astra-keyboard-endurance-v1-645-708#watch-root');
+      assert.equal(get('prior').href,'/?recording=astra-keyboard-endurance-v1-709-772#watch-root');
       get('range').value='5'; await get('range').emit('input');
-      assert.equal(get('decision').textContent,'Decision 714 / 772');
+      assert.equal(get('decision').textContent,'Decision 778 / 836');
       assert.equal(get('execution').textContent,'Key command accepted by the harness. Acceptance does not prove the intended outcome.');
       // The previous replay retains its rejected input and its own endpoint links.
       await get('runs').children.find(node=>node.dataset.recording==='astra-keyboard-endurance-v1-645-708').emit('click'); await settle();
-      assert.equal(get('result').href,index.outcomes[1].result.url);
+      assert.equal(get('result').href,index.outcomes.find(row=>row.recording_id==='astra-keyboard-endurance-v1-645-708').result.url);
       assert.match(get('outcome-summary').textContent,/75 food units and 93 drinks/);
       get('range').value='24'; await get('range').emit('input');
       assert.equal(get('decision').textContent,'Decision 669 / 708');
@@ -129,7 +140,7 @@ for (const mode of ['valid','unavailable','invalid','delayed']) test('real playe
       assert.equal(get('outcome').hidden,true);
       assert.equal(get('outcome-status').hidden,false);
       await get('next').emit('click');
-      assert.equal(get('decision').textContent,'Decision 710 / 772');
+      assert.equal(get('decision').textContent,'Decision 774 / 836');
     }
     live={schema_version:'fortgym.watch-live/v1',status:'running',run_id:'current',model:'gpt-6-astra',
       observed_at_unix:Math.floor(Date.now()/1000),fresh_for_seconds:30,

@@ -2,6 +2,49 @@
   "schema_version": "fortgym.watch-saved-outcomes/v1",
   "outcomes": [
     {
+      "recording_id": "astra-keyboard-endurance-v1-773-836",
+      "recording_sha256": "d9fbe4a36e0e792cabd94d1cc0f8dac1c74ed666b731cd01170ba89fd953360b",
+      "source_recording_id": "astra-keyboard-endurance-v1-709-772",
+      "campaign_id": "astra-keyboard-endurance-v1",
+      "source_revision": "4b526b5636e6f568a4cae1a1227d746d9c6922c3",
+      "model": "gpt-6-astra",
+      "reasoning_effort": "medium",
+      "control_profile": "native_keyboard_bindings/v1",
+      "saved_decision": 836,
+      "saved_elapsed_ticks": 552250,
+      "saved_year": 31,
+      "saved_year_tick": 165851,
+      "origin_year": 30,
+      "origin_year_tick": 16801,
+      "ticks_per_year": 403200,
+      "total_responses": 836,
+      "total_tokens": 24149524,
+      "reported_model_charge_usd": null,
+      "saved_metrics": {
+        "population": 19,
+        "recorded_dead_citizens": 1,
+        "completed_beds": 9,
+        "completed_workshops": 5,
+        "completed_farms": 3,
+        "food_stock": 151,
+        "drink_stock": 528
+      },
+      "checkpoint_sha256": "180580b5379d22a50078008d6adf74441b9ada9359c12f69a8ab1c8a41751066",
+      "native_audit_sha256": "8cbbd496963c31cdf3b00ab2c5148cf482834c572ccc35496d44ba5aa17f8939",
+      "fresh_reload_verified": true,
+      "human_gameplay_rescue": false,
+      "functioning_assessment": "operating_with_adaptive_supply_recovery",
+      "sustainability_proven": false,
+      "result": {
+        "url": "https://github.com/lemoz/fort-gym/blob/77f3f7227b79d41e6856fc0c3b142bc19b4e3a0a/experiments/evidence/astra_keyboard_endurance_836_20260913.json",
+        "sha256": "38c7132a55d6e1545b0801aa0e752e65a27ca566bbc9a0033396b725d6aacc59"
+      },
+      "review": {
+        "url": "https://github.com/lemoz/fort-gym/blob/77f3f7227b79d41e6856fc0c3b142bc19b4e3a0a/experiments/evidence/astra_keyboard_endurance_836_gameplay_review_20260913.json",
+        "sha256": "160b17b3cd19b2c9e5eed491a73465e0480bca0a2a3d0fd74366b80076de655b"
+      }
+    },
+    {
       "recording_id": "astra-keyboard-endurance-v1-709-772",
       "recording_sha256": "c7a2f3478b38b779db387bf5680c876c397888d6a1cec8f81c2e984f843f1a3a",
       "source_recording_id": "astra-keyboard-endurance-v1-645-708",

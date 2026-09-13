@@ -772,6 +772,42 @@ host-local files unchanged. No restart, new infrastructure or main merge.
 This background continuation skips browser-only preview and visual QA; the
 replay is validated with the real player contract and exact public HTTP bytes.
 
+## Astra keyboard endurance, checkpoint 836
+
+This static update starts from public `1cc292acf1584c10b6eb0d6929207aa8d7d32dca`.
+It adds the unchanged audited `astra-keyboard-endurance-v1-773-836` recording,
+its preview and gallery card, and a fourth saved-outcome entry. All 35 prior
+recordings, catalog rows, previews and all three prior outcome entries remain
+unchanged. The total becomes 36 recordings and 2,856 captured frames.
+
+Recording: `d9fbe4a36e0e792cabd94d1cc0f8dac1c74ed666b731cd01170ba89fd953360b`.
+Audit: `8cbbd496963c31cdf3b00ab2c5148cf482834c572ccc35496d44ba5aa17f8939`.
+Checkpoint: `180580b5379d22a50078008d6adf74441b9ada9359c12f69a8ab1c8a41751066`.
+Native result: `38c7132a55d6e1545b0801aa0e752e65a27ca566bbc9a0033396b725d6aacc59`.
+Gameplay review: `160b17b3cd19b2c9e5eed491a73465e0480bca0a2a3d0fd74366b80076de655b`.
+The last two receipts are committed at `77f3f7227b79d41e6856fc0c3b142bc19b4e3a0a`.
+
+The save retains 552,250 elapsed ticks, nineteen living dwarves, one earlier
+death, nine beds, five workshops, three farms, 151 food and 528 drinks. Native
+records verify brewing labor enabled through keyboard menus and worker-assigned
+brewing at two surface stills. A new baby first appears at decision823. The
+assessment is operating with adaptive supply recovery. Earlier labels remain
+unchanged; neither assessment claims indefinite sustainability. The new label
+requires a small additive change to the saved-outcome validator and summary.
+
+All 64 actions and 226 keys were accepted/confirmed, with 56,000 requested and
+actual ticks, no timeouts and no deferrals. The tenth automatic handoff verified
+stopped-state teardown, both shutdown return codes 0, and complete state reload
+before decision837. Cumulative usage is 24,149,524 returned tokens; charges remain
+unreported. No human gameplay rescue, model or native-condition change occurred.
+
+The homepage, Results page and core player stay unchanged. The saved-outcome
+summary, static result data and gallery update; services, database and host-local
+files must remain unchanged. No restart, new infrastructure or main merge.
+Contract checks cover all 64 frames, the new assessment, previous rejection and
+delayed metadata. This background update skips browser-only preview and does
+not claim visual QA. Publication is a separate, verified step after hosted CI.
+
 ## Astra keyboard endurance, checkpoint 772
 
 This static update starts from public `e030ccb9c46af539c78b72df1705e50a58033dd6`.
