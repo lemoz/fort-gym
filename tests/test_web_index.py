@@ -46,11 +46,18 @@ def test_live_index_uses_saved_replay_for_completed_runs() -> None:
 
     assert "Saved Run Replay" in html
     assert "DF Screen Replay" in html
-    assert "Recorded CopyScreen" in html
-    assert "Source: DF CopyScreen text" in html
+    assert "Post-action CopyScreen" in html
+    assert "Pre-action CopyScreen" in html
+    assert "Source: DF CopyScreen after action" in html
+    assert "Source: DF CopyScreen before action" in html
     assert "No Recorded DF Screen Frame" in html
     assert "the replay will not substitute the derived DFHack map" in html
     assert "extractScreenText(record)" in html
+    assert "extractScreenFrame(record)" in html
+    assert "screen_text_after_interaction" in html
+    assert "screenPhase: screenFrame.phase" in html
+    assert "formatReplayInput(snapshot)" in html
+    assert "interaction.interface_key" in html
     assert "drawDfScreenFrame" in html
     assert "drawMissingDfScreenFrame" in html
     assert "snapshot.screenText" in html

@@ -68,7 +68,7 @@ test('128 budget shows an infrastructure failure at its original 64-response sav
     assert.equal(url,'/static/displayed-key-comparison-128.json');
     return {ok:true,json:async()=>continued};
   },128);
-  assert.equal(doc.nodes['matched-summary'].textContent,'5 of 6 reviewed results published · 128-decision budget');
+  assert.equal(doc.nodes['matched-summary'].textContent,'6 of 6 reviewed results published · 128-decision budget');
   assert.equal(doc.nodes['matched-download'].href,'/static/displayed-key-comparison-128.json');
   const rows=doc.nodes['matched-table'].children[0].children[0].children[2].children;
   assert.match(text(rows[0]),/Sol · 1 Infrastructure failure 64 2,900 7 \/ 0/);
@@ -81,10 +81,20 @@ test('128 budget shows an infrastructure failure at its original 64-response sav
   assert.ok(rows[3].children.at(-1).children.some(link=>link.href==='/?recording=terra-matched-r2-65-128#watch-root'));
   assert.match(text(rows[4]),/Sol · 2 Infrastructure failure 64 10,400 7 \/ 0/);
   assert.doesNotMatch(text(rows[4]),/Saved 128|Replay/);
-  for(const row of rows.slice(5)) {
-    assert.match(text(row),/No published result/);
-    assert.equal(row.children[2].textContent,'—');
-  }
+  assert.match(text(rows[5]),/Astra · 2 Storage: 32 → 40 GiB from decision 65 Saved 128 50,400 7 \/ 0 7 \/ 3 \/ 1 42 \/ 121 3,483,445/);
+  assert.ok(rows[5].children.at(-1).children.some(link=>link.href==='/?recording=astra-matched-r2-65-128#watch-root'));
+});
+
+test('an unpublished slot still stays visible without invented numbers or replay',async()=>{
+  const data=structuredClone(continued), row=data.trials[5];
+  Object.assign(row,{publication_state:'no_published_result',result:null,evidence_url:null});
+  data.recorded_attempts=5;
+  const doc=document();
+  await renderComparison(doc,async()=>({ok:true,json:async()=>data}),128);
+  const rendered=doc.nodes['matched-table'].children[0].children[0].children[2].children[5];
+  assert.match(text(rendered),/No published result/);
+  assert.equal(rendered.children[2].textContent,'—');
+  assert.doesNotMatch(text(rendered),/Replay|Storage:/);
 });
 
 test('undeclared budgets and cross-budget payloads cannot be rendered',()=>{
@@ -129,7 +139,60 @@ for(const oldFails of [false,true]) test('a stale budget request cannot replace 
   if(oldFails) rejectOld(Error('old request failed'));
   else resolveOld({ok:true,json:async()=>source});
   await older;
-  assert.match(doc.nodes['matched-summary'].textContent,/5 of 6.*128-decision budget/);
+  assert.match(doc.nodes['matched-summary'].textContent,/6 of 6.*128-decision budget/);
   assert.equal(doc.nodes['matched-download'].href,'/static/displayed-key-comparison-128.json');
   assert.equal(doc.nodes['matched-table'].attributes['aria-busy'],'false');
+});
+
+
+function withStorageAmendment() {
+  // A synthetic paused window tests rendering without inventing a published result.
+  const data = structuredClone(continued);
+  const row = data.trials[5];
+  row.publication_state = 'recorded';
+  row.evidence_url = source.trials[5].evidence_url;
+  row.result = {...structuredClone(source.trials[5].result),status:'budget_limited_pause',response_limit:128};
+  row.result.storage_amendment = {
+    schema_version:'fortgym.public-comparison-storage-note/v1',
+    first_step:64,target_next_step:128,disk_gib_before:32,disk_gib_after:40,
+    other_conditions_unchanged:true,
+    declaration_sha256:'eeb3fa8b08234819247b4dec7ecf50fda9f137fd57cabe07d1426d968d15116e',
+  };
+  data.recorded_attempts = 6;
+  return data;
+}
+
+test('storage amendment is visible on only the affected attempt and does not imply success',async()=>{
+  const doc=document();
+  await renderComparison(doc,async()=>({ok:true,json:async()=>withStorageAmendment()}),128);
+  const rows=doc.nodes['matched-table'].children[0].children[0].children[2].children;
+  assert.match(text(rows[5]),/Storage: 32 → 40 GiB from decision 65/);
+  assert.match(text(rows[5]),/Budget pause 64/);
+  assert.doesNotMatch(text(rows[5]),/Saved 128/);
+  assert.ok(rows.slice(0,5).every(row=>!text(row).includes('Storage:')));
+  assert.match(text(doc.nodes['matched-table']),/Model, prompt, game controls, CPU and RAM were unchanged/);
+  assert.match(text(rows[0]),/Infrastructure failure/);
+  assert.match(text(rows[4]),/Infrastructure failure/);
+});
+
+for(const [key,value] of [
+  ['first_step',0],['first_step',true],['target_next_step',256],
+  ['disk_gib_before',16],['disk_gib_after',80],['other_conditions_unchanged',1],
+  ['declaration_sha256','a'.repeat(64)],['schema_version','unreviewed'],
+]) test('invalid storage note is not rendered: '+key,()=>{
+  const data=withStorageAmendment();
+  data.trials[5].result.storage_amendment[key]=value;
+  assert.throws(()=>validateComparison(data,128),/storage amendment/);
+});
+
+test('an amended storage note cannot be attached to a different model',()=>{
+  const data=withStorageAmendment();
+  data.trials[0].result.storage_amendment=data.trials[5].result.storage_amendment;
+  assert.throws(()=>validateComparison(data,128),/storage amendment/);
+});
+
+test('the original 64-response results have no later storage label',async()=>{
+  const doc=document();
+  await renderComparison(doc,async()=>({ok:true,json:async()=>source}));
+  assert.doesNotMatch(text(doc.nodes['matched-table']),/Storage:|more disk space/);
 });

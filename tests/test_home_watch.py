@@ -247,14 +247,55 @@ def test_observer_uses_completed_matching_receipts_without_game_calls(tmp_path, 
         snapshot(tmp_path, base, alive=True, now=now)
 
 
-def test_published_recordings_are_bounded_hashed_allowlisted_and_consecutive():
+def test_original_recordings_remain_immutable_as_the_public_catalog_grows():
     root = ROOT / "web/static/recordings"
     catalog = json.loads((root / "catalog.json").read_text())
-    assert len(catalog["recordings"]) == 15
+    # These fifteen recordings precede the controls and endurance additions.
+    # The complete current catalog is validated in test_home_spectator_release.
+    original_digests = {
+        "terra-matched-r2-65-128":
+            "f8fb441bfd5201d7ac9c38f23a10d942fb7adf3ab02c369c8ebc94b287a657a0",
+        "astra-matched-r1-65-128":
+            "0f32a0439dafeef5d39dc70702bfbda902bd0e95006fe974744f00fc291a0489",
+        "terra-matched-r1-65-128":
+            "259ef96059fee1d2ef35e51779fcd27747c7b9c68784579152fbccf848441146",
+        "astra-matched-r2-1-64":
+            "79ea8da55449f58aca9b9d6a98cd37db56b825d228bff10c6211961a9f2bfc30",
+        "sol-matched-r2-1-64":
+            "30b1aeced4a62c8882aa77004784d3057f84768c8b778c147b0adcc25f517152",
+        "terra-matched-r2-1-64":
+            "d34f451723a40ef11c2cb966b2c568702e44489163b51e79721bffb15aeaeeb1",
+        "astra-matched-r1-1-64":
+            "24380f7d5226ef28633b6eb37776ffa905069ac1cc1006b29ffd92b14950bfcc",
+        "terra-matched-r1-1-64":
+            "3499bc18073141858398ab631389155a2672ded691b3b0324aaf5d26c7d5e6bb",
+        "sol-matched-r1-1-64":
+            "50bc9a2b94b6a0de3fadf1507ec59fbde845c2cc4e5461623d2c26e0dab78741",
+        "astra-year-two-257-416":
+            "79a42eeb8501fe7669f134670e9ce6c947a5628eeb5e94506973f1afa78f83d9",
+        "astra-recovery-225-256":
+            "7aba3fdddea9f44e9a85a42738c93bd275d168692f6d4edbbc579cc70ee4e3f0",
+        "astra-97-256":
+            "5627f83eec939aa7b86603e9aa5d18d2eb7a839560ae3a5ff3354ab8d52a4ee0",
+        "sol-65-128":
+            "3eb8184e5b9a5f7bffee4ce6c972556c3baf030f74c4c59baf251c9a3100e696",
+        "terra-65-128":
+            "37dc8ce0f22df8c9a6b4630743dc443b6fdbac4505ce50ebdad30f38d5df0bfc",
+        "astra-portable-acceptance-1-4":
+            "4737508d32fd1a6e27c2c78e1636ec7fb8de91eaca622cd38f8a7d3ab398ddf1",
+    }
+    by_id = {row["id"]: row for row in catalog["recordings"]}
+    assert set(original_digests).issubset(by_id)
+    originals = [by_id[identity] for identity in original_digests]
+    assert len(originals) == 15
     total = 0
-    for row in catalog["recordings"]:
+    for row in originals:
         path = root / (row["id"] + ".json")
-        assert hashlib.sha256(path.read_bytes()).hexdigest() == row["sha256"]
+        assert (
+            hashlib.sha256(path.read_bytes()).hexdigest()
+            == row["sha256"]
+            == original_digests[row["id"]]
+        )
         recording = json.loads(path.read_text())
         assert recording["audit_sha256"] == row["audit_sha256"]
         frames = recording["frames"]
