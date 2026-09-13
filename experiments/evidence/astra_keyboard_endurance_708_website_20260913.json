@@ -1,0 +1,90 @@
+{
+  "schema_version": "fortgym.endurance-replay-delivery-evidence/v1",
+  "date_utc": "2026-09-13",
+  "native_result": "astra_keyboard_endurance_708_20260913.json",
+  "native_result_sha256": "aef02757b7e26049f1efcac3793f6d8e74f334e2a155ed61a75f285b948bbc0b",
+  "initial_native_publication_flag_preserved": true,
+  "initial_native_receipt_unchanged": true,
+  "source_revision": "284fb8206c7685d27aafe8969b303134fc02682a",
+  "previous_public_revision": "577c6c1474160e8c1366bedf22596ecb75005891",
+  "local_verification": {
+    "focusedPassed": 29,
+    "focusedWarnings": 3,
+    "nodePassed": 66,
+    "importerPassed": 25,
+    "all64PlayerPassed": 1,
+    "fullPassed": 1317,
+    "fullSkipped": 5,
+    "fullWarnings": 7
+  },
+  "initial_focused_failure": {
+    "failed": 1,
+    "passed": 28,
+    "warnings": 3,
+    "cause": "Stale 2,664-frame gallery text assertion; updated to the new explicit 2,728 snapshot. Native bytes unchanged."
+  },
+  "hosted_verification": {
+    "passed": 1317,
+    "skipped": 5,
+    "warnings": 7,
+    "head": "284fb8206c7685d27aafe8969b303134fc02682a",
+    "ciRun": 34746248000,
+    "ciJob": 103694606999,
+    "summaryUtc": "2026-09-13T07:54:25.1419898Z"
+  },
+  "public_verification": {
+    "schema_version": "fortgym.website-endurance-replay-release/v1",
+    "passed": true,
+    "release_revision": "284fb8206c7685d27aafe8969b303134fc02682a",
+    "ci_run": 34746248000,
+    "ci": {
+      "conclusion": "success",
+      "headSha": "284fb8206c7685d27aafe8969b303134fc02682a",
+      "status": "completed"
+    },
+    "assets": {
+      "/": "722a058301e1e994cb0ac3ef0ea6d253b2154b467e2efbc2c90c1905c0b83bf9",
+      "/worlds": "f778e026e2c62942c4b43aa8b594a0d7de41607fb0178a10fca75b2bd0b55ffb",
+      "/results": "cc95ac8034dd517719cdf2d329f44690cf6c09618a04e477c609645f3d373a45",
+      "/static/recordings/catalog.json": "401b4549953edde21e42106ae374b9e5e5c38de683c35491f690dae3dd826152",
+      "/static/recordings/previews.json": "612823c50f0bf76990f28cdc8cbf6d6179f65e7009d2cd1f2354d2500dbcc9dc"
+    },
+    "terminal_result_sha256": "aef02757b7e26049f1efcac3793f6d8e74f334e2a155ed61a75f285b948bbc0b",
+    "reload_result_sha256": "aef02757b7e26049f1efcac3793f6d8e74f334e2a155ed61a75f285b948bbc0b",
+    "full_tests_passed": 1317,
+    "skipped": 5,
+    "node_contract_tests_passed": 66,
+    "recordings": 34,
+    "captured_frames": 2728,
+    "historical_recordings_unchanged": true,
+    "new_recordings_published": 1,
+    "recording_id": "astra-keyboard-endurance-v1-645-708",
+    "recording_sha256": "fc4febb01c736109863f9f42a316956a0c66883e8c8883b19edf468ce4286427",
+    "current_live_campaign": "astra-keyboard-endurance-v1",
+    "observed_live_decision": 727,
+    "retained_feed_status": "running",
+    "retained_feed_owner_alive": true,
+    "retained_feed_observed_at_unix": 1789286153,
+    "browser_visual_qa": false,
+    "service_identities_unchanged": true,
+    "database_counts_unchanged": true,
+    "untracked_files_preserved": true,
+    "website_url": "https://fortgym.live/",
+    "service_restarts": 0,
+    "main_merge": false,
+    "gameplay_inputs": 0,
+    "model_calls": 0,
+    "remote_receipt_sha256": "c4e6d6587de4f61d71144b7b8879125bede86e2061f5422e117ce3dbdfc6713b",
+    "junit_sha256": "c3d6db9bea7c2cd7afcc87a0a472f80d95967ee7b6bc06c27d975690b7f45d05"
+  },
+  "helper_sha256": {
+    "prepare": "77edee2958bf4b220bb0b3dd9306bd2ea2088cc9577124b1c3cc381fb1cbc5e9",
+    "prepare_test": "00f789695d78891369ee4ee763fe3ca379623efab3ef2abb39709b871675c4fa",
+    "all_frame_player_test": "39d7e00b672a978db74f7ad0e6322626fe94758541200c12bc114e5d0dc127d8",
+    "publish": "980bda1c5173d765b65d57038b40e86fd497ee04e02b8f20405d248a4e415395",
+    "remote_deploy": "9b3a556992ea282cc5f4ebbe888bcab3e190066fd860472857705866967798f6"
+  },
+  "all_publication_mutators_consumed": true,
+  "recording_deep_link": "https://fortgym.live/?recording=astra-keyboard-endurance-v1-645-708#watch-root",
+  "full_goal_complete": false
+}

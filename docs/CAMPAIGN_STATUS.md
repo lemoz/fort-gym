@@ -38,11 +38,15 @@ Original command outcomes are preserved. Decision709 confirmed one key and zero
 ticks; public frame710 matched its original screen and chosen action.
 The coordinator remains the sole native owner; no human gameplay rescue,
 model/prompt/control change or new budget extension occurred.
-The 645–708 replay is prepared separately at
-`284fb8206c7685d27aafe8969b303134fc02682a`, not yet published at this capture.
+The [645–708 replay is now publicly verified](../experiments/evidence/astra_keyboard_endurance_708_website_20260913.json)
+at `284fb8206c7685d27aafe8969b303134fc02682a`.
 All 29 focused Python, 66 Node, 25 importer and the all-64-frame player test
-passed; the rejected frame remains rejected. The candidate preserves all 33
-older recordings and would bring the public catalog to 34 recordings/2,728 frames.
+passed; the rejected frame remains rejected. Local and hosted full suites each
+passed 1,317 tests with five skips and seven warnings. Public HTTPS verified
+all 34 recordings/2,728 frames and the live feed at decision727, preserving all
+33 older recording files, catalog rows and previews. Home/Results renderers,
+services, database and host-local files were unchanged. No restart, main merge,
+new VM or gameplay input was part of this static replay publication.
 
 The [comparison reproducibility repair](../experiments/evidence/year_two_reproducibility_review_20260913.json)
 is pushed separately as [draft PR185](https://github.com/lemoz/fort-gym/pull/185)
