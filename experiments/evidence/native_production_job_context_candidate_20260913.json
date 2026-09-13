@@ -1,0 +1,113 @@
+{
+  "schema_version": "fortgym.native-production-job-context-candidate/v1",
+  "date_utc": "2026-09-13",
+  "source_revision": "90600867d87a54f63a291175b2cc47a0ddbd4156",
+  "base_revision": "a06bf4b854aa362fca11ccf1294f7395bd98e702",
+  "branch": "codex/native-production-observer",
+  "draft_pr": 183,
+  "pushed": true,
+  "source_sha256": {
+    "fort_gym/bench/production_observer_lua.py": "5e7761609652dc23fbdebac8148deb44e02c7f25e391886be73693cc4bc4417a",
+    "fort_gym/bench/production_brew_evidence.py": "d2c81e8838d7a33d4103173a35b0cf4ffd4cc397be42ebc9bf977ca602af702c",
+    "scripts/campaign_production_probe.py": "3bcf80a64bca3f5f14ff3f405fc86e7e21f4d0734201846d6affb84520b9efdd",
+    "tests/test_campaign_production_probe.py": "af91cd37c42a9f08fe874922c333899702857d4190a6a2f5f0abbea96d87fafa",
+    "tests/test_production_brew_evidence.py": "1a2527020de0016302611eaf01d7aede6159006dcf857367c4754a77ce994e81",
+    "tests/test_production_job_context_lua.py": "b4a91534ee0735368cc48b6c26f48d32d1554a3e55e0df9a9fb5eaf473b05d4a",
+    "docs/PRIVATE_PRODUCTION_OBSERVER.md": "d38a10d7156e562232fe96616d9068a06f59a6d94c5211e30ebd2c36b4ac78a5"
+  },
+  "implementation": {
+    "callback_context": [
+      "worker current job ID",
+      "job type and reaction name",
+      "native building holder ID",
+      "native assigned worker ID"
+    ],
+    "reads_only": true,
+    "absent_context_explicit": true,
+    "context_read_failure_retains_output_items": true,
+    "context_read_failure_prevents_complete_collector": true,
+    "report_mode": "cumulative_snapshot_correlations",
+    "matches_exact_fixture_job_reaction_workshop_worker": true,
+    "verifies_owner_insertion_boundary_origin_event_prefix": true,
+    "retains_every_repeated_output_sighting": true,
+    "quantities_totalled": false,
+    "baseline_endpoint_inventory_membership_only": true,
+    "inventory_absence_attribution": false,
+    "job_completion_notifications_are_not_outputs": true,
+    "raw_boundary_retained_on_report_failure": true,
+    "passive_default_unchanged": true
+  },
+  "source_references": [
+    "https://github.com/DFHack/dfhack/blob/0.47.05-r8/library/modules/Job.cpp#L259-L274",
+    "https://github.com/DFHack/dfhack/blob/0.47.05-r8/library/LuaApi.cpp#L1635-L1642",
+    "https://github.com/DFHack/dfhack/blob/0.47.05-r8/plugins/eventful.cpp#L320-L350"
+  ],
+  "verification": {
+    "scope": "offline native doubles and retained JSON fixtures",
+    "focused": {
+      "passed": 260,
+      "skipped": 0,
+      "warnings": 2,
+      "new_cases": 54,
+      "new_native_context_lua_cases": 14
+    },
+    "full_local": {
+      "passed": 5990,
+      "skipped": 10,
+      "warnings": 8,
+      "exact_source": true,
+      "source_frozen_during_run": true,
+      "report_sha256": "acb2d58528dca142608ef3325e65cbd64122418f5f9a27ca5d5930ac3e704d02"
+    },
+    "scoped_ruff": "passed",
+    "scoped_mypy": "passed",
+    "format": "passed",
+    "diff_check": "passed",
+    "cli_help": "passed",
+    "initial_focused": {
+      "failed": 1,
+      "passed": 106,
+      "warnings": 2,
+      "cause": "Worker test double omitted cumulative event lists and a stable observer origin; completed the test fixture before final validation",
+      "native_bytes_changed": false
+    },
+    "ci": {
+      "run": 34741147814,
+      "job": 103680952014,
+      "head": "90600867d87a54f63a291175b2cc47a0ddbd4156",
+      "status_at_capture": "in_progress",
+      "conclusion_at_capture": null,
+      "lua_install_passed": true
+    }
+  },
+  "active_campaign": {
+    "frozenSource": "4b526b5636e6f568a4cae1a1227d746d9c6922c3",
+    "coordinatorSource": "4ce541fbe0cc20556744cd381298c31f1fb580a2",
+    "bothClean": true,
+    "savedDecision": 516,
+    "lastObservedDecision": 557,
+    "observedAt": 1789278633,
+    "currentTarget": 580,
+    "nativeFixtureExecuted": false
+  },
+  "native_fixture_executed": false,
+  "native_binding_validated": false,
+  "native_coverage_validated": false,
+  "independent_production_oracle": false,
+  "production_quantity": null,
+  "production_coverage": "inconclusive",
+  "agent_observation_changed": false,
+  "active_runtime_or_source_changed": false,
+  "website_changed": false,
+  "new_model_calls": 0,
+  "new_vms": 0,
+  "main_merged": false,
+  "full_goal_complete": false,
+  "remaining": [
+    "Native copied-save fixture and independent outcome check",
+    "Observer-free control and noninterference/overhead measurement",
+    "Cancellation and built-in or multi-output job coverage",
+    "Production and consumption flow attribution",
+    "Checkpoint/reload binding"
+  ]
+}

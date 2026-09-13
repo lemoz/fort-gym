@@ -180,7 +180,22 @@ eight-event prefix is retained. Third and fourth handoffs are recorded above;
 subsequent handoffs and the full sequence remain unverified.
 Export is not publication.
 
-The [private single-job brewing fixture candidate](../experiments/evidence/native_production_brew_fixture_candidate_20260913.json)
+The [private job-to-output evidence candidate](../experiments/evidence/native_production_job_context_candidate_20260913.json)
+is pushed in draft PR183 at `90600867d87a54f63a291175b2cc47a0ddbd4156`.
+Reaction callbacks retain read-only current-job, building-holder and assigned-worker
+identities. Missing context is explicit; read failures retain the output records
+while invalidating collector completeness. The controlled fixture correlates the
+queued job, exact reaction, workshop and matching worker in hashed cumulative
+reports. It requires matching ownership, insertion boundary, origin, retained
+event prefixes and complete bounded evidence. All repeated item sightings and
+their individual stack counts remain inspectable, with no summed quantity or
+consumption/loss claim. Completion notifications stay separate from outputs.
+All 260 focused tests and scoped code checks passed; the exact-head full local
+suite passed 5,990 tests with ten skips and eight warnings. These offline checks do not
+validate native attribution, an independent oracle, noninterference or rates;
+the active native source, agent observation, coordinator and website are unchanged.
+
+The preceding [private single-job brewing fixture candidate](../experiments/evidence/native_production_brew_fixture_candidate_20260913.json)
 is pushed in draft PR183 at `a06bf4b854aa362fca11ccf1294f7395bd98e702`.
 It extends the passive probe with an explicit `--brew-workshop-id` option for
 exactly one normal native plant-brewing job at a completed, empty-queue Still in

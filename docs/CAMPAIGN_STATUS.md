@@ -14,6 +14,16 @@ cohort below. Long-term self-sufficiency and the full delivery goal remain open.
 
 ## Current experiment summary
 
+The [private job-to-output evidence candidate](../experiments/evidence/native_production_job_context_candidate_20260913.json)
+is pushed in draft PR183 at `90600867d87a54f63a291175b2cc47a0ddbd4156`.
+It records a reaction worker's current job, workshop holder and assigned worker,
+then matches those fields to the queued fixture job in a hashed cumulative report.
+Repeated item IDs retain every observation without becoming extra production.
+Unreadable context preserves output records but marks evidence incomplete.
+All 260 focused tests and the exact-head full local suite (5,990 passed, ten skips,
+eight warnings) passed. This is prepared offline correlation, not native
+production acceptance or an independent oracle. The active campaign is unchanged.
+
 The [private single-job brewing fixture](../experiments/evidence/native_production_brew_fixture_candidate_20260913.json)
 is prepared and pushed in draft PR183 at `a06bf4b854aa362fca11ccf1294f7395bd98e702`.
 It adds an optional exact-Still brewing job to the copied-save observation probe,
