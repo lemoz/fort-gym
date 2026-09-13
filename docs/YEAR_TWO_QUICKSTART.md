@@ -66,6 +66,11 @@ infrastructure failures and the unequal-storage note, not a strong model ranking
 The final command only describes an own-save continuation. It cannot load the
 game, start a VM, make a model call or rerun an existing identity.
 
+The separate [completed keyboard-versus-shortcut study](CONTROLS_STUDY_RESULTS.md)
+includes all six paired outcomes, their declaration and a read-only reproduction
+command. It uses Astra Medium in both conditions and is not pooled into the
+three-model comparison. Its original result and replay bytes are preserved.
+
 To serve the bundled recordings locally:
 
 ```sh

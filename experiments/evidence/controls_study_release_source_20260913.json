@@ -1,0 +1,59 @@
+{
+  "schema_version": "fortgym.controls-study-release-source/v1",
+  "combined_base_revision": "5e7f0fddb475bcb8e6c3943f4d42e2817188689f",
+  "public_evidence_source_revision": "e36e95b1eea9cf38754cd02630b45496a1260936",
+  "imported_files": [
+    {
+      "path": "scripts/summarize_selected_workshop_cohort.py",
+      "sha256": "c7a2cef6a6172c48496c1e75168af83c427a407e00ba52227e527cb7cd5e74de"
+    },
+    {
+      "path": "tests/test_selected_workshop_cohort_summary.py",
+      "sha256": "23b46052c3c64165e19e2f52e7eea4b9bfd68579fcfd5bdbc226ba217edac87e"
+    },
+    {
+      "path": "experiments/evidence/selected_workshop_runtime_v2_declaration_20260912.json",
+      "sha256": "e325f69f40978a9a0b2ed962a505c893aa7ea397b569e3300455972d7b94ebc8"
+    },
+    {
+      "path": "experiments/evidence/selected_workshop_v2_cohort_20260912.json",
+      "sha256": "84db13cefc663f84c4016d2182ca9a34c974710517dab9640a15ab8919b9ef17"
+    },
+    {
+      "path": "experiments/evidence/selected_workshop_v2_p1_keyboard_128_20260912.json",
+      "sha256": "437266c9f15ae3442d9111290ea4e00795d5b29d9e7fea94a8b517172258689f"
+    },
+    {
+      "path": "experiments/evidence/selected_workshop_v2_p1_shortcuts_128_20260912.json",
+      "sha256": "ea4eb4a61594ccea6852c6458dbcaa6b6b5075e80065f2436e4e882c78648e1d"
+    },
+    {
+      "path": "experiments/evidence/selected_workshop_v2_p2_keyboard_128_20260912.json",
+      "sha256": "f900ac3897314401ceba995e81bc3017cd501c7d0e85ebdfef7fbc1447e0c2a5"
+    },
+    {
+      "path": "experiments/evidence/selected_workshop_v2_p2_shortcuts_128_20260912.json",
+      "sha256": "e6541861299c7d1d39c1650284d92ece65c3e447250fc08aa8bc35aa6780a847"
+    },
+    {
+      "path": "experiments/evidence/selected_workshop_v2_p3_keyboard_128_20260912.json",
+      "sha256": "e21bf87ed2b3efc4305690cf3d7de723c2c9bc6faf4189a98d50751da32786d0"
+    },
+    {
+      "path": "experiments/evidence/selected_workshop_v2_p3_shortcuts_128_20260912.json",
+      "sha256": "79886cf295d51cdda4cca16702a108c3b8743060e9f055a199393eb7d55f69f4"
+    }
+  ],
+  "study_id": "selected-workshop-v2",
+  "declared_attempts": 6,
+  "paired_attempts": 3,
+  "decision_boundary": 128,
+  "existing_condition_bytes_preserved": true,
+  "original_results_and_replays_preserved": true,
+  "model_calls": 0,
+  "gameplay_actions": 0,
+  "native_runtime_changed": false,
+  "website_changed": false,
+  "main_merged": false,
+  "full_goal_complete": false
+}
