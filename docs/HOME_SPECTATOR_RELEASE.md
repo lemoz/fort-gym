@@ -506,3 +506,31 @@ services, database and host-local files. No infrastructure creation, service
 restart, gameplay input or main merge belongs to this release. Browser-only
 preview and visual QA are skipped in this background goal continuation.
 Local validation, exact-head CI and public HTTPS acceptance remain separate.
+
+## Astra keyboard endurance, checkpoint 260
+
+Start from public revision `a0bf019b7eec2cb9144ae34d7cae638dd2f7dd8f` and add
+`astra-keyboard-endurance-v1-197-260`. Its 64 frames continue the same campaign
+without duplicating earlier frames. Recording SHA-256:
+`c67e515a936bee675d6563dcd18e5be094d06c22bc6c4560d8725111cd9b21eb`.
+Native audit: `6c6636e95b01963d4b222c97e984cca4c37936546258c87b091a800cae609920`.
+Campaign result `astra_keyboard_endurance_260_20260913.json` has SHA-256
+`e72fd9a26ae734d357b8a9df12d6eabd149a2ea0de3a17180e3c9a3378559995`.
+It binds the completed native save, stopped-state/closed-disk checks and actual
+fresh reload at 260, including the original already-stopped VM return code.
+
+Seven dwarves remain alive with no recorded deaths, nine installed beds, three
+workshops, three farms, 69 food and 134 drinks after 105,100 elapsed ticks.
+This window added 31,200 ticks: 64 accepted keyboard actions and 459 confirmed
+keys, with no clock timeouts or menu deferrals. Cumulative usage is 8,141,754
+returned tokens; subscription charges remain unreported. Automatic continuation
+restored the exact saved agent state and inherited the original cumulative
+budget extension. This is not an independent trial or a Year-Two result;
+inventories alone do not establish sustainability.
+
+Preserve all 26 older recording files, catalog rows and previews. The new total
+is 27 recordings and 2,280 captured frames. Preserve the coordinator-owned live
+feed, services, database and host-local files. No infrastructure creation,
+service restart, gameplay input or main merge belongs to this release.
+Browser-only preview and visual QA are skipped in this background continuation.
+Local validation, exact-head CI and public HTTPS acceptance remain separate.
