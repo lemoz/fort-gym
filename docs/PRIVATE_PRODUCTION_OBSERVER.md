@@ -104,9 +104,10 @@ Native coverage, accessibility and reload/checkpoint binding remain unproven.
 
 ## Prepared native binding probe
 
-`scripts/campaign_production_probe.py` now provides a provider-free, passive
-native-interval probe. It is prepared and offline-tested, not native-accepted.
-It does not queue production jobs or provide an independent production oracle.
+`scripts/campaign_production_probe.py` provides a provider-free native-interval
+probe, passive by default, with an optional controlled brewing fixture. Both are
+prepared and offline-tested, not native-accepted. Neither provides an independent
+production oracle.
 
 The `run` command belongs **inside a caller-owned, admitted Linux runtime**.
 It does not provision or own a VM, choose a source image, or perform host-level
@@ -136,7 +137,8 @@ snapshots in a hashed JSON artifact. It must match the adapter's actual calendar
 save identity, event sequence and observer origin. Tick receipts and before/after
 clocks are retained before validation, including incomplete intervals. A native
 interruption stops the probe; it never dismisses a dialog, presses keys, retries
-a tick timeout, places an order, injects items or creates a continuation save.
+a tick timeout, injects items or creates a continuation save. Passive mode does
+not place an order.
 Worker errors and stop failures are retained, and the outer result binds worker
 and game-process cleanup receipts by hash.
 
@@ -145,9 +147,41 @@ Even a `completed` probe reports `production_coverage: inconclusive`,
 `completed` only means its declared observation intervals finished. Natural
 callbacks may provide examples to investigate, but item arrivals or completed-job
 notifications are not independent proof of a particular production quantity.
-Controlled brewing/cooking, cancellation, multi-output and observer-free control
-fixtures below remain separate acceptance work. No active campaign profile or
+Native controlled brewing/cooking, cancellation, multi-output and observer-free
+control acceptance below remain separate work. No active campaign profile or
 website metric has been changed.
+
+## Optional single-job brewing fixture
+
+Pass `--brew-workshop-id ID` to declare the exact completed Still in the copied
+save. The fixture does not search for a workshop or assume that the UI selected
+one. It refuses a nonempty queue, an unavailable Still, an ambiguous or missing
+native brewing definition, a different observer owner or a changed paused native
+boundary. The default remains passive when the flag is absent; zero is a valid
+explicit building identity, not an omitted argument.
+
+After retaining the baseline, `fort_gym/bench/production_brew_fixture.py` queues
+exactly one normal `CustomReaction` job for `BREW_DRINK_FROM_PLANT`, using the
+native workshop job definition and cloned reagent filters. Native linking assigns
+its job ID. No items, labour assignments, completed jobs, keyboard actions or
+instant progress are injected. The game must find materials and workers and
+perform the job during the already bounded observation intervals.
+
+The fixture retains the raw RPC response and parsed insertion receipt, including
+the target workshop, created job ID, queue counts and before/after calendar.
+Its owner slot permits only one mutation attempt. A timeout, malformed reply or
+partial mutation stops the worker with `workshop_jobs_queued: null` and no retry;
+the raw partial receipt remains available when returned. It never deletes jobs
+to roll back an uncertain command. The outer owner still tears down the copied
+process and verifies the retained checkpoint is unchanged.
+
+A confirmed insertion is not a completed brew. The later inventory boundaries,
+job notifications and reaction output vectors are retained separately for native
+inspection. The probe does not automatically bind a reaction to this target job,
+sum overlapping output vectors, infer production from stock differences or turn
+a completed interval into a passed production test. Those relationships, an
+independent outcome check, cancellation and observer-free controls still need
+real native acceptance after the endurance coordinator releases its runtime.
 
 ## Native acceptance still required
 

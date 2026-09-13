@@ -8,6 +8,7 @@ import pytest
 from fort_gym.bench import dfhack_exec
 from fort_gym.bench.run import campaign_environment
 from scripts import campaign_production_probe as probe
+from tests.test_production_brew_fixture import receipt as brew_receipt
 from tests.test_production_observer_probe import boundary
 
 
@@ -15,7 +16,11 @@ from tests.test_production_observer_probe import boundary
 def worker_fixture(tmp_path, monkeypatch):
     runtime = tmp_path / "isolated/runtime"
     args = SimpleNamespace(
-        runtime=runtime, output=tmp_path / "probe", intervals=2, ticks=250
+        runtime=runtime,
+        output=tmp_path / "probe",
+        intervals=2,
+        ticks=250,
+        brew_workshop_id=None,
     )
     monkeypatch.setenv("DFROOT", str(runtime))
     monkeypatch.setenv("DFHACK_HOST", "127.0.0.1")
@@ -33,8 +38,8 @@ def worker_fixture(tmp_path, monkeypatch):
     class Observer:
         owner = "a" * 32
 
-        def __init__(self, *args):
-            pass
+        def __init__(self, runtime, *args):
+            self.runtime = runtime
 
         def command(self, operation):
             calls.append(operation)
@@ -59,6 +64,19 @@ def worker_fixture(tmp_path, monkeypatch):
         return dict(state), receipt
 
     monkeypatch.setattr(probe, "ProductionObserverProbe", Observer)
+
+    def queue(observer, before, workshop_id):
+        calls.append("queue_brew")
+        if settings.get("queue") == "timeout":
+            raise TimeoutError("queue timed out")
+        if settings.get("queue") == "invalid_json":
+            return "not json"
+        value = brew_receipt(observer, before, workshop_id)
+        if settings.get("queue") == "partial":
+            value.update(ok=False, command_mutation="attempted", jobs_queued=0)
+        return json.dumps(value)
+
+    monkeypatch.setattr(probe, "queue_brew", queue)
     monkeypatch.setattr(
         campaign_environment,
         "NativeCampaignEnvironment",
@@ -174,6 +192,7 @@ def launcher_fixture(tmp_path, monkeypatch):
         port=5610,
         intervals=2,
         ticks=250,
+        brew_workshop_id=None,
     )
     monkeypatch.setattr(probe.sys, "platform", "linux")
     calls = []
@@ -188,14 +207,20 @@ def launcher_fixture(tmp_path, monkeypatch):
     return args, calls
 
 
+@pytest.mark.parametrize("workshop_id", [None, 0, 7])
 def test_launcher_uses_isolated_copy_clean_source_and_bounded_worker(
-    launcher_fixture, monkeypatch
+    launcher_fixture, monkeypatch, workshop_id
 ):
     args, calls = launcher_fixture
+    args.brew_workshop_id = workshop_id
 
     def run_worker(command, *, env, stdout, timeout):
         assert timeout == 600
         assert "--ticks" in command and "--intervals" in command
+        if workshop_id is None:
+            assert "--brew-workshop-id" not in command
+        else:
+            assert command[command.index("--brew-workshop-id") + 1] == str(workshop_id)
         assert env["FORT_GYM_DFHACK_TRANSPORT"] == "native-rpc"
         assert env["FORT_GYM_DISABLE_DOTENV"] == "1"
         output = args.output / "probe"
@@ -219,7 +244,48 @@ def test_launcher_uses_isolated_copy_clean_source_and_bounded_worker(
     result = probe.run(args)
     assert result["cleanup_verified"] and result["original_checkpoint_unchanged"]
     assert result["production_coverage"] == "inconclusive"
+    assert result["brew_workshop_id"] == workshop_id
     assert [name for name, _ in calls] == ["source", "checkpoint", "checkpoint"]
+
+
+def test_controlled_brew_queues_once_after_baseline_and_retains_receipt(worker_fixture):
+    args, calls, _ = worker_fixture
+    args.brew_workshop_id = 7
+    result = probe.worker(args)
+    assert result["mode"] == "controlled_brew" and result["status"] == "completed"
+    assert result["brew_queue_attempted"] and result["brew_queue_confirmed"]
+    assert result["workshop_jobs_queued"] == 1
+    assert calls[:4] == ["start", "capture", "queue_brew", "advance"]
+    assert calls.count("queue_brew") == 1
+    assert "brew-queue.json" in result["artifacts"]
+    assert "brew-queue-response.json" in result["artifacts"]
+    assert result["production_coverage"] == "inconclusive"
+    assert result["independent_production_oracle"] is False
+
+
+@pytest.mark.parametrize("failure", ["timeout", "invalid_json", "partial"])
+def test_uncertain_queue_stops_without_retry_and_never_reports_zero(
+    worker_fixture, failure
+):
+    args, calls, settings = worker_fixture
+    args.brew_workshop_id = 7
+    settings["queue"] = failure
+    with pytest.raises((ValueError, TimeoutError)):
+        probe.worker(args)
+    result = json.loads((args.output / "result.json").read_text())
+    assert result["status"] == "failed" and result["brew_queue_attempted"]
+    assert result["workshop_jobs_queued"] is None and not result["brew_queue_confirmed"]
+    assert calls.count("queue_brew") == 1 and "advance" not in calls
+    assert calls[-2:] == ["stop", "close"]
+    assert ("brew-queue-response.json" in result["artifacts"]) is (failure != "timeout")
+
+
+def test_bad_workshop_id_rejected_before_start_or_output(worker_fixture):
+    args, calls, _ = worker_fixture
+    args.brew_workshop_id = True
+    with pytest.raises(ValueError):
+        probe.worker(args)
+    assert not args.output.exists() and calls == []
 
 
 def test_launcher_retains_owned_cleanup_on_worker_failure(

@@ -1,7 +1,8 @@
 """Collect bounded native observer evidence inside a caller-owned isolated Linux runtime.
 
-No VM provisioning, model calls, job queues, keyboard input, saves or production
-attribution. The outer runtime owner must admit this fixture only after any active
+No VM provisioning, model calls, keyboard input, saves or production attribution.
+An explicit optional fixture queues one normal brewing job in a declared Still.
+The outer runtime owner must admit this fixture only after any active
 campaign releases its runtime. A successful probe is not production acceptance.
 """
 
@@ -14,6 +15,11 @@ import sys
 import uuid
 from pathlib import Path
 
+from fort_gym.bench.production_brew_fixture import (
+    queue_brew,
+    validate_brew_receipt,
+    validate_workshop_id,
+)
 from fort_gym.bench.production_observer_probe import (
     ProductionObserverProbe,
     validate_boundary,
@@ -39,6 +45,7 @@ def worker(args: argparse.Namespace) -> dict:
     from fort_gym.bench.run.campaign_environment import NativeCampaignEnvironment
 
     validate_limits(args.intervals, args.ticks)
+    validate_workshop_id(args.brew_workshop_id)
     runtime, output = args.runtime.resolve(), args.output.resolve()
     if (
         runtime != output.parent / "isolated" / "runtime"
@@ -60,7 +67,12 @@ def worker(args: argparse.Namespace) -> dict:
         "schema_version": SCHEMA,
         "status": "failed",
         "owner": observer.owner,
-        "mode": "passive_native_interval",
+        "mode": "controlled_brew"
+        if args.brew_workshop_id is not None
+        else "passive_native_interval",
+        "brew_workshop_id": args.brew_workshop_id,
+        "brew_queue_attempted": False,
+        "brew_queue_confirmed": False,
         "model_calls": 0,
         "gameplay_keys": 0,
         "workshop_jobs_queued": 0,
@@ -102,6 +114,20 @@ def worker(args: argparse.Namespace) -> dict:
         if started.get("installed") is not True:
             raise ValueError("Observer installation not confirmed")
         capture(0, state)
+        if args.brew_workshop_id is not None:
+            result["brew_queue_attempted"] = True
+            # A timeout or malformed reply can follow a real insertion. Never
+            # report zero, retry the command, or remove potentially queued jobs.
+            result["workshop_jobs_queued"] = None
+            reply = queue_brew(observer, state, args.brew_workshop_id)
+            retain("brew-queue-response.json", {"raw_response": reply})
+            queued = json.loads(reply)
+            retain("brew-queue.json", queued)
+            if not isinstance(queued, dict):
+                raise ValueError("Native brewing receipt is not an object")
+            validate_brew_receipt(queued, observer, state, args.brew_workshop_id)
+            result["workshop_jobs_queued"] = 1
+            result["brew_queue_confirmed"] = True
         for index in range(1, args.intervals + 1):
             result["ticks_requested"] += args.ticks
             after, receipt = environment.advance(args.ticks, state)
@@ -172,6 +198,7 @@ def worker(args: argparse.Namespace) -> dict:
 
 def run(args: argparse.Namespace) -> dict:
     validate_limits(args.intervals, args.ticks)
+    validate_workshop_id(args.brew_workshop_id)
     if sys.platform != "linux":
         raise ValueError("Run the probe inside the admitted isolated Linux runtime")
     for retained in (args.source, args.checkpoint):
@@ -192,6 +219,7 @@ def run(args: argparse.Namespace) -> dict:
         "source_revision": args.revision,
         "source_checkpoint_file_sha256": original,
         "model_calls": 0,
+        "brew_workshop_id": args.brew_workshop_id,
         "production_coverage": "inconclusive",
         "native_coverage_validated": False,
         "original_checkpoint_unchanged": False,
@@ -228,7 +256,12 @@ def run(args: argparse.Namespace) -> dict:
                     str(args.intervals),
                     "--ticks",
                     str(args.ticks),
-                ],
+                ]
+                + (
+                    ["--brew-workshop-id", str(args.brew_workshop_id)]
+                    if args.brew_workshop_id is not None
+                    else []
+                ),
                 env=child_env,
                 stdout=log,
                 timeout=600,
@@ -294,6 +327,7 @@ def main() -> None:
         command.add_argument("--output", type=Path, required=True)
         command.add_argument("--intervals", type=int, default=4)
         command.add_argument("--ticks", type=int, default=250)
+        command.add_argument("--brew-workshop-id", type=int)
     args = parser.parse_args()
     with termination_as_interrupt():
         result = run(args) if args.command == "run" else worker(args)
