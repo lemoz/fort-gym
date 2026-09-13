@@ -1,0 +1,41 @@
+{
+  "schema_version": "fortgym.evidence-date-label-correction/v1",
+  "date_utc": "2026-09-13",
+  "campaign_id": "astra-keyboard-endurance-v1",
+  "corrections": [
+    {
+      "file": "astra_keyboard_endurance_68_20260912.json",
+      "sha256": "fa7bc9662c07dd6ba2949a641066d1062fbfb16e70548e8634bd8e35d7e1827c",
+      "field": "date_utc",
+      "recorded": "2026-09-12",
+      "correct": "2026-09-13"
+    },
+    {
+      "file": "astra_keyboard_endurance_68_reload_20260912.json",
+      "sha256": "84d1bb510e9deacb9bb9292f5202992547b1b4bc31b68c369574b23aa61d5e3c",
+      "field": "date_utc",
+      "recorded": "2026-09-12",
+      "correct": "2026-09-13"
+    }
+  ],
+  "evidence": [
+    {
+      "event": "stopped checkpoint68 public frame",
+      "unix": 1789258035,
+      "utc": "2026-09-13T00:07:15Z"
+    },
+    {
+      "event": "independent stopped frame HTTPS check",
+      "unix": 1789258140,
+      "utc": "2026-09-13T00:09:00Z"
+    },
+    {
+      "event": "continuation public frame75",
+      "unix": 1789258426,
+      "utc": "2026-09-13T00:13:46Z"
+    }
+  ],
+  "native_evidence_unchanged": true,
+  "original_result_bytes_unchanged": true,
+  "note": "The two derived receipts carried the local September 12 calendar label in a UTC field after UTC midnight. This correction preserves all hash-bound original results and native evidence. The 20260912 path names identify the original local study date and are retained."
+}

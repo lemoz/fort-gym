@@ -1,6 +1,6 @@
 # Year-Two delivery audit
 
-Snapshot: September 12, 2026 UTC. Reviewed integration candidate:
+Snapshot: September 13, 2026 UTC. Reviewed integration candidate:
 `0547261450262c8d0b59486b566a2404e02895f9`; PR176 is draft and unmerged.
 This is a progress audit, not a completion certificate or a replacement goal.
 Requirements come from [the approved goal](YEAR_TWO_CAMPAIGNS.md),
@@ -66,8 +66,19 @@ then restored the full saved agent state, clock, metrics and trace/usage prefixe
 The same 1,028-response/40-million-token limits were inherited without another
 extension. The first new response used 44,939 tokens; public live frame75 matched
 its original capture and chosen action. Decisions 69–132 are running under the
-same mandatory teardown. The first 68-frame replay is exported and imported
-into the website candidate, not yet publicly delivered at this capture.
+same mandatory teardown. The
+[first 68-frame replay is now publicly delivered](../experiments/evidence/astra_keyboard_endurance_68_website_20260913.json)
+at website revision `9195fc2d783c6884be1f1c5b987d05923caf40fe`: 24 recordings,
+2,088 frames, and all 23 previous recording files/rows/previews preserved.
+Local and exact-head remote CI each passed 1,307 Python tests with five skips
+and seven warnings; all 66 Node interaction checks passed. The initial local
+run's outdated display-count assertion is retained separately. Independent
+HTTPS checks verified the full catalog and all recordings. The continuation
+remained live at decision108, with unchanged services, database counts and
+host-local files. No service restart or main merge occurred.
+The two new receipts' local-date labels were placed in UTC fields after UTC
+midnight; the [date-label correction](../experiments/evidence/astra_keyboard_endurance_utc_correction_20260913.json)
+records September 13 UTC without rewriting their original hash-bound bytes.
 
 The [sixth controls replay is now published](../experiments/evidence/selected_workshop_v2_p3_keyboard_website_20260912.json)
 from the website branch at
@@ -309,7 +320,7 @@ the native result's original unpublished state.
 2. Continue the active, separate PR181 Astra endurance campaign through its
    declared save boundaries. Its initial four-response save and actual own-save
    reload are verified, and checkpoint68 has now saved and freshly reloaded.
-   Publish its actual replay; audit the current decision-132 save and teardown
+   Its actual replay is public; audit the current decision-132 save and teardown
    when the owner finishes, then continue the same fortress.
    The 403,200-tick anniversary is a milestone, not the stop condition or proof
    of a functioning fortress. Each continuation is not an independent trial.

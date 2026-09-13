@@ -1,6 +1,6 @@
 # Campaign status
 
-Verified September 12, 2026 UTC. The Year-Two Autonomous Play objective remains
+Verified September 13, 2026 UTC. The Year-Two Autonomous Play objective remains
 unfinished; work continues toward the same objective. The owner has approved starting the project
 work for [Astra standard-input experiments](ASTRA_STANDARD_INPUT_EXPERIMENTS.md).
 
@@ -30,11 +30,14 @@ the original nonzero guest-poweroff code. Its single cumulative budget extension
 survived the save. The [actual checkpoint68 reload also passed](../experiments/evidence/astra_keyboard_endurance_68_reload_20260912.json),
 restoring the entire agent state and inheriting the existing limits without
 another append. Astra is playing decisions 69–132, with the live viewer following
-it. The new window's final save is not yet verified; the first 68-frame endurance
-replay is exported and being validated for website publication.
+it. The new window's final save is not yet verified. The
+[first 68-frame endurance replay is now public](../experiments/evidence/astra_keyboard_endurance_68_website_20260913.json),
+with 24 recordings and 2,088 frames verified across the website at revision
+`9195fc2d7`. Exact-head CI and public HTTPS checks passed; the live continuation,
+all 23 earlier recordings, service identities and database counts were preserved.
 The [sixth controls replay is now public](../experiments/evidence/selected_workshop_v2_p3_keyboard_website_20260912.json).
-Exact-head CI passed and independent HTTPS checks verified all 23 recordings
-and 2,020 frames at website revision `4d4d38fd9`. All six v2 replays are available,
+That earlier release's exact-head CI and independent HTTPS checks verified 23
+recordings and 2,020 frames at revision `4d4d38fd9`. All six v2 replays remain available,
 with the earlier 22 recordings, live endurance feed, services and database
 preserved. This was a static-only release, not a main-branch merge.
 The full goal remains active; inventories and checkpoint recovery do not by
