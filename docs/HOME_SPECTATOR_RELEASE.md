@@ -771,3 +771,38 @@ Keep all native sources, controls, images, live feeds, services, database and
 host-local files unchanged. No restart, new infrastructure or main merge.
 This background continuation skips browser-only preview and visual QA; the
 replay is validated with the real player contract and exact public HTTP bytes.
+
+## Astra keyboard endurance, checkpoint 772
+
+This static update starts from public `e030ccb9c46af539c78b72df1705e50a58033dd6`.
+It adds the unchanged audited `astra-keyboard-endurance-v1-709-772` recording,
+its preview and gallery card, and a third saved-outcome entry. All 34 prior
+recordings, catalog rows and previews and both prior outcome entries remain
+unchanged. The new total is 35 recordings and 2,792 captured frames.
+
+Native recording SHA-256:
+`c7a2f3478b38b779db387bf5680c876c397888d6a1cec8f81c2e984f843f1a3a`.
+Audit: `a89724c72a8c9c51839be2f63806f851bacde020b7310247de45c91b90446aff`.
+Checkpoint: `e95420d952a1ffc7d63915f3fef7c5448e073050eecc91345c2a9dd0f3fbeddc`.
+The saved-outcome entry links native result `ecd0c1461ff32f74f43f1d42f75d38aad9f70d2e035078d3bba05605ee11bb4c`
+and gameplay review `211ca211d14726a4dc069d2a8c7fd07191d769625387c2fd82386623f93fb3e7`,
+both publicly committed at `e1b4e76c3f48e87fa3222b4e425ff6fa9d4492c6`.
+
+The save retains 496,250 elapsed ticks, eighteen living dwarves, one earlier
+death, nine beds, five workshops, three farms, 134 food and 143 drinks. A new
+surface still was completed and a brewing job acquired a worker. Native drinks
+peaked at 170 before falling to143; this is adaptive supply recovery, not proven
+indefinite sustainability or item-level attribution. All 64 actions and 289 keys
+were accepted/confirmed. One open-build-menu request deferred 1,200 ticks; actual
+elapsed time was49,200 against50,400 requested. No timeout or human rescue.
+
+The ninth automatic handoff verified stopped-state teardown and a whole-state
+reload before actual decision773. The original guest-poweroff return1 and
+VM-stop return0 remain preserved. Cumulative usage is22,152,718 returned tokens;
+subscription charges remain unreported. The same frozen campaign continues.
+
+Keep homepage/player code, native runtime, live feed, services, database and
+host-local files unchanged. Only existing static data and the gallery change;
+no restart, new infrastructure or main merge. Contract checks cover all64 new
+frames and preserve earlier rejection and delayed-metadata behavior. This
+background update skips browser-only preview and does not claim visual QA.

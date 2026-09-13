@@ -96,7 +96,7 @@ for (const mode of ['valid','unavailable','invalid','delayed']) test('real playe
       return {ok:true,json:async()=>url.includes('watch-active') ? live : JSON.parse(fs.readFileSync('web'+url))};
     };
     await import('../web/static/home-watch.mjs?saved-outcome-test='+mode); await settle();
-    assert.equal(get('decision').textContent,'Decision 645 / 708');
+    assert.equal(get('decision').textContent,'Decision 709 / 772');
     assert.equal(get('play').disabled,false);
     if(mode==='delayed') {
       assert.equal(get('outcome').hidden,true);
@@ -109,11 +109,18 @@ for (const mode of ['valid','unavailable','invalid','delayed']) test('real playe
     if(mode==='valid'||mode==='delayed') {
       assert.equal(get('outcome').hidden,false);
       assert.equal(get('outcome-status').hidden,true);
-      assert.match(get('outcome-summary').textContent,/18 living dwarves.*75 food units and 93 drinks/);
+      assert.match(get('outcome-summary').textContent,/18 living dwarves.*134 food units and 143 drinks/);
       assert.equal(get('result').href,index.outcomes[0].result.url);
       assert.equal(get('reload').href,index.outcomes[0].review.url);
       assert.equal(get('reload').textContent,'Inspect the gameplay assessment →');
-      assert.equal(get('prior').href,'/?recording=astra-keyboard-endurance-v1-581-644#watch-root');
+      assert.equal(get('prior').href,'/?recording=astra-keyboard-endurance-v1-645-708#watch-root');
+      get('range').value='5'; await get('range').emit('input');
+      assert.equal(get('decision').textContent,'Decision 714 / 772');
+      assert.equal(get('execution').textContent,'Key command accepted by the harness. Acceptance does not prove the intended outcome.');
+      // The previous replay retains its rejected input and its own endpoint links.
+      await get('runs').children.find(node=>node.dataset.recording==='astra-keyboard-endurance-v1-645-708').emit('click'); await settle();
+      assert.equal(get('result').href,index.outcomes[1].result.url);
+      assert.match(get('outcome-summary').textContent,/75 food units and 93 drinks/);
       get('range').value='24'; await get('range').emit('input');
       assert.equal(get('decision').textContent,'Decision 669 / 708');
       assert.equal(get('execution').textContent,'Key command was not accepted.');
@@ -122,7 +129,7 @@ for (const mode of ['valid','unavailable','invalid','delayed']) test('real playe
       assert.equal(get('outcome').hidden,true);
       assert.equal(get('outcome-status').hidden,false);
       await get('next').emit('click');
-      assert.equal(get('decision').textContent,'Decision 646 / 708');
+      assert.equal(get('decision').textContent,'Decision 710 / 772');
     }
     live={schema_version:'fortgym.watch-live/v1',status:'running',run_id:'current',model:'gpt-6-astra',
       observed_at_unix:Math.floor(Date.now()/1000),fresh_for_seconds:30,
