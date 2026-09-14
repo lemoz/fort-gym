@@ -1,0 +1,1830 @@
+{
+  "schema_version": "fortgym.endurance-gameplay-review/v1",
+  "date_utc": "2026-09-13",
+  "campaign_id": "astra-keyboard-endurance-v1",
+  "saved_through_decision": 964,
+  "native_receipt": "astra_keyboard_endurance_964_20260913.json",
+  "native_receipt_sha256": "311ab80b0218aa23f0fec253a66d29b46e74cc4ebc5d4437583bfc3c27b1d356",
+  "read_only_review_script_sha256": "decc615ee5a72b8ab38687301608498eb162c59cb4ed887a91742646f387c6e7",
+  "native_samples": {
+    "schema_version": "fortgym.endurance-bounded-native-gameplay-samples/v1",
+    "source_revision": "4b526b5636e6f568a4cae1a1227d746d9c6922c3",
+    "checkpoint964_receipt_sha256": "311ab80b0218aa23f0fec253a66d29b46e74cc4ebc5d4437583bfc3c27b1d356",
+    "checkpoint964_manifest_sha256": "c35df5675d7addefb030ab44ce28db95c16641597fc26c567829acb6ac79b008",
+    "before_window_metrics": {
+      "population": 19,
+      "food_stock": 388,
+      "drink_stock": 560,
+      "wood_stock": null,
+      "stone_stock": null,
+      "functional_rooms": null,
+      "completed_workshops": 7,
+      "completed_beds": 9,
+      "completed_farms": 3,
+      "recorded_dead_citizens": 1
+    },
+    "before_window_food_inventory": {
+      "complete": true,
+      "drink_records": 47,
+      "duplicate_records": 0,
+      "excluded_records": 0,
+      "food_records": 187,
+      "forbidden_units": 0,
+      "hidden_units": 0,
+      "in_job_units": 1,
+      "item_read_failures": 0,
+      "list_read_failures": 0,
+      "nonfood_records": 2677,
+      "predicate_argument": 0,
+      "rotten_units": 0,
+      "scanned_records": 2911,
+      "scanned_units": 388,
+      "schema_version": "fortgym.native-food-inventory/v1",
+      "scope": "native predicate at argument 0, not accessibility, ownership or production/consumption",
+      "source": "world.items.other.IN_PLAY isEdibleRaw(0) getStackSize excluding DRINK",
+      "trader_units": 250,
+      "units": 388
+    },
+    "before_window_drink_inventory": {
+      "complete": true,
+      "excluded_records": 0,
+      "forbidden_units": 0,
+      "in_job_units": 36,
+      "item_read_failures": 0,
+      "item_records": 47,
+      "list_read_failures": 0,
+      "rotten_units": 0,
+      "scanned_units": 560,
+      "scope": "existing units, not accessibility, ownership or production/consumption",
+      "source": "world.items.other.IN_PLAY DRINK stack_size",
+      "type_read_failures": 0,
+      "ui_estimate": 485,
+      "units": 560
+    },
+    "saved_window": {
+      "first_decision": 901,
+      "last_decision": 964,
+      "actual_ticks_advanced": 33245,
+      "decisions_with_positive_time": 23,
+      "clock_interruptions": [
+        {
+          "decision": 920,
+          "requested": 2000,
+          "ticks_advanced": 1021,
+          "error": "blocking_viewscreen_transition",
+          "interrupted": true,
+          "viewscreen_before": "viewscreen_dwarfmodest",
+          "viewscreen_after": "viewscreen_textviewerst",
+          "final_viewscreen_type": "viewscreen_textviewerst",
+          "final_pause_state": true,
+          "interrupt_safety_error": false,
+          "calendar_safety_error": false
+        },
+        {
+          "decision": 923,
+          "requested": 2000,
+          "ticks_advanced": 19,
+          "error": "blocking_viewscreen_transition",
+          "interrupted": true,
+          "viewscreen_before": "viewscreen_dwarfmodest",
+          "viewscreen_after": "viewscreen_topicmeetingst",
+          "final_viewscreen_type": "viewscreen_topicmeetingst",
+          "final_pause_state": true,
+          "interrupt_safety_error": false,
+          "calendar_safety_error": false
+        },
+        {
+          "decision": 924,
+          "requested": 2000,
+          "ticks_advanced": 24,
+          "error": "blocking_viewscreen_transition",
+          "interrupted": true,
+          "viewscreen_before": "viewscreen_dwarfmodest",
+          "viewscreen_after": "viewscreen_topicmeetingst",
+          "final_viewscreen_type": "viewscreen_topicmeetingst",
+          "final_pause_state": true,
+          "interrupt_safety_error": false,
+          "calendar_safety_error": false
+        },
+        {
+          "decision": 927,
+          "requested": 2000,
+          "ticks_advanced": 97,
+          "error": "blocking_viewscreen_transition",
+          "interrupted": true,
+          "viewscreen_before": "viewscreen_dwarfmodest",
+          "viewscreen_after": "viewscreen_topicmeetingst",
+          "final_viewscreen_type": "viewscreen_topicmeetingst",
+          "final_pause_state": true,
+          "interrupt_safety_error": false,
+          "calendar_safety_error": false
+        },
+        {
+          "decision": 929,
+          "requested": 2000,
+          "ticks_advanced": 16,
+          "error": "blocking_viewscreen_transition",
+          "interrupted": true,
+          "viewscreen_before": "viewscreen_dwarfmodest",
+          "viewscreen_after": "viewscreen_topicmeetingst",
+          "final_viewscreen_type": "viewscreen_topicmeetingst",
+          "final_pause_state": true,
+          "interrupt_safety_error": false,
+          "calendar_safety_error": false
+        },
+        {
+          "decision": 931,
+          "requested": 1200,
+          "ticks_advanced": 56,
+          "error": "blocking_viewscreen_transition",
+          "interrupted": true,
+          "viewscreen_before": "viewscreen_dwarfmodest",
+          "viewscreen_after": "viewscreen_topicmeetingst",
+          "final_viewscreen_type": "viewscreen_topicmeetingst",
+          "final_pause_state": true,
+          "interrupt_safety_error": false,
+          "calendar_safety_error": false
+        },
+        {
+          "decision": 936,
+          "requested": 2000,
+          "ticks_advanced": 12,
+          "error": "blocking_viewscreen_transition",
+          "interrupted": true,
+          "viewscreen_before": "viewscreen_dwarfmodest",
+          "viewscreen_after": "viewscreen_textviewerst",
+          "final_viewscreen_type": "viewscreen_textviewerst",
+          "final_pause_state": true,
+          "interrupt_safety_error": false,
+          "calendar_safety_error": false
+        }
+      ],
+      "memorial_related_job_samples": [
+        {
+          "decision": 944,
+          "jobs": [
+            {
+              "has_worker": true,
+              "id": 4287,
+              "pos": [
+                98,
+                103,
+                161
+              ],
+              "reaction": false,
+              "suspended": false,
+              "target_walk_group_connectivity": "connected",
+              "type": "ConstructSlab"
+            }
+          ],
+          "world_job_list_complete": true,
+          "worker_assignments": [
+            {
+              "id": 244,
+              "profession": "BREWER",
+              "current_job_known": true,
+              "current_job_type": "ConstructSlab"
+            }
+          ],
+          "worker_job_ids_measured": false
+        },
+        {
+          "decision": 945,
+          "jobs": [
+            {
+              "has_worker": true,
+              "id": 4287,
+              "pos": [
+                98,
+                103,
+                161
+              ],
+              "reaction": false,
+              "suspended": false,
+              "target_walk_group_connectivity": "connected",
+              "type": "ConstructSlab"
+            }
+          ],
+          "world_job_list_complete": true,
+          "worker_assignments": [
+            {
+              "id": 244,
+              "profession": "BREWER",
+              "current_job_known": true,
+              "current_job_type": "ConstructSlab"
+            }
+          ],
+          "worker_job_ids_measured": false
+        },
+        {
+          "decision": 946,
+          "jobs": [
+            {
+              "has_worker": true,
+              "id": 4287,
+              "pos": [
+                98,
+                103,
+                161
+              ],
+              "reaction": false,
+              "suspended": false,
+              "target_walk_group_connectivity": "connected",
+              "type": "ConstructSlab"
+            }
+          ],
+          "world_job_list_complete": true,
+          "worker_assignments": [
+            {
+              "id": 244,
+              "profession": "BREWER",
+              "current_job_known": true,
+              "current_job_type": "ConstructSlab"
+            }
+          ],
+          "worker_job_ids_measured": false
+        },
+        {
+          "decision": 947,
+          "jobs": [
+            {
+              "has_worker": true,
+              "id": 4287,
+              "pos": [
+                98,
+                103,
+                161
+              ],
+              "reaction": false,
+              "suspended": false,
+              "target_walk_group_connectivity": "connected",
+              "type": "ConstructSlab"
+            },
+            {
+              "has_worker": false,
+              "id": 4292,
+              "pos": [
+                94,
+                103,
+                161
+              ],
+              "reaction": false,
+              "suspended": false,
+              "target_walk_group_connectivity": "connected",
+              "type": "EngraveSlab"
+            }
+          ],
+          "world_job_list_complete": false,
+          "worker_assignments": [
+            {
+              "id": 244,
+              "profession": "BREWER",
+              "current_job_known": true,
+              "current_job_type": "ConstructSlab"
+            }
+          ],
+          "worker_job_ids_measured": false
+        },
+        {
+          "decision": 948,
+          "jobs": [
+            {
+              "has_worker": true,
+              "id": 4287,
+              "pos": [
+                98,
+                103,
+                161
+              ],
+              "reaction": false,
+              "suspended": false,
+              "target_walk_group_connectivity": "connected",
+              "type": "ConstructSlab"
+            },
+            {
+              "has_worker": false,
+              "id": 4292,
+              "pos": [
+                94,
+                103,
+                161
+              ],
+              "reaction": false,
+              "suspended": false,
+              "target_walk_group_connectivity": "connected",
+              "type": "EngraveSlab"
+            }
+          ],
+          "world_job_list_complete": false,
+          "worker_assignments": [
+            {
+              "id": 244,
+              "profession": "BREWER",
+              "current_job_known": true,
+              "current_job_type": "ConstructSlab"
+            }
+          ],
+          "worker_job_ids_measured": false
+        }
+      ],
+      "metric_summaries": {
+        "population": {
+          "start": 19,
+          "end": 19,
+          "change": 0,
+          "minimum_observed": 19,
+          "maximum_observed": 19,
+          "observed_samples": 64,
+          "missing_samples": 0,
+          "evidence": "complete"
+        },
+        "food_stock": {
+          "start": 388,
+          "end": 389,
+          "change": 1,
+          "minimum_observed": 387,
+          "maximum_observed": 392,
+          "observed_samples": 64,
+          "missing_samples": 0,
+          "evidence": "complete"
+        },
+        "drink_stock": {
+          "start": 560,
+          "end": 531,
+          "change": -29,
+          "minimum_observed": 531,
+          "maximum_observed": 560,
+          "observed_samples": 64,
+          "missing_samples": 0,
+          "evidence": "complete"
+        },
+        "wood_stock": {
+          "start": null,
+          "end": null,
+          "change": null,
+          "minimum_observed": null,
+          "maximum_observed": null,
+          "observed_samples": 0,
+          "missing_samples": 64,
+          "evidence": "incomplete"
+        },
+        "stone_stock": {
+          "start": null,
+          "end": null,
+          "change": null,
+          "minimum_observed": null,
+          "maximum_observed": null,
+          "observed_samples": 0,
+          "missing_samples": 64,
+          "evidence": "incomplete"
+        },
+        "functional_rooms": {
+          "start": null,
+          "end": null,
+          "change": null,
+          "minimum_observed": null,
+          "maximum_observed": null,
+          "observed_samples": 0,
+          "missing_samples": 64,
+          "evidence": "incomplete"
+        },
+        "completed_workshops": {
+          "start": 7,
+          "end": 7,
+          "change": 0,
+          "minimum_observed": 7,
+          "maximum_observed": 7,
+          "observed_samples": 64,
+          "missing_samples": 0,
+          "evidence": "complete"
+        },
+        "completed_beds": {
+          "start": 9,
+          "end": 9,
+          "change": 0,
+          "minimum_observed": 9,
+          "maximum_observed": 9,
+          "observed_samples": 64,
+          "missing_samples": 0,
+          "evidence": "complete"
+        },
+        "completed_farms": {
+          "start": 3,
+          "end": 3,
+          "change": 0,
+          "minimum_observed": 3,
+          "maximum_observed": 3,
+          "observed_samples": 64,
+          "missing_samples": 0,
+          "evidence": "complete"
+        },
+        "recorded_dead_citizens": {
+          "start": 1,
+          "end": 1,
+          "change": 0,
+          "minimum_observed": 1,
+          "maximum_observed": 1,
+          "observed_samples": 64,
+          "missing_samples": 0,
+          "evidence": "complete"
+        }
+      },
+      "stock_observation_changes": [
+        {
+          "decision": 901,
+          "food_stock": 388,
+          "drink_stock": 560
+        },
+        {
+          "decision": 920,
+          "food_stock": 387,
+          "drink_stock": 557
+        },
+        {
+          "decision": 937,
+          "food_stock": 391,
+          "drink_stock": 554
+        },
+        {
+          "decision": 944,
+          "food_stock": 390,
+          "drink_stock": 554
+        },
+        {
+          "decision": 947,
+          "food_stock": 388,
+          "drink_stock": 553
+        },
+        {
+          "decision": 949,
+          "food_stock": 388,
+          "drink_stock": 550
+        },
+        {
+          "decision": 953,
+          "food_stock": 389,
+          "drink_stock": 549
+        },
+        {
+          "decision": 954,
+          "food_stock": 389,
+          "drink_stock": 548
+        },
+        {
+          "decision": 955,
+          "food_stock": 388,
+          "drink_stock": 547
+        },
+        {
+          "decision": 956,
+          "food_stock": 387,
+          "drink_stock": 547
+        },
+        {
+          "decision": 957,
+          "food_stock": 390,
+          "drink_stock": 543
+        },
+        {
+          "decision": 958,
+          "food_stock": 390,
+          "drink_stock": 540
+        },
+        {
+          "decision": 959,
+          "food_stock": 390,
+          "drink_stock": 539
+        },
+        {
+          "decision": 960,
+          "food_stock": 392,
+          "drink_stock": 537
+        },
+        {
+          "decision": 961,
+          "food_stock": 391,
+          "drink_stock": 535
+        },
+        {
+          "decision": 962,
+          "food_stock": 387,
+          "drink_stock": 534
+        },
+        {
+          "decision": 963,
+          "food_stock": 389,
+          "drink_stock": 531
+        }
+      ],
+      "inventory_observation_changes": [
+        {
+          "decision": 901,
+          "food_total_units": 388,
+          "food_trader_flagged_units": 250,
+          "food_nontrader_units": 138,
+          "food_forbidden_units": 0,
+          "food_rotten_units": 0,
+          "food_in_job_units": 1,
+          "food_hidden_units": 0,
+          "drink_total_units": 560,
+          "drink_trader_flagged_units": null,
+          "drink_forbidden_units": 0,
+          "drink_rotten_units": 0,
+          "drink_in_job_units": 36
+        },
+        {
+          "decision": 920,
+          "food_total_units": 387,
+          "food_trader_flagged_units": 250,
+          "food_nontrader_units": 137,
+          "food_forbidden_units": 0,
+          "food_rotten_units": 0,
+          "food_in_job_units": 0,
+          "food_hidden_units": 0,
+          "drink_total_units": 557,
+          "drink_trader_flagged_units": null,
+          "drink_forbidden_units": 0,
+          "drink_rotten_units": 0,
+          "drink_in_job_units": 0
+        },
+        {
+          "decision": 937,
+          "food_total_units": 391,
+          "food_trader_flagged_units": 250,
+          "food_nontrader_units": 141,
+          "food_forbidden_units": 0,
+          "food_rotten_units": 0,
+          "food_in_job_units": 4,
+          "food_hidden_units": 0,
+          "drink_total_units": 554,
+          "drink_trader_flagged_units": null,
+          "drink_forbidden_units": 0,
+          "drink_rotten_units": 0,
+          "drink_in_job_units": 0
+        },
+        {
+          "decision": 944,
+          "food_total_units": 390,
+          "food_trader_flagged_units": 250,
+          "food_nontrader_units": 140,
+          "food_forbidden_units": 0,
+          "food_rotten_units": 0,
+          "food_in_job_units": 6,
+          "food_hidden_units": 0,
+          "drink_total_units": 554,
+          "drink_trader_flagged_units": null,
+          "drink_forbidden_units": 0,
+          "drink_rotten_units": 0,
+          "drink_in_job_units": 0
+        },
+        {
+          "decision": 947,
+          "food_total_units": 388,
+          "food_trader_flagged_units": 250,
+          "food_nontrader_units": 138,
+          "food_forbidden_units": 0,
+          "food_rotten_units": 0,
+          "food_in_job_units": 4,
+          "food_hidden_units": 0,
+          "drink_total_units": 553,
+          "drink_trader_flagged_units": null,
+          "drink_forbidden_units": 0,
+          "drink_rotten_units": 0,
+          "drink_in_job_units": 0
+        },
+        {
+          "decision": 949,
+          "food_total_units": 388,
+          "food_trader_flagged_units": 250,
+          "food_nontrader_units": 138,
+          "food_forbidden_units": 0,
+          "food_rotten_units": 0,
+          "food_in_job_units": 0,
+          "food_hidden_units": 0,
+          "drink_total_units": 550,
+          "drink_trader_flagged_units": null,
+          "drink_forbidden_units": 0,
+          "drink_rotten_units": 0,
+          "drink_in_job_units": 0
+        },
+        {
+          "decision": 953,
+          "food_total_units": 389,
+          "food_trader_flagged_units": 250,
+          "food_nontrader_units": 139,
+          "food_forbidden_units": 0,
+          "food_rotten_units": 0,
+          "food_in_job_units": 2,
+          "food_hidden_units": 0,
+          "drink_total_units": 549,
+          "drink_trader_flagged_units": null,
+          "drink_forbidden_units": 0,
+          "drink_rotten_units": 0,
+          "drink_in_job_units": 3
+        },
+        {
+          "decision": 954,
+          "food_total_units": 389,
+          "food_trader_flagged_units": 250,
+          "food_nontrader_units": 139,
+          "food_forbidden_units": 0,
+          "food_rotten_units": 0,
+          "food_in_job_units": 3,
+          "food_hidden_units": 0,
+          "drink_total_units": 548,
+          "drink_trader_flagged_units": null,
+          "drink_forbidden_units": 0,
+          "drink_rotten_units": 0,
+          "drink_in_job_units": 0
+        },
+        {
+          "decision": 955,
+          "food_total_units": 388,
+          "food_trader_flagged_units": 250,
+          "food_nontrader_units": 138,
+          "food_forbidden_units": 0,
+          "food_rotten_units": 0,
+          "food_in_job_units": 0,
+          "food_hidden_units": 0,
+          "drink_total_units": 547,
+          "drink_trader_flagged_units": null,
+          "drink_forbidden_units": 0,
+          "drink_rotten_units": 0,
+          "drink_in_job_units": 0
+        },
+        {
+          "decision": 956,
+          "food_total_units": 387,
+          "food_trader_flagged_units": 250,
+          "food_nontrader_units": 137,
+          "food_forbidden_units": 0,
+          "food_rotten_units": 0,
+          "food_in_job_units": 0,
+          "food_hidden_units": 0,
+          "drink_total_units": 547,
+          "drink_trader_flagged_units": null,
+          "drink_forbidden_units": 0,
+          "drink_rotten_units": 0,
+          "drink_in_job_units": 7
+        },
+        {
+          "decision": 957,
+          "food_total_units": 390,
+          "food_trader_flagged_units": 250,
+          "food_nontrader_units": 140,
+          "food_forbidden_units": 0,
+          "food_rotten_units": 0,
+          "food_in_job_units": 3,
+          "food_hidden_units": 0,
+          "drink_total_units": 543,
+          "drink_trader_flagged_units": null,
+          "drink_forbidden_units": 0,
+          "drink_rotten_units": 0,
+          "drink_in_job_units": 18
+        },
+        {
+          "decision": 958,
+          "food_total_units": 390,
+          "food_trader_flagged_units": 250,
+          "food_nontrader_units": 140,
+          "food_forbidden_units": 0,
+          "food_rotten_units": 0,
+          "food_in_job_units": 3,
+          "food_hidden_units": 0,
+          "drink_total_units": 540,
+          "drink_trader_flagged_units": null,
+          "drink_forbidden_units": 0,
+          "drink_rotten_units": 0,
+          "drink_in_job_units": 15
+        },
+        {
+          "decision": 959,
+          "food_total_units": 390,
+          "food_trader_flagged_units": 250,
+          "food_nontrader_units": 140,
+          "food_forbidden_units": 0,
+          "food_rotten_units": 0,
+          "food_in_job_units": 0,
+          "food_hidden_units": 0,
+          "drink_total_units": 539,
+          "drink_trader_flagged_units": null,
+          "drink_forbidden_units": 0,
+          "drink_rotten_units": 0,
+          "drink_in_job_units": 40
+        },
+        {
+          "decision": 960,
+          "food_total_units": 392,
+          "food_trader_flagged_units": 250,
+          "food_nontrader_units": 142,
+          "food_forbidden_units": 0,
+          "food_rotten_units": 0,
+          "food_in_job_units": 2,
+          "food_hidden_units": 0,
+          "drink_total_units": 537,
+          "drink_trader_flagged_units": null,
+          "drink_forbidden_units": 0,
+          "drink_rotten_units": 0,
+          "drink_in_job_units": 0
+        },
+        {
+          "decision": 961,
+          "food_total_units": 391,
+          "food_trader_flagged_units": 250,
+          "food_nontrader_units": 141,
+          "food_forbidden_units": 0,
+          "food_rotten_units": 0,
+          "food_in_job_units": 3,
+          "food_hidden_units": 0,
+          "drink_total_units": 535,
+          "drink_trader_flagged_units": null,
+          "drink_forbidden_units": 0,
+          "drink_rotten_units": 0,
+          "drink_in_job_units": 0
+        },
+        {
+          "decision": 962,
+          "food_total_units": 387,
+          "food_trader_flagged_units": 250,
+          "food_nontrader_units": 137,
+          "food_forbidden_units": 0,
+          "food_rotten_units": 0,
+          "food_in_job_units": 3,
+          "food_hidden_units": 0,
+          "drink_total_units": 534,
+          "drink_trader_flagged_units": null,
+          "drink_forbidden_units": 0,
+          "drink_rotten_units": 0,
+          "drink_in_job_units": 41
+        },
+        {
+          "decision": 963,
+          "food_total_units": 389,
+          "food_trader_flagged_units": 250,
+          "food_nontrader_units": 139,
+          "food_forbidden_units": 0,
+          "food_rotten_units": 0,
+          "food_in_job_units": 3,
+          "food_hidden_units": 0,
+          "drink_total_units": 531,
+          "drink_trader_flagged_units": null,
+          "drink_forbidden_units": 0,
+          "drink_rotten_units": 0,
+          "drink_in_job_units": 0
+        }
+      ],
+      "inventory_scope": "Raw existing native units; non-trader does not prove ownership, accessibility, nutrition or production. Trader counters for drinks are not captured by this frozen condition.",
+      "death_observation_changes": [
+        {
+          "decision": 901,
+          "dead_citizen_count": 1,
+          "dead_citizen_records": [
+            {
+              "cause_enum": 5,
+              "cause_known": true,
+              "cause_name": "DROWN",
+              "cause_source": "world.incidents.all[death_id].death_cause",
+              "drowning": false,
+              "emotionally_overloaded": false,
+              "hunger_timer": 0,
+              "incident_id": 4,
+              "stomach_food": 0,
+              "stored_fat": 0,
+              "suffocation": 0,
+              "thirst_timer": 0,
+              "unit_id": 537
+            }
+          ],
+          "death_causes_known": true,
+          "death_evidence_complete": true
+        }
+      ],
+      "workshop_observation_changes": [
+        {
+          "decision": 901,
+          "building_evidence_complete": true,
+          "workshops_truncated": false,
+          "entries": [
+            {
+              "id": 1,
+              "subtype": "Carpenters",
+              "pos": [
+                102,
+                96,
+                161
+              ],
+              "built": true,
+              "stage": 3,
+              "max_stage": 3,
+              "stage_read_ok": true
+            },
+            {
+              "id": 3,
+              "subtype": "Still",
+              "pos": [
+                112,
+                104,
+                159
+              ],
+              "built": true,
+              "stage": 3,
+              "max_stage": 3,
+              "stage_read_ok": true
+            },
+            {
+              "id": 11,
+              "subtype": "Still",
+              "pos": [
+                105,
+                95,
+                161
+              ],
+              "built": true,
+              "stage": 3,
+              "max_stage": 3,
+              "stage_read_ok": true
+            },
+            {
+              "id": 17,
+              "subtype": "Fishery",
+              "pos": [
+                45,
+                70,
+                161
+              ],
+              "built": true,
+              "stage": 3,
+              "max_stage": 3,
+              "stage_read_ok": true
+            },
+            {
+              "id": 22,
+              "subtype": "Still",
+              "pos": [
+                99,
+                97,
+                161
+              ],
+              "built": true,
+              "stage": 3,
+              "max_stage": 3,
+              "stage_read_ok": true
+            },
+            {
+              "id": 23,
+              "subtype": "Masons",
+              "pos": [
+                98,
+                103,
+                161
+              ],
+              "built": true,
+              "stage": 3,
+              "max_stage": 3,
+              "stage_read_ok": true
+            },
+            {
+              "id": 24,
+              "subtype": "Craftsdwarfs",
+              "pos": [
+                94,
+                103,
+                161
+              ],
+              "built": true,
+              "stage": 3,
+              "max_stage": 3,
+              "stage_read_ok": true
+            }
+          ]
+        }
+      ],
+      "citizen_roster_changes": [],
+      "citizen_labor_changes": [],
+      "worker_job_observations": {
+        "ConstructSlab": 5,
+        "Drink2": 48,
+        "Eat": 28,
+        "Fish": 54,
+        "MakeBarrel": 46,
+        "PrepareRawFish": 62,
+        "Sleep": 27,
+        "StoreItemInBarrel": 28
+      },
+      "worker_job_observation_unit": "citizen-boundary samples, not unique jobs, completed jobs or time",
+      "brew_job_samples": [
+        {
+          "decision": 901,
+          "brew_entries": [],
+          "entry_list_complete_by_count": true,
+          "sampled_entries": 11,
+          "total_jobs": 11
+        },
+        {
+          "decision": 902,
+          "brew_entries": [],
+          "entry_list_complete_by_count": true,
+          "sampled_entries": 11,
+          "total_jobs": 11
+        },
+        {
+          "decision": 903,
+          "brew_entries": [],
+          "entry_list_complete_by_count": true,
+          "sampled_entries": 11,
+          "total_jobs": 11
+        },
+        {
+          "decision": 904,
+          "brew_entries": [],
+          "entry_list_complete_by_count": true,
+          "sampled_entries": 11,
+          "total_jobs": 11
+        },
+        {
+          "decision": 905,
+          "brew_entries": [],
+          "entry_list_complete_by_count": true,
+          "sampled_entries": 11,
+          "total_jobs": 11
+        },
+        {
+          "decision": 906,
+          "brew_entries": [],
+          "entry_list_complete_by_count": true,
+          "sampled_entries": 11,
+          "total_jobs": 11
+        },
+        {
+          "decision": 907,
+          "brew_entries": [],
+          "entry_list_complete_by_count": true,
+          "sampled_entries": 11,
+          "total_jobs": 11
+        },
+        {
+          "decision": 908,
+          "brew_entries": [],
+          "entry_list_complete_by_count": true,
+          "sampled_entries": 11,
+          "total_jobs": 11
+        },
+        {
+          "decision": 909,
+          "brew_entries": [],
+          "entry_list_complete_by_count": true,
+          "sampled_entries": 11,
+          "total_jobs": 11
+        },
+        {
+          "decision": 910,
+          "brew_entries": [],
+          "entry_list_complete_by_count": true,
+          "sampled_entries": 11,
+          "total_jobs": 11
+        },
+        {
+          "decision": 911,
+          "brew_entries": [],
+          "entry_list_complete_by_count": true,
+          "sampled_entries": 11,
+          "total_jobs": 11
+        },
+        {
+          "decision": 912,
+          "brew_entries": [],
+          "entry_list_complete_by_count": true,
+          "sampled_entries": 11,
+          "total_jobs": 11
+        },
+        {
+          "decision": 913,
+          "brew_entries": [],
+          "entry_list_complete_by_count": true,
+          "sampled_entries": 11,
+          "total_jobs": 11
+        },
+        {
+          "decision": 914,
+          "brew_entries": [],
+          "entry_list_complete_by_count": true,
+          "sampled_entries": 11,
+          "total_jobs": 11
+        },
+        {
+          "decision": 915,
+          "brew_entries": [],
+          "entry_list_complete_by_count": true,
+          "sampled_entries": 11,
+          "total_jobs": 11
+        },
+        {
+          "decision": 916,
+          "brew_entries": [],
+          "entry_list_complete_by_count": true,
+          "sampled_entries": 11,
+          "total_jobs": 11
+        },
+        {
+          "decision": 917,
+          "brew_entries": [],
+          "entry_list_complete_by_count": true,
+          "sampled_entries": 11,
+          "total_jobs": 11
+        },
+        {
+          "decision": 918,
+          "brew_entries": [],
+          "entry_list_complete_by_count": true,
+          "sampled_entries": 11,
+          "total_jobs": 11
+        },
+        {
+          "decision": 919,
+          "brew_entries": [],
+          "entry_list_complete_by_count": true,
+          "sampled_entries": 11,
+          "total_jobs": 11
+        },
+        {
+          "decision": 920,
+          "brew_entries": [],
+          "entry_list_complete_by_count": true,
+          "sampled_entries": 8,
+          "total_jobs": 8
+        },
+        {
+          "decision": 921,
+          "brew_entries": [],
+          "entry_list_complete_by_count": true,
+          "sampled_entries": 8,
+          "total_jobs": 8
+        },
+        {
+          "decision": 922,
+          "brew_entries": [],
+          "entry_list_complete_by_count": true,
+          "sampled_entries": 8,
+          "total_jobs": 8
+        },
+        {
+          "decision": 923,
+          "brew_entries": [],
+          "entry_list_complete_by_count": true,
+          "sampled_entries": 8,
+          "total_jobs": 8
+        },
+        {
+          "decision": 924,
+          "brew_entries": [],
+          "entry_list_complete_by_count": true,
+          "sampled_entries": 8,
+          "total_jobs": 8
+        },
+        {
+          "decision": 925,
+          "brew_entries": [],
+          "entry_list_complete_by_count": true,
+          "sampled_entries": 8,
+          "total_jobs": 8
+        },
+        {
+          "decision": 926,
+          "brew_entries": [],
+          "entry_list_complete_by_count": true,
+          "sampled_entries": 8,
+          "total_jobs": 8
+        },
+        {
+          "decision": 927,
+          "brew_entries": [],
+          "entry_list_complete_by_count": true,
+          "sampled_entries": 8,
+          "total_jobs": 8
+        },
+        {
+          "decision": 928,
+          "brew_entries": [],
+          "entry_list_complete_by_count": true,
+          "sampled_entries": 8,
+          "total_jobs": 8
+        },
+        {
+          "decision": 929,
+          "brew_entries": [],
+          "entry_list_complete_by_count": true,
+          "sampled_entries": 8,
+          "total_jobs": 8
+        },
+        {
+          "decision": 930,
+          "brew_entries": [],
+          "entry_list_complete_by_count": true,
+          "sampled_entries": 8,
+          "total_jobs": 8
+        },
+        {
+          "decision": 931,
+          "brew_entries": [],
+          "entry_list_complete_by_count": true,
+          "sampled_entries": 8,
+          "total_jobs": 8
+        },
+        {
+          "decision": 932,
+          "brew_entries": [],
+          "entry_list_complete_by_count": true,
+          "sampled_entries": 8,
+          "total_jobs": 8
+        },
+        {
+          "decision": 933,
+          "brew_entries": [],
+          "entry_list_complete_by_count": true,
+          "sampled_entries": 8,
+          "total_jobs": 8
+        },
+        {
+          "decision": 934,
+          "brew_entries": [],
+          "entry_list_complete_by_count": true,
+          "sampled_entries": 8,
+          "total_jobs": 8
+        },
+        {
+          "decision": 935,
+          "brew_entries": [],
+          "entry_list_complete_by_count": true,
+          "sampled_entries": 8,
+          "total_jobs": 8
+        },
+        {
+          "decision": 936,
+          "brew_entries": [],
+          "entry_list_complete_by_count": true,
+          "sampled_entries": 8,
+          "total_jobs": 8
+        },
+        {
+          "decision": 937,
+          "brew_entries": [],
+          "entry_list_complete_by_count": true,
+          "sampled_entries": 9,
+          "total_jobs": 9
+        },
+        {
+          "decision": 938,
+          "brew_entries": [],
+          "entry_list_complete_by_count": true,
+          "sampled_entries": 9,
+          "total_jobs": 9
+        },
+        {
+          "decision": 939,
+          "brew_entries": [],
+          "entry_list_complete_by_count": true,
+          "sampled_entries": 9,
+          "total_jobs": 9
+        },
+        {
+          "decision": 940,
+          "brew_entries": [],
+          "entry_list_complete_by_count": true,
+          "sampled_entries": 9,
+          "total_jobs": 9
+        },
+        {
+          "decision": 941,
+          "brew_entries": [],
+          "entry_list_complete_by_count": true,
+          "sampled_entries": 9,
+          "total_jobs": 9
+        },
+        {
+          "decision": 942,
+          "brew_entries": [],
+          "entry_list_complete_by_count": true,
+          "sampled_entries": 9,
+          "total_jobs": 9
+        },
+        {
+          "decision": 943,
+          "brew_entries": [],
+          "entry_list_complete_by_count": true,
+          "sampled_entries": 9,
+          "total_jobs": 9
+        },
+        {
+          "decision": 944,
+          "brew_entries": [],
+          "entry_list_complete_by_count": true,
+          "sampled_entries": 12,
+          "total_jobs": 12
+        },
+        {
+          "decision": 945,
+          "brew_entries": [],
+          "entry_list_complete_by_count": true,
+          "sampled_entries": 12,
+          "total_jobs": 12
+        },
+        {
+          "decision": 946,
+          "brew_entries": [],
+          "entry_list_complete_by_count": true,
+          "sampled_entries": 12,
+          "total_jobs": 12
+        },
+        {
+          "decision": 947,
+          "brew_entries": [],
+          "entry_list_complete_by_count": false,
+          "sampled_entries": 12,
+          "total_jobs": 15
+        },
+        {
+          "decision": 948,
+          "brew_entries": [],
+          "entry_list_complete_by_count": false,
+          "sampled_entries": 12,
+          "total_jobs": 15
+        },
+        {
+          "decision": 949,
+          "brew_entries": [],
+          "entry_list_complete_by_count": true,
+          "sampled_entries": 11,
+          "total_jobs": 11
+        },
+        {
+          "decision": 950,
+          "brew_entries": [],
+          "entry_list_complete_by_count": true,
+          "sampled_entries": 11,
+          "total_jobs": 11
+        },
+        {
+          "decision": 951,
+          "brew_entries": [],
+          "entry_list_complete_by_count": true,
+          "sampled_entries": 11,
+          "total_jobs": 11
+        },
+        {
+          "decision": 952,
+          "brew_entries": [],
+          "entry_list_complete_by_count": true,
+          "sampled_entries": 11,
+          "total_jobs": 11
+        },
+        {
+          "decision": 953,
+          "brew_entries": [],
+          "entry_list_complete_by_count": true,
+          "sampled_entries": 10,
+          "total_jobs": 10
+        },
+        {
+          "decision": 954,
+          "brew_entries": [],
+          "entry_list_complete_by_count": true,
+          "sampled_entries": 10,
+          "total_jobs": 10
+        },
+        {
+          "decision": 955,
+          "brew_entries": [],
+          "entry_list_complete_by_count": true,
+          "sampled_entries": 8,
+          "total_jobs": 8
+        },
+        {
+          "decision": 956,
+          "brew_entries": [],
+          "entry_list_complete_by_count": true,
+          "sampled_entries": 9,
+          "total_jobs": 9
+        },
+        {
+          "decision": 957,
+          "brew_entries": [],
+          "entry_list_complete_by_count": true,
+          "sampled_entries": 10,
+          "total_jobs": 10
+        },
+        {
+          "decision": 958,
+          "brew_entries": [],
+          "entry_list_complete_by_count": true,
+          "sampled_entries": 10,
+          "total_jobs": 10
+        },
+        {
+          "decision": 959,
+          "brew_entries": [],
+          "entry_list_complete_by_count": true,
+          "sampled_entries": 11,
+          "total_jobs": 11
+        },
+        {
+          "decision": 960,
+          "brew_entries": [],
+          "entry_list_complete_by_count": true,
+          "sampled_entries": 11,
+          "total_jobs": 11
+        },
+        {
+          "decision": 961,
+          "brew_entries": [],
+          "entry_list_complete_by_count": true,
+          "sampled_entries": 10,
+          "total_jobs": 10
+        },
+        {
+          "decision": 962,
+          "brew_entries": [],
+          "entry_list_complete_by_count": false,
+          "sampled_entries": 12,
+          "total_jobs": 13
+        },
+        {
+          "decision": 963,
+          "brew_entries": [],
+          "entry_list_complete_by_count": true,
+          "sampled_entries": 11,
+          "total_jobs": 11
+        },
+        {
+          "decision": 964,
+          "brew_entries": [],
+          "entry_list_complete_by_count": true,
+          "sampled_entries": 9,
+          "total_jobs": 9
+        }
+      ],
+      "endpoint": {
+        "native_year": 31,
+        "native_year_tick": 253496,
+        "elapsed_ticks": 639895,
+        "metrics": {
+          "population": 19,
+          "food_stock": 389,
+          "drink_stock": 531,
+          "wood_stock": null,
+          "stone_stock": null,
+          "functional_rooms": null,
+          "completed_workshops": 7,
+          "completed_beds": 9,
+          "completed_farms": 3,
+          "recorded_dead_citizens": 1
+        },
+        "citizens": {
+          "total": 19,
+          "idle": 15,
+          "labor_eligible": 16,
+          "labor_eligible_idle": 12,
+          "labor_eligibility_complete": true,
+          "labor_state_complete": true
+        },
+        "jobs": {
+          "active_ids": [
+            505,
+            510,
+            528,
+            553,
+            574,
+            1798,
+            4368,
+            4369,
+            4371
+          ],
+          "active_ids_truncated": false,
+          "brew_reaction": 0,
+          "construct_building": 0,
+          "construct_building_walk_group_connected": 0,
+          "construct_building_walk_group_disconnected": 0,
+          "construct_building_walk_group_unknown": 0,
+          "dig": 0,
+          "entries": [
+            {
+              "has_worker": false,
+              "id": 505,
+              "pos": [
+                111,
+                106,
+                159
+              ],
+              "reaction": false,
+              "suspended": false,
+              "target_walk_group_connectivity": "disconnected",
+              "type": "HarvestPlants"
+            },
+            {
+              "has_worker": false,
+              "id": 510,
+              "pos": [
+                111,
+                107,
+                159
+              ],
+              "reaction": false,
+              "suspended": false,
+              "target_walk_group_connectivity": "disconnected",
+              "type": "HarvestPlants"
+            },
+            {
+              "has_worker": false,
+              "id": 528,
+              "pos": [
+                111,
+                108,
+                159
+              ],
+              "reaction": false,
+              "suspended": false,
+              "target_walk_group_connectivity": "disconnected",
+              "type": "HarvestPlants"
+            },
+            {
+              "has_worker": false,
+              "id": 553,
+              "pos": [
+                112,
+                106,
+                159
+              ],
+              "reaction": false,
+              "suspended": false,
+              "target_walk_group_connectivity": "disconnected",
+              "type": "HarvestPlants"
+            },
+            {
+              "has_worker": false,
+              "id": 574,
+              "pos": [
+                112,
+                107,
+                159
+              ],
+              "reaction": false,
+              "suspended": false,
+              "target_walk_group_connectivity": "disconnected",
+              "type": "HarvestPlants"
+            },
+            {
+              "has_worker": true,
+              "id": 1798,
+              "pos": [
+                102,
+                96,
+                161
+              ],
+              "reaction": false,
+              "suspended": false,
+              "target_walk_group_connectivity": "connected",
+              "type": "MakeBarrel"
+            },
+            {
+              "has_worker": true,
+              "id": 4368,
+              "pos": [
+                84,
+                96,
+                161
+              ],
+              "reaction": false,
+              "suspended": false,
+              "target_walk_group_connectivity": "connected",
+              "type": "StoreItemInBarrel"
+            },
+            {
+              "has_worker": true,
+              "id": 4369,
+              "pos": [
+                45,
+                70,
+                161
+              ],
+              "reaction": false,
+              "suspended": false,
+              "target_walk_group_connectivity": "connected",
+              "type": "PrepareRawFish"
+            },
+            {
+              "has_worker": true,
+              "id": 4371,
+              "pos": [
+                82,
+                104,
+                161
+              ],
+              "reaction": false,
+              "suspended": false,
+              "target_walk_group_connectivity": "connected",
+              "type": "Fish"
+            }
+          ],
+          "order_jobs": [
+            {
+              "id": 1798,
+              "item": "barrel"
+            }
+          ],
+          "order_jobs_truncated": false,
+          "plant_seeds": 0,
+          "suspended": 0,
+          "total": 9,
+          "workshop_task": 2
+        },
+        "workshops": [
+          {
+            "built": true,
+            "id": 1,
+            "max_stage": 3,
+            "pos": [
+              102,
+              96,
+              161
+            ],
+            "queued_job_details": [
+              {
+                "has_worker": true,
+                "id": 1798,
+                "reaction": false,
+                "suspended": false,
+                "type": "MakeBarrel"
+              }
+            ],
+            "queued_jobs": 1,
+            "stage": 3,
+            "stage_read_ok": true,
+            "subtype": "Carpenters"
+          },
+          {
+            "built": true,
+            "id": 3,
+            "max_stage": 3,
+            "pos": [
+              112,
+              104,
+              159
+            ],
+            "queued_job_details": [],
+            "queued_jobs": 0,
+            "stage": 3,
+            "stage_read_ok": true,
+            "subtype": "Still"
+          },
+          {
+            "built": true,
+            "id": 11,
+            "max_stage": 3,
+            "pos": [
+              105,
+              95,
+              161
+            ],
+            "queued_job_details": [],
+            "queued_jobs": 0,
+            "stage": 3,
+            "stage_read_ok": true,
+            "subtype": "Still"
+          },
+          {
+            "built": true,
+            "id": 17,
+            "max_stage": 3,
+            "pos": [
+              45,
+              70,
+              161
+            ],
+            "queued_job_details": [
+              {
+                "has_worker": true,
+                "id": 4369,
+                "reaction": false,
+                "suspended": false,
+                "type": "PrepareRawFish"
+              }
+            ],
+            "queued_jobs": 1,
+            "stage": 3,
+            "stage_read_ok": true,
+            "subtype": "Fishery"
+          },
+          {
+            "built": true,
+            "id": 22,
+            "max_stage": 3,
+            "pos": [
+              99,
+              97,
+              161
+            ],
+            "queued_job_details": [],
+            "queued_jobs": 0,
+            "stage": 3,
+            "stage_read_ok": true,
+            "subtype": "Still"
+          },
+          {
+            "built": true,
+            "id": 23,
+            "max_stage": 3,
+            "pos": [
+              98,
+              103,
+              161
+            ],
+            "queued_job_details": [],
+            "queued_jobs": 0,
+            "stage": 3,
+            "stage_read_ok": true,
+            "subtype": "Masons"
+          },
+          {
+            "built": true,
+            "id": 24,
+            "max_stage": 3,
+            "pos": [
+              94,
+              103,
+              161
+            ],
+            "queued_job_details": [],
+            "queued_jobs": 0,
+            "stage": 3,
+            "stage_read_ok": true,
+            "subtype": "Craftsdwarfs"
+          }
+        ],
+        "production_inputs": {
+          "brewable_plant_read_failures": 0,
+          "brewable_plant_scan_complete": true,
+          "brewable_plant_source": "PLANT material reaction product DRINK_MAT; unassigned stacks",
+          "brewable_plant_stacks": 26,
+          "brewable_plant_stacks_in_jobs": 0,
+          "brewable_plant_units": 78,
+          "empty_barrels": 165,
+          "empty_barrels_in_jobs": 0,
+          "schema_version": "fortgym.campaign-production-inputs/v2",
+          "total_barrels": 223
+        }
+      },
+      "source_records_sha256": "dcf834ea8b49f5c0f5951c9f5900f706a143724c89c89b5f461b732e0f7da9bb"
+    },
+    "captured_native_ui": {
+      "recording_sha256": "15a602225570735b3798f807ec5dc3a421bce420b90fa7cc7eae7658a5d4c6c7",
+      "audit_sha256": "c1cff6f99eb1d522fc6ee297a700a79ad48d2c0609a26482baa835601dad8adb",
+      "captured_before_action": true,
+      "decode_order": "column_major",
+      "matches": [
+        {
+          "before_decision": 920,
+          "screen_row": 4,
+          "text": "No slabs engraved"
+        },
+        {
+          "before_decision": 920,
+          "screen_row": 5,
+          "text": "Ghost"
+        },
+        {
+          "before_decision": 920,
+          "screen_row": 7,
+          "text": "Avuz Kàsfikod"
+        },
+        {
+          "before_decision": 944,
+          "screen_row": 15,
+          "text": "Construct rock Slab"
+        },
+        {
+          "before_decision": 947,
+          "screen_row": 4,
+          "text": "No slabs engraved"
+        },
+        {
+          "before_decision": 947,
+          "screen_row": 5,
+          "text": "Ghost"
+        },
+        {
+          "before_decision": 947,
+          "screen_row": 7,
+          "text": "Avuz Kàsfikod"
+        },
+        {
+          "before_decision": 949,
+          "screen_row": 4,
+          "text": "Needs slab"
+        },
+        {
+          "before_decision": 953,
+          "screen_row": 5,
+          "text": "limonite slabs"
+        },
+        {
+          "before_decision": 954,
+          "screen_row": 39,
+          "text": "Avuz Kàsfikod, Ghostly Mason has been put to rest."
+        }
+      ],
+      "game_resolution_message": "Avuz Kàsfikod, Ghostly Mason has been put to rest.",
+      "resolution_visible_before_decision": 954,
+      "placement_action_decision": 953,
+      "direct_native_ghost_flag_measurement": false,
+      "slab_building_inventory_measurement": false,
+      "model_intent_used_as_completion_proof": false
+    },
+    "all_saved_window_samples_after_anniversary": true,
+    "window_saved": true,
+    "actual_reload_verified": true,
+    "runtime_changed": false,
+    "model_calls": 0,
+    "gameplay_inputs": 0,
+    "flow_attribution": null,
+    "sustainability_verdict": null
+  },
+  "assessment": {
+    "classification": "operating_with_incident_recovery",
+    "qualified_operating_at_saved_year_two_endpoint": true,
+    "additional_recorded_deaths_this_window": 0,
+    "prior_recorded_death_cause": "DROWN",
+    "incident_recovery": {
+      "kind": "memorial_for_ghost",
+      "name_as_displayed": "Avuz Kàsfikod",
+      "game_resolution_announced": true,
+      "game_message": "Avuz Kàsfikod, Ghostly Mason has been put to rest.",
+      "resolution_visible_before_decision": 954,
+      "placement_action_decision": 953,
+      "slab_job_id": 4287,
+      "slab_job_worker_observed_decisions": [
+        944,
+        945,
+        946,
+        947,
+        948
+      ],
+      "engraving_job_id": 4292,
+      "engraving_job_observed_decisions": [
+        947,
+        948
+      ],
+      "engraving_worker_assignment_observed": false,
+      "available_slab_material_as_displayed": "limonite",
+      "native_slab_building_id": null,
+      "direct_native_ghost_flag_measurement": false,
+      "model_intent_used_as_completion_proof": false
+    },
+    "inventory_interpretation": {
+      "food_total_at_start": 388,
+      "food_trader_flagged_at_start": 250,
+      "food_nontrader_at_start": 138,
+      "food_total_at_save": 389,
+      "food_trader_flagged_at_save": 250,
+      "food_nontrader_at_save": 139,
+      "food_nontrader_change": 1,
+      "food_nontrader_minimum_observed": 137,
+      "food_nontrader_maximum_observed": 142,
+      "drink_total_at_start": 560,
+      "drink_total_at_save": 531,
+      "drink_net_change": -29,
+      "drink_trader_units": null,
+      "exact_drink_change_attribution": null,
+      "fortress_owned_or_accessible_reserves_proven": false,
+      "scope": "Raw native units. Non-trader food is not proven fortress-owned or accessible; this frozen condition has no drink trader counter."
+    },
+    "clock_interpretation": {
+      "requested_ticks": 45200,
+      "actual_ticks": 33245,
+      "positive_time_decisions": 23,
+      "blocking_viewscreen_interruptions": 7,
+      "interrupted_request_ticks": 13200,
+      "ticks_completed_before_interruptions": 1245,
+      "unadvanced_requested_ticks": 11955,
+      "timeouts": 0,
+      "deferred_requests": 0,
+      "note": "Seven text or meeting screens interrupted already-dispatched advances. Astra navigated them itself. These are not timeout failures, missing time, or undispatched build-menu deferrals."
+    },
+    "production_flow_attribution": null,
+    "indefinite_self_sufficiency_demonstrated": false,
+    "strong_model_ranking_supported": false,
+    "limits": [
+      "The memorial outcome is supported by the captured game announcement, a staffed slab job, a queued engraving job and the placement sequence. Engraving's worker assignment was not sampled, and this condition does not measure slab building IDs or native ghost flags.",
+      "The food count includes 250 trader-flagged units throughout. Non-trader food ended one unit above the prior save; that net change does not establish a production rate or accessible reserves.",
+      "Raw drinks fell by 29. No brewing was observed in the 64 complete citizen samples or three final still queues; three world-job samples were capped, and transient activity between boundaries cannot be ruled out.",
+      "Five old harvest jobs remain unstaffed and cache-disconnected. Twelve of 16 labor-eligible citizens are idle. Cached connectivity and the 78 brewable plant units do not prove accessible ingredients or complete paths.",
+      "Citizen worker observations are boundary samples, not unique completed products or evenly spaced time observations. Citizen job IDs were not measured; worker names/types are not a direct ID-level linkage to world jobs.",
+      "No new citizens, labor changes, workshops, beds, farms or recorded deaths were observed. The separately proven memorial outcome is not represented by those coarse building counters.",
+      "This continues one campaign, not a new independent trial or evidence for a strong cross-model ranking. Subscription dollar charges remain unreported rather than zero."
+    ]
+  },
+  "model_calls_for_review": 0,
+  "gameplay_inputs_for_review": 0,
+  "runtime_changed": false,
+  "website_published": false,
+  "main_merged": false,
+  "full_goal_complete": false
+}

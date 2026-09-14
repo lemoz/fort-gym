@@ -1,0 +1,15 @@
+{
+  "schema_version": "fortgym.codex-keyboard-window/v1",
+  "condition_id": "astra-medium-native-keyboard-v2-workshop-feedback",
+  "original_condition": "campaign_astra_keyboard_20260907.json",
+  "continuation_from_next_step": 311,
+  "steps_per_segment": 64,
+  "max_segments": 1,
+  "reset_memory": false,
+  "reset_usage": false,
+  "strategy_intervention": false,
+  "snapshot_profile": "native_menu_preserving_save/v3",
+  "hypothesis": "With verified zero-tick menu feedback returned to Astra instead of terminating the harness, the model can choose its own next input and continue advancing this fortress. Keep the prior 64-decision single-process cadence; do not supply a correction key or strategy hint.",
+  "continuity_note": "Continue only from audited checkpoint e1883c88633a66a86de11ca42bc9e0e60a9ed4e6f4e6cde679cce2848611b4d5 at cursor 311. Native forward recovery and a second fresh game load passed with no additional model call, key or tick. Preserve 65,600 retained ticks, model memory, the inherited 2,000-tick loss, all 327 accounted responses and 10,696,954 campaign tokens. The original workshop timeout and failed OOM recovery remain retained. This is the same fortress, not an independent comparison or proof of a cadence effect. A single process exposes up to 64 unsaved decisions to a failure.",
+  "budget_note": "Inherit the existing cumulative 1,024-dispatch / 40-million-token ceiling without extension or usage reset. Fresh subscription admission precedes every invocation. No API fallback, local model, credit purchase or reset. Charges remain unreported, not zero."
+}

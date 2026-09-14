@@ -58,4 +58,4 @@ def test_core_fort_labs_pages_link_to_findings_route() -> None:
         assert 'href="/findings"' in html
         if 'id="fl-mobile-menu"' in html:
             mobile_menu = html.split('id="fl-mobile-menu"', 1)[1].split("</nav>", 1)[0]
-            assert 'href="/live"' in mobile_menu
+            assert 'href="/#watch-root"' in mobile_menu

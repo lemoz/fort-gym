@@ -1,0 +1,138 @@
+{
+  "schema_version": "fortgym.endurance-terminal-save/v1",
+  "observed_at_unix": 1789302691,
+  "campaign_id": "astra-keyboard-endurance-v1",
+  "source_revision": "4b526b5636e6f568a4cae1a1227d746d9c6922c3",
+  "image": "sha256:a2f12a74805949b8a2fcf0262b5d63048f4bd3a6f2faf4d8bbc74c261b172ed4",
+  "model": "gpt-6-astra",
+  "reasoning_effort": "medium",
+  "control_profile": "native_keyboard_bindings/v1",
+  "saved_through_decision": 1028,
+  "new_model_responses": 64,
+  "cumulative_model_responses": 1028,
+  "cumulative_returned_tokens": 30125676,
+  "reported_subscription_charge_usd": null,
+  "new_cloud_spend_usd": 0,
+  "terminal_reason": "declared_response_boundary_reached",
+  "sequence_status": "declared_boundary_reached",
+  "saved_elapsed_ticks": 765895,
+  "saved_metrics": {
+    "population": 19,
+    "food_stock": 172,
+    "drink_stock": 348,
+    "wood_stock": null,
+    "stone_stock": null,
+    "functional_rooms": null,
+    "completed_workshops": 7,
+    "completed_beds": 9,
+    "completed_farms": 3,
+    "recorded_dead_citizens": 1
+  },
+  "checkpoint_verified": true,
+  "checkpoint_manifest_sha256": "7a788c3ab053e198eb050dc1aa148d0957a3dfa02ffde4fe259b27df42127919",
+  "audit_sha256": "dd9a2af5f36bcd1fe0d24034ea8c6bce205ea29d26b6414338122ed29e5a38ef",
+  "operation_sha256": "99b377d5e794bf38dc0df8fd2274bd9705cdbb96b23ac788df0054f7e11959a0",
+  "sequence_result_sha256": "e5ebee9f862715373c6efd558d1fc2adbb68127f3bb37a7423ec29ffd4050209",
+  "event_chain_sha256": "b5cbbd21571c1c961f00b4e14dcf80acc3318b6eac12f0658e6754c39519d02d",
+  "prior_38_events_preserved": true,
+  "saved_agent_sha256": "9b470cb335f5f16519569fb41c4b7467d4deabd9d920743013e692f43110059b",
+  "action_summary_cumulative": {
+    "schema_version": "fortgym.selected-workshop-action-summary/v1",
+    "decisions": 1028,
+    "action_routes": {
+      "KEYSTROKE": 1028
+    },
+    "accepted_actions": 1024,
+    "rejected_actions": 4,
+    "keyboard": {
+      "decisions": 1028,
+      "requested_key_presses": 4598,
+      "known_keys_sent": 4589,
+      "records_without_key_count": 0
+    },
+    "workshop": {
+      "decisions": 0,
+      "requested_jobs_by_item": {},
+      "known_jobs_queued_by_item": {},
+      "records_without_queue_count": 0,
+      "completed_products_measured": false
+    },
+    "clock": {
+      "requested_ticks": 797500,
+      "advanced_ticks": 765895,
+      "timeout_requests": 0,
+      "zero_tick_timeout_requests": 0,
+      "deferred_requests": 5
+    },
+    "native_audit_performed": false
+  },
+  "action_summary_this_window": {
+    "schema_version": "fortgym.selected-workshop-action-summary/v1",
+    "decisions": 64,
+    "action_routes": {
+      "KEYSTROKE": 64
+    },
+    "accepted_actions": 64,
+    "rejected_actions": 0,
+    "keyboard": {
+      "decisions": 64,
+      "requested_key_presses": 108,
+      "known_keys_sent": 108,
+      "records_without_key_count": 0
+    },
+    "workshop": {
+      "decisions": 0,
+      "requested_jobs_by_item": {},
+      "known_jobs_queued_by_item": {},
+      "records_without_queue_count": 0,
+      "completed_products_measured": false
+    },
+    "clock": {
+      "requested_ticks": 126000,
+      "advanced_ticks": 126000,
+      "timeout_requests": 0,
+      "zero_tick_timeout_requests": 0,
+      "deferred_requests": 0
+    },
+    "native_audit_performed": false
+  },
+  "teardown": {
+    "both_vms_stopped": true,
+    "configs_unchanged": true,
+    "global_context_unchanged": true,
+    "fg-portable_disk_closed": true,
+    "fg-v2_disk_closed": true,
+    "prior_inventory_preserved": true,
+    "guest_poweroff_returncode": 0,
+    "vm_stop_returncode": 0
+  },
+  "fresh_reload": {
+    "decision": 1028,
+    "verified": false,
+    "reason": "Final endpoint has no subsequent gameplay window; separate fresh reload is required."
+  },
+  "replay": {
+    "id": "astra-keyboard-endurance-v1-965-1028",
+    "frames": 64,
+    "sha256": "94564bfda7c156471aab61b08c4b868781def542e3f7c6822325dfceb2fb0501",
+    "exported": true,
+    "website_published": false
+  },
+  "cumulative_limits": {
+    "max_dispatches": 1028,
+    "max_total_tokens": 40000000
+  },
+  "budget_extensions": 1,
+  "no_new_budget_extension": true,
+  "human_gameplay_rescue": false,
+  "functioning_fortress": "not_assessed",
+  "production_rates": null,
+  "consumption_rates": null,
+  "accessible_reserves": null,
+  "year_two_reached": true,
+  "runtime_changed": false,
+  "gameplay_inputs": 0,
+  "model_calls": 0,
+  "main_merged": false,
+  "full_goal_complete": false
+}

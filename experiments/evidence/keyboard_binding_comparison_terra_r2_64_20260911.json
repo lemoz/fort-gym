@@ -1,0 +1,100 @@
+{
+  "schema_version": "fortgym.public-displayed-key-result/v1",
+  "recorded_at_utc": "2026-09-11 23:27:04 UTC",
+  "cohort_id": "bindings-comparison-20260911",
+  "campaign_id": "bindings-comparison-20260911-terra-r2",
+  "model": "gpt-5.6-terra",
+  "replicate": 2,
+  "reasoning_effort": "medium",
+  "source_revision": "d22f28d99f4fd103188979e964e148139d3f3efd",
+  "image_id": "sha256:32bd022138a4772ed0c0d3a14f94feab8ad4a4cd183a20a8cd098745aedbd10d",
+  "seed_receipt_sha256": "eaf5fa5a40014719e6c313f33497740e536a8faa1c90a84c4e09dcc380ac0595",
+  "condition_file_sha256": "2e2fec4f202b518f496a8d57edb86e19e5352795545502034c9440f0b560795f",
+  "trial_file_sha256": "864efc0b37848dc3be7bb2c38a429ab14bd3d912ea1e0ff01c9d0a8ba97f7c40",
+  "response_limit": 64,
+  "status": "saved",
+  "responses": 64,
+  "returned_tokens": 1186821,
+  "reported_charge_usd": null,
+  "human_gameplay_rescue": false,
+  "native_teardown_verified": true,
+  "vm_teardown_verified": true,
+  "terminal_audit_sha256": "b9801bf5a065839da24ed03eada32676042e5feaeaec06601eef6059004a30f9",
+  "checkpoint": {
+    "next_step": 64,
+    "sha256": "1b44d26183b728cd9c94f54704c86a408ea983a4f279a4b07d4eee1ea9cbc417",
+    "saved_elapsed_ticks": 0,
+    "metrics": {
+      "completed_beds": 0,
+      "completed_farms": 0,
+      "completed_workshops": 0,
+      "drink_stock": 60,
+      "food_stock": 50,
+      "functional_rooms": 0,
+      "population": 7,
+      "recorded_dead_citizens": 0,
+      "stone_stock": null,
+      "wood_stock": null
+    }
+  },
+  "evidence_details": {
+    "declaration_revision": "61fcca7177d8b66ddd7e12e4be0ab53bda5ffd5b",
+    "fresh_empty_memory_usage_history_verified": true,
+    "native_key_receipts_verified": true,
+    "confirmed_key_presses": 80,
+    "source_trace_sha256": "1cc617840e9ba36320589409033646a795388f1bc51ae13c5eb63db1cceae642",
+    "source_usage_sha256": "f07f8260b22cf208398ed5ff440aab980aace1fe07162dd1fbf01070ef623a4f",
+    "fresh_final_checkpoint_reload_verified": false,
+    "initial_metrics": {
+      "completed_beds": 0,
+      "completed_farms": 0,
+      "completed_workshops": 0,
+      "drink_stock": 60,
+      "food_stock": 50,
+      "functional_rooms": 0,
+      "population": 7,
+      "recorded_dead_citizens": 0,
+      "stone_stock": null,
+      "wood_stock": null
+    },
+    "observed_job_type_boundaries": {
+      "PickupEquipment": 64,
+      "no_current_job": 64
+    },
+    "zero_advance_replies": 64,
+    "total_requested_ticks": 0,
+    "actual_saved_ticks": 0,
+    "clock_outcomes": {
+      "no_error": 55,
+      "unsupported_native_keys": 9
+    },
+    "clock_timeout_zero_based_steps": [],
+    "cloud_vms_created": 0,
+    "vm_config_unchanged": true,
+    "reported_hardware_energy_cost_usd": null,
+    "shutdown": {
+      "guest_poweroff_returncode": 0,
+      "vm_stop_returncode": 0,
+      "vm_observed_stopped": true,
+      "guest_command_warning": false
+    },
+    "unsupported_key_replies": 9
+  },
+  "assessment": {
+    "functioning_fortress_established": false,
+    "year_two_reached": false,
+    "strong_model_ranking_supported": false,
+    "production_rates": null,
+    "consumption_rates": null,
+    "summary": "The second Terra attempt used all 64 responses without requesting simulation time or completing a building. Nine unsupported-key responses were rejected. Seven citizens and the starting stocks remain, but this is zero elapsed gameplay progress, not successful management or an infrastructure crash.",
+    "limits": [
+      "Saved means checkpoint and teardown verified, not successful autonomous fortress management.",
+      "Nine unsupported-key responses remain counted in usage and received feedback; no human correction or gameplay rescue was provided.",
+      "All 64 responses requested zero game ticks, and the verified save retains zero elapsed ticks.",
+      "Starting stocks and unchanged population do not establish sustainability when no game time elapsed.",
+      "Job counts are repeated sampled boundaries, not distinct jobs, completions or durations.",
+      "Subscription charges and hardware energy costs are unreported, not zero.",
+      "A separate fresh-load check remains pending; this saved result does not claim it."
+    ]
+  }
+}

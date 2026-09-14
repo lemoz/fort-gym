@@ -1,0 +1,733 @@
+{
+  "schema_version": "fortgym.public-matched-keyboard-continuation/v1",
+  "campaign_id": "matched-20260910-astra-r2",
+  "cohort_id": "keyboard-matched-pilot-20260910",
+  "model": "gpt-6-astra",
+  "reasoning_effort": "medium",
+  "replicate": 2,
+  "recorded_date_utc": "2026-09-11",
+  "condition_id": "matched-pilot-astra-medium-native-keyboard-120x40",
+  "execution": {
+    "source_revision": "1bc49b9675b1c82ad502bbd6d8461c9cdbf077e9",
+    "image_id": "sha256:ebc48ef1e63dabcae0e624e92eb114bbfd5e21d96bb9d5a2a3e0f0c2a0426cc9",
+    "seed_receipt_sha256": "eaf5fa5a40014719e6c313f33497740e536a8faa1c90a84c4e09dcc380ac0595",
+    "cohort_plan_sha256": "a724c04c94e27976820cb7fc8b071b7a15cd42973e69d3eb9a185bd97c632098",
+    "condition_file_sha256": "064ff83d17177719bd7b6c82d1502b713c5b127c4dda5e8ae98d56eedb47286e",
+    "window_sha256": "821882122f2e7655ecb02659e91b28dc0507672213572c37787d03308d9dda34",
+    "declaration_revision": "baee24bcef343d73922175439553306e95e3b01d",
+    "data_disk_gib": 32,
+    "binding_sha256": "81b60b43fffdad75b1a3d9bdc7a3014a99e9890344dae532c4ba0406ed483779"
+  },
+  "origin_kind": "saved_campaign_checkpoint",
+  "start_decision": 32,
+  "next_decision": 64,
+  "response_limit": 32,
+  "control_profile": "native_keyboard/v2",
+  "observation_profile": "native_screen_text/v1",
+  "screen_size": [
+    120,
+    40
+  ],
+  "prompt_profile": "native_keyboard_memory_replacement/v1",
+  "status": "completed",
+  "stop_reason": "segment_limit",
+  "new_responses": 32,
+  "new_saved_ticks": 10500,
+  "saved_elapsed_ticks_before_window": 9000,
+  "saved_elapsed_ticks": 19500,
+  "year_two_reached": false,
+  "prior_checkpoint_sha256": "66582a3d8fa05b8e8379456054fcc56786ef4a88214500aedfe9e8f4cea43679",
+  "checkpoint_sha256": "a969fa5389bf450583172f086b6eb122d78039436f6427965abbfe5e6f34a3b1",
+  "checkpoint_verified": true,
+  "source_checkpoint_fresh_load_verified": true,
+  "final_fresh_reload_verified": false,
+  "source_result_sha256": "8bd2a2c69ed08ed4c8c063dd955ae793873899ad24678109404e7b4d5b5a5dfb",
+  "memory_preserved_at_start": true,
+  "prompt_change": false,
+  "budget_extension": false,
+  "new_native_save_losses": 0,
+  "human_gameplay_rescue": false,
+  "usage": {
+    "new_returned_tokens": 988433,
+    "returned_tokens_before_window": 988564,
+    "campaign_returned_tokens": 1976997,
+    "campaign_accounted_responses": 64,
+    "reported_charge_usd": null,
+    "cost_basis": "codex_subscription_charge_unreported/v1"
+  },
+  "initial_metrics": {
+    "completed_beds": 0,
+    "completed_farms": 1,
+    "completed_workshops": 1,
+    "drink_stock": 60,
+    "food_stock": 50,
+    "functional_rooms": null,
+    "population": 7,
+    "recorded_dead_citizens": 0,
+    "stone_stock": null,
+    "wood_stock": null
+  },
+  "saved_metrics": {
+    "completed_beds": 3,
+    "completed_farms": 1,
+    "completed_workshops": 2,
+    "drink_stock": 60,
+    "food_stock": 50,
+    "functional_rooms": null,
+    "population": 7,
+    "recorded_dead_citizens": 0,
+    "stone_stock": null,
+    "wood_stock": null
+  },
+  "food": {
+    "available": true,
+    "raw_edible_units": 50,
+    "trader_flagged_units": 0,
+    "ownership_accessibility_assessed": false,
+    "complete_after_action_samples": 32,
+    "after_action_samples": 32
+  },
+  "new_window_timeline": [
+    {
+      "decision": 33,
+      "campaign_elapsed_ticks": 9000,
+      "new_elapsed_ticks": 0,
+      "accepted": true,
+      "metrics": {
+        "completed_beds": 0,
+        "completed_farms": 1,
+        "completed_workshops": 1,
+        "drink_stock": 60,
+        "food_stock": 50,
+        "functional_rooms": null,
+        "population": 7,
+        "recorded_dead_citizens": 0,
+        "stone_stock": null,
+        "wood_stock": null
+      }
+    },
+    {
+      "decision": 34,
+      "campaign_elapsed_ticks": 9000,
+      "new_elapsed_ticks": 0,
+      "accepted": true,
+      "metrics": {
+        "completed_beds": 0,
+        "completed_farms": 1,
+        "completed_workshops": 1,
+        "drink_stock": 60,
+        "food_stock": 50,
+        "functional_rooms": null,
+        "population": 7,
+        "recorded_dead_citizens": 0,
+        "stone_stock": null,
+        "wood_stock": null
+      }
+    },
+    {
+      "decision": 35,
+      "campaign_elapsed_ticks": 9000,
+      "new_elapsed_ticks": 0,
+      "accepted": true,
+      "metrics": {
+        "completed_beds": 0,
+        "completed_farms": 1,
+        "completed_workshops": 1,
+        "drink_stock": 60,
+        "food_stock": 50,
+        "functional_rooms": null,
+        "population": 7,
+        "recorded_dead_citizens": 0,
+        "stone_stock": null,
+        "wood_stock": null
+      }
+    },
+    {
+      "decision": 36,
+      "campaign_elapsed_ticks": 9000,
+      "new_elapsed_ticks": 0,
+      "accepted": true,
+      "metrics": {
+        "completed_beds": 0,
+        "completed_farms": 1,
+        "completed_workshops": 1,
+        "drink_stock": 60,
+        "food_stock": 50,
+        "functional_rooms": null,
+        "population": 7,
+        "recorded_dead_citizens": 0,
+        "stone_stock": null,
+        "wood_stock": null
+      }
+    },
+    {
+      "decision": 37,
+      "campaign_elapsed_ticks": 9000,
+      "new_elapsed_ticks": 0,
+      "accepted": true,
+      "metrics": {
+        "completed_beds": 0,
+        "completed_farms": 1,
+        "completed_workshops": 1,
+        "drink_stock": 60,
+        "food_stock": 50,
+        "functional_rooms": null,
+        "population": 7,
+        "recorded_dead_citizens": 0,
+        "stone_stock": null,
+        "wood_stock": null
+      }
+    },
+    {
+      "decision": 38,
+      "campaign_elapsed_ticks": 9000,
+      "new_elapsed_ticks": 0,
+      "accepted": true,
+      "metrics": {
+        "completed_beds": 0,
+        "completed_farms": 1,
+        "completed_workshops": 1,
+        "drink_stock": 60,
+        "food_stock": 50,
+        "functional_rooms": null,
+        "population": 7,
+        "recorded_dead_citizens": 0,
+        "stone_stock": null,
+        "wood_stock": null
+      }
+    },
+    {
+      "decision": 39,
+      "campaign_elapsed_ticks": 9000,
+      "new_elapsed_ticks": 0,
+      "accepted": true,
+      "metrics": {
+        "completed_beds": 0,
+        "completed_farms": 1,
+        "completed_workshops": 1,
+        "drink_stock": 60,
+        "food_stock": 50,
+        "functional_rooms": null,
+        "population": 7,
+        "recorded_dead_citizens": 0,
+        "stone_stock": null,
+        "wood_stock": null
+      }
+    },
+    {
+      "decision": 40,
+      "campaign_elapsed_ticks": 9000,
+      "new_elapsed_ticks": 0,
+      "accepted": true,
+      "metrics": {
+        "completed_beds": 0,
+        "completed_farms": 1,
+        "completed_workshops": 1,
+        "drink_stock": 60,
+        "food_stock": 50,
+        "functional_rooms": null,
+        "population": 7,
+        "recorded_dead_citizens": 0,
+        "stone_stock": null,
+        "wood_stock": null
+      }
+    },
+    {
+      "decision": 41,
+      "campaign_elapsed_ticks": 9000,
+      "new_elapsed_ticks": 0,
+      "accepted": true,
+      "metrics": {
+        "completed_beds": 0,
+        "completed_farms": 1,
+        "completed_workshops": 1,
+        "drink_stock": 60,
+        "food_stock": 50,
+        "functional_rooms": null,
+        "population": 7,
+        "recorded_dead_citizens": 0,
+        "stone_stock": null,
+        "wood_stock": null
+      }
+    },
+    {
+      "decision": 42,
+      "campaign_elapsed_ticks": 9000,
+      "new_elapsed_ticks": 0,
+      "accepted": true,
+      "metrics": {
+        "completed_beds": 0,
+        "completed_farms": 1,
+        "completed_workshops": 1,
+        "drink_stock": 60,
+        "food_stock": 50,
+        "functional_rooms": null,
+        "population": 7,
+        "recorded_dead_citizens": 0,
+        "stone_stock": null,
+        "wood_stock": null
+      }
+    },
+    {
+      "decision": 43,
+      "campaign_elapsed_ticks": 9000,
+      "new_elapsed_ticks": 0,
+      "accepted": true,
+      "metrics": {
+        "completed_beds": 0,
+        "completed_farms": 1,
+        "completed_workshops": 1,
+        "drink_stock": 60,
+        "food_stock": 50,
+        "functional_rooms": null,
+        "population": 7,
+        "recorded_dead_citizens": 0,
+        "stone_stock": null,
+        "wood_stock": null
+      }
+    },
+    {
+      "decision": 44,
+      "campaign_elapsed_ticks": 11000,
+      "new_elapsed_ticks": 2000,
+      "accepted": true,
+      "metrics": {
+        "completed_beds": 0,
+        "completed_farms": 1,
+        "completed_workshops": 2,
+        "drink_stock": 60,
+        "food_stock": 50,
+        "functional_rooms": null,
+        "population": 7,
+        "recorded_dead_citizens": 0,
+        "stone_stock": null,
+        "wood_stock": null
+      }
+    },
+    {
+      "decision": 45,
+      "campaign_elapsed_ticks": 11000,
+      "new_elapsed_ticks": 2000,
+      "accepted": true,
+      "metrics": {
+        "completed_beds": 0,
+        "completed_farms": 1,
+        "completed_workshops": 2,
+        "drink_stock": 60,
+        "food_stock": 50,
+        "functional_rooms": null,
+        "population": 7,
+        "recorded_dead_citizens": 0,
+        "stone_stock": null,
+        "wood_stock": null
+      }
+    },
+    {
+      "decision": 46,
+      "campaign_elapsed_ticks": 11000,
+      "new_elapsed_ticks": 2000,
+      "accepted": true,
+      "metrics": {
+        "completed_beds": 0,
+        "completed_farms": 1,
+        "completed_workshops": 2,
+        "drink_stock": 60,
+        "food_stock": 50,
+        "functional_rooms": null,
+        "population": 7,
+        "recorded_dead_citizens": 0,
+        "stone_stock": null,
+        "wood_stock": null
+      }
+    },
+    {
+      "decision": 47,
+      "campaign_elapsed_ticks": 11000,
+      "new_elapsed_ticks": 2000,
+      "accepted": true,
+      "metrics": {
+        "completed_beds": 0,
+        "completed_farms": 1,
+        "completed_workshops": 2,
+        "drink_stock": 60,
+        "food_stock": 50,
+        "functional_rooms": null,
+        "population": 7,
+        "recorded_dead_citizens": 0,
+        "stone_stock": null,
+        "wood_stock": null
+      }
+    },
+    {
+      "decision": 48,
+      "campaign_elapsed_ticks": 13000,
+      "new_elapsed_ticks": 4000,
+      "accepted": true,
+      "metrics": {
+        "completed_beds": 0,
+        "completed_farms": 1,
+        "completed_workshops": 2,
+        "drink_stock": 60,
+        "food_stock": 50,
+        "functional_rooms": null,
+        "population": 7,
+        "recorded_dead_citizens": 0,
+        "stone_stock": null,
+        "wood_stock": null
+      }
+    },
+    {
+      "decision": 49,
+      "campaign_elapsed_ticks": 13000,
+      "new_elapsed_ticks": 4000,
+      "accepted": true,
+      "metrics": {
+        "completed_beds": 0,
+        "completed_farms": 1,
+        "completed_workshops": 2,
+        "drink_stock": 60,
+        "food_stock": 50,
+        "functional_rooms": null,
+        "population": 7,
+        "recorded_dead_citizens": 0,
+        "stone_stock": null,
+        "wood_stock": null
+      }
+    },
+    {
+      "decision": 50,
+      "campaign_elapsed_ticks": 13000,
+      "new_elapsed_ticks": 4000,
+      "accepted": true,
+      "metrics": {
+        "completed_beds": 0,
+        "completed_farms": 1,
+        "completed_workshops": 2,
+        "drink_stock": 60,
+        "food_stock": 50,
+        "functional_rooms": null,
+        "population": 7,
+        "recorded_dead_citizens": 0,
+        "stone_stock": null,
+        "wood_stock": null
+      }
+    },
+    {
+      "decision": 51,
+      "campaign_elapsed_ticks": 13000,
+      "new_elapsed_ticks": 4000,
+      "accepted": true,
+      "metrics": {
+        "completed_beds": 0,
+        "completed_farms": 1,
+        "completed_workshops": 2,
+        "drink_stock": 60,
+        "food_stock": 50,
+        "functional_rooms": null,
+        "population": 7,
+        "recorded_dead_citizens": 0,
+        "stone_stock": null,
+        "wood_stock": null
+      }
+    },
+    {
+      "decision": 52,
+      "campaign_elapsed_ticks": 14000,
+      "new_elapsed_ticks": 5000,
+      "accepted": true,
+      "metrics": {
+        "completed_beds": 1,
+        "completed_farms": 1,
+        "completed_workshops": 2,
+        "drink_stock": 60,
+        "food_stock": 50,
+        "functional_rooms": null,
+        "population": 7,
+        "recorded_dead_citizens": 0,
+        "stone_stock": null,
+        "wood_stock": null
+      }
+    },
+    {
+      "decision": 53,
+      "campaign_elapsed_ticks": 14000,
+      "new_elapsed_ticks": 5000,
+      "accepted": true,
+      "metrics": {
+        "completed_beds": 1,
+        "completed_farms": 1,
+        "completed_workshops": 2,
+        "drink_stock": 60,
+        "food_stock": 50,
+        "functional_rooms": null,
+        "population": 7,
+        "recorded_dead_citizens": 0,
+        "stone_stock": null,
+        "wood_stock": null
+      }
+    },
+    {
+      "decision": 54,
+      "campaign_elapsed_ticks": 14000,
+      "new_elapsed_ticks": 5000,
+      "accepted": true,
+      "metrics": {
+        "completed_beds": 1,
+        "completed_farms": 1,
+        "completed_workshops": 2,
+        "drink_stock": 60,
+        "food_stock": 50,
+        "functional_rooms": null,
+        "population": 7,
+        "recorded_dead_citizens": 0,
+        "stone_stock": null,
+        "wood_stock": null
+      }
+    },
+    {
+      "decision": 55,
+      "campaign_elapsed_ticks": 14000,
+      "new_elapsed_ticks": 5000,
+      "accepted": true,
+      "metrics": {
+        "completed_beds": 1,
+        "completed_farms": 1,
+        "completed_workshops": 2,
+        "drink_stock": 60,
+        "food_stock": 50,
+        "functional_rooms": null,
+        "population": 7,
+        "recorded_dead_citizens": 0,
+        "stone_stock": null,
+        "wood_stock": null
+      }
+    },
+    {
+      "decision": 56,
+      "campaign_elapsed_ticks": 15500,
+      "new_elapsed_ticks": 6500,
+      "accepted": true,
+      "metrics": {
+        "completed_beds": 2,
+        "completed_farms": 1,
+        "completed_workshops": 2,
+        "drink_stock": 60,
+        "food_stock": 50,
+        "functional_rooms": null,
+        "population": 7,
+        "recorded_dead_citizens": 0,
+        "stone_stock": null,
+        "wood_stock": null
+      }
+    },
+    {
+      "decision": 57,
+      "campaign_elapsed_ticks": 15500,
+      "new_elapsed_ticks": 6500,
+      "accepted": true,
+      "metrics": {
+        "completed_beds": 2,
+        "completed_farms": 1,
+        "completed_workshops": 2,
+        "drink_stock": 60,
+        "food_stock": 50,
+        "functional_rooms": null,
+        "population": 7,
+        "recorded_dead_citizens": 0,
+        "stone_stock": null,
+        "wood_stock": null
+      }
+    },
+    {
+      "decision": 58,
+      "campaign_elapsed_ticks": 15500,
+      "new_elapsed_ticks": 6500,
+      "accepted": true,
+      "metrics": {
+        "completed_beds": 2,
+        "completed_farms": 1,
+        "completed_workshops": 2,
+        "drink_stock": 60,
+        "food_stock": 50,
+        "functional_rooms": null,
+        "population": 7,
+        "recorded_dead_citizens": 0,
+        "stone_stock": null,
+        "wood_stock": null
+      }
+    },
+    {
+      "decision": 59,
+      "campaign_elapsed_ticks": 17500,
+      "new_elapsed_ticks": 8500,
+      "accepted": true,
+      "metrics": {
+        "completed_beds": 3,
+        "completed_farms": 1,
+        "completed_workshops": 2,
+        "drink_stock": 60,
+        "food_stock": 50,
+        "functional_rooms": null,
+        "population": 7,
+        "recorded_dead_citizens": 0,
+        "stone_stock": null,
+        "wood_stock": null
+      }
+    },
+    {
+      "decision": 60,
+      "campaign_elapsed_ticks": 17500,
+      "new_elapsed_ticks": 8500,
+      "accepted": true,
+      "metrics": {
+        "completed_beds": 3,
+        "completed_farms": 1,
+        "completed_workshops": 2,
+        "drink_stock": 60,
+        "food_stock": 50,
+        "functional_rooms": null,
+        "population": 7,
+        "recorded_dead_citizens": 0,
+        "stone_stock": null,
+        "wood_stock": null
+      }
+    },
+    {
+      "decision": 61,
+      "campaign_elapsed_ticks": 17500,
+      "new_elapsed_ticks": 8500,
+      "accepted": true,
+      "metrics": {
+        "completed_beds": 3,
+        "completed_farms": 1,
+        "completed_workshops": 2,
+        "drink_stock": 60,
+        "food_stock": 50,
+        "functional_rooms": null,
+        "population": 7,
+        "recorded_dead_citizens": 0,
+        "stone_stock": null,
+        "wood_stock": null
+      }
+    },
+    {
+      "decision": 62,
+      "campaign_elapsed_ticks": 17500,
+      "new_elapsed_ticks": 8500,
+      "accepted": true,
+      "metrics": {
+        "completed_beds": 3,
+        "completed_farms": 1,
+        "completed_workshops": 2,
+        "drink_stock": 60,
+        "food_stock": 50,
+        "functional_rooms": null,
+        "population": 7,
+        "recorded_dead_citizens": 0,
+        "stone_stock": null,
+        "wood_stock": null
+      }
+    },
+    {
+      "decision": 63,
+      "campaign_elapsed_ticks": 17500,
+      "new_elapsed_ticks": 8500,
+      "accepted": true,
+      "metrics": {
+        "completed_beds": 3,
+        "completed_farms": 1,
+        "completed_workshops": 2,
+        "drink_stock": 60,
+        "food_stock": 50,
+        "functional_rooms": null,
+        "population": 7,
+        "recorded_dead_citizens": 0,
+        "stone_stock": null,
+        "wood_stock": null
+      }
+    },
+    {
+      "decision": 64,
+      "campaign_elapsed_ticks": 19500,
+      "new_elapsed_ticks": 10500,
+      "accepted": true,
+      "metrics": {
+        "completed_beds": 3,
+        "completed_farms": 1,
+        "completed_workshops": 2,
+        "drink_stock": 60,
+        "food_stock": 50,
+        "functional_rooms": null,
+        "population": 7,
+        "recorded_dead_citizens": 0,
+        "stone_stock": null,
+        "wood_stock": null
+      }
+    }
+  ],
+  "new_window_activity": {
+    "available_boundaries": 32,
+    "observed_boundaries": 32,
+    "boundaries_with_job_type": {
+      "ConstructBed": 26,
+      "Fish": 25,
+      "MakeBarrel": 6,
+      "PlantSeeds": 12,
+      "StoreItemInBarrel": 4,
+      "StoreItemInStockpile": 9,
+      "no_current_job": 28
+    },
+    "limits": [
+      "A current job can be traveling, waiting, interrupted or cancelled; it is not completion evidence.",
+      "Unknown citizen observations remain unknown, not zero activity.",
+      "Unseen activity between recorded boundaries is not measured."
+    ],
+    "final": {
+      "available": true,
+      "job_counts": {
+        "Fish": 1,
+        "MakeBarrel": 1,
+        "no_current_job": 5
+      },
+      "step": 63,
+      "unknown_citizens": 0,
+      "year": 30,
+      "year_tick": 36301
+    }
+  },
+  "new_window_clock_outcomes": {
+    "blocking_native_menu": 2,
+    "no_error": 29,
+    "timeout_waiting_for_ticks": 1
+  },
+  "production_rates": null,
+  "consumption_rates": null,
+  "sustainability_established": false,
+  "functioning_fortress": "not_assessed",
+  "matched_comparison_complete": false,
+  "native_cleanup_verified": true,
+  "vm_teardown_verified": true,
+  "shutdown": {
+    "guest_command_warning": false,
+    "guest_poweroff_returncode": 0,
+    "vm_observed_stopped": true,
+    "vm_stop_returncode": 0
+  },
+  "resources": {
+    "observed_boundaries": 5,
+    "memory_limit_bytes": 1610612736,
+    "memory_peak_bytes": 1246846976,
+    "memory_limit_events": 0,
+    "oom_events": 0,
+    "oom_kills": 0,
+    "task_limit": 256,
+    "task_peak": 22,
+    "task_limit_events": 0,
+    "maximum_observed_zombies": 0,
+    "process_scans_complete": true,
+    "tasks_include_threads": true
+  },
+  "audit_sha256": "a9259e0eda36c22b0fc5452695003c011b531482846a430b15ef35812694a434",
+  "projection_source_sha256": "9160cac2351c6d5a4091b17b0b55fa6d1fc66662a11f3340ea79be845920c2b9",
+  "scope": "One saved-game continuation with unchanged model memory and conditions. New and cumulative results are separate. Current-job samples are not completed jobs; unknown costs are not zero. No ranking or sustainability conclusion. Private prompts, maps and native saves are excluded."
+}

@@ -18,10 +18,19 @@ def test_wrong_runtime_is_rejected_before_connect_or_gameplay(tmp_path, monkeypa
 
 @pytest.mark.parametrize("placement", ["strict_floor/v1", "dfhack_047_ground/v1"])
 @pytest.mark.parametrize("tick_limit", [2000, 2500])
+@pytest.mark.parametrize("measurement_profile,measurement_timeout", [
+    (None, 5.0), ("fortgym.campaign-food-measurement/v1", 5.0),
+    ("fortgym.campaign-food-measurement/v1", 15.0),
+])
 def test_native_adapter_uses_existing_executor_without_assisted_completion(
-    tmp_path, monkeypatch, placement, tick_limit
+    tmp_path, monkeypatch, placement, tick_limit, measurement_profile, measurement_timeout
 ):
     calls = []
+    food_calls = []
+    def measure(**kwargs):
+        food_calls.append(kwargs)
+        return {"private_measurement_fixture": True}
+    monkeypatch.setattr(module, "read_food_measurement", measure)
 
     def get_state(**kwargs):
         assert kwargs == {"require_native": True}
@@ -59,9 +68,17 @@ def test_native_adapter_uses_existing_executor_without_assisted_completion(
         expected_dfroot=tmp_path,
         workshop_placement_policy=placement,
         max_advance_ticks=tick_limit,
+        private_measurement_profile=measurement_profile,
+        private_measurement_timeout_seconds=measurement_timeout,
     )
     assert env.executor._allow_assisted_dig_completion is False
     state = env.observe()
+    assert ("private_food_measurement" in state) is (measurement_profile is not None)
+    if measurement_profile is None:
+        assert food_calls == []
+    else:
+        assert food_calls[-1] == {"expected_dfroot": tmp_path, "year": 30, "year_tick": 19309,
+                                 **({"timeout_seconds": measurement_timeout} if measurement_timeout != 5.0 else {})}
     assert env.executor._workshop_placement_policy == placement
     assert ("workshop_placement" in state) == (placement == "dfhack_047_ground/v1")
     assert state["year"] == 30 and state["year_tick"] == 19309

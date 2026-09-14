@@ -1,0 +1,262 @@
+{
+  "schema_version": "fortgym.selected-workshop-attempt-result/v2",
+  "date_utc": "2026-09-12",
+  "study_id": "selected-workshop-v2",
+  "pair": 1,
+  "campaign_id": "selected-workshop-v2-p1-shortcuts",
+  "condition": "shortcuts",
+  "status": "saved",
+  "source_revision": "5ddf1e6718dab2e8351e8dc24a2afe5071cd2592",
+  "image": "sha256:dcbc9b042538401a146159fcf5f6456b21dc900c4649369c008f7a77f661fed3",
+  "study_declaration_sha256": "e325f69f40978a9a0b2ed962a505c893aa7ea397b569e3300455972d7b94ebc8",
+  "condition_sha256": "bb7d63df0ff86bfad5e89275f252c292cf06991608f7084ad71239234f6b309a",
+  "model": "gpt-6-astra",
+  "reasoning_effort": "medium",
+  "control_profile": "native_keyboard_selected_workshop_jobs/v1",
+  "comparison_boundary": 128,
+  "model_responses": 128,
+  "returned_tokens": 3772495,
+  "reported_charge_usd": null,
+  "cost_basis": "codex_subscription_charge_unreported/v1",
+  "audit_sha256": "628112a07c1181ce5fca4f94aa706c59579b60d8c867c1ae45983b3bcf179cff",
+  "checkpoint_manifest_sha256": "fa8a39a96053751ebc707ce9ab660e426e498dd0e125fd8740107571be0fc535",
+  "checkpoint_file_sha256": "a03859f760c60a669527f2c50662e2b76828d1aae436582cc1c4799447d6385e",
+  "checkpoint_verified": true,
+  "parent_64_checkpoint_fresh_reload_verified": true,
+  "final_checkpoint_fresh_reload_verified": false,
+  "saved_elapsed_ticks": 68200,
+  "saved_metrics": {
+    "population": 7,
+    "food_stock": 39,
+    "drink_stock": 115,
+    "wood_stock": null,
+    "stone_stock": null,
+    "functional_rooms": null,
+    "completed_workshops": 2,
+    "completed_beds": 7,
+    "completed_farms": 1,
+    "recorded_dead_citizens": 0
+  },
+  "boundary_64": {
+    "saved_elapsed_ticks": 27000,
+    "saved_metrics": {
+      "population": 7,
+      "food_stock": 45,
+      "drink_stock": 78,
+      "wood_stock": null,
+      "stone_stock": null,
+      "functional_rooms": null,
+      "completed_workshops": 2,
+      "completed_beds": 2,
+      "completed_farms": 1,
+      "recorded_dead_citizens": 0
+    },
+    "returned_tokens": 2041871,
+    "action_counts": {
+      "schema_version": "fortgym.selected-workshop-action-summary/v1",
+      "decisions": 64,
+      "action_routes": {
+        "KEYSTROKE": 54,
+        "WORKSHOP_JOB": 10
+      },
+      "accepted_actions": 64,
+      "rejected_actions": 0,
+      "keyboard": {
+        "decisions": 54,
+        "requested_key_presses": 293,
+        "known_keys_sent": 293,
+        "records_without_key_count": 0
+      },
+      "workshop": {
+        "decisions": 10,
+        "requested_jobs_by_item": {
+          "bed": 12,
+          "barrel": 5,
+          "brew": 7,
+          "table": 2,
+          "chair": 4
+        },
+        "known_jobs_queued_by_item": {
+          "bed": 12,
+          "barrel": 5,
+          "brew": 7,
+          "table": 2,
+          "chair": 4
+        },
+        "records_without_queue_count": 0,
+        "completed_products_measured": false
+      },
+      "clock": {
+        "requested_ticks": 38200,
+        "advanced_ticks": 27000,
+        "timeout_requests": 5,
+        "zero_tick_timeout_requests": 5,
+        "deferred_requests": 1
+      },
+      "native_audit_performed": false
+    }
+  },
+  "action_counts": {
+    "schema_version": "fortgym.selected-workshop-action-summary/v1",
+    "decisions": 128,
+    "action_routes": {
+      "KEYSTROKE": 116,
+      "WORKSHOP_JOB": 12
+    },
+    "accepted_actions": 128,
+    "rejected_actions": 0,
+    "keyboard": {
+      "decisions": 116,
+      "requested_key_presses": 574,
+      "known_keys_sent": 574,
+      "records_without_key_count": 0
+    },
+    "workshop": {
+      "decisions": 12,
+      "requested_jobs_by_item": {
+        "bed": 12,
+        "barrel": 5,
+        "brew": 7,
+        "table": 5,
+        "chair": 7
+      },
+      "known_jobs_queued_by_item": {
+        "bed": 12,
+        "barrel": 5,
+        "brew": 7,
+        "table": 5,
+        "chair": 7
+      },
+      "records_without_queue_count": 0,
+      "completed_products_measured": false
+    },
+    "clock": {
+      "requested_ticks": 81400,
+      "advanced_ticks": 68200,
+      "timeout_requests": 6,
+      "zero_tick_timeout_requests": 6,
+      "deferred_requests": 1
+    },
+    "native_audit_performed": false
+  },
+  "window_action_counts": [
+    {
+      "schema_version": "fortgym.selected-workshop-action-summary/v1",
+      "decisions": 64,
+      "action_routes": {
+        "KEYSTROKE": 54,
+        "WORKSHOP_JOB": 10
+      },
+      "accepted_actions": 64,
+      "rejected_actions": 0,
+      "keyboard": {
+        "decisions": 54,
+        "requested_key_presses": 293,
+        "known_keys_sent": 293,
+        "records_without_key_count": 0
+      },
+      "workshop": {
+        "decisions": 10,
+        "requested_jobs_by_item": {
+          "bed": 12,
+          "barrel": 5,
+          "brew": 7,
+          "table": 2,
+          "chair": 4
+        },
+        "known_jobs_queued_by_item": {
+          "bed": 12,
+          "barrel": 5,
+          "brew": 7,
+          "table": 2,
+          "chair": 4
+        },
+        "records_without_queue_count": 0,
+        "completed_products_measured": false
+      },
+      "clock": {
+        "requested_ticks": 38200,
+        "advanced_ticks": 27000,
+        "timeout_requests": 5,
+        "zero_tick_timeout_requests": 5,
+        "deferred_requests": 1
+      },
+      "native_audit_performed": false
+    },
+    {
+      "schema_version": "fortgym.selected-workshop-action-summary/v1",
+      "decisions": 64,
+      "action_routes": {
+        "KEYSTROKE": 62,
+        "WORKSHOP_JOB": 2
+      },
+      "accepted_actions": 64,
+      "rejected_actions": 0,
+      "keyboard": {
+        "decisions": 62,
+        "requested_key_presses": 281,
+        "known_keys_sent": 281,
+        "records_without_key_count": 0
+      },
+      "workshop": {
+        "decisions": 2,
+        "requested_jobs_by_item": {
+          "table": 3,
+          "chair": 3
+        },
+        "known_jobs_queued_by_item": {
+          "table": 3,
+          "chair": 3
+        },
+        "records_without_queue_count": 0,
+        "completed_products_measured": false
+      },
+      "clock": {
+        "requested_ticks": 43200,
+        "advanced_ticks": 41200,
+        "timeout_requests": 1,
+        "zero_tick_timeout_requests": 1,
+        "deferred_requests": 0
+      },
+      "native_audit_performed": false
+    }
+  ],
+  "memory_usage_and_history_preserved": true,
+  "original_inputs_unchanged": true,
+  "unchanged_model_prompt_controls_and_resources": true,
+  "no_human_gameplay_rescue": true,
+  "teardown_verified": true,
+  "operations": [
+    {
+      "receipt_sha256": "964b1f16ec309de9f08d36ca7f2e9ab673ebc7690f364ba18ee0175a4e509d1e",
+      "mode": "fresh",
+      "both_vms_stopped": true,
+      "both_disks_closed": true,
+      "prior_inventory_preserved": true,
+      "configs_unchanged": true,
+      "guest_poweroff_returncode": 0,
+      "redundant_vm_stop_returncode": 0
+    },
+    {
+      "receipt_sha256": "1b1e8395798fb82e862bc1e545bb4130dfce0a5114f973156f548d3e0a97be39",
+      "mode": "continue",
+      "both_vms_stopped": true,
+      "both_disks_closed": true,
+      "prior_inventory_preserved": true,
+      "configs_unchanged": true,
+      "guest_poweroff_returncode": 0,
+      "redundant_vm_stop_returncode": 0
+    }
+  ],
+  "replay": {
+    "id": "controls-v2-p1-shortcuts-1-128",
+    "frames": 128,
+    "sha256": "9063c997563bd5c00eb3726acfff77088a50877dd66aeb12a95662b46c62d17b",
+    "exported": true,
+    "website_published": false
+  },
+  "sustainability_proven": false,
+  "paired_comparison_complete": false,
+  "full_goal_complete": false,
+  "note": "Queued jobs are not completed products. A saved endpoint does not establish sustainable production or comparative superiority. This is the first v2 policy sample. Final checkpoint has no separate fresh reload. Subscription dollar charge is unreported."
+}

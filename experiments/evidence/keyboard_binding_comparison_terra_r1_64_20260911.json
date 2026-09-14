@@ -1,0 +1,108 @@
+{
+  "schema_version": "fortgym.public-displayed-key-result/v1",
+  "recorded_at_utc": "2026-09-11T22:21:48Z",
+  "cohort_id": "bindings-comparison-20260911",
+  "campaign_id": "bindings-comparison-20260911-terra-r1",
+  "model": "gpt-5.6-terra",
+  "replicate": 1,
+  "reasoning_effort": "medium",
+  "source_revision": "d22f28d99f4fd103188979e964e148139d3f3efd",
+  "image_id": "sha256:32bd022138a4772ed0c0d3a14f94feab8ad4a4cd183a20a8cd098745aedbd10d",
+  "seed_receipt_sha256": "eaf5fa5a40014719e6c313f33497740e536a8faa1c90a84c4e09dcc380ac0595",
+  "condition_file_sha256": "2e2fec4f202b518f496a8d57edb86e19e5352795545502034c9440f0b560795f",
+  "trial_file_sha256": "864efc0b37848dc3be7bb2c38a429ab14bd3d912ea1e0ff01c9d0a8ba97f7c40",
+  "response_limit": 64,
+  "status": "saved",
+  "responses": 64,
+  "returned_tokens": 1589877,
+  "reported_charge_usd": null,
+  "human_gameplay_rescue": false,
+  "native_teardown_verified": true,
+  "vm_teardown_verified": true,
+  "terminal_audit_sha256": "a27991556fcffab8287eb535814ecf62ab9c2131cbbf6b891bfd76edaa79ddfe",
+  "checkpoint": {
+    "next_step": 64,
+    "sha256": "8338569453b6c517ff5e314d2f76a76de02b7735887edbbc27800a6599b12292",
+    "saved_elapsed_ticks": 4200,
+    "metrics": {
+      "completed_beds": 0,
+      "completed_farms": 0,
+      "completed_workshops": 0,
+      "drink_stock": 60,
+      "food_stock": 51,
+      "functional_rooms": 0,
+      "population": 7,
+      "recorded_dead_citizens": 0,
+      "stone_stock": null,
+      "wood_stock": null
+    }
+  },
+  "evidence_details": {
+    "declaration_revision": "61fcca7177d8b66ddd7e12e4be0ab53bda5ffd5b",
+    "fresh_empty_memory_usage_history_verified": true,
+    "native_key_receipts_verified": true,
+    "confirmed_key_presses": 274,
+    "source_trace_sha256": "f971e14ea7783e7e9ffdd94c70395e2c2e641644bbd20276ed7e91cb26dde91e",
+    "source_usage_sha256": "94b7aef5d9db9dd3b287ed283d7b3581f3fcccfa6db7625029a1a7f76642db3a",
+    "fresh_final_checkpoint_reload_verified": false,
+    "initial_metrics": {
+      "completed_beds": 0,
+      "completed_farms": 0,
+      "completed_workshops": 0,
+      "drink_stock": 60,
+      "food_stock": 50,
+      "functional_rooms": 0,
+      "population": 7,
+      "recorded_dead_citizens": 0,
+      "stone_stock": null,
+      "wood_stock": null
+    },
+    "observed_job_type_boundaries": {
+      "FellTree": 6,
+      "GatherPlants": 44,
+      "PickupEquipment": 8,
+      "no_current_job": 64
+    },
+    "zero_advance_replies": 55,
+    "total_requested_ticks": 16200,
+    "actual_saved_ticks": 4200,
+    "clock_outcomes": {
+      "blocking_native_menu": 1,
+      "no_error": 58,
+      "timeout_waiting_for_ticks": 5
+    },
+    "clock_timeout_zero_based_steps": [
+      46,
+      47,
+      48,
+      50,
+      51
+    ],
+    "cloud_vms_created": 0,
+    "vm_config_unchanged": true,
+    "reported_hardware_energy_cost_usd": null,
+    "shutdown": {
+      "guest_poweroff_returncode": 1,
+      "vm_stop_returncode": 0,
+      "vm_observed_stopped": true,
+      "guest_command_warning": true
+    }
+  },
+  "assessment": {
+    "functioning_fortress_established": false,
+    "year_two_reached": false,
+    "strong_model_ranking_supported": false,
+    "production_rates": null,
+    "consumption_rates": null,
+    "summary": "This first short trial showed tree-felling and plant-gathering activity, but little elapsed game time and no completed beds, workshops or farms. It is not a model ranking.",
+    "limits": [
+      "Saved means checkpoint and teardown verified, not successful autonomous fortress management.",
+      "Job-type counts are sampled boundaries, not distinct jobs, completed production or all intervening activity.",
+      "Five clock requests timed out and one encountered a blocking menu. The original feedback and 4,200 actually saved ticks are retained; requested ticks are not counted as progress.",
+      "Food rose from 50 to 51 in measured stock, but ownership, accessibility and production rates are not established.",
+      "Subscription charges and hardware energy costs are unreported, not zero.",
+      "The guest shutdown connection returned nonzero; the subsequent VM-stop command and observed stopped state verified teardown.",
+      "A separate fresh-load check remains pending; this saved result does not claim it."
+    ]
+  }
+}

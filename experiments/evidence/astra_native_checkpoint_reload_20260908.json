@@ -1,0 +1,23 @@
+{
+  "schema_version": "fortgym.native-checkpoint-reload-diagnostic-summary/v1",
+  "source_revision": "08931089ecc2d6c7ac355affd1df411efc4185c8",
+  "independent_retained_evidence_audit_passed": true,
+  "latest_native_save_reload_verified": true,
+  "retained_elapsed_ticks": 47200,
+  "persistent_observations_equal": true,
+  "all_observations_equal": false,
+  "derived_pathfinding_differences": 14,
+  "native_pathfinding_reindex_pending": true,
+  "recorded_world_unchanged_during_save": true,
+  "menu_stack_restored": true,
+  "pixel_equality_rejected_save": true,
+  "before_save_read_only_capture_changes": 1,
+  "across_save_capture_changes": 4,
+  "after_save_read_only_capture_changes": 3,
+  "new_campaign_checkpoint_created": false,
+  "model_calls": 0,
+  "gameplay_keys": 0,
+  "gameplay_ticks": 0,
+  "teardown_verified": true,
+  "scope": "Authored non-content diagnostic summary. The latest retained native save loaded at its expected paused calendar. Every recorded persistent observation matched; 14 derived connectivity fields changed only to unknown while the native pathfinding reindex flag was true. The v1 snapshot helper then rejected pixel equality although recorded world observations, calendar and menu stack were unchanged. Pixels also differed between read-only captures before and after the save, without gameplay input or elapsed ticks. The preceding all-observations-equal diagnostic remains failed. No recovered campaign checkpoint or new gameplay is claimed by this diagnostic."
+}

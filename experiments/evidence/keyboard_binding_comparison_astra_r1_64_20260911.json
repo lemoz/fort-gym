@@ -1,0 +1,111 @@
+{
+  "schema_version": "fortgym.public-displayed-key-result/v1",
+  "recorded_at_utc": "2026-09-11 23:11:47 UTC",
+  "cohort_id": "bindings-comparison-20260911",
+  "campaign_id": "bindings-comparison-20260911-astra-r1",
+  "model": "gpt-6-astra",
+  "replicate": 1,
+  "reasoning_effort": "medium",
+  "source_revision": "d22f28d99f4fd103188979e964e148139d3f3efd",
+  "image_id": "sha256:32bd022138a4772ed0c0d3a14f94feab8ad4a4cd183a20a8cd098745aedbd10d",
+  "seed_receipt_sha256": "eaf5fa5a40014719e6c313f33497740e536a8faa1c90a84c4e09dcc380ac0595",
+  "condition_file_sha256": "7bf8ebf8656cf9c993764b6f1d02bb22dcd75d2a68aa2d4d1f868e49b5f4e1ab",
+  "trial_file_sha256": "3925997ef8a992a6da24e760543750e9d256d54d3ca832732e371983789dc0c8",
+  "response_limit": 64,
+  "status": "saved",
+  "responses": 64,
+  "returned_tokens": 1671491,
+  "reported_charge_usd": null,
+  "human_gameplay_rescue": false,
+  "native_teardown_verified": true,
+  "vm_teardown_verified": true,
+  "terminal_audit_sha256": "8fcd53923a28b84763a031f4046b7831b38f0b9a6dfdbdfcf5f4c081f6396cfc",
+  "checkpoint": {
+    "next_step": 64,
+    "sha256": "e718b389f37cfe11fab4121f3b3fec3e1da72e3f62e04d9f45658dde556eba63",
+    "saved_elapsed_ticks": 23000,
+    "metrics": {
+      "completed_beds": 7,
+      "completed_farms": 1,
+      "completed_workshops": 2,
+      "drink_stock": 55,
+      "food_stock": 50,
+      "functional_rooms": null,
+      "population": 7,
+      "recorded_dead_citizens": 0,
+      "stone_stock": null,
+      "wood_stock": null
+    }
+  },
+  "evidence_details": {
+    "declaration_revision": "61fcca7177d8b66ddd7e12e4be0ab53bda5ffd5b",
+    "fresh_empty_memory_usage_history_verified": true,
+    "native_key_receipts_verified": true,
+    "confirmed_key_presses": 426,
+    "source_trace_sha256": "4782ce5974a46c8b99bdd0d7a905c85cc23e42f3ec431f63d988f3a793dd6b43",
+    "source_usage_sha256": "6f6fa2b838ca85a8456582e146a5668f9029b94f6018e5bd5f16b95e01760ebb",
+    "fresh_final_checkpoint_reload_verified": false,
+    "initial_metrics": {
+      "completed_beds": 0,
+      "completed_farms": 0,
+      "completed_workshops": 0,
+      "drink_stock": 60,
+      "food_stock": 50,
+      "functional_rooms": 0,
+      "population": 7,
+      "recorded_dead_citizens": 0,
+      "stone_stock": null,
+      "wood_stock": null
+    },
+    "observed_job_type_boundaries": {
+      "ConstructBed": 21,
+      "Dig": 12,
+      "Drink2": 2,
+      "FellTree": 4,
+      "Fish": 35,
+      "MakeBarrel": 14,
+      "PickupEquipment": 8,
+      "PlantSeeds": 19,
+      "StoreItemInBarrel": 6,
+      "StoreItemInStockpile": 4,
+      "no_current_job": 64
+    },
+    "zero_advance_replies": 49,
+    "total_requested_ticks": 27000,
+    "actual_saved_ticks": 23000,
+    "clock_outcomes": {
+      "blocking_native_menu": 1,
+      "no_error": 62,
+      "timeout_waiting_for_ticks": 1
+    },
+    "clock_timeout_zero_based_steps": [
+      47
+    ],
+    "cloud_vms_created": 0,
+    "vm_config_unchanged": true,
+    "reported_hardware_energy_cost_usd": null,
+    "shutdown": {
+      "guest_poweroff_returncode": 0,
+      "vm_stop_returncode": 0,
+      "vm_observed_stopped": true,
+      "guest_command_warning": false
+    }
+  },
+  "assessment": {
+    "functioning_fortress_established": false,
+    "year_two_reached": false,
+    "strong_model_ranking_supported": false,
+    "production_rates": null,
+    "consumption_rates": null,
+    "summary": "This first short trial completed seven beds, two workshops and one farm with seven living citizens and no recorded deaths. It provides early fortress-development evidence, not Year-Two success, demonstrated sustainability or a reliable model ranking.",
+    "limits": [
+      "Saved means checkpoint and teardown verified, not successful autonomous fortress management.",
+      "Job-type counts are sampled boundaries, not distinct jobs, completed production or all intervening activity.",
+      "One clock request timed out and one encountered a blocking menu. Only the 23,000 actually saved ticks count as progress.",
+      "Food remained at 50 and drinks fell from 60 to 55; inventories do not establish production or consumption rates.",
+      "Functional room, wood and stone measurements remain unknown.",
+      "Subscription charges and hardware energy costs are unreported, not zero.",
+      "A separate fresh-load check remains pending; this saved result does not claim it."
+    ]
+  }
+}

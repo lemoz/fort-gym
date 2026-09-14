@@ -14,7 +14,7 @@
 <meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="Protocols | Fort Labs"><meta name="twitter:description" content="The declared observation, action, knowledge, evidence, and ranking contracts for Fort-Eval."><meta name="twitter:image" content="https://fortgym.live/static/social/protocols.png?v=1"><meta name="twitter:image:alt" content="Fort-Eval Easy, Hard, and Discovery protocol interfaces">
 <link rel="icon" type="image/svg+xml" href="/static/brand/favicon.svg"><link rel="icon" type="image/png" sizes="32x32" href="/static/brand/favicon-32.png"><link rel="apple-touch-icon" sizes="180x180" href="/static/brand/apple-touch-icon.png">
 <!-- SOCIAL_META_END -->
-<link rel="stylesheet" href="/static/fort-labs.css?v=20260711-2">
+<link rel="stylesheet" href="/static/fort-labs.css?v=20260911-3">
 <style>
   .protocol-hero { padding: 58px 0 48px; border-bottom: 1px solid var(--line); }
   .protocol-hero-grid { display: grid; grid-template-columns: 1.2fr .8fr; gap: 70px; align-items: end; }
@@ -72,13 +72,13 @@
   <div class="fl-wrap fl-nav">
     <a class="fl-brand" href="/"><span>FORT</span> LABS</a>
     <nav class="fl-nav-links" aria-label="Primary navigation">
-      <a href="/">Home</a><a href="/results">Results</a><a href="/protocols" aria-current="page">Protocols</a><a href="/worlds">Runs</a><a href="/findings">Findings</a><a href="/#about">About</a><a class="fl-live-link" href="/live"><span class="fl-status-dot"></span>No live run</a>
+      <a href="/">Home</a><a href="/results">Results</a><a href="/protocols" aria-current="page">Protocols</a><a href="/worlds">Runs</a><a href="/findings">Findings</a><a href="/#about">About</a><a class="fl-live-link" href="/#watch-root"><span class="fl-status-dot"></span>Watch</a>
     </nav>
     <button class="fl-menu-button" type="button" aria-label="Open navigation" aria-expanded="false" aria-controls="fl-mobile-menu" data-fl-menu-button>☰</button>
   </div>
 </header>
 <nav class="fl-mobile-menu" id="fl-mobile-menu" aria-label="Mobile navigation" aria-hidden="true" data-fl-mobile-menu data-open="false">
-  <a href="/">Home <span>01</span></a><a href="/results">Results <span>02</span></a><a href="/protocols">Protocols <span>03</span></a><a href="/worlds">Runs <span>04</span></a><a href="/findings">Findings <span>05</span></a><a href="/#about">About <span>06</span></a><a href="/live">Live viewer <span>07</span></a>
+  <a href="/">Home <span>01</span></a><a href="/results">Results <span>02</span></a><a href="/protocols">Protocols <span>03</span></a><a href="/worlds">Runs <span>04</span></a><a href="/findings">Findings <span>05</span></a><a href="/#about">About <span>06</span></a><a href="/#watch-root">Spectator <span>07</span></a>
 </nav>
 
 <main id="protocol-index">
@@ -101,6 +101,10 @@
   </section>
 </main>
 
+<aside class="fl-wrap publication-note" aria-label="Current experiments and protocol scope">
+  <p>The current keyboard recordings are exploratory. The versioned benchmark definitions retain their original scope; a keyboard run is not automatically a scored Hard-profile result.</p>
+  <a class="fl-link" href="/worlds">Open the current recordings →</a>
+</aside>
 <main id="protocol-detail" hidden>
   <section class="detail-head"><div class="fl-wrap"><a class="fl-link" href="/protocols">← All protocols</a><div class="detail-status" id="detail-status">Loading protocol…</div><h1 class="fl-title" id="detail-name">Protocol</h1><p class="fl-copy" id="detail-summary"></p></div></section>
   <section class="detail-section"><div class="fl-wrap detail-grid"><div><div class="fl-eyebrow">Declared interface</div><h2>The agent’s world.</h2><p class="fl-copy">The evaluated model receives only the surfaces named by this profile.</p></div><dl class="fact-list" id="interface-facts"></dl></div></section>

@@ -1,0 +1,24 @@
+{
+  "schema_version": "fortgym.codex-keyboard-window/v1",
+  "condition_id": "astra-medium-native-keyboard-v2-unavailable-runtime-restart-711",
+  "original_condition": "campaign_astra_keyboard_20260907.json",
+  "continuation_from_next_step": 711,
+  "steps_per_segment": 64,
+  "max_segments": 1,
+  "reset_memory": false,
+  "reset_usage": false,
+  "strategy_intervention": false,
+  "snapshot_profile": "native_menu_preserving_save/v4",
+  "private_measurement_profile": "fortgym.campaign-food-measurement/v1",
+  "restart": {
+    "schema_version": "fortgym.native-save-loss-restart/v1",
+    "source_segment": 0,
+    "source_revision": "7e7366871011fd54305c80ebbdf10986b39b4eb3",
+    "restored_next_step": 711,
+    "lost_trace_next_step": 738,
+    "failure_kind": "runtime_unavailable_after_input"
+  },
+  "hypothesis": "After eliminating whole-history observation decoding in diagnostics and checkpoint creation, the same Astra Medium native-keyboard condition can complete its bounded window and verify a new save. The preceding container was OOM-killed, but the exact victim and cause are unverified; the earlier in-container observer could have contributed. Observe this run through its existing host courier, without extra full-trace in-container diagnostics. The model alone chooses fresh inputs and simulation advances.",
+  "continuity_note": "Restore verified checkpoint 34d325596121a9a6e3631b1ed0297a4c4558e0ae2fff39853f91c138e8335c57 at cursor 711 with its saved memory. Retain all 842 responses and 26,990,171 campaign tokens, including failed window s. Inherit its three recorded losses totaling 29,891 ticks. The new loss is at least 5,200 ticks, with the final uncommitted action duration unknown, not zero. A fourth restart exists only when applied. The total known loss lower bound is then 35,091 ticks, not an exact discarded-time total. Replay no action. Preserve original evidence. This is neither an uninterrupted campaign nor an independent comparison attempt.",
+  "budget_note": "Inherit the existing cumulative 1,024-dispatch / 40-million-token ceiling and budget-extension history without extension or reset. Preserve 69,004 historical failed-delivery tokens separately. Fresh subscription admission before every invocation; no API fallback, local model, purchase or reset. Dollar charges remain unreported. Check capacity before dispatch; retain all evidence and tear down the native runtime, container and owned local VM."
+}

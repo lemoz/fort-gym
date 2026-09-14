@@ -1,0 +1,23 @@
+{
+  "schema_version": "fortgym.native-menu-save-summary/v1",
+  "source_revision": "693f1c4ccf12050f1cfa48b5a3144a4d37da3b99",
+  "snapshot_profile": "native_menu_preserving_save/v1",
+  "independent_retained_evidence_audit_passed": true,
+  "verified_cases": ["nested_unit_menu", "normal_fortress_view"],
+  "native_save_and_fresh_reload_verified": true,
+  "exact_screen_preserved_during_save": true,
+  "recorded_world_observations_equal_after_reload": true,
+  "menu_stack_and_backup_setting_restored": true,
+  "snapshot_gameplay_keys": 0,
+  "snapshot_elapsed_ticks": 0,
+  "native_logic_calls_per_save": 1,
+  "model_calls": 0,
+  "whole_diagnostic_succeeded": false,
+  "additional_build_menu_case": "invalid_diagnostic_key_rejected_before_snapshot_untested",
+  "native_processes_cleaned": 5,
+  "container_and_vm_teardown_verified": true,
+  "original_checkpoint_unchanged": true,
+  "historical_unsaved_tail_recovered": false,
+  "metered_provider_charge_usd": "0",
+  "scope": "Authored non-content operational summary. Two cases pass against the committed helper, including save completion, stable copied inventory, exact screen preservation and freshly reloaded observer fields. This does not prove equivalence of every native world object, preserve menus across process restarts, or establish campaign success. A third fixture used an invalid diagnostic key, dispatched no input and never attempted a snapshot; the overall fixture remains failed and retained. No model calls or historical gameplay replay occurred."
+}

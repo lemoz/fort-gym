@@ -1,0 +1,17 @@
+{
+  "schema_version": "fortgym.codex-keyboard-window/v1",
+  "condition_id": "astra-medium-native-keyboard-v2-continuation-567",
+  "original_condition": "campaign_astra_keyboard_20260907.json",
+  "continuation_from_next_step": 567,
+  "steps_per_segment": 64,
+  "max_segments": 1,
+  "reset_memory": false,
+  "reset_usage": false,
+  "strategy_intervention": false,
+  "snapshot_profile": "native_menu_preserving_save/v3",
+  "private_measurement_profile": "fortgym.campaign-food-measurement/v1",
+  "hypothesis": "Continue the same autonomous fortress with unchanged Astra Medium, native keyboard inputs, screen-only model observations and checkpoint cadence. Add explicitly versioned private food inventory measurement to evaluate stock over time; it is not supplied to the model and does not alter commands or tick requests.",
+  "continuity_note": "Continue only from independently audited checkpoint 045fcbbfe8d34fc8b29ee1f14ece2a672b65ff1f68edce044c746dc0d3d5d17d at cursor 567. A separate paused probe verified fresh native loading without gameplay. Preserve 122,200 retained ticks, all model memory, the inherited 2,000-tick loss, all 583 accounted responses and 18,636,365 campaign tokens. The previous outer-operator observation failure remains recorded alongside completed native play and save. This is the same fortress, not an independent model comparison. A single process exposes up to 64 unsaved decisions to failure.",
+  "budget_note": "Inherit the existing cumulative 1,024-dispatch / 40-million-token ceiling without extension or usage reset. Fresh subscription admission precedes every invocation. No API fallback, local model, credit purchase or reset. Charges remain unreported, not zero."
+}
+

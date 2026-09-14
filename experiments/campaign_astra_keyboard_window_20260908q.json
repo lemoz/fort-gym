@@ -1,0 +1,16 @@
+{
+  "schema_version": "fortgym.codex-keyboard-window/v1",
+  "condition_id": "astra-medium-native-keyboard-v2-postrestart-continuation-647",
+  "original_condition": "campaign_astra_keyboard_20260907.json",
+  "continuation_from_next_step": 647,
+  "steps_per_segment": 64,
+  "max_segments": 1,
+  "reset_memory": false,
+  "reset_usage": false,
+  "strategy_intervention": false,
+  "snapshot_profile": "native_menu_preserving_save/v4",
+  "private_measurement_profile": "fortgym.campaign-food-measurement/v1",
+  "hypothesis": "With v4 saving verified in actual play, a single 64-decision process gives Astra time to progress from its current status and labor-menu inspection into independently advancing and managing the fortress. The model alone chooses inputs and simulation advances; no navigation rescue or strategy is supplied.",
+  "continuity_note": "Continue only from independently audited checkpoint 21a2b1e25f86a2bffc673d2154e770758f32bf441f1024bea1bb792ca71e005c at cursor 647 after verifying a fresh native load. Preserve the new model memory, all 727 responses, 23,330,797 campaign tokens, 143,400 retained ticks, and both recorded save losses totaling 23,200 discarded ticks. This is ordinary continuation, not another restart or a new model-comparison attempt. One native process now holds up to 64 unsaved decisions, explicitly returning to the earlier longer cadence after the 16-decision save acceptance.",
+  "budget_note": "Inherit the cumulative 1,024-dispatch / 40-million-token ceiling with no extension or usage reset. Fresh subscription admission before every invocation. No API fallback, local model, purchase or reset; dollar charges remain unreported. Preserve historical failed-delivery tokens separately. Check capacity before model dispatch and retain all evidence with mandatory native/container/VM teardown."
+}

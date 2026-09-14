@@ -1,0 +1,37 @@
+{
+  "schema_version": "fortgym.native-keyboard-input-rejection-summary/v1",
+  "source_revision": "d37a1b42f6bdb5f2c1904f842cb1b78ab606db69",
+  "model": "gpt-6-astra",
+  "reasoning_effort": "medium",
+  "control_profile": "native_keyboard/v2",
+  "observation_profile": "native_screen_text/v1",
+  "captured_screen_size": [120, 40],
+  "terminal_reason": "unsupported_model_key_names_stopped_harness",
+  "independent_retained_evidence_audit_passed": true,
+  "historical_run_reclassified_as_success": false,
+  "teardown_verified": true,
+  "recovery_requires_reconciliation": true,
+  "forensic_save_is_resumable_checkpoint": false,
+  "progress": {
+    "starting_checkpoint_cursor": 101,
+    "committed_decisions": 183,
+    "returned_model_decisions": 184,
+    "new_returned_model_decisions": 83,
+    "native_key_events_confirmed": 786,
+    "failed_tail_key_events_confirmed": 0,
+    "elapsed_native_ticks": 44000,
+    "checkpoint_cursors": [117, 133, 149, 165, 181],
+    "latest_verified_checkpoint_cursor": 181,
+    "uncheckpointed_committed_decisions": 2
+  },
+  "usage": {
+    "new_tokens": 2702162,
+    "campaign_tokens": 5933954,
+    "all_attempt_tokens": 6002958,
+    "historical_failed_delivery_tokens": 69004,
+    "rejected_response_tokens_included": 32731,
+    "reported_charge_usd": null,
+    "cost_basis": "codex_subscription_charge_unreported/v1"
+  },
+  "scope": "Authored non-content operational evidence only. A fully received response contained unsupported key names, and no keys or ticks from that response were dispatched. The original harness treated rejection as fatal. This is not a fortress-collapse result. The latest native state and every returned model token are retained for forward-only reconciliation, not rollback or free replay."
+}

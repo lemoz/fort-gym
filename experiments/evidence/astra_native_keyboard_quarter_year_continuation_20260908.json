@@ -1,0 +1,96 @@
+{
+  "schema_version": "fortgym.native-keyboard-continuation-summary/v1",
+  "status": "completed",
+  "source_revision": "8caa3e11acc5d19ddea8b28bd917f9659e733d21",
+  "model": "gpt-6-astra",
+  "reasoning_effort": "medium",
+  "control_profile": "native_keyboard/v2",
+  "observation_profile": "native_screen_text/v1",
+  "captured_screen_size": [
+    120,
+    40
+  ],
+  "snapshot_profile": "native_menu_preserving_save/v3",
+  "parent_record": "astra_native_keyboard_workshop_continuation_20260908",
+  "parent_checkpoint_sha256": "69679e980dcf4164c7c0ae264a6044f4bfa8678e081079c7dd62769ccddc34e8",
+  "parent_checkpoint_cursor": 439,
+  "steps_per_segment": 64,
+  "checkpoints": [
+    {
+      "cursor": 503,
+      "sha256": "7bc4350c68c1ecb81bb88a7df58ea3e34db95c9bfe7f926d633858bb6de6eae7",
+      "elapsed_native_ticks": 115000,
+      "parent_sha256": "69679e980dcf4164c7c0ae264a6044f4bfa8678e081079c7dd62769ccddc34e8",
+      "checkpoint_verified": true
+    }
+  ],
+  "new_model_calls": 64,
+  "new_accepted_decisions": 64,
+  "cumulative_model_responses": 519,
+  "new_elapsed_ticks": 14000,
+  "retained_elapsed_ticks": 115000,
+  "new_tokens": 1867563,
+  "campaign_tokens": 16682250,
+  "all_attempt_tokens": 16751254,
+  "discarded_native_ticks": 2000,
+  "native_save_loss_restarts": 1,
+  "reported_charge_usd": null,
+  "cost_basis": "codex_subscription_charge_unreported/v1",
+  "independent_retained_evidence_audit_passed": true,
+  "original_checkpoint_unchanged": true,
+  "memory_and_usage_preserved_across_segments": true,
+  "inherited_discontinuity_unchanged": true,
+  "uninterrupted_campaign": false,
+  "new_restart_performed": false,
+  "reset_memory": false,
+  "reset_usage": false,
+  "strategy_intervention": false,
+  "historical_failed_run_reclassified_as_success": false,
+  "final_checkpoint_fresh_reload_verified": false,
+  "teardown_verified": true,
+  "scope": "Completed another unchanged 64-decision continuation of the same fortress from checkpoint 439. All inputs were accepted; seven decisions requested and advanced 14,000 total ticks and 57 requested no time. No menu deferrals or clock-unavailable timeouts occurred, so this window is not new coverage of those branches. Independent review verified the parent save loaded in a fresh native process with a captured 120x40 screen, then verified final save lineage, memory, usage, clock receipts and teardown. The final checkpoint 503 still needs a separate fresh native load. Seven dwarves remain alive and completed farms, beds and workshops are unchanged. Existing drink units increased, without production or consumption attribution. No new loss, restart, replay, model-memory reset, strategy intervention or budget extension occurred. The inherited 2,000-tick loss and all historical failures remain explicit. Outcome counts are authored aggregates; native assets, coordinates, detailed observations, saves and model traces remain private. No year-two sustainability, independent model comparison, merge or deployment claim.",
+  "outcome_counts": {
+    "schema_version": "fortgym.keyboard-outcome-counts/v1",
+    "independent_private_review_passed": true,
+    "counts": {
+      "population": {
+        "start": 7,
+        "end": 7
+      },
+      "completed_farms": {
+        "start": 5,
+        "end": 5
+      },
+      "completed_beds": {
+        "start": 4,
+        "end": 4
+      },
+      "completed_workshops": {
+        "start": 3,
+        "end": 3
+      },
+      "recorded_dead_citizens": {
+        "start": 0,
+        "end": 0
+      },
+      "drink_units": {
+        "start": 162,
+        "end": 172
+      }
+    },
+    "advancing_decisions": 7,
+    "zero_tick_decisions": 57,
+    "food_stock": null,
+    "production_and_consumption": "not_measured",
+    "sustainability": "not_established"
+  },
+  "execution_counts": {
+    "schema_version": "fortgym.keyboard-execution-counts/v1",
+    "independent_private_review_passed": true,
+    "requested_elapsed_ticks": 14000,
+    "model_input_rejections": 0,
+    "rejected_native_key_events": 0,
+    "menu_deferrals": 0,
+    "clock_unavailable_timeouts": 0
+  }
+}

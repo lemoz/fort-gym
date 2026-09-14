@@ -1,0 +1,93 @@
+{
+  "schema_version": "fortgym.website-own-save-release/v1",
+  "release_revision": "674a12c7c3ba499739e28959bd6c864386c14e33",
+  "assets": {
+    "/static/displayed-key-comparison-128.json": {
+      "sha256": "5a78f4917443c2eafd72e40f81e66d73803179254a0acbc70927fbc34e5a17bb",
+      "mime": "application/json"
+    },
+    "/static/displayed-key-comparison.mjs": {
+      "sha256": "9d91360c41731ead6d42048ce93bca4550db9c62ae6eef9659e8fb7c055c8984",
+      "mime": "text/javascript"
+    },
+    "/static/recordings/catalog.json": {
+      "sha256": "745089b3ad733ffbd41f3bfbfee6a3e131c7a93a48e09b30c3bfd0c0a205eb0c",
+      "mime": "application/json"
+    },
+    "/static/recordings/previews.json": {
+      "sha256": "57d5e1f6f16c3ad8536ce22919c974d6aed63104d0549168bcfed32332ddacad",
+      "mime": "application/json"
+    },
+    "/static/recordings/terra-matched-r2-65-128.json": {
+      "sha256": "f8fb441bfd5201d7ac9c38f23a10d942fb7adf3ab02c369c8ebc94b287a657a0",
+      "mime": "application/json"
+    },
+    "/worlds": {
+      "sha256": "d9aa01d75100eb48b809467d66b114b81fd7481b9f20028b81d6e59b979adb4d",
+      "mime": "text/html"
+    }
+  },
+  "recordings": 14,
+  "captured_frames": 1056,
+  "matched_rows": 6,
+  "published_results": 6,
+  "continuation_results": 5,
+  "decision_budgets": [
+    64,
+    128
+  ],
+  "historical_recordings_unchanged": true,
+  "immutable_source_links_resolve": true,
+  "relay_snapshot": {
+    "run_id": "bindings-comparison-20260911-terra-r2",
+    "model": "gpt-5.6-terra",
+    "status": "stopped",
+    "observed_at_unix": 1789182649
+  },
+  "passed": true,
+  "website_url": "https://fortgym.live/results#matched-comparison",
+  "replay_url": "https://fortgym.live/?recording=terra-matched-r2-65-128#watch-root",
+  "source_report_revision": "1647d9b4c210e206769f9300a5006c0340388b56",
+  "observer_revision": "7cd3b96763998abfd99ed623630d658320a27918",
+  "private_receipt_sha256": {
+    "public-acceptance.json": "b1fc0d0a1ddeefc867d1a314dedbd874b63f5aab6c4306c68594ed643bca9b7b",
+    "remote-acceptance.jsonl": "6a48b06f9b1ec34bfd784dbe35f6ff836739733f35e1d9477d54a60c971a4525",
+    "build-receipt.json": "ca2400fe128637396428affc1a9553cdfb55fff2ef92b5b94b9b743cf24d7116",
+    "deploy_remote.py": "5b327fabc7c790cc5da1fe698a637fafbfec03f41296590bc374b1c3dbf969e1",
+    "verify_public.py": "970fa558265c74b172583d48d1212f753e458e31aacc59253e3ae61d609ace5a",
+    "publish.py": "e5da7f0a7726f97fb6c493121822a0e3abf4534c04db99b7465432dd5856eaf2"
+  },
+  "ci": {
+    "run_id": 34670777013,
+    "head_sha": "674a12c7c3ba499739e28959bd6c864386c14e33",
+    "status": "completed",
+    "conclusion": "success"
+  },
+  "validation": {
+    "full_local_tests_passed": 1272,
+    "skipped": 5,
+    "warnings": 8,
+    "node_playback_publication_tests_passed": 51,
+    "selected_ruff_passed": true,
+    "browser_visual_qa_performed": false
+  },
+  "native_and_api_service_identities_unchanged": true,
+  "database_counts_unchanged": true,
+  "untracked_files_preserved": true,
+  "service_restarts": 0,
+  "new_hosts": 0,
+  "main_merge": false,
+  "new_model_calls_by_website_tools": 0,
+  "new_gameplay_inputs_by_website_tools": 0,
+  "stopped_terra_relay_preserved": true,
+  "strong_model_ranking_supported": false,
+  "full_goal_complete": false,
+  "limits": [
+    "Fourteen recording windows are not fourteen independent trials; all thirteen previously published recordings are unchanged.",
+    "Six fresh outcomes are saved at 64 responses. The 128-budget table has three saved continuations and two infrastructure failures; Astra r2 has no published outcome.",
+    "Terra r2 retains 108000 saved ticks, seven living citizens, no recorded deaths and no completed beds, workshops or farms, with 36 food and 26 drinks. Elapsed time does not prove fortress development or sustainability.",
+    "Sol r2 stopped at its declared guest capacity floor before game creation or model calls. Its original 64-response save remains intact; no continuation replay is fabricated.",
+    "Terra's parent was loaded natively; final checkpoint128 has not had a separate fresh reload.",
+    "Subscription dollar charges remain unreported, not zero."
+  ]
+}

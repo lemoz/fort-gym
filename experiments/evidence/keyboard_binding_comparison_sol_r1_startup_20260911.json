@@ -1,0 +1,102 @@
+{
+  "schema_version": "fortgym.keyboard-comparison-startup/v1",
+  "observed_at_utc": "2026-09-11T20:48:00Z",
+  "status": "running_observation_not_terminal_acceptance",
+  "cohort_id": "bindings-comparison-20260911",
+  "campaign_id": "bindings-comparison-20260911-sol-r1",
+  "model": "gpt-5.6-sol",
+  "reasoning_effort": "medium",
+  "replicate": 1,
+  "declaration_revision": "61fcca7177d8b66ddd7e12e4be0ab53bda5ffd5b",
+  "native_source_revision": "d22f28d99f4fd103188979e964e148139d3f3efd",
+  "native_image": "sha256:32bd022138a4772ed0c0d3a14f94feab8ad4a4cd183a20a8cd098745aedbd10d",
+  "seed_receipt_sha256": "eaf5fa5a40014719e6c313f33497740e536a8faa1c90a84c4e09dcc380ac0595",
+  "maximum_responses_this_start": 64,
+  "shared_comparison_boundaries": [
+    64,
+    128
+  ],
+  "replicates_per_model": 2,
+  "predeclared_models": [
+    "gpt-5.6-sol",
+    "gpt-5.6-terra",
+    "gpt-6-astra"
+  ],
+  "verification": {
+    "focused_tests_passed": 31,
+    "selected_ruff_passed": true,
+    "native_condition_parser_accepted_all_three_models": true,
+    "existing_native_revision_ci_run": "https://github.com/lemoz/fort-gym/actions/runs/34619202196",
+    "existing_native_revision_ci_passed": true,
+    "new_declaration_github_ci_claimed": false,
+    "remote_declaration_readback_verified": true,
+    "startup_review_sha256": "e1557dce2c5bcf1dd1203706a9eb9187b7492dd041373fdaad50639be9cba8cb",
+    "shared_seed_native_load_verified": true,
+    "fresh_empty_memory_usage_history_verified": true,
+    "loaded_year": 30,
+    "loaded_year_tick": 16801,
+    "screen_size": [
+      120,
+      40
+    ],
+    "first_response_original_events_verified": true,
+    "first_response_tokens": 25368
+  },
+  "provisional_owner_observation": {
+    "returned_model_replies": 17,
+    "grammar_valid_replies": 17,
+    "returned_tokens": 362871,
+    "reported_charge_usd": null,
+    "terminal_receipt_review_complete": false,
+    "saved_checkpoint_verified": false,
+    "vm_teardown_pending": true
+  },
+  "resources": {
+    "local_vm_started": 1,
+    "cloud_vms_created": 0,
+    "concurrent_experiment_games": 1,
+    "guest_available_kib_before_container": 2936560,
+    "guest_disk_growth": false,
+    "historical_evidence_deleted": false,
+    "mandatory_vm_teardown": true,
+    "subscription_transport": "codex-exec-chatgpt/v1",
+    "api_fallback_configured": false,
+    "reset_consumed": false,
+    "credits_purchased": false,
+    "hardware_energy_and_app_cost_usd": null
+  },
+  "website": {
+    "url": "https://fortgym.live/#watch-root",
+    "source_revision": "08f1b7d31855188bbef2b2ae8aac300a4bc757f0",
+    "site_code_deployed_this_observation": false,
+    "services_restarted": false,
+    "observed_same_api_and_game_process_ids": true,
+    "live_frame_decision_verified": 15,
+    "live_verification_sha256": "1a8e185f29117b1aee7dd986fea312ef76c34e992ae4dfc7b056f4cadb8db8d1",
+    "live_public_payload_sha256": "e038a7a290e9eff4fc45ce000456b8222652248b90dfa7d3c2f4afe2d7f235e2",
+    "original_screen_and_explicit_action_match": true,
+    "live_action_status": "chosen_not_execution_verified",
+    "private_memory_or_provider_payload_published": false,
+    "desktop_browser_observed_decisions": [
+      9,
+      11
+    ],
+    "desktop_viewport": [
+      1440,
+      1000
+    ],
+    "screenshot_visually_inspected_inline": true,
+    "console_errors_or_warnings_observed": 0,
+    "live_feed_expires_if_observer_lost": true,
+    "recordings_unchanged": true
+  },
+  "limits": [
+    "This is an early running observation, not a completed attempt or verified checkpoint.",
+    "The live feed displays chosen moves and captured screens, not proof of native execution.",
+    "The completed historical Astra Year-Two result is context, not a replicate in this new cohort.",
+    "Two attempts per model support preliminary inspection, not a strong model ranking.",
+    "Dollar charges are unreported, not zero; retained token counts are separate from billing."
+  ],
+  "human_gameplay_rescue": false,
+  "full_goal_complete": false
+}

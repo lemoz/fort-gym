@@ -1,0 +1,109 @@
+{
+  "schema_version": "fortgym.controls-comparison-website-release/v1",
+  "passed": true,
+  "revision": "2cdfee3131d3792b5cde8c6fadaeef742940f12e",
+  "previous_revision": "62427fce64590b0b958e4618c36aab31586c41c2",
+  "ci": {
+    "conclusion": "success",
+    "headSha": "2cdfee3131d3792b5cde8c6fadaeef742940f12e",
+    "status": "completed"
+  },
+  "ci_run": 34761684373,
+  "assets": {
+    "/results": "659b61f66f9b7783a1eda50d930d8f5910e06bf34ed6af07a86ddbe657baf1f1",
+    "/static/controls-study-comparison.json": "84db13cefc663f84c4016d2182ca9a34c974710517dab9640a15ab8919b9ef17"
+  },
+  "original_sources": {
+    "selected_workshop_v2_cohort_20260912.json": "84db13cefc663f84c4016d2182ca9a34c974710517dab9640a15ab8919b9ef17",
+    "selected_workshop_runtime_v2_declaration_20260912.json": "e325f69f40978a9a0b2ed962a505c893aa7ea397b569e3300455972d7b94ebc8",
+    "selected_workshop_v2_p1_shortcuts_128_20260912.json": "ea4eb4a61594ccea6852c6458dbcaa6b6b5075e80065f2436e4e882c78648e1d",
+    "selected_workshop_v2_p1_keyboard_128_20260912.json": "437266c9f15ae3442d9111290ea4e00795d5b29d9e7fea94a8b517172258689f",
+    "selected_workshop_v2_p2_keyboard_128_20260912.json": "f900ac3897314401ceba995e81bc3017cd501c7d0e85ebdfef7fbc1447e0c2a5",
+    "selected_workshop_v2_p2_shortcuts_128_20260912.json": "e6541861299c7d1d39c1650284d92ece65c3e447250fc08aa8bc35aa6780a847",
+    "selected_workshop_v2_p3_shortcuts_128_20260912.json": "79886cf295d51cdda4cca16702a108c3b8743060e9f055a199393eb7d55f69f4",
+    "selected_workshop_v2_p3_keyboard_128_20260912.json": "e21bf87ed2b3efc4305690cf3d7de723c2c9bc6faf4189a98d50751da32786d0",
+    "docs/CONTROLS_STUDY_RESULTS.md": "132795a728f409ec0e05331fc34e0e031cf2a2d55f38b91a5ddef526e0d46339"
+  },
+  "exact_local_tests_passed": 1336,
+  "skipped": 5,
+  "paired_runs": 6,
+  "comparison_boundary": 128,
+  "replay_hashes": {
+    "controls-v2-p3-keyboard-1-128": "337ca3bd834be6f50c2d09afbd3668228eee69d142e65d632f0b013974cdb337",
+    "controls-v2-p3-shortcuts-1-128": "02b139ad1021de3e560d20a2404944121cfc896b5477180c8c3e3a0dde71226a",
+    "controls-v2-p2-shortcuts-1-128": "4890518b7d6c550a49e25a6c134945141a16c136dc9f50721d605ab0f89db1cd",
+    "controls-v2-p2-keyboard-1-128": "9d15f665d816f9ba53f6b332480bc6017c192bcc8f50d73a208c0e067563c76e",
+    "controls-v2-p1-keyboard-1-128": "280e6193242088f0743a000cc84ace5cefa23b82d4c9877f73abf46597c533f5",
+    "controls-v2-p1-shortcuts-1-128": "9063c997563bd5c00eb3726acfff77088a50877dd66aeb12a95662b46c62d17b"
+  },
+  "unchanged_public_routes": {
+    "/": "a7a32f1ca186ba013993883a1b25027a117a471e025f11e916ccbfcc3d84f257",
+    "/worlds": "d89abe4c9ce0216cea910eaf98c7035cd0c70618c508809d4dc4bd59f9d4e641",
+    "/static/home-watch.mjs": "7957c064f5d166a65e794b71008713159f007309c7a4d7a199034de9682d0c14",
+    "/static/home-watch-model.mjs": "9bc89eb35488c0a7be905197cd9a75c878cff93bdfd06cb0d9075100088d1e23",
+    "/static/saved-outcomes.json": "bbd6ff27dee0b0a96ca9e47ca82f1b26e9420593dfcd6eb0be521e70ac4480d8",
+    "/static/recordings/catalog.json": "37a13b8c2ca05c447fde0720862e896514152d7c93ea3f438d0351af6cca8e87",
+    "/static/recordings/previews.json": "aace49ecf68b4c79bd7811bcb0e30799eea1c218d9a5acceaff7cd6ee12b55b9",
+    "/static/displayed-key-comparison.json": "323eb178749f324791ff0b384c069d667af2132e81770c11ff937a656aa1398d",
+    "/static/displayed-key-comparison-128.json": "f8e26272d9ef4e297c560212a5928edfaf92f0b3f3cb3472d8f8335292ab87e2",
+    "/static/displayed-key-comparison.mjs": "4099d1790bde452af261768ce065c5ed7bb637f8086994baad8e013b7708ef9e",
+    "/static/live/watch-active.json": "d900cc20b0d509aa5ec6f32e931ad735c04af320cad3a2803bdc250f69f3a3ac"
+  },
+  "catalog_recordings": 39,
+  "catalog_frames": 3048,
+  "data_source_revision": "26edd37c0f5946bfb4f0a98d30ae432d8d590e7f",
+  "summary_sha256": "84db13cefc663f84c4016d2182ca9a34c974710517dab9640a15ab8919b9ef17",
+  "source_result_manifests_verified": 6,
+  "public_native_audit_rerun": false,
+  "browser_visual_qa": false,
+  "service_identities_unchanged": true,
+  "database_counts_unchanged": true,
+  "untracked_files_preserved": true,
+  "service_restarts": 0,
+  "main_merge": false,
+  "gameplay_inputs": 0,
+  "model_calls": 0,
+  "website_url": "https://fortgym.live/results#controls-comparison",
+  "remote_receipt_sha256": "ea3a802e184a16d17031dfc5f80a2c3a08f10533ac8d44aa1c1c6de3f006f545",
+  "junit_sha256": "6798234375ec7d107a2d1f3edf1fdd739087a0e9e25451400fb3e56a5f2b008f",
+  "date_utc": "2026-09-13",
+  "changed_files": 4,
+  "renderer": "static_html_with_keyboard_focusable_horizontal_scroller",
+  "publication_includes_new_browser_javascript": false,
+  "local_tests": {
+    "passed": 1336,
+    "skipped": 5,
+    "warnings": 7,
+    "seconds": 153.01,
+    "focused_passed": 17,
+    "scoped_ruff_passed": true,
+    "deployment_guards_passed": 3
+  },
+  "hosted_tests": {
+    "passed": 1336,
+    "skipped": 5,
+    "warnings": 7,
+    "seconds": 171.63,
+    "ci_run": 34761684373,
+    "ci_job": 103735516446,
+    "summary_utc": "2026-09-13T14:09:17.7652377Z",
+    "head": "2cdfee3131d3792b5cde8c6fadaeef742940f12e",
+    "conclusion": "success"
+  },
+  "scripts": {
+    "publisher_sha256": "672d9565aaf6aca702a534185a7215f7422b595ffb9f18dd9164bff2db111176",
+    "remote_deployer_sha256": "b70c5226532ec9f2afac8860c768f9bb540027b79b2ff1fe886ec986c41537e5",
+    "publisher_consumed": true
+  },
+  "sites_skill_effect": "Preserved the existing architecture and comparison styling; no registration, scaffold, generated imagery or background browser preview.",
+  "source_review": {
+    "reviewer": "implementer",
+    "independent_approval": false,
+    "all_four_changed_files_reviewed": true,
+    "original_summary_copied_byte_identically": true
+  },
+  "combined_candidate_still_at": "26edd37c0f5946bfb4f0a98d30ae432d8d590e7f",
+  "combined_candidate_contains_new_panel": false,
+  "full_goal_complete": false,
+  "next_work": "Consolidate the published paired-controls panel into the combined release, retaining existing navigation/protocol compatibility and original evidence."
+}

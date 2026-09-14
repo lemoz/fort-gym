@@ -1,0 +1,69 @@
+{
+  "schema_version": "fortgym.native-keyboard-restart-summary/v2",
+  "source_revision": "3a708cdfe0c884273942361352297bb6b3555b0c",
+  "model": "gpt-6-astra",
+  "reasoning_effort": "medium",
+  "control_profile": "native_keyboard/v2",
+  "observation_profile": "native_screen_text/v1",
+  "snapshot_profile": "native_menu_preserving_save/v4",
+  "original_failure": "astra_native_keyboard_presave_failure_20260908",
+  "parent_checkpoint_sha256": "7ea1b53b0ce6081ab935cd68a720d81330d08b3c6dfbcfd2ec4b01ecc8c2b283",
+  "checkpoint_sha256": "21a2b1e25f86a2bffc673d2154e770758f32bf441f1024bea1bb792ca71e005c",
+  "independent_retained_evidence_audit_passed": true,
+  "independent_audit_sha256": "3c0e51e4d61d52f7ef6f3566594a884c7c89f8a266ef60fc596dc2f712c0df2e",
+  "native_checkpoint_verified": true,
+  "teardown_verified": true,
+  "source_checkpoint_and_failed_window_unchanged": true,
+  "model_memory_restored_from_checkpoint": true,
+  "uninterrupted_campaign": false,
+  "historical_tail_replayed": false,
+  "independent_comparison_attempt": false,
+  "final_checkpoint_fresh_reload_verified": false,
+  "captured_screen_size": [
+    120,
+    40
+  ],
+  "steps_per_segment": 16,
+  "native_save_loss_restarts": 2,
+  "save_failure_stage": "identity_before_save",
+  "source_save_attempt_sha256": "6af02ba3fb1389ef39a91a02f94b34e282d98045231aa57f22c47f04b326749e",
+  "progress": {
+    "restored_checkpoint_cursor": 631,
+    "checkpoint_cursor": 647,
+    "new_model_responses": 16,
+    "new_accepted_decisions": 16,
+    "cumulative_model_responses": 727,
+    "new_elapsed_ticks": 0,
+    "retained_elapsed_ticks": 143400,
+    "discarded_native_ticks": 23200
+  },
+  "usage": {
+    "new_tokens": 511720,
+    "campaign_tokens": 23330797,
+    "all_attempt_tokens": 23399801,
+    "lost_tail_tokens_retained": 1968854,
+    "historical_failed_delivery_tokens": 69004,
+    "reported_charge_usd": null,
+    "cost_basis": "codex_subscription_charge_unreported/v1"
+  },
+  "outcome_counts": {
+    "population": 12,
+    "completed_farms": 7,
+    "completed_beds": 5,
+    "completed_workshops": 4,
+    "recorded_dead_citizens": 0,
+    "food_units": 82,
+    "drink_units": 179,
+    "advancing_decisions": 0,
+    "zero_tick_decisions": 16,
+    "food_observed_boundaries": 17,
+    "food_complete_measurements": 16,
+    "food_unknown_measurements": 1,
+    "food_unknown_boundaries": [
+      1
+    ],
+    "sustainability": "not_established",
+    "production_and_consumption": "not_measured"
+  },
+  "scope": "Astra chose 16 new accepted native-keyboard inputs after the explicit loss-aware restart from checkpoint 631. All requested zero game ticks while the model inspected status, jobs and labor menus. Checkpoint 647 saved 143,400 retained ticks, unchanged from its parent. This verifies the corrected save path in actual play, not endurance improvement or year-two success. All 727 responses remain accounted, including the lost 64-response tail. Total discarded time is 23,200 ticks across two restarts. No historical action was replayed and no gameplay strategy was supplied. The new checkpoint is verified in process; a subsequent fresh reload is not yet claimed. Native game, container and VM teardown were verified."
+}

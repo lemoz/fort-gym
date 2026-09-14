@@ -1,0 +1,123 @@
+{
+  "schema_version": "fortgym.native-interface-acceptance-summary/v1",
+  "feature": "astra-subscription-native-keyboard-campaign",
+  "source_revision": "fcdd1f6626eed3e5b8e5dba8cd1e0469dcd909de",
+  "source_pull_request": "https://github.com/lemoz/fort-gym/pull/137",
+  "publication_scope": "Authored condition and non-content operational outcomes only. Native screens, maps, coordinates, fortress identifiers, calendars, saves, private prompts and detailed traces remain local.",
+  "condition_file": "experiments/campaign_astra_keyboard_endurance_20260907.json",
+  "model": "gpt-6-astra",
+  "reasoning_effort": "medium",
+  "transport": "codex-exec-chatgpt/v1",
+  "auth_mode": "chatgpt",
+  "control_profile": "native_keyboard/v2",
+  "observation_profile": "native_screen_text/v1",
+  "captured_screen_size": [
+    120,
+    40
+  ],
+  "attempts": [
+    {
+      "attempt_id": "astra-native-campaign-v1",
+      "status": "failed_before_game_input",
+      "codex_invocations": 1,
+      "total_tokens": 34496,
+      "diagnosis": "Docker-created root-owned response could not be hard-linked by the game user.",
+      "teardown_verified": true
+    },
+    {
+      "attempt_id": "astra-native-campaign-v2",
+      "status": "failed_before_game_input",
+      "codex_invocations": 1,
+      "total_tokens": 34508,
+      "diagnosis": "Copied private response remained unreadable by the game user after atomic rename.",
+      "teardown_verified": true
+    },
+    {
+      "attempt_id": "astra-native-campaign-v3",
+      "status": "first_segment_completed_then_infrastructure_failure",
+      "codex_invocations": 4,
+      "total_tokens": 126182,
+      "committed_decisions": 4,
+      "checkpoint_cursor": 4,
+      "diagnosis": "Four native model decisions and checkpoint completed; subsequent runtime preflight hit local port reuse EADDRINUSE before game startup.",
+      "teardown_verified": true
+    },
+    {
+      "attempt_id": "astra-native-continuation-v1",
+      "status": "completed",
+      "continues": "astra-native-campaign-v3",
+      "codex_invocations": 4,
+      "total_tokens": 110620,
+      "cumulative_committed_decisions": 8,
+      "checkpoint_cursor": 8,
+      "diagnosis": "Same campaign resumed from the verified checkpoint on a fresh isolated local port, preserving memory, trace and usage; no prior action replayed.",
+      "teardown_verified": true
+    },
+    {
+      "attempt_id": "astra-native-endurance-v1",
+      "status": "completed_declared_segment_window",
+      "continues": "astra-native-continuation-v1",
+      "codex_invocations": 64,
+      "total_tokens": 2081738,
+      "cumulative_committed_decisions": 72,
+      "checkpoint_cursor": 72,
+      "diagnosis": "Four 16-decision segments resumed the same campaign with a digest-bound budget extension, preserving memory, original configuration, trace and cumulative usage.",
+      "teardown_verified": true
+    }
+  ],
+  "campaign_result": {
+    "model_decisions": 72,
+    "native_key_events_confirmed": 357,
+    "all_input_batches_accepted": true,
+    "elapsed_native_ticks": 25000,
+    "cumulative_tokens": 2318540,
+    "checkpoint_cursors": [
+      4,
+      8,
+      24,
+      40,
+      56,
+      72
+    ],
+    "native_process_reload_verified": true,
+    "memory_preserved": true,
+    "trace_and_usage_prefix_preserved": true,
+    "independent_retained_evidence_audit_passed": true,
+    "original_seed_verified_unchanged": true,
+    "budget_extension_preserves_original_configuration": true
+  },
+  "usage": {
+    "codex_invocations_across_all_attempts": 74,
+    "returned_input_tokens": 2376109,
+    "returned_output_tokens": 11435,
+    "total_tokens": 2387544,
+    "failed_delivery_tokens": 69004,
+    "reported_charge_usd": null,
+    "displayed_credit_balance_change": "no_change_observed",
+    "atomic_account_reservation": false,
+    "fresh_account_check_before_every_invocation": true,
+    "internal_provider_dispatch_count": null
+  },
+  "cloud_vms_created": 0,
+  "local_model_servers_started": 0,
+  "api_fallback_used": false,
+  "credit_purchases": 0,
+  "resets_consumed": 0,
+  "autonomous_gameplay": true,
+  "year_two_gameplay_verified": false,
+  "website_deployed": false,
+  "limitations": [
+    "This cumulative milestone extends the previous eight-decision campaign; milestone rows must not be summed or treated as separate model attempts.",
+    "25,000 elapsed ticks are about 6.2 percent of a full 403,200-tick game year. Year-two success is not established.",
+    "Accepted native key events do not independently establish the intended construction or excavation outcomes.",
+    "The run stopped at its declared four-segment operating window, not at a subscription or cumulative-token limit. The final checkpoint preserves all 72 decisions.",
+    "Exact subscription charges remain unreported. Displayed credit balance was unchanged, but this is not an invoice or an atomic reservation against other account activity.",
+    "Detailed fortress observations remain private; this public record contains only authored conditions and non-content operational totals.",
+    "Longer autonomous runs, production website acceptance and repeated comparable three-model evaluation remain required."
+  ],
+  "original_condition_file": "experiments/campaign_astra_keyboard_20260907.json",
+  "declared_budget_extension": {
+    "max_dispatches": 256,
+    "max_total_tokens": 8000000
+  }
+}

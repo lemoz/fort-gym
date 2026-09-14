@@ -1,0 +1,32 @@
+{
+  "schema_version": "fortgym.native-keyboard-checkpoint-review/v1",
+  "source_revision": "1198ece397eec679c04dcf4e948b2b419bbde956",
+  "parent_restart": "astra_native_keyboard_restart_20260908",
+  "parent_checkpoint_sha256": "aabb513a50309812f900d9e346807710acb0935f271a200e9df4cda59aef1cdb",
+  "terminal_reason": "native_screen_changed_during_save",
+  "independent_retained_evidence_audit_passed": true,
+  "checkpoint_verified": false,
+  "copied_native_save_matches_runtime": true,
+  "copied_world_save_differs_from_parent": true,
+  "new_native_state_requires_reload_verification": true,
+  "original_checkpoint_and_trace_prefix_unchanged": true,
+  "inherited_discontinuity_unchanged": true,
+  "teardown_verified": true,
+  "progress": {
+    "trace_cursor": 216,
+    "latest_verified_checkpoint_cursor": 200,
+    "new_accepted_decisions": 16,
+    "cumulative_model_responses": 232,
+    "new_elapsed_ticks": 1200,
+    "trace_elapsed_ticks": 47200,
+    "last_verified_elapsed_ticks": 46000
+  },
+  "usage": {
+    "new_tokens": 722519,
+    "campaign_tokens": 7706555,
+    "all_attempt_tokens": 7775559,
+    "reported_charge_usd": null,
+    "cost_basis": "codex_subscription_charge_unreported/v1"
+  },
+  "scope": "Authored non-content terminal summary. Native saving produced and copied changed save files before screen equality validation rejected the checkpoint. The copied save matches the stopped runtime, but no verified checkpoint 216 exists. Latest state requires fresh reload and forward-only reconciliation, not rollback or replay. Do not assume these latest actions were lost or recovered. All usage, original trace prefix and inherited loss record remain retained. The exact before/after screen pair and operation receipt were not persisted by the executed implementation; the root cause of the screen change remains unproven."
+}

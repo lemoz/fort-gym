@@ -564,6 +564,10 @@ end
 -- Raw production inputs. These are inventory facts, not a prediction that a
 -- queued job will succeed: the simulation still decides item assignment.
 out.production_inputs = {
+  schema_version = 'fortgym.campaign-production-inputs/v2',
+  brewable_plant_source = 'PLANT material reaction product DRINK_MAT; unassigned stacks',
+  brewable_plant_scan_complete = true,
+  brewable_plant_read_failures = 0,
   brewable_plant_stacks = 0,
   brewable_plant_units = 0,
   brewable_plant_stacks_in_jobs = 0,
@@ -574,23 +578,47 @@ out.production_inputs = {
 do
   for _, item in ipairs(df.global.world.items.other.IN_PLAY) do
     local ok_type, item_type = pcall(function() return df.item_type[item:getType()] end)
-    if ok_type and item_type == 'PLANT' then
-      local ok_brewable, brewable = pcall(function()
+    if not ok_type or not item_type then
+      out.production_inputs.brewable_plant_scan_complete = false
+      out.production_inputs.brewable_plant_read_failures = out.production_inputs.brewable_plant_read_failures + 1
+    elseif item_type == 'PLANT' then
+      local ok_brewable, brewable, in_job, units = pcall(function()
         local mat = dfhack.matinfo.decode(item)
-        return mat and mat.material and mat.material.flags.ALCOHOL_PLANT and true or false
+        -- ALCOHOL_PLANT marks the finished drink, not its plant ingredient.
+        -- Brewing consumes structural material with a DRINK_MAT reaction product.
+        if not mat or not mat.material or not mat.material.reaction_product
+            or not mat.material.reaction_product.id then error('plant_material_unreadable') end
+        local can_brew = false
+        for _, product in ipairs(mat.material.reaction_product.id) do
+          local token = type(product) == 'string' and product or product.value
+          if type(token) ~= 'string' then error('reaction_product_unreadable') end
+          if token == 'DRINK_MAT' then can_brew = true end
+        end
+        if not can_brew then return false end
+        if not item.flags or type(item.flags.in_job) ~= 'boolean' then
+          error('plant_job_flag_unreadable')
+        end
+        local stack = item:getStackSize()
+        if type(stack) ~= 'number' or stack < 0 or stack > 9007199254740991
+            or stack ~= math.floor(stack) then error('plant_stack_unreadable') end
+        return true, item.flags.in_job, stack
       end)
-      if ok_brewable and brewable then
-        local in_job = item.flags and item.flags.in_job and true or false
+      if not ok_brewable then
+        out.production_inputs.brewable_plant_scan_complete = false
+        out.production_inputs.brewable_plant_read_failures = out.production_inputs.brewable_plant_read_failures + 1
+      elseif brewable then
         if in_job then
           out.production_inputs.brewable_plant_stacks_in_jobs =
             out.production_inputs.brewable_plant_stacks_in_jobs + 1
         else
           out.production_inputs.brewable_plant_stacks =
             out.production_inputs.brewable_plant_stacks + 1
-          local stack_size = 1
-          pcall(function() stack_size = math.max(1, tonumber(item.stack_size) or 1) end)
           out.production_inputs.brewable_plant_units =
-            out.production_inputs.brewable_plant_units + stack_size
+            out.production_inputs.brewable_plant_units + units
+          if out.production_inputs.brewable_plant_units > 9007199254740991 then
+            out.production_inputs.brewable_plant_scan_complete = false
+            out.production_inputs.brewable_plant_read_failures = out.production_inputs.brewable_plant_read_failures + 1
+          end
         end
       end
     elseif ok_type and item_type == 'BARREL' then
@@ -608,6 +636,12 @@ do
       end
     end
   end
+end
+if not out.production_inputs.brewable_plant_scan_complete then
+  -- Missing totals encode as absent, not as a successful zero or partial total.
+  out.production_inputs.brewable_plant_stacks = nil
+  out.production_inputs.brewable_plant_units = nil
+  out.production_inputs.brewable_plant_stacks_in_jobs = nil
 end
 
 -- placed furniture buildings (installed or being installed)

@@ -1,0 +1,63 @@
+{
+  "schema_version": "fortgym.native-keyboard-prompt-trial/v1",
+  "model": "gpt-6-astra",
+  "reasoning_effort": "medium",
+  "control_profile": "native_keyboard/v2",
+  "observation_profile": "native_screen_text/v1",
+  "parent_record": "astra_native_keyboard_unavailable_restart_20260909",
+  "integrity_audit_passed": true,
+  "status": "failed",
+  "source_revision": "52ed94a5c22f84cd25ed1d7f6015c9ee8f82084d",
+  "terminal_reason": "modal_clock_baseline_invalid_then_pending_save",
+  "parent_checkpoint_cursor": 775,
+  "parent_checkpoint_sha256": "7b69e64913adce2a9bfe3ecf539a8e91ea93edb4ce5c38e19c91279bb3b4e1bd",
+  "parent_checkpoint_unchanged": true,
+  "parent_fresh_native_reload_verified": true,
+  "new_responses": 18,
+  "committed_decisions": 17,
+  "uncommitted_decisions": 1,
+  "committed_trace_cursor": 792,
+  "new_committed_unsaved_ticks": 614,
+  "uncommitted_ticks": 0,
+  "checkpointed_elapsed_ticks": 198600,
+  "new_checkpoint_created": false,
+  "existing_loss_records": 4,
+  "existing_known_lost_ticks": 35091,
+  "existing_lost_ticks_complete": false,
+  "new_tokens": 507860,
+  "campaign_tokens": 29418907,
+  "all_attempt_tokens": 29487911,
+  "historical_failed_delivery_tokens": 69004,
+  "reported_charge_usd": null,
+  "cost_basis": "codex_subscription_charge_unreported/v1",
+  "prompt_profile": "native_keyboard_memory_replacement/v1",
+  "memory_clears": 0,
+  "memory_handoff_verified": true,
+  "prompt_receipts_verified": true,
+  "advancing_decisions": 4,
+  "zero_tick_committed_decisions": 13,
+  "model_performance_improvement_established": false,
+  "matched_comparison": false,
+  "year_two_success": false,
+  "teardown_verified": true,
+  "container_oom_killed": false,
+  "runtime_calls_by_review": 0,
+  "model_calls_by_review": 0,
+  "independent_audit_sha256": "577a734fbaeb8faf96b70aff17d10184bfe8865cce5ac41a72933fc32e60fa0c",
+  "counts": {
+    "population": {
+      "start": 12,
+      "end": 12
+    },
+    "recorded_dead_citizens": {
+      "start": 0,
+      "end": 0
+    },
+    "drink_units": {
+      "start": 411,
+      "end": 410
+    }
+  },
+  "food_stock": null,
+  "sustainability": "not_established"
+}

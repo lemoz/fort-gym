@@ -1,0 +1,105 @@
+{
+  "schema_version": "fortgym.displayed-key-comparison/v1",
+  "cohort_id": "bindings-comparison-20260911",
+  "status": "declared_not_launched",
+  "native_source_revision": "d22f28d99f4fd103188979e964e148139d3f3efd",
+  "native_image": "sha256:32bd022138a4772ed0c0d3a14f94feab8ad4a4cd183a20a8cd098745aedbd10d",
+  "seed_receipt_sha256": "eaf5fa5a40014719e6c313f33497740e536a8faa1c90a84c4e09dcc380ac0595",
+  "models": {
+    "sol": "gpt-5.6-sol",
+    "terra": "gpt-5.6-terra",
+    "astra": "gpt-6-astra"
+  },
+  "replicates_per_model": 2,
+  "common_decision_boundaries": [
+    64,
+    128
+  ],
+  "campaign_dispatch_cap": 1280,
+  "campaign_token_cap": 40000000,
+  "initial_memory": "empty",
+  "human_gameplay_rescue": false,
+  "shared_observation_profile": "native_screen_text/v1",
+  "shared_control_profile": "native_keyboard_bindings/v1",
+  "shared_prompt_profile": "native_keyboard_binding_instructions/v1",
+  "bindings_sha256": "8176d2bd7a8d96f6bb12feb654519a8361a6f262363b84ec48963be832cb7efd",
+  "screen_size": [
+    120,
+    40
+  ],
+  "maximum_concurrent_vms": 1,
+  "maximum_concurrent_games": 1,
+  "cloud_vms_to_create": 0,
+  "mandatory_vm_teardown": true,
+  "retained_prior_campaigns_unchanged": true,
+  "historical_astra_is_context_not_a_new_replicate": true,
+  "shortcut_condition_included": false,
+  "shortcut_pair_comparison_remains_separate": true,
+  "strong_ranking_claims_allowed": false,
+  "sequence": [
+    {
+      "id": "bindings-comparison-20260911-sol-r1",
+      "model": "sol",
+      "replicate": 1,
+      "condition": "sol-condition.json",
+      "trial": "sol-trial.json"
+    },
+    {
+      "id": "bindings-comparison-20260911-terra-r1",
+      "model": "terra",
+      "replicate": 1,
+      "condition": "terra-condition.json",
+      "trial": "terra-trial.json"
+    },
+    {
+      "id": "bindings-comparison-20260911-astra-r1",
+      "model": "astra",
+      "replicate": 1,
+      "condition": "astra-condition.json",
+      "trial": "astra-trial.json"
+    },
+    {
+      "id": "bindings-comparison-20260911-terra-r2",
+      "model": "terra",
+      "replicate": 2,
+      "condition": "terra-condition.json",
+      "trial": "terra-trial.json"
+    },
+    {
+      "id": "bindings-comparison-20260911-sol-r2",
+      "model": "sol",
+      "replicate": 2,
+      "condition": "sol-condition.json",
+      "trial": "sol-trial.json"
+    },
+    {
+      "id": "bindings-comparison-20260911-astra-r2",
+      "model": "astra",
+      "replicate": 2,
+      "condition": "astra-condition.json",
+      "trial": "astra-trial.json"
+    }
+  ],
+  "comparison": {
+    "primary": "Report every attempt at the same saved decision boundary, including incomplete, failed and budget-limited attempts; do not compare a chosen successful continuation with stopped peers as an equal-budget trial.",
+    "outcomes": [
+      "saved_elapsed_ticks",
+      "population",
+      "recorded_dead_citizens",
+      "completed_beds",
+      "completed_workshops",
+      "completed_farms",
+      "food_and_drink_stocks",
+      "observed_job_activity",
+      "rejected_inputs_and_menu_recovery",
+      "returned_tokens",
+      "reported_subscription_charges",
+      "native_save_and_reload_integrity"
+    ],
+    "resource_stocks_are_not_production_rates": true,
+    "budget_limited_pause_is_not_gameplay_collapse": true,
+    "protocol_changes_require_new_version": true,
+    "terminal_defeat_preserved": true,
+    "continuation": "After the common 128-response comparison, continue the autonomous-play investigation with declared own-save windows. The already verified Year-Two result remains genuine but does not substitute for these repeats."
+  }
+}

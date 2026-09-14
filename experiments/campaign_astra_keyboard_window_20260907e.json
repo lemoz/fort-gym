@@ -1,0 +1,23 @@
+{
+  "schema_version": "fortgym.codex-keyboard-window/v1",
+  "condition_id": "astra-medium-native-keyboard-v2-loss-aware-menu-save-restart",
+  "original_condition": "campaign_astra_keyboard_20260907.json",
+  "continuation_from_next_step": 184,
+  "steps_per_segment": 16,
+  "max_segments": 1,
+  "reset_memory": false,
+  "reset_usage": false,
+  "strategy_intervention": false,
+  "snapshot_profile": "native_menu_preserving_save/v1",
+  "budget_extension": {"max_dispatches": 1024, "max_total_tokens": 40000000},
+  "restart": {
+    "schema_version": "fortgym.native-save-loss-restart/v1",
+    "source_segment": 0,
+    "source_revision": "6493cba58152a009a167447f10d73034e8ef0a9c",
+    "restored_next_step": 184,
+    "lost_trace_next_step": 200
+  },
+  "hypothesis": "The menu-preserving snapshot profile can retain Astra's next independently chosen native actions after an explicitly recorded infrastructure restart.",
+  "continuity_note": "Not uninterrupted gameplay and not recovery of the lost tail. Load native checkpoint 184 and its model memory; retain all 200 prior responses and 6,465,867 campaign tokens, including the 16 unsaved responses. Keep the original failed window immutable. Give factual loss feedback, replay no actions, and carry the discontinuity through subsequent checkpoints and traces. Historical failed-delivery usage remains separately retained.",
+  "budget_note": "Retain the existing cumulative 1,024-dispatch / 40-million-token ceiling. The restored checkpoint predates that extension, so re-declare the same ceiling after all later usage has been reconciled. This is neither a new dollar reservation nor a reset of spent usage. Fresh subscription admission before each call; no API fallback, purchase or reset."
+}

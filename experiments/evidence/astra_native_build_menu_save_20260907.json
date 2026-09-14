@@ -1,0 +1,21 @@
+{
+  "schema_version": "fortgym.native-menu-save-summary/v1",
+  "source_revision": "60c5a3eee2d8da4060f8aed0a7a0c00c2b630593",
+  "snapshot_profile": "native_menu_preserving_save/v1",
+  "independent_retained_evidence_audit_passed": true,
+  "verified_cases": ["native_build_menu"],
+  "native_save_and_fresh_reload_verified": true,
+  "exact_screen_preserved_during_save": true,
+  "recorded_world_observations_equal_after_reload": true,
+  "snapshot_gameplay_keys": 0,
+  "snapshot_elapsed_ticks": 0,
+  "native_logic_calls_per_save": 1,
+  "model_calls": 0,
+  "whole_diagnostic_succeeded": true,
+  "native_processes_cleaned": 2,
+  "container_and_vm_teardown_verified": true,
+  "original_checkpoint_unchanged": true,
+  "historical_unsaved_tail_recovered": false,
+  "metered_provider_charge_usd": "0",
+  "scope": "Authored non-content operational summary. The corrected native build-menu case passes the committed helper's save and fresh reload, preserving exact screens and recorded world fields with no snapshot keys or elapsed ticks. One diagnostic D_BUILDING key entered the menu before saving. The previous invalid diagnostic key failure remains retained separately. No autonomous campaign progress or general equivalence of every internal native object is claimed."
+}

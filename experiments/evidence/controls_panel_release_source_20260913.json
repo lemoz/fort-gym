@@ -1,0 +1,54 @@
+{
+  "schema_version": "fortgym.controls-panel-release-source/v1",
+  "combined_base_revision": "26edd37c0f5946bfb4f0a98d30ae432d8d590e7f",
+  "published_website_revision": "2cdfee3131d3792b5cde8c6fadaeef742940f12e",
+  "publication_receipt_revision": "9065c0363b05e64f894f320fcf568425530a6919",
+  "imported_files": [
+    {
+      "path": "web/static/controls-study-comparison.json",
+      "source_revision": "2cdfee3131d3792b5cde8c6fadaeef742940f12e",
+      "sha256": "84db13cefc663f84c4016d2182ca9a34c974710517dab9640a15ab8919b9ef17"
+    },
+    {
+      "path": "tests/test_controls_study_publication.py",
+      "source_revision": "2cdfee3131d3792b5cde8c6fadaeef742940f12e",
+      "sha256": "9f0788efbad39744084ccb054cce1ea6eaf8281598cb06154664213840d74207"
+    },
+    {
+      "path": "docs/CONTROLS_STUDY_PUBLICATION.md",
+      "source_revision": "2cdfee3131d3792b5cde8c6fadaeef742940f12e",
+      "sha256": "059c2370ae392d848cea7f9e49d259356cfd2624febf052999d274e76f1e6d97"
+    },
+    {
+      "path": "experiments/evidence/controls_study_website_20260913.json",
+      "source_revision": "9065c0363b05e64f894f320fcf568425530a6919",
+      "sha256": "00d650ce5e4dd71b41c9ff2da420e63ae4fae0bd82c8d10e455691e940733396"
+    }
+  ],
+  "previous_results_sha256": "e7cdd4f02421e221b47736a3b58d4e8c2c0f1c52a7531196d248a6c0921bdc12",
+  "published_results_sha256": "659b61f66f9b7783a1eda50d930d8f5910e06bf34ed6af07a86ddbe657baf1f1",
+  "combined_results_sha256": "255ebd14b244383392d8ec08bb87db218d5b7d0953c601b22b1f260ebabe7368",
+  "published_panel_sha256": "f3d4113d97dce2e92ab3f828e6ecdc15e2ff0ae4d37fa10a3a94ddfea05bbb1e",
+  "publication_receipt": "experiments/evidence/controls_study_website_20260913.json",
+  "public_source_comparison": {
+    "files": 83,
+    "exact": 80,
+    "compatibility_differences": [
+      "web/landing.html",
+      "web/protocols.html",
+      "web/results.html"
+    ],
+    "protected_native_files": 263,
+    "retained_harness_assets": 13,
+    "original_source_evidence": 16
+  },
+  "campaign_navigation_preserved": true,
+  "existing_native_and_condition_files_changed": false,
+  "original_results_recordings_and_outcomes_changed": false,
+  "website_deployed_by_this_integration": false,
+  "model_calls": 0,
+  "gameplay_actions": 0,
+  "vm_starts": 0,
+  "main_merged": false,
+  "full_goal_complete": false
+}

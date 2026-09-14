@@ -1,0 +1,67 @@
+{
+  "schema_version": "fortgym.isolated-protocol-setup/v1",
+  "passed": true,
+  "source_revision": "bce580ae30782b258453889283c10f1ccba06a7b",
+  "dfhack_proto_release": "52.04-r1",
+  "python": "Python 3.11.15",
+  "binding_sources_sha256": {
+    "sources/library/proto/Basic.proto": "c59037cb891a3df1b2149e0caa118270f4d999130da9f59253f3d7f898ddb2eb",
+    "sources/library/proto/BasicApi.proto": "d349a3a356ff2c3de501716b2462e217ad012915b95d853ddfbfa93ce01f092e",
+    "sources/library/proto/CoreProtocol.proto": "900892b043f2eddcb349e5ef5afaf731ae9f9649ac85d57e29ebc18f0e84400e",
+    "sources/plugins/remotefortressreader/proto/AdventureControl.proto": "08e09e4203f0a37c6eb9b9479fa01f278c462970fde1eef92bed5c0e6ed6ffb9",
+    "sources/plugins/remotefortressreader/proto/DwarfControl.proto": "61569c6211fefab1b28b5cb20a31c139f3152ad13893f82854e29031c1ad9cd5",
+    "sources/plugins/remotefortressreader/proto/ItemdefInstrument.proto": "39831a0952623969784db4d340602745478846517e8367499ef427f2ec85f32d",
+    "sources/plugins/remotefortressreader/proto/RemoteFortressReader.proto": "df3823685980d4195d6007d7dd007e5fa70dd4caf336a8041ece9002660857b4",
+    "sources/plugins/remotefortressreader/proto/ui_sidebar_mode.proto": "87fbb9b97ae90d2c450c466fe375a92a6833fd907faee29057349476ac4aec24"
+  },
+  "generated_bindings_sha256": {
+    "generated/AdventureControl_pb2.py": "c0d113e9fcd6b5dcf0dc8dfdf54740adb4590ff1132bdd3adc544d61566fb98b",
+    "generated/BasicApi_pb2.py": "1fc079276d990a43dfc4a11d6808f28e9e31a5da761c85127af6281e79ac9d85",
+    "generated/Basic_pb2.py": "5f177b9f23ffd11b9f2445f0c9aab1db3da008f30f5b23ead1a7f716e8c69c98",
+    "generated/CoreProtocol_pb2.py": "fb97e63735d251c6fca54c1105726d0d5636811c754fb5504b3340bee1441545",
+    "generated/DwarfControl_pb2.py": "36d44ea1de25b26efa1f20ea8772406d2b72d47aa90e761de099f03ac001236c",
+    "generated/ItemdefInstrument_pb2.py": "2be7d44bd6df5edeb82fbc6e8fc5b881be6fb37b42a68a93f67bbaea4e7ff5c2",
+    "generated/RemoteFortressReader_pb2.py": "ad740198fcd93dcb4b48f87d153a193ae7b87891ac90107a3a6aefd9060b8480",
+    "generated/ui_sidebar_mode_pb2.py": "3692039cd0130a8d0b9a2df0bde72806e5dda19700e4064218bfe9751a09beea"
+  },
+  "setup_code_sha256": {
+    "fetch_proto.py": "36172837788b7e006e94169cd3ff92afabdebba88c197e7d38e921d49ca25988",
+    "__init__.py": "327da62bdff5a94f3127b624296d7b05357b5452988d50d586724f1a3df20b76"
+  },
+  "generation_log_sha256": "351de3fd9e98641ec4dc6d838b24e1d0dc066964ab09bab2ed92819e50b361ae",
+  "verification_script_sha256": "b74ff87b4691af0440a766aa1948dc9d66d600308b800652d4396e17004cb9a7",
+  "import_probe": {
+    "loaded_modules": [
+      "core",
+      "fortress"
+    ],
+    "generated_message_types": {
+      "AdventureControl": 4,
+      "Basic": 16,
+      "BasicApi": 10,
+      "CoreProtocol": 12,
+      "DwarfControl": 6,
+      "ItemdefInstrument": 4,
+      "RemoteFortressReader": 79,
+      "ui_sidebar_mode": 0
+    },
+    "empty_message_partial_serialization_passed": true
+  },
+  "tracked_checkout_clean": true,
+  "existing_acceptance_records_unchanged": true,
+  "game_connections": 0,
+  "game_launches": 0,
+  "vm_launches": 0,
+  "model_calls": 0,
+  "native_wire_compatibility_verified": false,
+  "fresh_game_provisioning_verified": false,
+  "private_receipt_sha256": "9640a45acb56017fc2478d2deaa8d83f57755033eb6a6d13e418d918c6aee76e",
+  "prior_python_setup_receipt_sha256": "1d8cdba12a03b9e75473c6b9461706722d0ddc8b1711278cb1f84c4b4c7a4f2e",
+  "verification_command": "python -m fort_gym.bench.env.remote_proto.fetch_proto --version 52.04-r1",
+  "limits": [
+    "Generated and imported eight bindings, with partial empty-message serialization for 131 declared message types; no native RPC compatibility was tested.",
+    "Generated assets and official schema inputs remain isolated, ignored setup artifacts, not changes to frozen experiment bindings.",
+    "This extends the Python setup evidence at the exact prior integration revision; it does not establish fresh-machine game provisioning or portable owner acceptance.",
+    "The earlier Python setup acceptance receipt is byte-identical."
+  ]
+}

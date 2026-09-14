@@ -14,10 +14,24 @@
 <meta property="og:image" content="https://fortgym.live/static/social/worlds.png?v=1"><meta property="og:image:secure_url" content="https://fortgym.live/static/social/worlds.png?v=1"><meta property="og:image:type" content="image/png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="Recorded Fort-Eval Dwarf Fortress worlds with public replay evidence">
 <meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="Recorded Worlds | Fort Labs"><meta name="twitter:description" content="Browse the Dwarf Fortress worlds built by evaluated AI agents and open every recorded run."><meta name="twitter:image" content="https://fortgym.live/static/social/worlds.png?v=1"><meta name="twitter:image:alt" content="Recorded Fort-Eval Dwarf Fortress worlds with public replay evidence">
 <link rel="icon" type="image/svg+xml" href="/static/brand/favicon.svg"><link rel="icon" type="image/png" sizes="32x32" href="/static/brand/favicon-32.png"><link rel="apple-touch-icon" sizes="180x180" href="/static/brand/apple-touch-icon.png">
-<link rel="stylesheet" href="/static/fort-labs.css?v=20260711-2">
+<link rel="stylesheet" href="/static/fort-labs.css?v=20260911-3">
 <style>
   .worlds-hero { padding: 50px 0 38px; border-bottom: 1px solid var(--line); }
-  .worlds-hero-grid { display: grid; grid-template-columns: .78fr 1.22fr; gap: 54px; align-items: end; }
+  .worlds-hero-grid { display: grid; gap: 30px; }
+  .recording-card { min-width: 0; border: 1px solid var(--line); background: var(--coal); }
+  .recording-card:hover { border-color: var(--cyan); }
+  .recording-card:focus-within { outline: 2px solid var(--cyan); outline-offset: 3px; }
+  .recording-media { display: block; aspect-ratio: 15 / 8; background: #000; border-bottom: 1px solid var(--line); }
+  .recording-media canvas { display: block; width: 100%; height: 100%; image-rendering: pixelated; }
+  .recording-copy { padding: 20px; }
+  .recording-copy h2 { margin: 0 0 10px; font: 750 20px/1.3 var(--mono); }
+  .recording-copy p { margin: 10px 0 18px; font: 400 14px/1.6 var(--mono); color: var(--muted); }
+  .recording-window { color: var(--cyan); font: 650 14px/1.5 var(--mono); }
+  .recording-source { padding: 10px 20px 0; color: var(--muted); font: 400 12px/1.5 var(--mono); }
+  .archive-intro { padding: 28px 0 18px; }
+  .archive-intro p { margin: 8px 0 0; color: var(--muted); font-size: 14px; }
+  .featured-world[hidden] { display: none; }
+  .library .featured-world:not([hidden]) { margin-bottom: 24px; }
   .worlds-summary { margin-top: 22px; color: var(--muted); font: 650 11px/1.6 var(--mono); }
   .featured-world { display: grid; grid-template-columns: 1.25fr .75fr; min-height: 250px; border: 1px solid var(--line); background: var(--coal); }
   .featured-media { min-height: 250px; border: 0; border-right: 1px solid var(--line); }
@@ -95,13 +109,13 @@
   <div class="fl-wrap fl-nav">
     <a class="fl-brand" href="/"><span>FORT</span> LABS</a>
     <nav class="fl-nav-links" aria-label="Primary navigation">
-      <a href="/">Home</a><a href="/results">Results</a><a href="/protocols">Protocols</a><a href="/worlds" aria-current="page">Runs</a><a href="/findings">Findings</a><a href="/#about">About</a><a class="fl-live-link" href="/live"><span class="fl-status-dot" id="nav-live-dot"></span><span id="nav-live-label">No live run</span></a>
+      <a href="/">Home</a><a href="/results">Results</a><a href="/protocols">Protocols</a><a href="/worlds" aria-current="page">Runs</a><a href="/findings">Findings</a><a href="/#about">About</a><a class="fl-live-link" href="/#watch-root"><span class="fl-status-dot" id="nav-live-dot"></span><span id="nav-live-label">Watch</span></a>
     </nav>
     <button class="fl-menu-button" type="button" aria-label="Open navigation" aria-expanded="false" aria-controls="fl-mobile-menu" data-fl-menu-button>☰</button>
   </div>
 </header>
 <nav class="fl-mobile-menu" id="fl-mobile-menu" aria-label="Mobile navigation" aria-hidden="true" data-fl-mobile-menu data-open="false">
-  <a href="/">Home <span>01</span></a><a href="/results">Results <span>02</span></a><a href="/protocols">Protocols <span>03</span></a><a href="/worlds">Runs <span>04</span></a><a href="/findings">Findings <span>05</span></a><a href="/#about">About <span>06</span></a><a href="/live">Live viewer <span>07</span></a>
+  <a href="/">Home <span>01</span></a><a href="/results">Results <span>02</span></a><a href="/protocols">Protocols <span>03</span></a><a href="/worlds">Runs <span>04</span></a><a href="/findings">Findings <span>05</span></a><a href="/#about">About <span>06</span></a><a href="/#watch-root">Spectator <span>07</span></a>
 </nav>
 
 <main>
@@ -111,26 +125,215 @@
         <div class="fl-eyebrow">Recorded worlds</div>
         <h1 class="fl-title" id="worlds-title">Every world leaves a trace.</h1>
         <p class="fl-copy">Browse the fortresses agents built, the strategies they followed, and the moments that changed each run.</p>
-        <div class="worlds-summary" id="worlds-summary">Loading the public run archive…</div>
+        <div class="worlds-summary" id="worlds-summary">39 recordings · 3,048 captured decisions · Astra, Sol and Terra</div>
       </div>
-      <article class="featured-world" id="featured-world" aria-label="Featured run">
-        <div class="fl-media featured-media"><canvas id="featured-canvas"></canvas><div class="fl-media-source" id="featured-source">Loading recorded world…</div></div>
-        <div class="featured-copy">
-          <div class="fl-kicker" id="featured-kicker">Featured world</div>
-          <div class="featured-model" id="featured-model">Loading…</div>
-          <div class="featured-grid">
-            <div><div class="fl-data-label">Step</div><div class="fl-data-value" id="featured-step">--</div></div>
-            <div><div class="fl-data-label">Score</div><div class="fl-data-value fl-data-value-acid" id="featured-score">--</div></div>
-            <div><div class="fl-data-label">Protocol</div><div class="fl-data-value" id="featured-protocol">--</div></div>
-            <div><div class="fl-data-label">Seed</div><div class="fl-data-value" id="featured-seed">--</div></div>
-          </div>
-          <a class="fl-link" id="featured-link" href="/live">Open run →</a>
-        </div>
-      </article>
+      <div class="world-grid" id="recent-recordings" aria-label="Recent recordings">
+        <article class="recording-card" data-recording-preview="astra-keyboard-endurance-v1-965-1028">
+          <a class="recording-media" href="/?recording=astra-keyboard-endurance-v1-965-1028#watch-root" aria-label="Replay the final Astra endurance decisions 965 to 1028"><canvas role="img" aria-label="Astra final checkpoint 1028 captured screen preview"></canvas></a>
+          <div class="recording-source" data-preview-status>Captured native screen</div>
+          <div class="recording-copy"><h2>Astra keyboard endurance · decisions 965–1028</h2><div class="recording-window">Declared run limit reached · 64 frames</div><p>The run ended at its 1,028-response limit, not a fortress collapse: 765,895 total game ticks, or 1.90 elapsed game years, with nineteen living dwarves and no new deaths in this window. Seven workshops, nine beds and three farms remained. Non-trader food rose from 139 to 172; merchants departed with 250 trader-flagged food units. Raw drinks fell from 531 to 348, with drink ownership unmeasured. Fishing, fish preparation, barrel-making and tree-felling were observed, but no brewing appeared in sampled workers and the still queues were empty at the save. All 64 actions and 108 keys were confirmed; all 126,000 requested ticks advanced. The final save passed a separate fresh reload without another model turn or tick. Cumulative usage is 30,125,676 returned tokens; subscription dollar charges were not reported. The fort survived into Year Two with unresolved production gaps. Self-sufficiency remains unproven, and this continuation is not an independent trial.</p><a class="fl-link" href="/?recording=astra-keyboard-endurance-v1-965-1028#watch-root">Open final replay →</a></div>
+        </article>
+        <article class="recording-card" data-recording-preview="astra-keyboard-endurance-v1-901-964">
+          <a class="recording-media" href="/?recording=astra-keyboard-endurance-v1-901-964#watch-root" aria-label="Replay Astra keyboard endurance decisions 901 to 964"><canvas role="img" aria-label="Astra Year-Two checkpoint 964 captured screen preview"></canvas></a>
+          <div class="recording-source" data-preview-status>Captured native screen</div>
+          <div class="recording-copy"><h2>Astra keyboard endurance · decisions 901–964</h2><div class="recording-window">Saved in Year Two · 64 frames</div><p>Astra resolved a ghost incident through keyboard menus. The captured game announcement before decision 954 confirms: “Avuz Kàsfikod, Ghostly Mason has been put to rest.” A staffed slab-construction job and queued engraving job precede the memorial placement. The fortress saved at 639,895 total game ticks with nineteen living dwarves, nine beds, seven workshops and three farms; no additional deaths were recorded. Food includes 250 trader-flagged units and 139 non-trader units, up from 138. Drinks fell from 560 to 531; drink ownership was not measured and no brewing was observed at sampled boundaries. All 64 actions were accepted; 33,245 of 45,200 requested ticks advanced. Seven diplomatic or text screens interrupted time advances, and Astra navigated them itself. The decision-964 save was freshly reloaded with memory and usage preserved. Cumulative usage is 28,011,285 returned tokens; subscription dollar charges were not reported. The fort is operating with incident recovery, not proven self-sufficiency. This is a continuation, not an independent trial.</p><a class="fl-link" href="/?recording=astra-keyboard-endurance-v1-901-964#watch-root">Open replay →</a></div>
+        </article>
+        <article class="recording-card" data-recording-preview="astra-keyboard-endurance-v1-837-900">
+          <a class="recording-media" href="/?recording=astra-keyboard-endurance-v1-837-900#watch-root" aria-label="Replay Astra keyboard endurance decisions 837 to 900"><canvas role="img" aria-label="Astra Year-Two checkpoint 900 captured screen preview"></canvas></a>
+          <div class="recording-source" data-preview-status>Captured native screen</div>
+          <div class="recording-copy"><h2>Astra keyboard endurance · decisions 837–900</h2><div class="recording-window">Saved in Year Two · 64 frames</div><p>Astra built mason and craftsdwarf workshops through keyboard menus. The fortress saved at 606,650 total game ticks with nineteen living dwarves, nine beds, seven workshops and three farms; no additional deaths were recorded. The raw food total of 388 includes 250 trader-flagged units. Non-trader food fell from 151 to 138. Drinks declined from 528 to 485 before rising to 560, but drink ownership was not measured, so that increase is not credited to brewing. All 64 actions were accepted; 54,400 ticks advanced, with one 2,000-tick build-menu deferral. The decision-900 save was freshly reloaded with memory and usage preserved. Cumulative usage is 26,085,530 returned tokens; subscription dollar charges were not reported. The fort is operating with workshop development, not demonstrated supply recovery or self-sufficiency. This is a continuation, not an independent trial.</p><a class="fl-link" href="/?recording=astra-keyboard-endurance-v1-837-900#watch-root">Open replay →</a></div>
+        </article>
+        <article class="recording-card" data-recording-preview="astra-keyboard-endurance-v1-773-836">
+          <a class="recording-media" href="/?recording=astra-keyboard-endurance-v1-773-836#watch-root" aria-label="Replay Astra keyboard endurance decisions 773 to 836"><canvas role="img" aria-label="Astra Year-Two checkpoint 836 captured screen preview"></canvas></a>
+          <div class="recording-source" data-preview-status>Captured native screen</div>
+          <div class="recording-copy"><h2>Astra keyboard endurance · decisions 773–836</h2><div class="recording-window">Saved in Year Two · 64 frames</div><p>Astra enabled brewing labor through keyboard menus, restarted brewing at two surface stills and gathered more plants. Native worker assignments confirm both brewing runs. The fortress saved at 552,250 total game ticks with nineteen living dwarves, nine beds, five workshops and three farms. A new baby increased the population; no additional deaths were recorded. Food rose from 134 to 151 and drinks from 143 to 528. All 64 actions were accepted and all 56,000 requested ticks advanced. The decision-836 save was freshly reloaded with memory and usage preserved. Cumulative usage is 24,149,524 returned tokens; subscription dollar charges were not reported. This is a continuation, not an independent trial. The fort is operating with adaptive supply recovery; brewing was idle at the save and long-term sustainability remains unproven.</p><a class="fl-link" href="/?recording=astra-keyboard-endurance-v1-773-836#watch-root">Open replay →</a></div>
+        </article>
+        <article class="recording-card" data-recording-preview="astra-keyboard-endurance-v1-709-772">
+          <a class="recording-media" href="/?recording=astra-keyboard-endurance-v1-709-772#watch-root" aria-label="Replay Astra keyboard endurance decisions 709 to 772"><canvas role="img" aria-label="Astra Year-Two checkpoint 772 captured screen preview"></canvas></a>
+          <div class="recording-source" data-preview-status>Captured native screen</div>
+          <div class="recording-copy"><h2>Astra keyboard endurance · decisions 709–772</h2><div class="recording-window">Saved in Year Two · 64 frames</div><p>Astra built another surface still through keyboard menus and a brewing job acquired a worker. The fortress saved at 496,250 total game ticks with eighteen living dwarves, nine beds, five workshops and three farms. Food rose from 75 to 134; drinks peaked at 170 and ended at 143, up from 93. No additional deaths were recorded. All 64 actions were accepted; 49,200 ticks advanced, with one 1,200-tick request deferred by an open build menu. The decision-772 save was freshly reloaded with memory and usage preserved. Cumulative usage is 22,152,718 returned tokens; subscription dollar charges were not reported. This is a continuation, not an independent trial. Supplies recovered, but brewing was inactive again at the final snapshot; long-term sustainability remains unproven.</p><a class="fl-link" href="/?recording=astra-keyboard-endurance-v1-709-772#watch-root">Open replay →</a></div>
+        </article>
+        <article class="recording-card" data-recording-preview="astra-keyboard-endurance-v1-645-708">
+          <a class="recording-media" href="/?recording=astra-keyboard-endurance-v1-645-708#watch-root" aria-label="Replay Astra keyboard endurance decisions 645 to 708"><canvas role="img" aria-label="Astra Year-Two checkpoint 708 captured screen preview"></canvas></a>
+          <div class="recording-source" data-preview-status>Captured native screen</div>
+          <div class="recording-copy"><h2>Astra keyboard endurance · decisions 645–708</h2><div class="recording-window">Saved in Year Two · 64 frames</div><p>The fortress saved at 447,050 total game ticks with eighteen living dwarves, nine installed beds, four workshops and three farms. One dwarf died; the native incident record identifies drowning. Food rose from 66 to 75 while drinks fell from 112 to 93. There were 63 accepted keyboard actions; one PageUp command was rejected and sent no keys. All 24,000 requested ticks advanced. The decision-708 save was freshly reloaded with memory and usage preserved, and the run continued automatically. Cumulative usage is 20,492,446 returned tokens; subscription dollar charges were not reported. This is a continuation, not an independent trial. The fortress is operating but fragile; stock counts alone do not establish sustainability.</p><a class="fl-link" href="/?recording=astra-keyboard-endurance-v1-645-708#watch-root">Open replay →</a></div>
+        </article>
+        <article class="recording-card" data-recording-preview="astra-keyboard-endurance-v1-581-644">
+          <a class="recording-media" href="/?recording=astra-keyboard-endurance-v1-581-644#watch-root" aria-label="Replay Astra keyboard endurance decisions 581 to 644"><canvas role="img" aria-label="Astra Year-Two checkpoint 644 captured screen preview"></canvas></a>
+          <div class="recording-source" data-preview-status>Captured native screen</div>
+          <div class="recording-copy"><h2>Astra keyboard endurance · decisions 581–644</h2><div class="recording-window">Saved in Year Two · 64 frames</div><p>Astra crossed the first anniversary and saved at 423,050 total game ticks. Nineteen dwarves remain alive, with no recorded deaths, nine installed beds, four workshops and three farms. Food fell from 73 to 66 and drinks from 130 to 112. All 64 keyboard actions were accepted and all 20,000 requested ticks advanced. The decision-644 save was freshly reloaded with memory and usage preserved, and the run continued automatically. Cumulative usage is 19,259,777 returned tokens; subscription dollar charges were not reported. This is a continuation, not an independent trial. The saved fortress is inside Year Two; stock counts alone do not establish sustainability.</p><a class="fl-link" href="/?recording=astra-keyboard-endurance-v1-581-644#watch-root">Open replay →</a></div>
+        </article>
+        <article class="recording-card" data-recording-preview="astra-keyboard-endurance-v1-517-580">
+          <a class="recording-media" href="/?recording=astra-keyboard-endurance-v1-517-580#watch-root" aria-label="Replay Astra keyboard endurance decisions 517 to 580"><canvas role="img" aria-label="Astra keyboard endurance checkpoint 580 captured screen preview"></canvas></a>
+          <div class="recording-source" data-preview-status>Captured native screen</div>
+          <div class="recording-copy"><h2>Astra keyboard endurance · decisions 517–580</h2><div class="recording-window">Decisions 517–580 · 64 frames</div><p>Nineteen dwarves remain alive after 403,050 total game ticks, with nine installed beds, four workshops and three farms. Food fell from 170 to 73 while drinks rose from 29 to 130, with no recorded deaths. All 64 keyboard actions were accepted and all 58,000 requested ticks advanced. The decision-580 save was freshly reloaded with memory and usage preserved. Its next action crossed the first anniversary, but that later progress is not part of this saved replay. Cumulative usage at this checkpoint is 17,698,403 returned tokens; subscription dollar charges were not reported. This is a continuation, not an independent trial, and stock counts alone do not establish sustainability.</p><a class="fl-link" href="/?recording=astra-keyboard-endurance-v1-517-580#watch-root">Open replay →</a></div>
+        </article>
+        <article class="recording-card" data-recording-preview="astra-keyboard-endurance-v1-453-516">
+          <a class="recording-media" href="/?recording=astra-keyboard-endurance-v1-453-516#watch-root" aria-label="Replay Astra keyboard endurance decisions 453 to 516"><canvas role="img" aria-label="Astra keyboard endurance checkpoint 516 captured screen preview"></canvas></a>
+          <div class="recording-source" data-preview-status>Captured native screen</div>
+          <div class="recording-copy"><h2>Astra keyboard endurance · decisions 453–516</h2><div class="recording-window">Decisions 453–516 · 64 frames</div><p>Nineteen dwarves remain alive after 345,050 total game ticks, with nine installed beds, four workshops and three farms. Food rose from 134 to 170 and drinks remained at 29, with no recorded deaths. All 64 keyboard actions were accepted and all 44,000 requested ticks advanced. The decision-516 save was freshly reloaded with memory and usage preserved, and the run continued automatically. Cumulative usage is 15,847,406 returned tokens; subscription dollar charges were not reported. This is a continuation, not an independent trial. It has not reached Year Two, and stock counts alone do not establish sustainability.</p><a class="fl-link" href="/?recording=astra-keyboard-endurance-v1-453-516#watch-root">Open replay →</a></div>
+        </article>
+        <article class="recording-card" data-recording-preview="astra-keyboard-endurance-v1-389-452">
+          <a class="recording-media" href="/?recording=astra-keyboard-endurance-v1-389-452#watch-root" aria-label="Replay Astra keyboard endurance decisions 389 to 452"><canvas role="img" aria-label="Astra keyboard endurance checkpoint 452 captured screen preview"></canvas></a>
+          <div class="recording-source" data-preview-status>Captured native screen</div>
+          <div class="recording-copy"><h2>Astra keyboard endurance · decisions 389–452</h2><div class="recording-window">Decisions 389–452 · 64 frames</div><p>Nineteen dwarves remain alive after 301,050 total game ticks, with nine installed beds, four workshops and three farms. Food fell from 184 to 134 and drinks from 88 to 29, with no recorded deaths. All 64 keyboard actions were accepted and all 66,000 requested ticks advanced. The decision-452 save was freshly reloaded with memory and usage preserved, and the run continued automatically. Cumulative usage is 14,136,731 returned tokens; subscription dollar charges were not reported. This is a continuation, not an independent trial. It has not reached Year Two, and stock counts alone do not establish sustainability.</p><a class="fl-link" href="/?recording=astra-keyboard-endurance-v1-389-452#watch-root">Open replay →</a></div>
+        </article>
+        <article class="recording-card" data-recording-preview="astra-keyboard-endurance-v1-325-388">
+          <a class="recording-media" href="/?recording=astra-keyboard-endurance-v1-325-388#watch-root" aria-label="Replay Astra keyboard endurance decisions 325 to 388"><canvas role="img" aria-label="Astra keyboard endurance checkpoint 388 captured screen preview"></canvas></a>
+          <div class="recording-source" data-preview-status>Captured native screen</div>
+          <div class="recording-copy"><h2>Astra keyboard endurance · decisions 325–388</h2><div class="recording-window">Decisions 325–388 · 64 frames</div><p>The fortress grew from eleven to nineteen living dwarves. After 235,050 total game ticks, it has nine installed beds, four workshops, three farms, 184 food and 88 drinks, with no recorded deaths. All 64 keyboard actions were accepted. Seven meeting or text screens interrupted time advancement; Astra continued without human input and advanced another 30,000 ticks after the last interruption. The decision-388 save was freshly reloaded with memory and usage preserved, and the run continued automatically. Cumulative usage is 12,096,579 returned tokens; subscription dollar charges were not reported. This is a continuation, not an independent trial. It has not reached Year Two, and stock counts alone do not establish sustainability.</p><a class="fl-link" href="/?recording=astra-keyboard-endurance-v1-325-388#watch-root">Open replay →</a></div>
+        </article>
+        <article class="recording-card" data-recording-preview="astra-keyboard-endurance-v1-261-324">
+          <a class="recording-media" href="/?recording=astra-keyboard-endurance-v1-261-324#watch-root" aria-label="Replay Astra keyboard endurance decisions 261 to 324"><canvas role="img" aria-label="Astra keyboard endurance checkpoint 324 captured screen preview"></canvas></a>
+          <div class="recording-source" data-preview-status>Captured native screen</div>
+          <div class="recording-copy"><h2>Astra keyboard endurance · decisions 261–324</h2><div class="recording-window">Decisions 261–324 · 64 frames</div><p>The fortress grew from seven to eleven living dwarves and added a fourth workshop. After 169,100 total game ticks, it has nine installed beds, four workshops, three farms, 72 food and 122 drinks, with no recorded deaths. This segment added 64,000 ticks and includes one rejected keyboard action. The decision-324 save was freshly reloaded with memory and usage preserved, and the run continued automatically. Cumulative usage is 10,418,341 returned tokens; subscription dollar charges were not reported. This is a continuation, not an independent trial. It has not reached Year Two, and stock counts alone do not establish sustainability.</p><a class="fl-link" href="/?recording=astra-keyboard-endurance-v1-261-324#watch-root">Open replay →</a></div>
+        </article>
+        <article class="recording-card" data-recording-preview="astra-keyboard-endurance-v1-197-260">
+          <a class="recording-media" href="/?recording=astra-keyboard-endurance-v1-197-260#watch-root" aria-label="Replay Astra keyboard endurance decisions 197 to 260"><canvas role="img" aria-label="Astra keyboard endurance checkpoint 260 captured screen preview"></canvas></a>
+          <div class="recording-source" data-preview-status>Captured native screen</div>
+          <div class="recording-copy"><h2>Astra keyboard endurance · decisions 197–260</h2><div class="recording-window">Decisions 197–260 · 64 frames</div><p>Seven dwarves remain alive after 105,100 total game ticks, with nine installed beds, three workshops, three farms, 69 food and 134 drinks. This segment added 31,200 ticks; all 64 keyboard actions were accepted, with no clock timeouts. The decision-260 save was freshly reloaded with memory and usage preserved, and the run continued automatically. Cumulative usage is 8,141,754 returned tokens; subscription dollar charges were not reported. This is a continuation, not an independent trial. It has not reached Year Two, and stock counts alone do not establish sustainability.</p><a class="fl-link" href="/?recording=astra-keyboard-endurance-v1-197-260#watch-root">Open replay →</a></div>
+        </article>
+        <article class="recording-card" data-recording-preview="astra-keyboard-endurance-v1-133-196">
+          <a class="recording-media" href="/?recording=astra-keyboard-endurance-v1-133-196#watch-root" aria-label="Replay Astra keyboard endurance decisions 133 to 196"><canvas role="img" aria-label="Astra keyboard endurance checkpoint 196 captured screen preview"></canvas></a>
+          <div class="recording-source" data-preview-status>Captured native screen</div>
+          <div class="recording-copy"><h2>Astra keyboard endurance · decisions 133–196</h2><div class="recording-window">Decisions 133–196 · 64 frames</div><p>Seven dwarves remain alive after 73,900 total game ticks, with nine installed beds, three workshops, two farms, 60 food and 90 drinks. This segment added 33,200 ticks and includes one rejected keyboard action. The decision-196 save was freshly reloaded with memory and usage preserved. Cumulative usage is 5,751,089 returned tokens; subscription dollar charges were not reported. This is a continuation, not an independent trial. It has not reached Year Two, and stock counts alone do not establish sustainability.</p><a class="fl-link" href="/?recording=astra-keyboard-endurance-v1-133-196#watch-root">Open replay →</a></div>
+        </article>
+        <article class="recording-card" data-recording-preview="astra-keyboard-endurance-v1-69-132">
+          <a class="recording-media" href="/?recording=astra-keyboard-endurance-v1-69-132#watch-root" aria-label="Replay Astra keyboard endurance decisions 69 to 132"><canvas role="img" aria-label="Astra keyboard endurance continuation captured screen preview"></canvas></a>
+          <div class="recording-source" data-preview-status>Captured native screen</div>
+          <div class="recording-copy"><h2>Astra keyboard endurance · decisions 69–132</h2><div class="recording-window">Decisions 69–132 · 64 frames</div><p>The same fortress continues: seven dwarves alive after 40,700 total game ticks, with seven installed beds, three workshops, two farms, 64 food and 53 drinks. This segment added 10,000 ticks and includes one rejected keyboard action. The decision-132 save was freshly reloaded with memory and usage preserved. Cumulative usage is 3,799,537 returned tokens; subscription dollar charges were not reported. This is a continuation, not an independent trial. It has not reached Year Two, and stock counts alone do not establish sustainability.</p><a class="fl-link" href="/?recording=astra-keyboard-endurance-v1-69-132#watch-root">Open replay →</a></div>
+        </article>
+        <article class="recording-card" data-recording-preview="astra-keyboard-endurance-v1-1-68">
+          <a class="recording-media" href="/?recording=astra-keyboard-endurance-v1-1-68#watch-root" aria-label="Replay Astra keyboard endurance decisions 1 to 68"><canvas role="img" aria-label="Astra keyboard endurance captured screen preview"></canvas></a>
+          <div class="recording-source" data-preview-status>Captured native screen</div>
+          <div class="recording-copy"><h2>Astra keyboard endurance · decisions 1–68</h2><div class="recording-window">Decisions 1–68 · 68 frames</div><p>Seven dwarves alive after 30,700 game ticks, with six installed beds, three workshops, one farm, 53 food and 53 drinks. No recorded deaths. Both saves at decisions 4 and 68 were freshly reloaded with memory and usage preserved. Used 1,788,513 returned tokens; subscription dollar charges were not reported. This separate keyboard-only campaign continues beyond this recording. It has not reached Year Two, and these stocks do not establish self-sufficiency.</p><a class="fl-link" href="/?recording=astra-keyboard-endurance-v1-1-68#watch-root">Open replay →</a></div>
+        </article>
+        <article class="recording-card" data-recording-preview="controls-v2-p3-keyboard-1-128">
+          <a class="recording-media" href="/?recording=controls-v2-p3-keyboard-1-128#watch-root" aria-label="Replay Astra keyboard controls study v2 pair 3"><canvas role="img" aria-label="Astra keyboard study v2 pair 3 captured screen preview"></canvas></a>
+          <div class="recording-source" data-preview-status>Captured native screen</div>
+          <div class="recording-copy"><h2>Astra · controls study v2 pair 3 · keyboard · 1–128</h2><div class="recording-window">Decisions 1–128 · 128 frames</div><p>Seven dwarves alive after 46,400 game ticks, with seven installed beds, three workshops, one farm, 42 food and 122 drinks. No recorded deaths. All 128 decisions used keyboard controls, with 751 key presses and no workshop shortcuts. Resumed from its own save at decision 64. Used 3,753,509 returned tokens; subscription dollar charges were not reported. All three matched pairs are recorded: repeated policies on the same seed, not independent worlds. These stocks do not establish sustainability or a control ranking, and the final save has not had a separate fresh-reload check.</p><a class="fl-link" href="/?recording=controls-v2-p3-keyboard-1-128#watch-root">Open replay →</a></div>
+        </article>
+        <article class="recording-card" data-recording-preview="controls-v2-p3-shortcuts-1-128">
+          <a class="recording-media" href="/?recording=controls-v2-p3-shortcuts-1-128#watch-root" aria-label="Replay Astra shortcut controls study v2 pair 3"><canvas role="img" aria-label="Astra shortcut study v2 pair 3 captured screen preview"></canvas></a>
+          <div class="recording-source" data-preview-status>Captured native screen</div>
+          <div class="recording-copy"><h2>Astra · controls study v2 pair 3 · shortcuts · 1–128</h2><div class="recording-window">Decisions 1–128 · 128 frames</div><p>Seven dwarves alive after 58,200 game ticks, with seven installed beds, two workshops, one farm, 56 food and 161 drinks. No recorded deaths. Resumed from its own save at decision 64. Twelve workshop shortcuts queued 49 jobs; queued jobs are not completed products. Used 3,621,402 returned tokens; subscription dollar charges were not reported. Its paired keyboard replay is available above. These stocks do not establish sustainability or a control ranking, and the final save has not had a separate fresh-reload check.</p><a class="fl-link" href="/?recording=controls-v2-p3-shortcuts-1-128#watch-root">Open replay →</a></div>
+        </article>
+        <article class="recording-card" data-recording-preview="controls-v2-p2-shortcuts-1-128">
+          <a class="recording-media" href="/?recording=controls-v2-p2-shortcuts-1-128#watch-root" aria-label="Replay Astra shortcut controls study v2 pair 2"><canvas role="img" aria-label="Astra shortcut study v2 pair 2 captured screen preview"></canvas></a>
+          <div class="recording-source" data-preview-status>Captured native screen</div>
+          <div class="recording-copy"><h2>Astra · controls study v2 pair 2 · shortcuts · 1–128</h2><div class="recording-window">Decisions 1–128 · 128 frames</div><p>Seven dwarves alive after 49,600 game ticks, with ten installed beds, two workshops, two farms, 40 food and 136 drinks. No recorded deaths. Resumed from its own save at decision 64. Eleven workshop shortcuts queued 43 jobs; queued jobs are not completed products. Used 4,014,250 returned tokens; subscription dollar charges were not reported. Both second-pair replays are available. These stocks do not establish sustainability or a control ranking, and the final save has not had a separate fresh-reload check.</p><a class="fl-link" href="/?recording=controls-v2-p2-shortcuts-1-128#watch-root">Open replay →</a></div>
+        </article>
+        <article class="recording-card" data-recording-preview="controls-v2-p2-keyboard-1-128">
+          <a class="recording-media" href="/?recording=controls-v2-p2-keyboard-1-128#watch-root" aria-label="Replay Astra keyboard controls study v2 pair 2"><canvas role="img" aria-label="Astra keyboard study v2 pair 2 captured screen preview"></canvas></a>
+          <div class="recording-source" data-preview-status>Loading captured screen…</div>
+          <div class="recording-copy"><h2>Astra · controls study v2 pair 2 · keyboard · 1–128</h2><div class="recording-window">Decisions 1–128 · 128 frames</div><p>Six dwarves alive after 51,900 game ticks, with seven installed beds, five workshops, one farm, 61 food and 122 drinks. One recorded drowning. All 128 decisions used keyboard controls. Resumed from its own save at decision 64. Its paired shortcuts replay is available above. These stocks do not establish sustainability or a model ranking, and the final save has not had a separate fresh-reload check.</p><a class="fl-link" href="/?recording=controls-v2-p2-keyboard-1-128#watch-root">Open replay →</a></div>
+        </article>
+        <article class="recording-card" data-recording-preview="controls-v2-p1-keyboard-1-128">
+          <a class="recording-media" href="/?recording=controls-v2-p1-keyboard-1-128#watch-root" aria-label="Replay Astra keyboard controls study v2"><canvas role="img" aria-label="Astra keyboard study v2 captured screen preview"></canvas></a>
+          <div class="recording-source" data-preview-status>Loading captured screen…</div>
+          <div class="recording-copy"><h2>Astra · controls study v2 pair 1 · keyboard · 1–128</h2><div class="recording-window">Decisions 1–128 · 128 frames</div><p>Seven dwarves alive after 70,900 game ticks, with seven installed beds, two workshops, one farm, 43 food and 135 drinks. All 128 decisions used keyboard controls. Resumed from its own save at decision 64. This first matched pair uses the same seed and 128-decision limit as the shortcuts run. Stocks do not establish sustainability, and the final save has not had a separate fresh-reload check.</p><a class="fl-link" href="/?recording=controls-v2-p1-keyboard-1-128#watch-root">Open replay →</a></div>
+        </article>
+        <article class="recording-card" data-recording-preview="controls-v2-p1-shortcuts-1-128">
+          <a class="recording-media" href="/?recording=controls-v2-p1-shortcuts-1-128#watch-root" aria-label="Replay Astra shortcuts controls study v2"><canvas role="img" aria-label="Astra shortcuts study captured screen preview"></canvas></a>
+          <div class="recording-source" data-preview-status>Loading captured screen…</div>
+          <div class="recording-copy"><h2>Astra · controls study v2 pair 1 · shortcuts · 1–128</h2><div class="recording-window">Decisions 1–128 · 128 frames</div><p>Seven dwarves alive after 68,200 game ticks, with seven installed beds, two workshops, one farm, 39 food and 115 drinks. Resumed from its own save at decision 64. Twelve workshop shortcuts queued 36 jobs; queued jobs are not completed products. This is the first of three planned matched pairs on the same seed, not a verdict on which controls are better. These stocks do not establish sustainability, and the final save has not had a separate fresh-reload check.</p><a class="fl-link" href="/?recording=controls-v2-p1-shortcuts-1-128#watch-root">Open replay →</a></div>
+        </article>
+        <article class="recording-card" data-recording-preview="controls-p1-keyboard-1-128">
+          <a class="recording-media" href="/?recording=controls-p1-keyboard-1-128#watch-root" aria-label="Replay Astra keyboard controls study v1"><canvas role="img" aria-label="Astra keyboard study captured screen preview"></canvas></a>
+          <div class="recording-source" data-preview-status>Loading captured screen…</div>
+          <div class="recording-copy"><h2>Astra · controls study pair 1 · keyboard · 1–128 (v1)</h2><div class="recording-window">Decisions 1–128 · 128 frames</div><p>Seven dwarves alive after 83,800 game ticks, with four installed beds, three workshops, one farm, 58 food and 111 drinks. Resumed from its own save at decision 64. This is the earlier v1 keyboard run, separate from the corrected v2 controls study. The final save has not had a separate fresh-reload check.</p><a class="fl-link" href="/?recording=controls-p1-keyboard-1-128#watch-root">Open replay →</a></div>
+        </article>
+        <article class="recording-card" data-recording-preview="astra-matched-r2-65-128">
+          <a class="recording-media" href="/?recording=astra-matched-r2-65-128#watch-root" aria-label="Replay Astra matched trial 2 continuation"><canvas role="img" aria-label="Astra second own-save continuation captured screen preview"></canvas></a>
+          <div class="recording-source" data-preview-status>Loading captured screen…</div>
+          <div class="recording-copy"><h2>gpt-6-astra · matched trial 2</h2><div class="recording-window">Decisions 65–128 · 64 frames</div><p>Continued from its own save to seven beds, three workshops and one farm after 50,400 total game ticks. Seven dwarves alive, no recorded deaths, 42 food and 121 drinks. This window used the declared 32-to-40 GiB storage amendment; other conditions were unchanged.</p><a class="fl-link" href="/?recording=astra-matched-r2-65-128#watch-root">Open replay →</a></div>
+        </article>
+        <article class="recording-card" data-recording-preview="terra-matched-r2-65-128">
+          <a class="recording-media" href="/?recording=terra-matched-r2-65-128#watch-root" aria-label="Replay Terra matched trial 2 continuation"><canvas role="img" aria-label="Terra second own-save continuation captured screen preview"></canvas></a>
+          <div class="recording-source" data-preview-status>Loading captured screen…</div>
+          <div class="recording-copy"><h2>gpt-5.6-terra · matched trial 2</h2><div class="recording-window">Decisions 65–128 · 64 frames</div><p>The game advanced 108,000 ticks from its own save. Seven dwarves remain alive, but no beds, workshops or farms are complete. Food and drinks fell to 36 and 26. Time passed without measured fortress development.</p><a class="fl-link" href="/?recording=terra-matched-r2-65-128#watch-root">Open replay →</a></div>
+        </article>
+        <article class="recording-card" data-recording-preview="astra-matched-r1-65-128">
+          <a class="recording-media" href="/?recording=astra-matched-r1-65-128#watch-root" aria-label="Replay Astra matched trial 1 continuation"><canvas role="img" aria-label="Astra own-save continuation captured screen preview"></canvas></a>
+          <div class="recording-source" data-preview-status>Loading captured screen…</div>
+          <div class="recording-copy"><h2>gpt-6-astra · matched trial 1</h2><div class="recording-window">Decisions 65–128 · 64 frames</div><p>Continued from its own save to eight beds, three workshops and two farms after 55,700 total game ticks. Seven dwarves alive, no recorded deaths, 61 food and 83 drinks. These stocks do not establish sustainability.</p><a class="fl-link" href="/?recording=astra-matched-r1-65-128#watch-root">Open replay →</a></div>
+        </article>
+        <article class="recording-card" data-recording-preview="terra-matched-r1-65-128">
+          <a class="recording-media" href="/?recording=terra-matched-r1-65-128#watch-root" aria-label="Replay Terra matched trial 1 continuation"><canvas role="img" aria-label="Terra own-save continuation captured screen preview"></canvas></a>
+          <div class="recording-source" data-preview-status>Loading captured screen…</div>
+          <div class="recording-copy"><h2>gpt-5.6-terra · matched trial 1</h2><div class="recording-window">Decisions 65–128 · 64 frames</div><p>Continued from its own save. Population grew from seven to fifteen, with one workshop and no recorded deaths after 120,200 total game ticks. Still no beds or farm; food and drinks fell to 36 and 26.</p><a class="fl-link" href="/?recording=terra-matched-r1-65-128#watch-root">Open replay →</a></div>
+        </article>
+        <article class="recording-card" data-recording-preview="astra-matched-r2-1-64">
+          <a class="recording-media" href="/?recording=astra-matched-r2-1-64#watch-root" aria-label="Replay Astra matched trial 2"><canvas role="img" aria-label="Astra second matched-trial captured screen preview"></canvas></a>
+          <div class="recording-source" data-preview-status>Loading captured screen…</div>
+          <div class="recording-copy"><h2>gpt-6-astra · matched trial 2</h2><div class="recording-window">Decisions 1–64 · 64 frames</div><p>Three completed workshops and seven dwarves alive after 9,200 game ticks. No placed beds or farm plots at this checkpoint. All requested time advanced without clock errors; food and drink stocks stayed at 50 and 60.</p><a class="fl-link" href="/?recording=astra-matched-r2-1-64#watch-root">Open replay →</a></div>
+        </article>
+        <article class="recording-card" data-recording-preview="sol-matched-r2-1-64">
+          <a class="recording-media" href="/?recording=sol-matched-r2-1-64#watch-root" aria-label="Replay Sol matched trial 2"><canvas role="img" aria-label="Sol second matched-trial captured screen preview"></canvas></a>
+          <div class="recording-source" data-preview-status>Loading captured screen…</div>
+          <div class="recording-copy"><h2>gpt-5.6-sol · matched trial 2</h2><div class="recording-window">Decisions 1–64 · 64 frames</div><p>Seven dwarves alive after 10,400 game ticks, with no completed beds, workshops or farms. Nine clock timeouts remain in the source evidence. Food and drink stocks stayed at 50 and 60.</p><a class="fl-link" href="/?recording=sol-matched-r2-1-64#watch-root">Open replay →</a></div>
+        </article>
+        <article class="recording-card" data-recording-preview="terra-matched-r2-1-64">
+          <a class="recording-media" href="/?recording=terra-matched-r2-1-64#watch-root" aria-label="Replay Terra matched trial 2"><canvas role="img" aria-label="Terra second matched-trial captured screen preview"></canvas></a>
+          <div class="recording-source" data-preview-status>Loading captured screen…</div>
+          <div class="recording-copy"><h2>gpt-5.6-terra · matched trial 2</h2><div class="recording-window">Decisions 1–64 · 64 frames</div><p>No game time advanced and no buildings completed. All nine rejected key commands remain visible. Seven dwarves remained in the starting state; this is not fortress-management success.</p><a class="fl-link" href="/?recording=terra-matched-r2-1-64#watch-root">Open replay →</a></div>
+        </article>
+        <article class="recording-card" data-recording-preview="astra-matched-r1-1-64">
+          <a class="recording-media" href="/?recording=astra-matched-r1-1-64#watch-root" aria-label="Replay Astra matched trial 1"><canvas role="img" aria-label="Astra matched-trial captured screen preview"></canvas></a>
+          <div class="recording-source" data-preview-status>Loading captured screen…</div>
+          <div class="recording-copy"><h2>gpt-6-astra · matched trial 1</h2><div class="recording-window">Decisions 1–64 · 64 frames</div><p>Seven beds, two workshops and one farm, with seven dwarves alive. Saved 23,000 game ticks under the same starting conditions as Sol and Terra. Early development, not demonstrated sustainability or a model ranking.</p><a class="fl-link" href="/?recording=astra-matched-r1-1-64#watch-root">Open replay →</a></div>
+        </article>
+        <article class="recording-card" data-recording-preview="terra-matched-r1-1-64">
+          <a class="recording-media" href="/?recording=terra-matched-r1-1-64#watch-root" aria-label="Replay Terra matched trial 1"><canvas role="img" aria-label="Terra matched-trial captured screen preview"></canvas></a>
+          <div class="recording-source" data-preview-status>Loading captured screen…</div>
+          <div class="recording-copy"><h2>gpt-5.6-terra · matched trial 1</h2><div class="recording-window">Decisions 1–64 · 64 frames</div><p>Tree-felling and plant-gathering activity, with seven dwarves alive but no completed beds, workshops or farms. Saved 4,200 game ticks. Clock timeouts remain in the evidence; requested time is not counted as progress.</p><a class="fl-link" href="/?recording=terra-matched-r1-1-64#watch-root">Open replay →</a></div>
+        </article>
+        <article class="recording-card" data-recording-preview="sol-matched-r1-1-64">
+          <a class="recording-media" href="/?recording=sol-matched-r1-1-64#watch-root" aria-label="Replay Sol matched trial 1"><canvas role="img" aria-label="Sol matched-trial captured screen preview"></canvas></a>
+          <div class="recording-source" data-preview-status>Loading captured screen…</div>
+          <div class="recording-copy"><h2>gpt-5.6-sol · matched trial 1</h2><div class="recording-window">Decisions 1–64 · 64 frames</div><p>Fresh start with displayed keyboard controls. Saved 2,900 game ticks with seven dwarves and no completed beds, workshops or farms. Part of the new six-attempt comparison, not the earlier keyboard experiment.</p><a class="fl-link" href="/?recording=sol-matched-r1-1-64#watch-root">Open replay →</a></div>
+        </article>
+        <article class="recording-card" data-recording-preview="astra-year-two-257-416">
+          <a class="recording-media" href="/?recording=astra-year-two-257-416#watch-root" aria-label="Replay Astra into Year Two"><canvas role="img" aria-label="Astra Year-Two captured screen preview"></canvas></a>
+          <div class="recording-source" data-preview-status>Loading captured screen…</div>
+          <div class="recording-copy"><h2>Astra · into Year Two</h2><div class="recording-window">Decisions 257–416 · 160 frames</div><p>1.066 elapsed game years. Saved with 13 dwarves, 12 beds, 43 raw-food units and 389 drinks. Checkpoint 416 passed a fresh reload. Earlier save loss remains in the campaign history; this is a continuation, not another independent trial.</p><a class="fl-link" href="/?recording=astra-year-two-257-416#watch-root">Open replay →</a></div>
+        </article>
+        <article class="recording-card" data-recording-preview="astra-recovery-225-256">
+          <a class="recording-media" href="/?recording=astra-recovery-225-256#watch-root" aria-label="Replay Astra recovery"><canvas role="img" aria-label="Astra recovery captured screen preview"></canvas></a>
+          <div class="recording-source" data-preview-status>Loading captured screen…</div>
+          <div class="recording-copy"><h2>Astra · recovered continuation</h2><div class="recording-window">Decisions 225–256 · 32 frames</div><p>Resumed from checkpoint 224 and saved through 256. The earlier 32 unsaved decisions remain in the separate failed recording; all model usage stays counted.</p><a class="fl-link" href="/?recording=astra-recovery-225-256#watch-root">Open replay →</a></div>
+        </article>
+        <article class="recording-card" data-recording-preview="astra-97-256">
+          <a class="recording-media" href="/?recording=astra-97-256#watch-root" aria-label="Replay Astra"><canvas role="img" aria-label="Astra captured screen preview"></canvas></a>
+          <div class="recording-source" data-preview-status>Loading captured screen…</div>
+          <div class="recording-copy"><h2>Astra · displayed keys</h2><div class="recording-window">Decisions 97–256 · 160 frames</div><p>Saved through decision 224. Decisions 225–256 are an observed, unsaved tail after the final save failed.</p><a class="fl-link" href="/?recording=astra-97-256#watch-root">Open replay →</a></div>
+        </article>
+        <article class="recording-card" data-recording-preview="sol-65-128">
+          <a class="recording-media" href="/?recording=sol-65-128#watch-root" aria-label="Replay Sol"><canvas role="img" aria-label="Sol captured screen preview"></canvas></a>
+          <div class="recording-source" data-preview-status>Loading captured screen…</div>
+          <div class="recording-copy"><h2>Sol · keyboard</h2><div class="recording-window">Decisions 65–128 · 64 frames</div><p>Saved through decision 128. Scrub captured game screens alongside the model’s stated intent and chosen keys.</p><a class="fl-link" href="/?recording=sol-65-128#watch-root">Open replay →</a></div>
+        </article>
+        <article class="recording-card" data-recording-preview="terra-65-128">
+          <a class="recording-media" href="/?recording=terra-65-128#watch-root" aria-label="Replay Terra"><canvas role="img" aria-label="Terra captured screen preview"></canvas></a>
+          <div class="recording-source" data-preview-status>Loading captured screen…</div>
+          <div class="recording-copy"><h2>Terra · keyboard</h2><div class="recording-window">Decisions 65–128 · 64 frames</div><p>Saved through decision 128. Includes a rejected key command, kept visible in the recording.</p><a class="fl-link" href="/?recording=terra-65-128#watch-root">Open replay →</a></div>
+        </article>
+        <article class="recording-card" data-recording-preview="astra-portable-acceptance-1-4">
+          <a class="recording-media" href="/?recording=astra-portable-acceptance-1-4#watch-root" aria-label="Replay the Astra harness check"><canvas role="img" aria-label="Astra harness check captured screen preview"></canvas></a>
+          <div class="recording-source" data-preview-status>Loading captured screen…</div>
+          <div class="recording-copy"><h2>Astra · harness save-and-resume check</h2><div class="recording-window">Decisions 1–4 · 4 frames</div><p>Four paused decisions across a verified save and resume. Zero elapsed game ticks. This is a harness check, not fortress growth or a model ranking.</p><a class="fl-link" href="/?recording=astra-portable-acceptance-1-4#watch-root">Open replay →</a></div>
+        </article>
+      </div>
+      <p class="fl-copy">Play or scrub each captured decision window. Astra’s saved continuation reached Year Two; it is separate from the new matched comparison. A recording window is not an independent trial.</p>
+      <noscript>Enable JavaScript to render captured screens and use the replay controls.</noscript>
     </div>
   </section>
 
-  <section class="filter-band" aria-label="Run filters">
+  <section class="archive-intro fl-wrap" aria-labelledby="archive-title">
+    <h2 class="fl-kicker" id="archive-title">Earlier published runs</h2>
+    <p>This separate archive uses the original run registry. Filters below apply only to this archive, not the recordings above.</p>
+  </section>
+  <section class="filter-band" aria-label="Earlier run filters">
     <form class="fl-wrap filters" id="filters-form">
       <div class="filter-field"><input id="filter-query" name="q" type="search" maxlength="100" placeholder="Search models, protocols, seeds…" aria-label="Search recorded worlds"></div>
       <div class="filter-field"><select id="filter-status" name="status" aria-label="Filter by status"><option value="">All statuses</option><option value="pending">Pending</option><option value="running">Live</option><option value="paused">Paused</option><option value="completed">Completed</option><option value="stopped">Stopped</option><option value="failed">Failed</option></select></div>
@@ -143,7 +346,21 @@
 
   <section class="library">
     <div class="fl-wrap">
-      <div class="library-head"><div class="fl-kicker">World archive</div><div class="library-count" id="library-count">Loading…</div></div>
+      <article class="featured-world" id="featured-world" aria-label="Featured earlier run" hidden>
+        <div class="fl-media featured-media"><canvas id="featured-canvas"></canvas><div class="fl-media-source" id="featured-source">Loading recorded world…</div></div>
+        <div class="featured-copy">
+          <div class="fl-kicker" id="featured-kicker">Featured world</div>
+          <div class="featured-model" id="featured-model">Loading…</div>
+          <div class="featured-grid">
+            <div><div class="fl-data-label">Step</div><div class="fl-data-value" id="featured-step">--</div></div>
+            <div><div class="fl-data-label">Score</div><div class="fl-data-value fl-data-value-acid" id="featured-score">--</div></div>
+            <div><div class="fl-data-label">Protocol</div><div class="fl-data-value" id="featured-protocol">--</div></div>
+            <div><div class="fl-data-label">Seed</div><div class="fl-data-value" id="featured-seed">--</div></div>
+          </div>
+          <a class="fl-link" id="featured-link" href="/#watch-root">Open run →</a>
+        </div>
+      </article>
+      <div class="library-head"><div class="fl-kicker">Earlier run archive</div><div class="library-count" id="library-count">Loading…</div></div>
       <div class="world-grid" id="world-grid" aria-live="polite"><div class="fl-empty">Reconstructing recorded worlds…</div></div>
       <div class="pager" id="pager" hidden>
         <div class="pager-info" id="pager-info"></div>
@@ -157,12 +374,13 @@
   <div class="fl-wrap fl-footer-grid">
     <div><div class="fl-footer-mark"><span>FORT</span> LABS</div><p class="fl-footer-copy">Worlds for long-horizon intelligence. Every public run opens into its recorded gameplay.</p></div>
     <div><div class="fl-footer-title">Explore</div><div class="fl-footer-links"><a href="/results">Results</a><a href="/protocols">Protocols</a><a href="/worlds">Runs</a><a href="/findings">Findings</a></div></div>
-    <div><div class="fl-footer-title">Research</div><div class="fl-footer-links"><a href="https://github.com/lemoz/fort-gym/blob/main/docs/FORT_EVAL_SPEC.md">Methodology</a><a href="https://github.com/lemoz/fort-gym">GitHub</a><a href="/live">Live viewer</a></div></div>
+    <div><div class="fl-footer-title">Research</div><div class="fl-footer-links"><a href="https://github.com/lemoz/fort-gym/blob/main/docs/FORT_EVAL_SPEC.md">Methodology</a><a href="https://github.com/lemoz/fort-gym">GitHub</a><a href="/#watch-root">Spectator</a></div></div>
     <div><div class="fl-footer-title">Archive</div><div class="fl-footer-links"><a href="/leaderboard">Historical leaderboard</a><a href="/worlds">Recorded worlds</a></div></div>
   </div>
 </footer>
 
 <script src="/static/fort-labs.js?v=20260711-2"></script>
+<script type="module" src="/static/worlds-recordings.mjs?v=20260911-1"></script>
 <script>
 (function () {
   'use strict';
@@ -208,12 +426,8 @@
   }
 
   function applyFeatured(run) {
-    if (!run) {
-      FL.renderUnavailable($('featured-canvas'));
-      $('featured-source').textContent = 'No recorded world available';
-      $('featured-model').textContent = 'The next world begins soon';
-      return;
-    }
+    $('featured-world').hidden = !run;
+    if (!run) return;
     const isRunning = FL.canWatchLive(run);
     const featureLabel = isRunning
       ? 'Live world'
@@ -271,11 +485,13 @@
   function renderPage(payload, filters) {
     state = {offset: payload.offset, total: payload.total, items: payload.items || []};
     const items = state.items;
-    $('worlds-summary').textContent = `${state.total.toLocaleString()} public worlds · real gameplay and replay evidence`;
-    $('library-count').textContent = state.total ? `Showing ${state.offset + 1}–${Math.min(state.offset + items.length, state.total)} of ${state.total}` : 'No matching worlds';
+    $('library-count').textContent = state.total ? `Showing ${state.offset + 1}–${Math.min(state.offset + items.length, state.total)} of ${state.total}` : 'No earlier runs listed';
     applyFeatured(items[0]);
     if (!items.length) {
-      $('world-grid').innerHTML = '<div class="fl-empty">No recorded worlds match these filters. Try a broader model, protocol, seed, or status.</div>';
+      const filtered = ['q','status','model','evaluation_protocol','seed_save'].some(key => filters[key]);
+      $('world-grid').innerHTML = '<div class="fl-empty">' + (filtered
+        ? 'No recorded worlds match these filters. Try a broader model, protocol, seed, or status.'
+        : 'No earlier runs are listed in this registry. The recent recordings above are ready to replay.') + '</div>';
     } else {
       $('world-grid').innerHTML = items.map(cardHtml).join('');
       observeFrames(items);
@@ -296,7 +512,8 @@
     try {
       renderPage(await FL.fetchJson(endpoint(filters)), filters);
     } catch (_) {
-      $('world-grid').innerHTML = '<div class="fl-empty">Recorded worlds are temporarily unavailable. The archive will reconnect automatically on the next request.</div>';
+      applyFeatured(null);
+      $('world-grid').innerHTML = '<div class="fl-empty">The earlier run archive is temporarily unavailable. You can still open the recent recordings above.</div>';
       $('library-count').textContent = 'Archive unavailable';
     }
   }

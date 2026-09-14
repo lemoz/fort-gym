@@ -318,6 +318,23 @@ def signal_runtime_members(runtime: Path, requested_signal: int) -> None:
                 pass
 
 
+def runtime_launcher(runtime: Path, screen_size: tuple[int, int] | None = None) -> list[str]:
+    """Size only the newly owned Linux PTY; never edit the retained game config."""
+    command = shlex.quote(str(runtime / "dfhack"))
+    if screen_size is not None:
+        if (
+            not isinstance(screen_size, tuple)
+            or len(screen_size) != 2
+            or any(type(value) is not int for value in screen_size)
+            or not 80 <= screen_size[0] <= 300
+            or not 25 <= screen_size[1] <= 150
+        ):
+            raise CampaignSaveError("Invalid native terminal screen size")
+        columns, rows = screen_size
+        command = f"stty cols {columns} rows {rows} && exec {command}"
+    return ["script", "-qefc", command, "/dev/null"]
+
+
 def run_isolated(
     *,
     source: Path,
@@ -331,7 +348,9 @@ def run_isolated(
     source_kind: str = "native_snapshot",
     minimum_free_bytes: int = 0,
     checkpoint_copies: int = 0,
+    screen_size: tuple[int, int] | None = None,
 ):
+    runtime_launcher(output / "runtime", screen_size)  # Validate before creating any output.
     for retained in (source, snapshot):
         if output.resolve() == retained.resolve() or retained.resolve() in output.resolve().parents:
             raise CampaignSaveError("Test output must be outside retained source and snapshot")
@@ -389,6 +408,7 @@ def run_isolated(
         result=result,
         validate_source=lambda: verify_load_source(snapshot, digest, source_kind),
         work=work,
+        screen_size=screen_size,
     )
 
 
@@ -402,14 +422,20 @@ def _run_prepared_runtime(
     validate_source: Callable[[], Any],
     work=None,
     validate_runtime: Callable[[], Any] | None = None,
+    screen_size: tuple[int, int] | None = None,
 ) -> dict[str, Any]:
     """Shared process lifetime; callers own preparation and any restart lock."""
     port = result["port"]
+    command = runtime_launcher(runtime, screen_size)
+    if screen_size is not None:
+        result["requested_screen_size"] = {"width": screen_size[0], "height": screen_size[1]}
+        # This is a request, not a capture. A native CopyScreen must verify it.
+        result["display_profile"] = "native_terminal_grid/v1"
     if validate_runtime is not None:
         validate_runtime()
     with (output / "runtime.log").open("xb") as log:
         process = subprocess.Popen(
-            ["script", "-qefc", shlex.quote(str(runtime / "dfhack")), "/dev/null"],
+            command,
             cwd=runtime,
             env=environment,
             stdin=subprocess.DEVNULL,

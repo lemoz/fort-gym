@@ -1,0 +1,52 @@
+{
+  "schema_version": "fortgym.keyboard-comparison-startup/v1",
+  "recorded_at_utc": "2026-09-11T21:18:20Z",
+  "status": "running_observation_not_terminal_acceptance",
+  "cohort_id": "bindings-comparison-20260911",
+  "campaign_id": "bindings-comparison-20260911-terra-r1",
+  "model": "gpt-5.6-terra",
+  "reasoning_effort": "medium",
+  "replicate": 1,
+  "declaration_revision": "61fcca7177d8b66ddd7e12e4be0ab53bda5ffd5b",
+  "native_source_revision": "d22f28d99f4fd103188979e964e148139d3f3efd",
+  "maximum_responses_this_start": 64,
+  "startup_review_sha256": "f96c259c497f4743ebf3eb8d1f2e932daff6b2304ecc38b8d4a8c584f30a6e44",
+  "shared_seed_native_load_verified": true,
+  "fresh_empty_memory_usage_history_verified": true,
+  "loaded_year": 30,
+  "loaded_year_tick": 16801,
+  "first_response_original_events_verified": true,
+  "first_response_tokens": 25465,
+  "subscription_transport": "codex-exec-chatgpt/v1",
+  "reported_charge_usd": null,
+  "guest_available_kib_before_container": 2803612,
+  "cloud_vms_created": 0,
+  "mandatory_vm_teardown": true,
+  "predecessor_sol_saved_and_teardown_verified_before_launch": true,
+  "new_checkpoint_verified": false,
+  "terminal_acceptance_complete": false,
+  "website": {
+    "url": "https://fortgym.live/#watch-root",
+    "public_frame_verified": 9,
+    "live_verification_sha256": "5810042dfb290265198c71a20c4544eaac3c0aa70e518c4ff1f78a9317635cb0",
+    "actual_public_payload_sha256": "0143a8b652db51a79cdeb8a04c6853c2caf6d01c1e762e2bf225d0bf102e2ff8",
+    "original_screen_and_explicit_action_match": true,
+    "browser_observed_terra_decisions": [
+      8,
+      11
+    ],
+    "browser_switched_from_previous_sol_owner": true,
+    "desktop_screenshot_visually_inspected_inline": true,
+    "console_errors_or_warnings_observed": 0,
+    "private_memory_or_provider_payload_published": false,
+    "new_site_deployment": false,
+    "service_restart": false
+  },
+  "limits": [
+    "This is a running observation, not a completed trial or a verified save.",
+    "The live feed shows captured screens and chosen moves, not confirmed game outcomes.",
+    "The matched comparison currently contains only Sol r1's settled decision-64 result; missing records do not mean failed or unstarted trials.",
+    "Charges are unreported, not zero. No paid API fallback, reset or credit purchase is configured."
+  ],
+  "full_goal_complete": false
+}

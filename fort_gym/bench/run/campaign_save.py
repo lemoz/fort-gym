@@ -14,9 +14,15 @@ import shutil
 import time
 from collections.abc import Callable, Mapping
 from pathlib import Path
-from typing import Any
+from typing import Any, Protocol
 
 from ..dfhack_exec import run_command, run_lua_expr
+
+
+class NativeSnapshotter(Protocol):
+    """Capture a native save and return its verified metadata and file inventory."""
+
+    def capture(self, destination: Path) -> dict[str, Any]: ...
 
 _SAVE_NAME = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.-]{0,127}\Z")
 

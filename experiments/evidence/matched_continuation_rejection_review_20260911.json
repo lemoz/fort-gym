@@ -1,0 +1,41 @@
+{
+  "schema_version": "fortgym.matched-continuation-rejection-review/v1",
+  "scope": "Typed rejected-input terminal audit and offline regression against retained Terra r2 evidence.",
+  "native_source_revision": "d22f28d99f4fd103188979e964e148139d3f3efd",
+  "source_sha256": {
+    "rejection_review.py": "97e81ec09df53380082b9518849f5981a0143c361799ebe4affce0de31c1e3bb",
+    "terminal_review.py": "edb55f51eec71485345a8bef0f0df548a487baf395bf45bb01ada465f5d4baf3"
+  },
+  "validation": {
+    "focused_tests_passed": 274,
+    "selected_ruff_passed": true,
+    "selected_mypy_passed": true,
+    "selected_mypy_source_files": 5,
+    "full_regression_rerun": false,
+    "retained_full_suite_limit": "Earlier local full run retained one unchanged historical M1b source-hook versus pinned OCI-layer mismatch; this record does not claim the full suite is green."
+  },
+  "actual_retained_evidence": {
+    "campaign_id": "bindings-comparison-20260911-terra-r2",
+    "review_sha256": "5168363c76f4b4bbd15666e2b5fc77172264819e82b59717776053e88d58f651",
+    "review_script_sha256": "5c7aa4478ef033ae7d444b5fcb73a244f7ad0543eb56e72adfa6d1299e589530",
+    "original_audit_sha256": "b9801bf5a065839da24ed03eada32676042e5feaeaec06601eef6059004a30f9",
+    "original_checkpoint_sha256": "1b44d26183b728cd9c94f54704c86a408ea983a4f279a4b07d4eee1ea9cbc417",
+    "original_trace_sha256": "1cc617840e9ba36320589409033646a795388f1bc51ae13c5eb63db1cceae642",
+    "provider_receipts_verified": 64,
+    "rejected_responses_verified": 9,
+    "altered_action_dispatch_clock_negative_checks_passed": 27,
+    "confirmed_key_presses": 80,
+    "total_tokens": 1186821,
+    "complete_memory_chain_verified": true,
+    "rejected_memory_updates_not_applied": true,
+    "original_evidence_unchanged": true
+  },
+  "continuation_launched": false,
+  "native_continuation_audit_exercised": false,
+  "observer_rejection_projection_fixed": false,
+  "website_publication": false,
+  "model_calls_by_review": 0,
+  "gameplay_inputs_by_review": 0,
+  "vm_operations_by_review": 0,
+  "full_goal_complete": false
+}

@@ -1,0 +1,192 @@
+{
+  "schema_version": "fortgym.endurance-save-and-reload/v1",
+  "date_utc": "2026-09-13",
+  "observed_at_unix": 1789291770,
+  "campaign_id": "astra-keyboard-endurance-v1",
+  "source_revision": "4b526b5636e6f568a4cae1a1227d746d9c6922c3",
+  "image": "sha256:a2f12a74805949b8a2fcf0262b5d63048f4bd3a6f2faf4d8bbc74c261b172ed4",
+  "model": "gpt-6-astra",
+  "reasoning_effort": "medium",
+  "control_profile": "native_keyboard_bindings/v1",
+  "saved_through_decision": 836,
+  "new_model_responses": 64,
+  "cumulative_model_responses": 836,
+  "cumulative_returned_tokens": 24149524,
+  "reported_subscription_charge_usd": null,
+  "new_cloud_spend_usd": 0,
+  "saved_elapsed_ticks": 552250,
+  "saved_metrics": {
+    "population": 19,
+    "food_stock": 151,
+    "drink_stock": 528,
+    "wood_stock": null,
+    "stone_stock": null,
+    "functional_rooms": null,
+    "completed_workshops": 5,
+    "completed_beds": 9,
+    "completed_farms": 3,
+    "recorded_dead_citizens": 1
+  },
+  "checkpoint_verified": true,
+  "checkpoint_manifest_sha256": "180580b5379d22a50078008d6adf74441b9ada9359c12f69a8ab1c8a41751066",
+  "audit_sha256": "8cbbd496963c31cdf3b00ab2c5148cf482834c572ccc35496d44ba5aa17f8939",
+  "operation_sha256": "cadc7550b6b9fcaf391c14616fd2f71dd725933593df4fdd722321c1fd6c5e67",
+  "saved_agent_sha256": "25e530a48e207074bda0af8a2e57f21ee16c8cd15a919bed6dbc2ecdccc8fa3b",
+  "action_summary_cumulative": {
+    "schema_version": "fortgym.selected-workshop-action-summary/v1",
+    "decisions": 836,
+    "action_routes": {
+      "KEYSTROKE": 836
+    },
+    "accepted_actions": 832,
+    "rejected_actions": 4,
+    "keyboard": {
+      "decisions": 836,
+      "requested_key_presses": 4009,
+      "known_keys_sent": 4000,
+      "records_without_key_count": 0
+    },
+    "workshop": {
+      "decisions": 0,
+      "requested_jobs_by_item": {},
+      "known_jobs_queued_by_item": {},
+      "records_without_queue_count": 0,
+      "completed_products_measured": false
+    },
+    "clock": {
+      "requested_ticks": 569900,
+      "advanced_ticks": 552250,
+      "timeout_requests": 0,
+      "zero_tick_timeout_requests": 0,
+      "deferred_requests": 4
+    },
+    "native_audit_performed": false
+  },
+  "action_summary_this_window": {
+    "schema_version": "fortgym.selected-workshop-action-summary/v1",
+    "decisions": 64,
+    "action_routes": {
+      "KEYSTROKE": 64
+    },
+    "accepted_actions": 64,
+    "rejected_actions": 0,
+    "keyboard": {
+      "decisions": 64,
+      "requested_key_presses": 226,
+      "known_keys_sent": 226,
+      "records_without_key_count": 0
+    },
+    "workshop": {
+      "decisions": 0,
+      "requested_jobs_by_item": {},
+      "known_jobs_queued_by_item": {},
+      "records_without_queue_count": 0,
+      "completed_products_measured": false
+    },
+    "clock": {
+      "requested_ticks": 56000,
+      "advanced_ticks": 56000,
+      "timeout_requests": 0,
+      "zero_tick_timeout_requests": 0,
+      "deferred_requests": 0
+    },
+    "native_audit_performed": false
+  },
+  "teardown_before_continuation": {
+    "both_vms_stopped": true,
+    "configs_unchanged": true,
+    "global_context_unchanged": true,
+    "fg-portable_disk_closed": true,
+    "fg-v2_disk_closed": true,
+    "prior_inventory_preserved": true,
+    "guest_poweroff_returncode": 0,
+    "vm_stop_returncode": 0,
+    "original_return_codes_preserved": true
+  },
+  "fresh_reload": {
+    "decision": 836,
+    "verified": true,
+    "complete_agent_state_equal": true,
+    "native_clock_and_metrics_equal": true,
+    "trace_usage_prefixes_equal": true,
+    "inherited_loss_history_equal": true,
+    "initial_native_sha256": "7b184b95a3d05642b9b7f7a143ff6098e3783312149e291f8f8df7f4ffa26a9f",
+    "initial_agent_sha256": "9933df3f6e0a5644c1b0210384f9f19b091ca80968b6cea226537d74269bf9c3",
+    "first_new_response_sha256": "c1f7caeb283ccf5e3d3ab349cceed60bdbf824055247b5ccb6db581d6f37532f",
+    "first_new_response_valid": true,
+    "first_executed_decision": 837,
+    "first_execution_summary": {
+      "schema_version": "fortgym.selected-workshop-action-summary/v1",
+      "decisions": 1,
+      "action_routes": {
+        "KEYSTROKE": 1
+      },
+      "accepted_actions": 1,
+      "rejected_actions": 0,
+      "keyboard": {
+        "decisions": 1,
+        "requested_key_presses": 1,
+        "known_keys_sent": 1,
+        "records_without_key_count": 0
+      },
+      "workshop": {
+        "decisions": 0,
+        "requested_jobs_by_item": {},
+        "known_jobs_queued_by_item": {},
+        "records_without_queue_count": 0,
+        "completed_products_measured": false
+      },
+      "clock": {
+        "requested_ticks": 2000,
+        "advanced_ticks": 2000,
+        "timeout_requests": 0,
+        "zero_tick_timeout_requests": 0,
+        "deferred_requests": 0
+      },
+      "native_audit_performed": false
+    },
+    "first_canonical_trace_record_sha256": "c98a2697cf80c0d75e9a8f44f876f25b724e0ec87c18fb7d7fd11c2debd2ddfc"
+  },
+  "budget_extensions": 1,
+  "no_new_budget_extension": true,
+  "cumulative_limits": {
+    "max_dispatches": 1028,
+    "max_total_tokens": 40000000
+  },
+  "current_window": {
+    "first_decision": 837,
+    "last_decision": 900,
+    "final_checkpoint_verified": false,
+    "mandatory_teardown": true,
+    "declaration_sha256": "7b71cf4fb135dc097a26965c9d0776fac732317fe558abf5b5cc18ee0fbfc900",
+    "owner_plan_sha256": "022c19960b4cbf1b4dcf42d92dbcde2091df56b1ec0a51f20da56abe9e913ca7"
+  },
+  "public_live": {
+    "status": "running",
+    "decision": 839,
+    "public_https_verified": true,
+    "owner_identity_verified": true,
+    "original_screen_and_chosen_action_verified": true,
+    "payload_sha256": "a936005f45f7028d3a16663890bf5d1988be3d4821a4b90d30e262ae007694ae",
+    "request_sha256": "708c0d6df37a006b06c5cfc11ce31dab4082e62ce9ffec4a9a0e73e6cc5f621c",
+    "private_memory_or_transcripts_published": false
+  },
+  "replay": {
+    "id": "astra-keyboard-endurance-v1-773-836",
+    "frames": 64,
+    "sha256": "d9fbe4a36e0e792cabd94d1cc0f8dac1c74ed666b731cd01170ba89fd953360b",
+    "exported": true,
+    "website_published": false
+  },
+  "year_two_reached": true,
+  "production_rates": null,
+  "consumption_rates": null,
+  "accessible_reserves": null,
+  "functioning_fortress": "not_assessed",
+  "human_gameplay_rescue": false,
+  "main_merged": false,
+  "full_goal_complete": false,
+  "post_anniversary_checkpoint_verified": true,
+  "new_returned_tokens": 1996806,
+  "read_only_capture_script_sha256": "e0934d1d98c76572ea8072dc7a5d4ddde5626d524c0e8b7622806970a02e523b"
+}

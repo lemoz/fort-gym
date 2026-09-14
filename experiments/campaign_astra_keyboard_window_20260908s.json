@@ -1,0 +1,24 @@
+{
+  "schema_version": "fortgym.codex-keyboard-window/v1",
+  "condition_id": "astra-medium-native-keyboard-v2-partial-loss-aware-restart-711",
+  "original_condition": "campaign_astra_keyboard_20260907.json",
+  "continuation_from_next_step": 711,
+  "steps_per_segment": 64,
+  "max_segments": 1,
+  "reset_memory": false,
+  "reset_usage": false,
+  "strategy_intervention": false,
+  "snapshot_profile": "native_menu_preserving_save/v4",
+  "private_measurement_profile": "fortgym.campaign-food-measurement/v1",
+  "restart": {
+    "schema_version": "fortgym.native-save-loss-restart/v1",
+    "source_segment": 0,
+    "source_revision": "2e535166fc96633438c19017a52256b45ab36790",
+    "restored_next_step": 711,
+    "lost_trace_next_step": 733,
+    "failure_kind": "partial_interruption_pending_save"
+  },
+  "hypothesis": "With native clock receipts validated against the paused post-keyboard screen, Astra can continue ordinary play across a model-selected menu exit and any subsequent native dialogue interruption. Restore the last verified save; the model alone chooses fresh inputs and simulation advances. A run without that transition tests continuation, but does not by itself prove native acceptance of the interruption fix.",
+  "continuity_note": "Restore checkpoint 34d325596121a9a6e3631b1ed0297a4c4558e0ae2fff39853f91c138e8335c57 at cursor 711 with its original memory after verifying a fresh native load. Retain all 814 accounted responses and 26,113,503 campaign tokens, including the 23 responses from failed window r. Its 6,691 unsaved ticks include 6,000 committed trace ticks and 691 ticks from one additional uncommitted action; retain those separately in the restart record. Keep the original source and evidence immutable, replay no action, and inherit both historical losses totaling 23,200 ticks. This is a declared third loss-aware restart only when executed, not an uninterrupted campaign or independent model-comparison attempt. The 64-decision cadence, model, display, save and observation profiles remain unchanged.",
+  "budget_note": "Inherit the existing cumulative 1,024-dispatch / 40-million-token ceiling and budget-extension history without extension or reset. Preserve 69,004 historical failed-delivery tokens separately. Fresh subscription admission before every invocation; no API fallback, local model, purchase or reset. Dollar charges remain unreported. Check capacity before dispatch and retain all evidence with mandatory native/container/VM teardown."
+}

@@ -1,0 +1,75 @@
+{
+  "schema_version": "fortgym.native-interface-acceptance-summary/v1",
+  "feature": "version-matched-native-keyboard-and-terminal-viewport",
+  "source_revision": "0ef33ff7029bcf9a79cc9d320104b61ef07d2df1",
+  "source_pull_request": "https://github.com/lemoz/fort-gym/pull/137",
+  "publication_scope": "Operational test outcomes only. Captured screens, maps, coordinates, calendars, saves, traces, private prompts and detailed game-state results remain local and are excluded.",
+  "control_profile": "native_keyboard/v2",
+  "observation_profile": "native_screen_text/v1",
+  "display_profile": "native_terminal_grid/v1",
+  "attempts": [
+    {
+      "attempt_id": "local-native-keyboard-20260907-a",
+      "status": "failed",
+      "source_revision": "28630e22642fb5ad655fe51c18f4a5cba850d95c",
+      "diagnosis": "Fixture expected a different menu label than the game displayed.",
+      "teardown_verified": true
+    },
+    {
+      "attempt_id": "local-native-keyboard-20260907-b",
+      "status": "failed",
+      "source_revision": "28630e22642fb5ad655fe51c18f4a5cba850d95c",
+      "diagnosis": "Fixture expected a menu entry that was outside the captured viewport.",
+      "teardown_verified": true
+    },
+    {
+      "attempt_id": "local-native-keyboard-20260907-c",
+      "status": "failed",
+      "source_revision": "28630e22642fb5ad655fe51c18f4a5cba850d95c",
+      "diagnosis": "The historical key catalog advertised PAUSE, which is not the native D_PAUSE identifier. Native preflight rejected it before dispatch.",
+      "teardown_verified": true
+    },
+    {
+      "attempt_id": "local-native-keyboard-20260907-d",
+      "status": "passed",
+      "source_revision": "0ef33ff7029bcf9a79cc9d320104b61ef07d2df1",
+      "diagnosis": "Version-matched full key catalog, larger native capture, menu and pause inputs, and explicit clock advancement verified.",
+      "teardown_verified": true
+    }
+  ],
+  "checks": {
+    "catalog_candidates_checked": 1613,
+    "catalog_candidates_unsupported": 0,
+    "catalog_audit_sent_no_inputs": true,
+    "requested_screen_width": 120,
+    "requested_screen_height": 40,
+    "captured_screen_width": 120,
+    "captured_screen_height": 40,
+    "lossless_readable_screen_roundtrip": true,
+    "menu_and_pause_inputs_confirmed": 8,
+    "world_ticks_during_inputs": 0,
+    "explicit_ticks_requested": 100,
+    "actual_ticks_advanced": 100,
+    "original_seed_verified_unchanged": true,
+    "native_runtime_cleanup_verified": true,
+    "container_stopped": true,
+    "local_vm_stopped": true,
+    "host_docker_context_unchanged": true
+  },
+  "provider_calls": 0,
+  "metered_provider_charge_usd": "0",
+  "cloud_vms_created": 0,
+  "local_model_servers_started": 0,
+  "hardware_energy_app_and_ci_cost_usd": null,
+  "autonomous_gameplay": false,
+  "year_two_gameplay_verified": false,
+  "new_model_comparison_rows": 0,
+  "limitations": [
+    "Scripted native interface diagnostic, not an Astra model-selected action or campaign.",
+    "Workshop ordering, building placement and completed digging were not tested.",
+    "Not a guarantee of post-input frame freshness in every menu.",
+    "Original failed verdicts are preserved.",
+    "Unattended subscription accounting, checkpointed keyboard integration, website delivery and reviewed merge remain open.",
+    "Native evidence remains private. No production deployment."
+  ]
+}

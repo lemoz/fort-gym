@@ -1,0 +1,22 @@
+{
+  "schema_version": "fortgym.native-settled-identity-acceptance-summary/v1",
+  "source_revision": "adc2aeafcceba1159cb0c624f3c68318846ab398",
+  "snapshot_profile": "native_menu_preserving_save/v3",
+  "retained_trace_cursor": 232,
+  "native_snapshot_verified": true,
+  "saved_state_fresh_reload_verified": true,
+  "settled_identity_unchanged": true,
+  "inline_helper_discrepancy_retained": true,
+  "native_screen_stack_unchanged": true,
+  "native_calendar_unchanged": true,
+  "recorded_world_observations_unchanged": true,
+  "source_save_read_only_and_unchanged": true,
+  "independent_retained_evidence_audit_passed": true,
+  "teardown_verified": true,
+  "menu_setup_keys": 9,
+  "save_keys": 0,
+  "model_calls": 0,
+  "requested_game_ticks": 0,
+  "new_campaign_checkpoint_created": false,
+  "measurement_note": "Provider-free reproduction and acceptance on a disposable copy of the latest retained save. This verifies the save-profile correction, not campaign recovery or new autonomous gameplay."
+}

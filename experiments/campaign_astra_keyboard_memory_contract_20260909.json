@@ -1,0 +1,28 @@
+{
+  "schema_version": "fortgym.codex-keyboard-condition/v3",
+  "condition_id": "astra-medium-native-keyboard-memory-replacement-120x40",
+  "model": "gpt-6-astra",
+  "reasoning_effort": "medium",
+  "transport": "codex-exec-chatgpt/v1",
+  "control_profile": "native_keyboard/v2",
+  "observation_profile": "native_screen_text/v1",
+  "advance_policy": "model_requested/v1",
+  "screen_size": [
+    120,
+    40
+  ],
+  "steps_per_segment": 4,
+  "max_segments": 2,
+  "max_dispatches": 8,
+  "max_total_tokens": 500000,
+  "max_advance_ticks": 2000,
+  "model_timeout_seconds": 180,
+  "exchange_timeout_seconds": 240,
+  "maximum_included_usage_percent": 90,
+  "account_admission": "fresh_read_before_each_model_invocation",
+  "actual_charge_usd": null,
+  "api_fallback": false,
+  "automatic_credit_purchase": false,
+  "automatic_reset_consumption": false,
+  "prompt_profile": "native_keyboard_memory_replacement/v1"
+}

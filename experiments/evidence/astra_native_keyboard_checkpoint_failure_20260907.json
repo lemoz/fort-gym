@@ -1,0 +1,35 @@
+{
+  "schema_version": "fortgym.native-keyboard-checkpoint-failure-summary/v1",
+  "source_revision": "6493cba58152a009a167447f10d73034e8ef0a9c",
+  "model": "gpt-6-astra",
+  "reasoning_effort": "medium",
+  "control_profile": "native_keyboard/v2",
+  "observation_profile": "native_screen_text/v1",
+  "terminal_reason": "native_save_completion_timeout",
+  "independent_retained_evidence_audit_passed": true,
+  "teardown_verified": true,
+  "checkpoint_verified": false,
+  "original_failed_window_preserved": true,
+  "original_trace_and_usage_prefix_unchanged": true,
+  "progress": {
+    "starting_checkpoint_cursor": 184,
+    "retained_trace_cursor": 200,
+    "returned_model_responses": 200,
+    "new_accepted_model_responses": 16,
+    "committed_elapsed_ticks_in_trace": 46000,
+    "last_resumable_checkpoint_cursor": 184,
+    "last_saved_elapsed_ticks": 44000,
+    "unsaved_new_native_ticks": 2000,
+    "new_native_save_matches_prior_checkpoint": true,
+    "newer_native_state_resumable": false
+  },
+  "usage": {
+    "new_tokens": 531913,
+    "campaign_tokens": 6465867,
+    "all_attempt_tokens": 6534871,
+    "historical_failed_delivery_tokens": 69004,
+    "reported_charge_usd": null,
+    "cost_basis": "codex_subscription_charge_unreported/v1"
+  },
+  "scope": "Authored non-content terminal summary. Sixteen new model responses were accepted before native saving failed. Their trace and fully counted usage are retained, but the game save remains at checkpoint 184. No checkpoint 200 or resumable newer state is claimed. A later run must retain this usage and explicitly declare any discontinuity, never silently rewind or replay. This is an infrastructure save failure, not fortress-collapse evidence."
+}

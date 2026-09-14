@@ -1,0 +1,198 @@
+# Reusable keyboard campaign continuation
+
+The native entrypoint is `python -m scripts.campaign_keyboard_native`.
+It replaces the per-experiment native fixture while reusing CampaignLoop,
+the native checkpoint/save verifier, isolated game launcher and model exchange.
+The host-side model operation is
+`fort_gym.bench.agent.keyboard_courier.answer_request`.
+The outside VM/container owner remains responsible for its own provisioning,
+read-only checkpoint mount, host courier transport and final VM teardown.
+
+An explicit `snapshot_profile` can select the new
+[menu-preserving save helper](native-menu-save.md). Omitted values preserve
+historical quicksave behavior; no past window is silently changed.
+
+## Declared window
+
+`experiments/campaign_astra_keyboard_window_20260907b.json` starts at cursor 72
+and permits eight 16-decision segments. It preserves the existing cumulative
+256-invocation/eight-million-returned-token extension. It does not reset usage,
+change the model prompt, add strategy guidance, or extend that budget again.
+The research hypothesis is descriptive metadata for evaluation, not an extra
+instruction passed to the playing model.
+
+The original condition remains `campaign_astra_keyboard_20260907.json`:
+Astra Medium, ChatGPT subscription, native keyboard v2, readable 120x40 screen,
+model-selected bounded advancement and a fresh account read before each call.
+No API credentials or model runtime are needed inside the game container.
+
+## Native command
+
+Run inside the owned isolated game environment, on a clean committed checkout:
+
+```sh
+python -m scripts.campaign_keyboard_native run \
+  --condition experiments/campaign_astra_keyboard_20260907.json \
+  --window experiments/campaign_astra_keyboard_window_20260907b.json \
+  --checkpoint /previous/checkpoint \
+  --latest-usage /previous/loop/usage.jsonl \
+  --source /opt/dwarf-fortress \
+  --output /evidence/astra \
+  --port 5530 \
+  --revision FULL_EXECUTED_COMMIT
+```
+
+The checkpoint must be the latest fully settled one, and its latest usage journal
+must match the checkpoint copy. A later unresolved tail is not permission to
+restore an older game state. Each segment uses a distinct local port, verifies
+the actual screen dimensions, loads the preceding native save, retains private
+before/after observations and agent state, and creates a verified checkpoint.
+The final runtime receipt distinguishes completion, budget pause and failure.
+Unsettled failures retain a forensic native save where possible; that save is
+explicitly not advertised as a resumable campaign checkpoint.
+
+## Host courier and game-user response delivery
+
+The outer owner reads a complete request from the dedicated exchange directory
+and gives `answer_request` a unique private host directory. The courier records
+a single-use claim before inference, performs the existing fresh subscription
+check, and retains the response and actual returned-token summary. A second call
+at the same directory cannot silently infer again. Ambiguous errors keep their
+dispatch state unknown.
+
+Before the first model call, send a harmless JSON object on stdin to:
+
+```sh
+python -m scripts.campaign_keyboard_native probe \
+  --output /evidence/astra/transport-probe.json
+```
+
+Send the returned response JSON on stdin, as the same unprivileged game user, to:
+
+```sh
+python -m scripts.campaign_keyboard_native publish-response \
+  --exchange /evidence/astra/exchange --request-id REQUEST_UUID_HEX
+```
+
+The publisher binds the response to the exact original request digest, publishes
+without overwriting and verifies game-user readback. Do not copy a root-owned
+private response into the game directory and assume the game can read it.
+Neither courier nor publisher chooses native actions. Website publication remains
+a separate explicit non-content projection; the exchange and native evidence
+directories are private.
+
+## Verification
+
+Executed source `a004c490f` passed 96 focused runtime/checkpoint/transport tests,
+2,326 broad-suite tests with ten skips, and changed-file Ruff/scoped mypy for
+all four new source modules. The broad suite's one sandbox-denied localhost bind
+passed separately with socket access. Exact-head
+[CI passed](https://github.com/lemoz/fort-gym/actions/runs/34158366994).
+
+The reusable window is now terminal and failed, not active. It retained a verified
+cursor-88 checkpoint, then committed through decision 100 at 29,000 elapsed ticks.
+The 101st model response sent three confirmed key events, followed by a 2,000-tick
+request that timed out with zero elapsed ticks while native focus remained
+`dwarfmode/Build/Type`. The newer native save and all model usage are retained;
+that forensic save is not a resumable checkpoint. Do not rewind to cursor 88.
+
+An independent retained-evidence audit verifies 913,252 new tokens and 3,231,792
+cumulative campaign tokens. Including prior failed deliveries gives 3,300,796.
+Subscription charges remain unreported. Both native processes, the container and
+owned VM are stopped. Original configuration, budget extension, memory handoffs
+and trace/journal prefixes remain intact. The public non-content interruption is
+`experiments/evidence/astra_native_keyboard_interruption_20260907.json`.
+
+## Build-menu clock correction
+
+The v2 adapter now reads the existing native keyboard probe before positive clock
+requests. For the exact observed blocking build-menu focus, two matching probes
+and paused calendar observations attest a zero-tick deferral without sending
+keys or invoking the clock. The model receives factual requested/actual tick
+feedback and chooses its next action. The boundary can checkpoint normally.
+Other focuses retain the existing clock path; historical keyboard v1 and helper
+conditions are unchanged. The original timed-out run is not reclassified.
+
+Regression tests cover unchanged native boundaries, unknown/changed evidence,
+no automatic recovery input, checkpoint continuation and failure usage retention.
+The window also retains a failed worker's detailed receipt while recording
+successful native cleanup separately. These corrections have offline test proof;
+reconciliation of the retained failed tail remains next, before further campaign
+model calls. Website records distinguish the
+interruption from the older resumable checkpoint and do not claim live activity.
+
+Native correction proof subsequently passed at `9d09f6961`: ordinary advancement
+produced 100 ticks, while a 2,000-tick request in the observed build menu returned
+a verified zero-tick deferral without clock dispatch. A separate read-only load
+of the newest forensic save matched the expected calendar and native structures.
+Original source files stayed unchanged and both native processes, container and
+VM stopped. No model call or campaign move occurred. The non-content diagnostic
+is `experiments/evidence/local_native_keyboard_clock_20260907.json`.
+
+## Forward-only failure reconciliation
+
+`inspect_recovery_source` validates one complete model response, its original
+screen/memory exchange, fully delivered native key sequence, accounted usage,
+unchanged calendar, verified repause and retained save inventory. Partial input,
+unknown usage, elapsed-time ambiguity or changed source bytes are not accepted.
+
+`reconcile_loaded_tail` requires the latest save loaded in the same owned runtime
+as its snapshotter. It verifies every native save file; the DFHack event log may
+only append to its original prefix. It makes no model call, sends no key, requests
+no simulation ticks, and preserves the exact model memory/configuration/usage.
+It appends one explicitly marked reconciliation row with the original failed
+clock receipt unchanged, then checkpoints the latest state. The old failed run
+and every original source remain unchanged. The model receives factual failure
+and runtime-reload feedback and chooses its next move. This is recovery of a
+known completed input, not success relabelling or replay from an earlier save.
+
+The native recovery subsequently passed at `914ac0721`, with
+[passing exact-source CI](https://github.com/lemoz/fort-gym/actions/runs/34162604769).
+An independent audit verifies checkpoint cursor 101, its parent at cursor 88,
+the complete original trace prefix plus the explicitly reconciled failure row,
+unchanged model memory/usage, the preserved native state and final game/container/
+VM teardown. It made zero model calls, sent zero keys and requested zero ticks.
+Elapsed game time remains 29,000 ticks and campaign usage remains 3,231,792 tokens.
+The original failed window remains failed. The non-content record is
+`experiments/evidence/astra_native_keyboard_recovery_20260907.json`.
+
+The next declared window is `campaign_astra_keyboard_window_20260907c.json`:
+six 16-decision segments from cursor 101, preserving the existing cumulative
+256-dispatch/eight-million-token budget, Astra Medium, raw 120x40 screen, memory
+and model-selected strategy. Declaring this window is not proof it has executed.
+
+## Post-recovery input rejection and feedback correction
+
+The declared window executed at `d37a1b42f`, verified checkpoints 117, 133, 149,
+165 and 181, and committed through decision 183 at 44,000 elapsed ticks. Model
+response 184 contained unsupported key names. That entire response was rejected
+before native input or clock dispatch, but the original harness treated it as a
+fatal decision error. All six native processes, the container and VM stopped.
+Independent audit verifies 83 new responses, 2,702,162 new tokens, 5,933,954 campaign
+tokens and 6,002,958 including historical failed deliveries. Charges remain
+unreported. The rejection's 32,731 tokens are included. The newest native save
+preserves two committed actions after checkpoint 181; do not rewind to that
+checkpoint or drop the rejected response's usage. Forward-only reconciliation
+of this new failure remains pending. The non-content record is
+`experiments/evidence/astra_native_keyboard_rejection_20260907.json`.
+
+The keyboard agent now separates a complete, shape-valid response with unknown
+key names from transport, identity or malformed-envelope failures. Such a response
+becomes an explicit `model_input_rejection/v1` trace row and factual feedback.
+The original keys remain recorded, but no key or clock method is invoked. The
+model's previous memory remains unchanged; its attempted update is retained only
+as part of the rejected response. It can choose its own next response. Rejections
+consume cumulative decision/token budgets and can checkpoint/resume normally.
+No key spelling is repaired, no WAIT is invented, and no new strategy is supplied.
+Unknown native mutation, incomplete usage, changed identity, calendar drift and
+inconsistent rejection evidence still fail rather than being labelled harmless.
+
+Focused rejection, runtime, recovery and checkpoint validation passes 166 tests.
+These are offline checks; native validation and recovery of the original failed
+tail are separate, still-pending evidence steps. Historical failed runs stay failed.
+
+The 256-dispatch allocation cannot cover the full-year objective from the latest
+state: at checkpoint 149, 40,000 elapsed ticks plus 107 remaining maximum 2,000-tick
+decisions reaches at most 254,000 ticks, below 403,200. A later continuation needs
+an explicit append-only allocation extension, retaining spent usage and the same
+subscription admission guard. A budget stop must not become a capability claim.

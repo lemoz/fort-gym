@@ -1,0 +1,218 @@
+{
+  "schema_version": "fortgym.endurance-terminal-reload-evidence/v1",
+  "date_utc": "2026-09-13",
+  "campaign_id": "astra-keyboard-endurance-v1",
+  "saved_through_decision": 1028,
+  "save_receipt": "astra_keyboard_endurance_1028_save_20260913.json",
+  "save_receipt_sha256": "4386765369987f29185771d88e95b8243950a28fa59bc373294b117f58ba0391",
+  "checkpoint_manifest_sha256": "7a788c3ab053e198eb050dc1aa148d0957a3dfa02ffde4fe259b27df42127919",
+  "final_native_reload_verified": true,
+  "operation": {
+    "schema_version": "fortgym.endurance-reload-operation/v1",
+    "status": "passed",
+    "campaign_id": "astra-keyboard-endurance-v1",
+    "source_revision": "4b526b5636e6f568a4cae1a1227d746d9c6922c3",
+    "image": "sha256:a2f12a74805949b8a2fcf0262b5d63048f4bd3a6f2faf4d8bbc74c261b172ed4",
+    "operator_sha256": "4d77b33bebee022c56315f0b2e0b754a11c231f624073931e49dab6007b55c89",
+    "worker_sha256": "8fa678972e855d4e509632a04be90517108da301b6df210f8517c87cd5aadae1",
+    "runtime_file_sha256": "529bd596bd30245703ad3c44f18f4f5951e3cc5284ff6cc10ce7b00a1cefab3f",
+    "checkpoint_sha256": "7a788c3ab053e198eb050dc1aa148d0957a3dfa02ffde4fe259b27df42127919",
+    "terminal_operation_sha256": "99b377d5e794bf38dc0df8fd2274bd9705cdbb96b23ac788df0054f7e11959a0",
+    "owner_output": "/Volumes/Crucial X10/pcc-projects/canonical/projects/fort-gym/fort_gym/artifacts/portable-runtime-20260912/native-acceptance-v1/astra-keyboard-endurance-v1-1028-reload-v2",
+    "origin": "/Volumes/Crucial X10/pcc-projects/canonical/projects/fort-gym/fort_gym/artifacts/portable-runtime-20260912/native-acceptance-v1/astra-keyboard-endurance-v1-965-1028/game/native/segment-0/checkpoint",
+    "native_reload_verified": true,
+    "vm_created": false,
+    "image_built": false,
+    "image_pulled": false,
+    "model_calls": 0,
+    "gameplay_actions": 0,
+    "new_returned_tokens": 0,
+    "new_cloud_spend_usd": 0,
+    "budget_extension": null,
+    "autonomous_gameplay": false,
+    "new_campaign_checkpoint": false,
+    "guest_space_before": "Filesystem     1K-blocks    Used Available Use% Mounted on\n/dev/vdb1       10216724 3307108   6369048  35% /var/lib/docker",
+    "native_result_sha256": "3e333728c018933baaee74fc735d7561959359da234a806cd70d730aa462dc4f",
+    "inspection": {
+      "actual_screen_size": [
+        120,
+        40
+      ],
+      "autonomous_gameplay": false,
+      "checkpoint_sha256": "7a788c3ab053e198eb050dc1aa148d0957a3dfa02ffde4fe259b27df42127919",
+      "committed_elapsed_ticks": 765895,
+      "complete_agent_state_unchanged": true,
+      "gameplay_actions": 0,
+      "gameplay_ticks_requested": 0,
+      "model_calls": 0,
+      "native_saves_requested": 0,
+      "native_year": 31,
+      "native_year_tick": 379496,
+      "new_campaign_checkpoint": false,
+      "new_returned_tokens": 0,
+      "next_step": 1028,
+      "normal_loop_restore_verified": true,
+      "observed_elapsed_ticks": 0,
+      "original_checkpoint_unchanged": true,
+      "passed": true,
+      "paused": true,
+      "paused_observation_unchanged": true,
+      "saved_observation_comparison": {
+        "all_observations_equal": false,
+        "changed_paths": [
+          [
+            "crew",
+            "jobs",
+            "entries",
+            0,
+            "target_walk_group_connectivity"
+          ],
+          [
+            "crew",
+            "jobs",
+            "entries",
+            1,
+            "target_walk_group_connectivity"
+          ],
+          [
+            "crew",
+            "jobs",
+            "entries",
+            2,
+            "target_walk_group_connectivity"
+          ],
+          [
+            "crew",
+            "jobs",
+            "entries",
+            3,
+            "target_walk_group_connectivity"
+          ],
+          [
+            "crew",
+            "jobs",
+            "entries",
+            4,
+            "target_walk_group_connectivity"
+          ]
+        ],
+        "expected_derived_paths": [
+          [
+            "crew",
+            "jobs",
+            "entries",
+            0,
+            "target_walk_group_connectivity"
+          ],
+          [
+            "crew",
+            "jobs",
+            "entries",
+            1,
+            "target_walk_group_connectivity"
+          ],
+          [
+            "crew",
+            "jobs",
+            "entries",
+            2,
+            "target_walk_group_connectivity"
+          ],
+          [
+            "crew",
+            "jobs",
+            "entries",
+            3,
+            "target_walk_group_connectivity"
+          ],
+          [
+            "crew",
+            "jobs",
+            "entries",
+            4,
+            "target_walk_group_connectivity"
+          ]
+        ],
+        "pending_pathfinding_reindex": true,
+        "persistent_observations_equal": true
+      },
+      "schema_version": "fortgym.endurance-reload-inspection/v1",
+      "source_revision": "4b526b5636e6f568a4cae1a1227d746d9c6922c3",
+      "trace_usage_history_unchanged": true
+    },
+    "original_inputs_unchanged": true,
+    "running_containers_before_vm_stop": "",
+    "prior_inventory_preserved": true,
+    "guest-poweroff_returncode": 0,
+    "vm-stop_returncode": 0,
+    "project_states": {
+      "fg-portable": {
+        "name": "fg-portable",
+        "status": "Stopped",
+        "arch": "aarch64",
+        "cpus": 2,
+        "memory": 3221225472,
+        "disk": 10737418240,
+        "runtime": "docker"
+      },
+      "fg-v2": {
+        "name": "fg-v2",
+        "status": "Stopped",
+        "arch": "aarch64",
+        "cpus": 2,
+        "memory": 3221225472,
+        "disk": 42949672960,
+        "runtime": "docker"
+      }
+    },
+    "both_vms_stopped": true,
+    "configs_unchanged": true,
+    "global_context_unchanged": true,
+    "fg-portable_disk_closed": true,
+    "fg-v2_disk_closed": true
+  },
+  "operation_result": {
+    "path": "fort_gym/artifacts/selected-workshop-study-20260912/astra-keyboard-endurance-runtime/reload-1028-operation-v2/result.json",
+    "sha256": "284b20041dfa56e39e64d8ae0d1ca7b9a14f7381c45dd13eb0af65b68ab69b36"
+  },
+  "first_attempt": {
+    "status": "failed",
+    "result_path": "fort_gym/artifacts/selected-workshop-study-20260912/astra-keyboard-endurance-runtime/reload-1028-operation-v1/result.json",
+    "result_sha256": "df7586237fd377284d90ec64c64bc8082f8ceac0f37d25d58f0b0e5620a1924f",
+    "native_load_verified": true,
+    "gameplay_changed": false,
+    "teardown_passed": true,
+    "retained_unchanged": true,
+    "cause": "The inspection used a different container runtime directory, changing two dfroot provenance fields in private food measurements. The fortress loaded paused at the exact saved calendar. The strict persistent comparison correctly rejected this metadata mismatch.",
+    "correction": "The v2 inspection keeps the ordinary campaign runtime path /fortgym-evidence/native/runtime-0/runtime inside its new isolated evidence mount. Original game source, saved inputs and observation comparator are unchanged; no normalization or exclusion was added."
+  },
+  "validation": {
+    "v2_tests_passed": 54,
+    "warnings": 2,
+    "seconds": 4.79,
+    "scoped_ruff_passed": true,
+    "junit": {
+      "path": "fort_gym/artifacts/selected-workshop-study-20260912/astra-keyboard-endurance-runtime/terminal-reload-v2-tests.xml",
+      "sha256": "847d8379ac1138c5f2fae8219ec86e0b177fc8d8b58293cf1b9e2aaa59f50718"
+    },
+    "native_acceptance_performed": true,
+    "inspection_preserved_full_loop_state": true,
+    "existing_derived_pathfinding_cache_allowance_only": true
+  },
+  "public_live_feed": {
+    "status": "stopped",
+    "owner_alive": false,
+    "observed_at_unix": 1789302650,
+    "decision": 1028
+  },
+  "source_and_sequence_worktrees_clean": true,
+  "gameplay_inputs": 0,
+  "model_calls": 0,
+  "new_returned_tokens": 0,
+  "new_cloud_spend_usd": 0,
+  "new_vm": false,
+  "budget_extension": null,
+  "main_merged": false,
+  "website_recording_published": false,
+  "full_goal_complete": false
+}

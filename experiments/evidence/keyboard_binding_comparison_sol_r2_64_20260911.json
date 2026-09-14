@@ -1,0 +1,113 @@
+{
+  "schema_version": "fortgym.public-displayed-key-result/v1",
+  "recorded_at_utc": "2026-09-12 00:08:27 UTC",
+  "cohort_id": "bindings-comparison-20260911",
+  "campaign_id": "bindings-comparison-20260911-sol-r2",
+  "model": "gpt-5.6-sol",
+  "replicate": 2,
+  "reasoning_effort": "medium",
+  "source_revision": "d22f28d99f4fd103188979e964e148139d3f3efd",
+  "image_id": "sha256:32bd022138a4772ed0c0d3a14f94feab8ad4a4cd183a20a8cd098745aedbd10d",
+  "seed_receipt_sha256": "eaf5fa5a40014719e6c313f33497740e536a8faa1c90a84c4e09dcc380ac0595",
+  "condition_file_sha256": "15119adc949afe3b691485a944856a295d8e9b0ccc57657a9f1086f8dddd3db4",
+  "trial_file_sha256": "964d7bccd0764e4d94737dd4211d89fb3a221491dad9cbee83d48559415996d7",
+  "response_limit": 64,
+  "status": "saved",
+  "responses": 64,
+  "returned_tokens": 1221506,
+  "reported_charge_usd": null,
+  "human_gameplay_rescue": false,
+  "native_teardown_verified": true,
+  "vm_teardown_verified": true,
+  "terminal_audit_sha256": "c75b838d06e69b63145023851d3bfb419c68620e620bcca25dc46860a55a102a",
+  "checkpoint": {
+    "next_step": 64,
+    "sha256": "e082332f969bef80a5ff4049206fa2a6a4580ab26c0b4ddad6e8bb3a74fd4f59",
+    "saved_elapsed_ticks": 10400,
+    "metrics": {
+      "completed_beds": 0,
+      "completed_farms": 0,
+      "completed_workshops": 0,
+      "drink_stock": 60,
+      "food_stock": 50,
+      "functional_rooms": 0,
+      "population": 7,
+      "recorded_dead_citizens": 0,
+      "stone_stock": null,
+      "wood_stock": null
+    }
+  },
+  "evidence_details": {
+    "declaration_revision": "61fcca7177d8b66ddd7e12e4be0ab53bda5ffd5b",
+    "fresh_empty_memory_usage_history_verified": true,
+    "native_key_receipts_verified": true,
+    "confirmed_key_presses": 454,
+    "source_trace_sha256": "b4f8486a824ac1be9f81f06ffb909c22c0e2e550ad1dd9f18107c293cac7b021",
+    "source_usage_sha256": "e4e7d47c353bd7bd9be400f5b2be2fd230ebf33dde1def74449d7921e60650dc",
+    "fresh_final_checkpoint_reload_verified": false,
+    "initial_metrics": {
+      "completed_beds": 0,
+      "completed_farms": 0,
+      "completed_workshops": 0,
+      "drink_stock": 60,
+      "food_stock": 50,
+      "functional_rooms": 0,
+      "population": 7,
+      "recorded_dead_citizens": 0,
+      "stone_stock": null,
+      "wood_stock": null
+    },
+    "observed_job_type_boundaries": {
+      "CarveDownwardStaircase": 1,
+      "Fish": 13,
+      "PickupEquipment": 7,
+      "no_current_job": 64
+    },
+    "single_down_level_key_replies": 37,
+    "zero_advance_replies": 40,
+    "total_requested_ticks": 15000,
+    "actual_saved_ticks": 10400,
+    "cloud_vms_created": 0,
+    "vm_config_unchanged": true,
+    "reported_hardware_energy_cost_usd": null,
+    "clock_outcomes": {
+      "no_error": 55,
+      "timeout_waiting_for_ticks": 9
+    },
+    "clock_timeout_zero_based_steps": [
+      5,
+      6,
+      11,
+      15,
+      17,
+      54,
+      55,
+      56,
+      57
+    ],
+    "shutdown": {
+      "guest_command_warning": false,
+      "guest_poweroff_returncode": 0,
+      "vm_observed_stopped": true,
+      "vm_stop_returncode": 0
+    },
+    "unsupported_key_replies": 0
+  },
+  "assessment": {
+    "functioning_fortress_established": false,
+    "year_two_reached": false,
+    "strong_model_ranking_supported": false,
+    "production_rates": null,
+    "consumption_rates": null,
+    "summary": "The second Sol attempt saved 10,400 game ticks with seven living citizens but no completed beds, workshops or farms. Native samples showed staircase-carving and fishing jobs, not proof of completed production or sustainable management. Nine clock timeouts remain in the evidence; only actual saved ticks are counted.",
+    "limits": [
+      "Saved means checkpoint and teardown verified, not successful autonomous fortress management.",
+      "All 64 responses remain counted. No human correction or gameplay rescue was provided.",
+      "Clock timeouts preserve partial actual advances rather than counting requested time as progress.",
+      "Starting and ending stocks do not establish production, consumption or sustainability rates.",
+      "Job counts are repeated sampled boundaries, not distinct jobs, completions or durations.",
+      "Subscription charges and hardware energy costs are unreported, not zero.",
+      "A separate fresh-load check remains pending; this saved result does not claim it."
+    ]
+  }
+}

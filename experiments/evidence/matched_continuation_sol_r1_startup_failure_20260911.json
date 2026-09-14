@@ -1,0 +1,72 @@
+{
+  "schema_version": "fortgym.matched-continuation-startup-failure-review/v1",
+  "status": "infrastructure_failure",
+  "failed_session": "bindings-comparison-20260911-sol-r1-64-128",
+  "failed_owner_revision": "4f4c5a33024b7c3fc2b487dd4d8197c46a477ef2",
+  "native_source_revision": "d22f28d99f4fd103188979e964e148139d3f3efd",
+  "failure": "Native load changed trace/usage prefixes",
+  "cause": "The pre-dispatch gate compared the full active usage journal with the saved journal, but the pinned native loop had already appended its exact decision_started marker for step 64. The saved prefix was unchanged.",
+  "offline_reconstructed_first_load": {
+    "schema_version": "fortgym.matched-continuation-load-gate/v2",
+    "passed": true,
+    "campaign_id": "bindings-comparison-20260911-sol-r1",
+    "checkpoint_sha256": "985f00da901dfd8edd684e4bb242cec022a9f8937d3f5f733ff7567684ebdb0e",
+    "next_step": 64,
+    "original_prefix_sha256": {
+      "trace.jsonl": "d049e5c2be2748b59cd26394fc3cc134be3a7e0c7dc8d46c4d69765cf9178602",
+      "usage.jsonl": "5402a3729386d643fa6bbb2255ab069e2f44ec732b2ef948a34b1eff81b030c9"
+    },
+    "first_dispatch_prefix_sha256": {
+      "trace.jsonl": "d049e5c2be2748b59cd26394fc3cc134be3a7e0c7dc8d46c4d69765cf9178602",
+      "usage.jsonl": "7cb59c09a534665fcbedb2aa7594b4d116c5233d52d0c229414ce8065adf1c20"
+    },
+    "exact_decision_started_marker_verified": true,
+    "memory_usage_feedback_and_history_preserved": true,
+    "native_clock_and_metrics_preserved": true,
+    "model_calls_by_gate": 0,
+    "gameplay_inputs_by_gate": 0,
+    "new_checkpoint_verified": false
+  },
+  "parent_usage_prefix_bytes": 19723,
+  "pending_marker_bytes": 41,
+  "original_trace_byte_identical": true,
+  "original_usage_byte_prefix_identical": true,
+  "model_claims": 0,
+  "model_summaries": 0,
+  "model_calls": 0,
+  "native_failed_dispatch_counter": 65,
+  "parent_dispatch_counter": 64,
+  "new_returned_tokens": 0,
+  "vm_stopped": true,
+  "source_checkpoint_unchanged": true,
+  "owner_result_sha256": "474f4f75e8856ed9c98a830e221601d8b646af157718e32255493bbb8bf6512f",
+  "loaded_usage_sha256": "58a447aae4028b0c221ae7c5d166f17bbeb0e61377ca5b86facc1e2f6be47c7a",
+  "actual_new_native_acceptance": false,
+  "native_retry_launched": false,
+  "native_cleanup": {
+    "container_stop_returncode": 0,
+    "evidence_copy_returncode": 0,
+    "guest_poweroff_returncode": 0,
+    "vm_stop_returncode": 0,
+    "vm_observed_stopped": true,
+    "container_running": false,
+    "container_exit_code": 130,
+    "container_oom_killed": false
+  },
+  "correction": {
+    "continuation_state_sha256": "fc88a47d308e1c608459b085f5a06f4d92f41132ecf00c8c190744108d4f915c",
+    "terminal_review_sha256": "366ea263ec8d7b82b5add23cb8d2f4a624e0ea576607a0666380f77edbd887ee",
+    "requires_exact_pending_marker": true,
+    "arbitrary_journal_append_allowed": false
+  },
+  "validation": {
+    "focused_tests_passed": 282,
+    "selected_ruff_passed": true,
+    "full_suite_rerun": false,
+    "dependency_following_mypy": "Reported 271 pre-existing errors in 16 imported frozen-source files; the frozen native source was not changed."
+  },
+  "original_failure_retained": true,
+  "failed_session_relaunched": false,
+  "new_final_save_verified": false,
+  "full_goal_complete": false
+}

@@ -19,10 +19,11 @@ def test_landing_page_is_gameplay_first_fort_labs_surface() -> None:
     assert "The next great benchmark is a world" in html
     assert "Easy" in html and "Hard" in html and "Discovery" in html
     assert "Spectator view · the agent plays from its declared interface" in html
-    assert "The first experimental cohort is being assembled" in html
-    assert "/public/worlds?limit=24" in html
+    assert "No comparable benchmark results are published here" in html
+    assert "/public/worlds?limit=24" not in html
     assert "/public/overview?recent_limit=24" in html
-    assert "FL.loadRunFrame" in html
+    assert "/static/published-recordings.mjs" in html
+    assert 'id="latest-save"' in html
     assert "/export/trace" not in html
     assert 'href="/worlds"' in html
     assert 'href="/results"' in html
